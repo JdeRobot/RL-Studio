@@ -2,7 +2,7 @@ catkin_pkg
 rospkg
 matplotlib
 defusedxml
-opencv-python
+opencv-python==4.2.0.32
 scikit-image
 netifaces
 numpy
@@ -10,5 +10,5 @@ gym
 requests>=2.0
 six
 pyglet>=1.2.0
-scipy==1.2.3
+#scipy==1.2.3
 environs
