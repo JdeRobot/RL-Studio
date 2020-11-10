@@ -64,3 +64,7 @@ export GAZEBO_MODEL_PATH=:/home/USER/gym-gazebo-2/gym_gazebo/envs/installation/.
 export GYM_GAZEBO_WORLD_CIRCUIT_F1=/home/USER/gym-gazebo-2/gym_gazebo/envs/installation/../assets/worlds/f1_1_simplecircuit.world
 ```
 
+Install CustomRobots
+```bash
+git clone -b noetic-devel https://github.com/JdeRobot/CustomRobots.git
+```
