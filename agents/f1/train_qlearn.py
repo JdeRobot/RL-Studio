@@ -13,9 +13,9 @@ import agents.f1.settings as settings
 
 
 def render():
-    render_skip = 0  # Skip first X episodes.
-    render_interval = 50  # Show render Every Y episodes.
-    render_episodes = 10  # Show Z episodes every rendering.
+    render_skip = 0
+    render_interval = 50
+    render_episodes = 10
 
     if (episode % render_interval == 0) and (episode != 0) and (episode > render_skip):
         env.render()
@@ -35,12 +35,12 @@ def load_model(qlearn, file_name):
     qlearn.epsilon = settings.algorithm_params["epsilon"]
     # highest_reward = settings.algorithm_params["highest_reward"]
 
-    print("\n\nMODEL LOADED. Number of (action, state): {}".format(len(model)))
-    print("    - Loading:    {}".format(file_name))
-    print("    - Model size: {}".format(len(qlearn.q)))
-    print("    - Action set: {}".format(settings.actions_set))
-    print("    - Epsilon:    {}".format(qlearn.epsilon))
-    print("    - Start:      {}".format(datetime.datetime.now()))
+    print(f"\n\nMODEL LOADED. Number of (action, state): {len(model)}")
+    print(f"    - Loading:    {file_name}")
+    print(f"    - Model size: {len(qlearn.q)}")
+    print(f"    - Action set: {settings.actions_set}")
+    print(f"    - Epsilon:    {qlearn.epsilon}")
+    print(f"    - Start:      {datetime.datetime.now()}")
 
 
 def save_model(current_time, states, states_counter, states_rewards):
@@ -188,34 +188,29 @@ if __name__ == '__main__':
                 if settings.plotter_graphic:
                     plotter.plot_steps_vs_epoch(stats, save=True)
                 save_model(start_time_format, stats, states_counter, states_reward)
-                print("\n\n====> LAP COMPLETED in: {} - Epoch: {} - Cum. Reward: {} <====\n\n".format(
-                        datetime.datetime.now() - start_time,
-                        episode,
-                        cumulated_reward
-                    )
-                )
+                print(f"\n\n====> LAP COMPLETED in: {datetime.datetime.now() - start_time} - Epoch: {episode}"
+                      f" - Cum. Reward: {cumulated_reward} <====\n\n")
 
             if counter > 1000:
                 if settings.plotter_graphic:
                     plotter.plot_steps_vs_epoch(stats, save=True)
                 qlearn.epsilon *= epsilon_discount
                 save_model(start_time_format, episode, states_counter, states_reward)
-                print("\t- epsilon: {}\n\t- cum reward: {}\n\t- dict_size: {}\n\t- time: {}\n\t- steps: {}\n".format(
-                    round(qlearn.epsilon, 2), cumulated_reward, len(qlearn.q), datetime.datetime.now()-start_time, step))
+                print(f"\t- epsilon: {round(qlearn.epsilon, 2)}\n\t- cum reward: {cumulated_reward}\n\t- dict_size: "
+                      f"{len(qlearn.q)}\n\t- time: {datetime.datetime.now()-start_time}\n\t- steps: {step}\n")
                 counter = 0
 
             if datetime.datetime.now() - datetime.timedelta(hours=2) > start_time:
                 print(settings.eop)
                 save_model(start_time_format, stats, states_counter, states_reward)
-                print("    - N epoch:     {}".format(episode))
-                print("    - Model size:  {}".format(len(qlearn.q)))
-                print("    - Action set:  {}".format(settings.actions_set))
-                print("    - Epsilon:     {}".format(round(qlearn.epsilon, 2)))
-                print("    - Cum. reward: {}".format(cumulated_reward))
+                print(f"    - N epoch:     {episode}")
+                print(f"    - Model size:  {len(qlearn.q)}")
+                print(f"    - Action set:  {settings.actions_set}")
+                print(f"    - Epsilon:     {round(qlearn.epsilon, 2)}")
+                print(f"    - Cum. reward: {cumulated_reward}")
 
                 env.close()
                 exit(0)
-            # print("Obser: {} - Rew: {}".format(observation, reward))
 
         if episode % 1 == 0 and settings.plotter_graphic:
             # plotter.plot(env)
@@ -223,20 +218,14 @@ if __name__ == '__main__':
             # plotter.full_plot(env, stats, 2)  # optional parameter = mode (0, 1, 2)
 
         if episode % 250 == 0 and settings.save_model and episode > 1:
-            print("\nSaving model . . .\n")
+            print(f"\nSaving model . . .\n")
             save_model(start_time_format, stats, states_counter, states_reward)
 
         m, s = divmod(int(time.time() - telemetry_start_time), 60)
         h, m = divmod(m, 60)
 
-        print("\nEP: {} - epsilon: {} - Reward: {} - Time: {} - Steps: {}\n".format(
-                episode + 1,
-                round(qlearn.epsilon, 2),
-                cumulated_reward,
-                start_time_format,
-                step
-            )
-        )
+        print(f"\nEP: {episode + 1} - epsilon: {round(qlearn.epsilon, 2)} - Reward: {cumulated_reward}"
+              f"- Time: {start_time_format} - Steps: {step}\n")
 
     print("Total EP: {} - epsilon: {} - ep. discount: {} - Highest Reward: {}".format(
             total_episodes,
