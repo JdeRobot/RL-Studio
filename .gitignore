@@ -2,8 +2,7 @@
 # Created by https://www.toptal.com/developers/gitignore/api/python,vscode,pycharm,opencv,images
 # Edit at https://www.toptal.com/developers/gitignore?templates=python,vscode,pycharm,opencv,images
 
-# CustomRobots
-CustomRobots/*
+CustomRobots
 
 ### Images ###
 # JPEG
