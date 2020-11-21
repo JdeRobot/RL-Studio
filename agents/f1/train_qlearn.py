@@ -81,7 +81,7 @@ if __name__ == '__main__':
     print(settings.description)
     print("    - Start hour: {}".format(datetime.datetime.now()))
 
-    environment = settings.envs_params["nurburgring"]
+    environment = settings.envs_params["simple"]
     env = gym.make(environment["env"])
 
     outdir = './logs/f1_qlearn_gym_experiments/'
