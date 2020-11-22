@@ -91,7 +91,7 @@ envs_params = {
         "launch": "simple_circuit.launch",
         "gaz_pos": simple_gazebo_positions,
         "start_pose": [simple_gazebo_positions[1][1], simple_gazebo_positions[1][2]],
-        "alternate_pose": False,
+        "alternate_pose": True,
         "estimated_steps": 4000,
         "sensor": "camera"
     },

@@ -1,11 +1,11 @@
-#!/usr/bin/env python
 import matplotlib
 import matplotlib.pyplot as plt
 import gym
 
 rewards_key = 'episode_rewards'
 
-class LivePlot(object):
+
+class LivePlot:
     def __init__(self, outdir, data_key=rewards_key, line_color='blue'):
         """
         Liveplot renders a graph of either episode_rewards or episode_lengths

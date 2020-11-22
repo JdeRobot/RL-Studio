@@ -7,7 +7,7 @@ import liveplot
 import gym_gazebo
 import numpy as np
 from gym import wrappers
-from qlearn import QLearn
+from agents.f1.qlearn import QLearn
 
 import agents.f1.settings as settings
 
@@ -79,9 +79,9 @@ if __name__ == '__main__':
 
     print(settings.title)
     print(settings.description)
-    print("    - Start hour: {}".format(datetime.datetime.now()))
+    print(f"\t- Start hour: {datetime.datetime.now()}")
 
-    environment = settings.envs_params["simple"]
+    environment = settings.envs_params["montreal"]
     env = gym.make(environment["env"])
 
     outdir = './logs/f1_qlearn_gym_experiments/'
@@ -105,8 +105,8 @@ if __name__ == '__main__':
     qlearn = QLearn(actions=actions, alpha=0.8, gamma=0.9, epsilon=0.99)
 
     if settings.load_model:
-        # file_name = 'qlearn_camera_solved/montreal/2/1_20200928_2303_act_set_simple_epsilon_0.87_QTABLE.pkl'
-        file_name = 'qlearn_camera_solved/points_1_actions_simple__simple_circuit/4/1_20200921_2024_act_set_simple_epsilon_0.83_QTABLE.pkl'
+        # TODO: Folder to models. Maybe from environment variable?
+        file_name = ''
         load_model(qlearn, file_name)
         highest_reward = max(qlearn.q.values(), key=stats.get)
     else:
@@ -181,6 +181,8 @@ if __name__ == '__main__':
                 last_time_steps = np.append(last_time_steps, [int(step + 1)])
                 stats[int(episode)] = step
                 states_reward[int(episode)] = cumulated_reward
+                print(f"\nEP: {episode + 1} - epsilon: {round(qlearn.epsilon, 2)} - Reward: {cumulated_reward}"
+                      f"- Time: {start_time_format} - Steps: {step}")
                 break
 
             if step > estimate_step_per_lap and not lap_completed:
@@ -224,8 +226,7 @@ if __name__ == '__main__':
         m, s = divmod(int(time.time() - telemetry_start_time), 60)
         h, m = divmod(m, 60)
 
-        print(f"\nEP: {episode + 1} - epsilon: {round(qlearn.epsilon, 2)} - Reward: {cumulated_reward}"
-              f"- Time: {start_time_format} - Steps: {step}\n")
+
 
     print("Total EP: {} - epsilon: {} - ep. discount: {} - Highest Reward: {}".format(
             total_episodes,
