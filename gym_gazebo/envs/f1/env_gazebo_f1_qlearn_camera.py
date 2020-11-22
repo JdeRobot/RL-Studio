@@ -16,7 +16,7 @@ from sensor_msgs.msg import Image
 
 from gym.utils import seeding
 from agents.f1.settings import actions, envs_params
-from agents.f1.settings import telemetry, x_row, ranges, center_image, width, height, telemetry_mask, max_distance
+from agents.f1.settings import telemetry, x_row, center_image, width, height, telemetry_mask, max_distance
 
 
 font = cv2.FONT_HERSHEY_COMPLEX
@@ -32,16 +32,16 @@ class ImageF1:
         self.data.shape = self.height, self.width, 3
 
     def __str__(self):
-        s = "Image: {\n   height: " + str(self.height) + "\n   width: " + str(self.width)
-        s = s + "\n   format: " + self.format + "\n   timeStamp: " + str(self.timeStamp)
-        return s + "\n   data: " + str(self.data) + "\n}"
+        return f"Image:" \
+               f"\nHeight: {self.height}\nWidth: {self.width}\n" \
+               f"Format: {self.format}\nTimeStamp: {self.timeStamp}\nData: {self.data}"
 
 
 class GazeboF1QlearnCameraEnv(gazebo_env.GazeboEnv):
 
     def __init__(self):
-        # Launch the simulation with the given launchfile name
-        self.circuit = envs_params["simple"]
+        # Launch the simulation with the given launch file name
+        self.circuit = envs_params["montreal"]
         gazebo_env.GazeboEnv.__init__(self, self.circuit["launch"])
         self.vel_pub = rospy.Publisher('/F1ROS/cmd_vel', Twist, queue_size=5)
         self.unpause = rospy.ServiceProxy('/gazebo/unpause_physics', Empty)
@@ -167,7 +167,7 @@ class GazeboF1QlearnCameraEnv(gazebo_env.GazeboEnv):
         _, mask = cv2.threshold(line_pre_proc, 240, 255, cv2.THRESH_BINARY)
 
         lines = [mask[x_row[idx], :] for idx, x in enumerate(x_row)]
-        centrals = map(self.get_center, lines)
+        centrals = list(map(self.get_center, lines))
 
         # if centrals[-1] == 9:
         #     centrals[-1] = center_image
@@ -257,7 +257,7 @@ class GazeboF1QlearnCameraEnv(gazebo_env.GazeboEnv):
             reward = -100
 
         if telemetry:
-            print("center: {} - actions: {} - reward: {}".format(center, action, reward))
+            print(f"center: {center} - actions: {action} - reward: {reward}")
             # self.show_telemetry(f1_image_camera.data, points, action, reward)
 
         return state, reward, done, {}
