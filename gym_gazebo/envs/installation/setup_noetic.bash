@@ -40,16 +40,20 @@ cd ..
 touch catkin_ws/src/ecl_navigation/ecl_mobile_robot/CATKIN_IGNORE
 catkin_make
 bash -c 'echo source `pwd`/devel/setup.bash >> ~/.bashrc'
+zsh -c 'echo source `pwd`/devel/setup.bash >> ~/.zshrc'
 echo "## ROS workspace compiled ##"
 
 # add own models path to gazebo models path
 if [ -z "$GAZEBO_MODEL_PATH" ]; then
-  bash -c 'echo "export GAZEBO_MODEL_PATH="`pwd`/../../assets/models >> ~/.bashrc'
-  exec bash #reload bashrc
+  bash -c 'echo "export GAZEBO_MODEL_PATH="`pwd`/../../CustomRobots/f1/models >> ~/.bashrc'
+  # exec bash #reload bashrc
 fi
 
 read -p "Do you use zsh? [Y/n]: " zsh
 if [ "${!zsh}" = "" ]; then
-  bash -c 'echo "export GAZEBO_MODEL_PATH="`pwd`/CustomRobots/f1/models >> ~/.zshrc'
-  source $HOME/.zshrc
+  bash -c 'echo "export GAZEBO_MODEL_PATH="`pwd`/../../CustomRobots/f1/models >> ~/.zshrc'
+  # source $HOME/.zshrc
 fi
+
+printf ""
+printf "\nRestart the terminal or type: source ~/.bashrc / .zshrc"
