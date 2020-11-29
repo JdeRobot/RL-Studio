@@ -45,7 +45,7 @@ class GazeboEnv(gym.Env):
         else:
             # TODO: Global env for 'f1'. It must be passed in constructor.
             fullpath = str(Path(Path(__file__).resolve().parents[1] / "CustomRobots" / "f1" / "launch" / launchfile))
-
+            print(f"-----> {fullpath}")
         if not os.path.exists(fullpath):
             raise IOError(f"File {fullpath} does not exist")
 
