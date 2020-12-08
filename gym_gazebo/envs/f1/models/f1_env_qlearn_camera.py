@@ -1,27 +1,25 @@
-import rospy
-import numpy as np
 import cv2
-
+import numpy as np
+import rospy
 from cv_bridge import CvBridge
-
 from geometry_msgs.msg import Twist
+from gym import spaces
+from gym.utils import seeding
 from sensor_msgs.msg import Image
 
-
-from gym_gazebo.envs.gazebo_env import GazeboEnv
-
-from gym.utils import seeding
 from agents.f1.settings import actions
 from agents.f1.settings import telemetry, x_row, center_image, width, height, telemetry_mask, max_distance
-
 from gym_gazebo.envs.f1.image_f1 import ImageF1
+from gym_gazebo.envs.f1.models.f1_env import F1Env
+from gym_gazebo.envs.gazebo_env import GazeboEnv
 
 
-class F1QlearnCameraEnv(GazeboEnv):
+class F1QlearnCameraEnv(F1Env):
 
     def __init__(self, **config):
-        GazeboEnv.__init__(self)
+        F1Env.__init__(self, **config)
         self.image = ImageF1()
+        self.action_space = spaces.Discrete(len(actions))  # actions  # spaces.Discrete(3)  # F,L,R
 
     def render(self, mode='human'):
         pass
@@ -156,7 +154,7 @@ class F1QlearnCameraEnv(GazeboEnv):
 
     def reset(self):
         # === POSE ===
-        if self.circuit["alternate_pose"]:
+        if self.alternate_pose:
             self.set_new_pose()
         else:
             self._gazebo_reset()

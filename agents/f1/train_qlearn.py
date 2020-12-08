@@ -37,9 +37,7 @@ if __name__ == '__main__':
     print(f"\t- Start hour: {datetime.datetime.now()}")
 
     environment = settings.envs_params["simple"]
-    print(type(environment))
-    #env = gym.make(environment["env"])
-    env = gym.make('F1Env-v0', config=environment)
+    env = gym.make(environment["env"], **environment)
 
     # TODO: Move to settings file
     outdir = './logs/f1_qlearn_gym_experiments/'
@@ -47,13 +45,12 @@ if __name__ == '__main__':
     states_counter = {}
     states_reward = {}
 
-    env = gym.wrappers.Monitor(env, outdir, force=True)
     plotter = liveplot.LivePlot(outdir)
 
     last_time_steps = np.ndarray(0)
 
     actions = range(env.action_space.n)
-
+    env = gym.wrappers.Monitor(env, outdir, force=True)
     counter = 0
     estimate_step_per_lap = environment["estimated_steps"]
     lap_completed = False
