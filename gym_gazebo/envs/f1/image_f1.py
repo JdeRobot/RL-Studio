@@ -29,3 +29,19 @@ class ImageF1:
         image.data = cv_image
 
         return image
+
+
+    @staticmethod
+    def show_telemetry(img, points, action, reward):
+        count = 0
+        for idx, point in enumerate(points):
+            cv2.line(img, (320, x_row[idx]), (320, x_row[idx]), (255, 255, 0), thickness=5)
+            # cv2.line(img, (center_image, x_row[idx]), (point, x_row[idx]), (255, 255, 255), thickness=2)
+            cv2.putText(img, str("err{}: {}".format(idx+1, center_image - point)), (18, 340 + count), font, 0.4,
+                        (255, 255, 255), 1)
+            count += 20
+        cv2.putText(img, str("action: {}".format(action)), (18, 280), font, 0.4, (255, 255, 255), 1)
+        cv2.putText(img, str("reward: {}".format(reward)), (18, 320), font, 0.4, (255, 255, 255), 1)
+
+        cv2.imshow("Image window", img[240:])
+        cv2.waitKey(3)
