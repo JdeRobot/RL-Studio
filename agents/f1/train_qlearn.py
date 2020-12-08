@@ -1,35 +1,16 @@
-import gym
-import time
 import datetime
-import liveplot
+import time
+
+import gym
 
 import numpy as np
 
-import utils
-from gym_gazebo.envs import gazebo_env
-
-from gym import wrappers
-
-from agents.f1.qlearn import QLearn
 import agents.f1.settings as settings
+import liveplot
+import utils
+from agents.f1.qlearn import QLearn
 
 
-def render():
-    render_skip = 0
-    render_interval = 50
-    render_episodes = 10
-
-    if (episode % render_interval == 0) and (episode != 0) and (episode > render_skip):
-        env.render()
-    elif ((episode - render_episodes) % render_interval == 0) and (episode != 0) and (episode > render_skip) and \
-            (render_episodes < episode):
-        env.render(close=True)
-
-
-
-####################################################################################################################
-# MAIN PROGRAM
-####################################################################################################################
 if __name__ == '__main__':
     
     print(settings.title)
@@ -136,7 +117,7 @@ if __name__ == '__main__':
                 last_time_steps = np.append(last_time_steps, [int(step + 1)])
                 stats[int(episode)] = step
                 states_reward[int(episode)] = cumulated_reward
-                print(f"\nEP: {episode + 1} - epsilon: {round(qlearn.epsilon, 2)} - Reward: {cumulated_reward}"
+                print(f"EP: {episode + 1} - epsilon: {round(qlearn.epsilon, 2)} - Reward: {cumulated_reward}"
                       f"- Time: {start_time_format} - Steps: {step}")
                 break
 
@@ -144,7 +125,7 @@ if __name__ == '__main__':
                 lap_completed = True
                 if settings.plotter_graphic:
                     plotter.plot_steps_vs_epoch(stats, save=True)
-                utils.save_model(start_time_format, stats, states_counter, states_reward)
+                utils.save_model(qlearn, start_time_format, stats, states_counter, states_reward)
                 print(f"\n\n====> LAP COMPLETED in: {datetime.datetime.now() - start_time} - Epoch: {episode}"
                       f" - Cum. Reward: {cumulated_reward} <====\n\n")
 
@@ -152,14 +133,14 @@ if __name__ == '__main__':
                 if settings.plotter_graphic:
                     plotter.plot_steps_vs_epoch(stats, save=True)
                 qlearn.epsilon *= epsilon_discount
-                utils.save_model(start_time_format, episode, states_counter, states_reward)
+                utils.save_model(qlearn, start_time_format, episode, states_counter, states_reward)
                 print(f"\t- epsilon: {round(qlearn.epsilon, 2)}\n\t- cum reward: {cumulated_reward}\n\t- dict_size: "
                       f"{len(qlearn.q)}\n\t- time: {datetime.datetime.now()-start_time}\n\t- steps: {step}\n")
                 counter = 0
 
             if datetime.datetime.now() - datetime.timedelta(hours=2) > start_time:
                 print(settings.eop)
-                utils.save_model(start_time_format, stats, states_counter, states_reward)
+                utils.save_model(qlearn, start_time_format, stats, states_counter, states_reward)
                 print(f"    - N epoch:     {episode}")
                 print(f"    - Model size:  {len(qlearn.q)}")
                 print(f"    - Action set:  {settings.actions_set}")
@@ -176,12 +157,10 @@ if __name__ == '__main__':
 
         if episode % 250 == 0 and settings.save_model and episode > 1:
             print(f"\nSaving model . . .\n")
-            utils.save_model(start_time_format, stats, states_counter, states_reward)
+            utils.save_model(qlearn, start_time_format, stats, states_counter, states_reward)
 
         m, s = divmod(int(time.time() - telemetry_start_time), 60)
         h, m = divmod(m, 60)
-
-
 
     print("Total EP: {} - epsilon: {} - ep. discount: {} - Highest Reward: {}".format(
             total_episodes,
