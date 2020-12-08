@@ -30,7 +30,7 @@ class VideoRecorder(object):
     """
 
     def __init__(self, env, path=None, metadata=None, enabled=True, base_path=None):
-        modes = env.metadata.get('render.modes', [])
+        modes = env.metadata.get('render.models', [])
         self._async = env.metadata.get('semantics.async')
         self.enabled = enabled
 

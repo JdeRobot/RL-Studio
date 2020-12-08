@@ -11,7 +11,7 @@ import random
 class RealEnv(gym.Env):
     """Superclass for all Gazebo environments.
     """
-    metadata = {'render.modes': ['human']}
+    metadata = {'render.models': ['human']}
 
     def __init__(self):
 
