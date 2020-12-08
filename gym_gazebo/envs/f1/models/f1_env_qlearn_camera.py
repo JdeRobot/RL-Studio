@@ -7,19 +7,19 @@ from gym import spaces
 from gym.utils import seeding
 from sensor_msgs.msg import Image
 
-from agents.f1.settings import actions
 from agents.f1.settings import telemetry, x_row, center_image, width, height, telemetry_mask, max_distance
 from gym_gazebo.envs.f1.image_f1 import ImageF1
 from gym_gazebo.envs.f1.models.f1_env import F1Env
-from gym_gazebo.envs.gazebo_env import GazeboEnv
 
 
 class F1QlearnCameraEnv(F1Env):
 
     def __init__(self, **config):
         F1Env.__init__(self, **config)
+        print(config)
         self.image = ImageF1()
-        self.action_space = spaces.Discrete(len(actions))  # actions  # spaces.Discrete(3)  # F,L,R
+        self.actions = config.get("actions")
+        self.action_space = spaces.Discrete(len(self.actions))  # actions  # spaces.Discrete(3)  # F,L,R
 
     def render(self, mode='human'):
         pass
@@ -108,8 +108,8 @@ class F1QlearnCameraEnv(F1Env):
         self._gazebo_unpause()
 
         vel_cmd = Twist()
-        vel_cmd.linear.x = actions[action][0]
-        vel_cmd.angular.z = actions[action][1]
+        vel_cmd.linear.x = self.actions[action][0]
+        vel_cmd.angular.z = self.actions[action][1]
         self.vel_pub.publish(vel_cmd)
 
         # Get camera info
@@ -184,8 +184,8 @@ class F1QlearnCameraEnv(F1Env):
         self._gazebo_unpause()
 
         vel_cmd = Twist()
-        vel_cmd.linear.x = actions[action][0]
-        vel_cmd.angular.z = actions[action][1]
+        vel_cmd.linear.x = ACTIONS_SET[action][0]
+        vel_cmd.angular.z = ACTIONS_SET[action][1]
         self.vel_pub.publish(vel_cmd)
 
         image_data = rospy.wait_for_message('/F1ROS/cameraL/image_raw', Image, timeout=1)
