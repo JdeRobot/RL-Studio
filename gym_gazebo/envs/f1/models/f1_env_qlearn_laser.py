@@ -18,9 +18,9 @@ from agents.f1.settings import actions
 from agents.f1.settings import envs_params
 
 
-class GazeboF1QlearnLaserEnv(gazebo_env.GazeboEnv):
+class F1QlearnLaserEnv(gazebo_env.GazeboEnv):
 
-    def __init__(self):
+    def __init__(self, **config):
         # Launch the simulation with the given launchfile name
         self.circuit = envs_params["simple"]
         gazebo_env.GazeboEnv.__init__(self, self.circuit["launch"])

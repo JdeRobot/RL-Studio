@@ -8,19 +8,19 @@ from geometry_msgs.msg import Twist
 from sensor_msgs.msg import Image
 
 
-from gym_gazebo.envs.f1.modes.f1_env import GazeboF1Env
+from gym_gazebo.envs.gazebo_env import GazeboEnv
 
 from gym.utils import seeding
 from agents.f1.settings import actions
 from agents.f1.settings import telemetry, x_row, center_image, width, height, telemetry_mask, max_distance
 
-from image_f1 import *
+from gym_gazebo.envs.f1.image_f1 import ImageF1
 
 
-class F1QlearnCameraEnv(GazeboF1Env):
+class F1QlearnCameraEnv(GazeboEnv):
 
-    def __init__(self):
-        GazeboF1Env.__init__(self)
+    def __init__(self, **config):
+        GazeboEnv.__init__(self)
         self.image = ImageF1()
 
     def render(self, mode='human'):
@@ -104,21 +104,6 @@ class F1QlearnCameraEnv(GazeboF1Env):
     def _seed(self, seed=None):
         self.np_random, seed = seeding.np_random(seed)
         return [seed]
-
-    @staticmethod
-    def show_telemetry(img, points, action, reward):
-        count = 0
-        for idx, point in enumerate(points):
-            cv2.line(img, (320, x_row[idx]), (320, x_row[idx]), (255, 255, 0), thickness=5)
-            # cv2.line(img, (center_image, x_row[idx]), (point, x_row[idx]), (255, 255, 255), thickness=2)
-            cv2.putText(img, str("err{}: {}".format(idx+1, center_image - point)), (18, 340 + count), font, 0.4,
-                        (255, 255, 255), 1)
-            count += 20
-        cv2.putText(img, str("action: {}".format(action)), (18, 280), font, 0.4, (255, 255, 255), 1)
-        cv2.putText(img, str("reward: {}".format(reward)), (18, 320), font, 0.4, (255, 255, 255), 1)
-
-        cv2.imshow("Image window", img[240:])
-        cv2.waitKey(3)
 
     def step(self, action):
 
