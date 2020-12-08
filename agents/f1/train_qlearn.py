@@ -1,14 +1,16 @@
+import gym
 import time
 import datetime
-import pickle
-
-import gym
 import liveplot
-import gym_gazebo
-import numpy as np
-from gym import wrappers
-from agents.f1.qlearn import QLearn
 
+import numpy as np
+
+import utils
+from gym_gazebo.envs import gazebo_env
+
+from gym import wrappers
+
+from agents.f1.qlearn import QLearn
 import agents.f1.settings as settings
 
 
@@ -24,66 +26,22 @@ def render():
         env.render(close=True)
 
 
-def load_model(qlearn, file_name):
-
-    qlearn_file = open("./logs/qlearn_models/" + file_name)
-    model = pickle.load(qlearn_file)
-
-    qlearn.q = model
-    qlearn.alpha = settings.algorithm_params["alpha"]
-    qlearn.gamma = settings.algorithm_params["gamma"]
-    qlearn.epsilon = settings.algorithm_params["epsilon"]
-    # highest_reward = settings.algorithm_params["highest_reward"]
-
-    print(f"\n\nMODEL LOADED. Number of (action, state): {len(model)}")
-    print(f"    - Loading:    {file_name}")
-    print(f"    - Model size: {len(qlearn.q)}")
-    print(f"    - Action set: {settings.actions_set}")
-    print(f"    - Epsilon:    {qlearn.epsilon}")
-    print(f"    - Start:      {datetime.datetime.now()}")
-
-
-def save_model(current_time, states, states_counter, states_rewards):
-    # Tabular RL: Tabular Q-learning basically stores the policy (Q-values) of  the agent into a matrix of shape
-    # (S x A), where s are all states, a are all the possible actions. After the environment is solved, just save this
-    # matrix as a csv file. I have a quick implementation of this on my GitHub under Reinforcement Learning.
-
-    # Q TABLE
-    base_file_name = "_act_set_{}_epsilon_{}".format(settings.actions_set, round(qlearn.epsilon, 2))
-    file_dump = open("./logs/qlearn_models/1_" + current_time + base_file_name + '_QTABLE.pkl', 'wb')
-    pickle.dump(qlearn.q, file_dump)
-    # STATES COUNTER
-    states_counter_file_name = base_file_name + "_STATES_COUNTER.pkl"
-    file_dump = open("./logs/qlearn_models/2_" + current_time + states_counter_file_name, 'wb')
-    pickle.dump(states_counter, file_dump)
-    # STATES CUMULATED REWARD
-    states_cum_reward_file_name = base_file_name + "_STATES_CUM_REWARD.pkl"
-    file_dump = open("./logs/qlearn_models/3_" + current_time + states_cum_reward_file_name, 'wb')
-    pickle.dump(states_rewards, file_dump)
-    # STATES
-    steps = base_file_name + "_STATES_STEPS.pkl"
-    file_dump = open("./logs/qlearn_models/4_" + current_time + steps, 'wb')
-    pickle.dump(states, file_dump)
-
-
-def save_times(checkpoints):
-    file_name = "actions_"
-    file_dump = open("./logs/" + file_name + settings.actions_set + '_checkpoints.pkl', 'wb')
-    pickle.dump(checkpoints, file_dump)
-
 
 ####################################################################################################################
 # MAIN PROGRAM
 ####################################################################################################################
 if __name__ == '__main__':
-
+    
     print(settings.title)
     print(settings.description)
     print(f"\t- Start hour: {datetime.datetime.now()}")
 
-    environment = settings.envs_params["montreal"]
-    env = gym.make(environment["env"])
+    environment = settings.envs_params["simple"]
+    print(type(environment))
+    #env = gym.make(environment["env"])
+    env = gym.make('F1Env-v0', config=environment)
 
+    # TODO: Move to settings file
     outdir = './logs/f1_qlearn_gym_experiments/'
     stats = {}  # epoch: steps
     states_counter = {}
@@ -107,7 +65,7 @@ if __name__ == '__main__':
     if settings.load_model:
         # TODO: Folder to models. Maybe from environment variable?
         file_name = ''
-        load_model(qlearn, file_name)
+        utils.load_model(qlearn, file_name)
         highest_reward = max(qlearn.q.values(), key=stats.get)
     else:
         highest_reward = 0
@@ -171,7 +129,7 @@ if __name__ == '__main__':
 
                 if datetime.datetime.now() - datetime.timedelta(minutes=3, seconds=12) > start_time:
                     print("Finish. Saving parameters . . .")
-                    save_times(checkpoints)
+                    utils.save_times(checkpoints)
                     env.close()
                     exit(0)
 
@@ -189,7 +147,7 @@ if __name__ == '__main__':
                 lap_completed = True
                 if settings.plotter_graphic:
                     plotter.plot_steps_vs_epoch(stats, save=True)
-                save_model(start_time_format, stats, states_counter, states_reward)
+                utils.save_model(start_time_format, stats, states_counter, states_reward)
                 print(f"\n\n====> LAP COMPLETED in: {datetime.datetime.now() - start_time} - Epoch: {episode}"
                       f" - Cum. Reward: {cumulated_reward} <====\n\n")
 
@@ -197,14 +155,14 @@ if __name__ == '__main__':
                 if settings.plotter_graphic:
                     plotter.plot_steps_vs_epoch(stats, save=True)
                 qlearn.epsilon *= epsilon_discount
-                save_model(start_time_format, episode, states_counter, states_reward)
+                utils.save_model(start_time_format, episode, states_counter, states_reward)
                 print(f"\t- epsilon: {round(qlearn.epsilon, 2)}\n\t- cum reward: {cumulated_reward}\n\t- dict_size: "
                       f"{len(qlearn.q)}\n\t- time: {datetime.datetime.now()-start_time}\n\t- steps: {step}\n")
                 counter = 0
 
             if datetime.datetime.now() - datetime.timedelta(hours=2) > start_time:
                 print(settings.eop)
-                save_model(start_time_format, stats, states_counter, states_reward)
+                utils.save_model(start_time_format, stats, states_counter, states_reward)
                 print(f"    - N epoch:     {episode}")
                 print(f"    - Model size:  {len(qlearn.q)}")
                 print(f"    - Action set:  {settings.actions_set}")
@@ -221,7 +179,7 @@ if __name__ == '__main__':
 
         if episode % 250 == 0 and settings.save_model and episode > 1:
             print(f"\nSaving model . . .\n")
-            save_model(start_time_format, stats, states_counter, states_reward)
+            utils.save_model(start_time_format, stats, states_counter, states_reward)
 
         m, s = divmod(int(time.time() - telemetry_start_time), 60)
         h, m = divmod(m, 60)
