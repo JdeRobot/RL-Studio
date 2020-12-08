@@ -1,137 +1,42 @@
-import rospy
-import numpy as np
-import random
 import cv2
-
-from gym import spaces
+import numpy as np
+import rospy
 from cv_bridge import CvBridge
-
-from gym_gazebo.envs import gazebo_env
-from gazebo_msgs.msg import ModelState
-from gazebo_msgs.srv import SetModelState, GetModelState
-
 from geometry_msgs.msg import Twist
-from std_srvs.srv import Empty
+from gym import spaces
+from gym.utils import seeding
 from sensor_msgs.msg import Image
 
-from gym.utils import seeding
-from agents.f1.settings import actions, envs_params
 from agents.f1.settings import telemetry, x_row, center_image, width, height, telemetry_mask, max_distance
+from gym_gazebo.envs.f1.image_f1 import ImageF1
+from gym_gazebo.envs.f1.models.f1_env import F1Env
 
 
-font = cv2.FONT_HERSHEY_COMPLEX
+class F1QlearnCameraEnv(F1Env):
 
-
-class ImageF1:
-    def __init__(self):
-        self.height = 3  # Image height [pixels]
-        self.width = 3  # Image width [pixels]
-        self.timeStamp = 0  # Time stamp [s] */
-        self.format = ""  # Image format string (RGB8, BGR,...)
-        self.data = np.zeros((self.height, self.width, 3), np.uint8)  # The image data itself
-        self.data.shape = self.height, self.width, 3
-
-    def __str__(self):
-        return f"Image:" \
-               f"\nHeight: {self.height}\nWidth: {self.width}\n" \
-               f"Format: {self.format}\nTimeStamp: {self.timeStamp}\nData: {self.data}"
-
-
-class GazeboF1QlearnCameraEnv(gazebo_env.GazeboEnv):
-
-    def __init__(self):
-        # Launch the simulation with the given launch file name
-        self.circuit = envs_params["montreal"]
-        gazebo_env.GazeboEnv.__init__(self, self.circuit["launch"])
-        self.vel_pub = rospy.Publisher('/F1ROS/cmd_vel', Twist, queue_size=5)
-        self.unpause = rospy.ServiceProxy('/gazebo/unpause_physics', Empty)
-        self.pause = rospy.ServiceProxy('/gazebo/pause_physics', Empty)
-        self.reset_proxy = rospy.ServiceProxy('/gazebo/reset_simulation', Empty)
-        self.action_space = spaces.Discrete(len(actions))  # actions  # spaces.Discrete(3)  # F,L,R
-        self.reward_range = (-np.inf, np.inf)
-        self.model_coordinates = rospy.ServiceProxy('/gazebo/get_model_state', GetModelState)
-        self.position = None
-        self.start_pose = np.array(self.circuit["start_pose"])
-        self._seed()
+    def __init__(self, **config):
+        F1Env.__init__(self, **config)
+        print(config)
+        self.image = ImageF1()
+        self.actions = config.get("actions")
+        self.action_space = spaces.Discrete(len(self.actions))  # actions  # spaces.Discrete(3)  # F,L,R
 
     def render(self, mode='human'):
         pass
-
-    def get_position(self):
-        object_coordinates = self.model_coordinates("f1_renault", "")
-        x_position = round(object_coordinates.pose.position.x, 2)
-        y_position = round(object_coordinates.pose.position.y, 2)
-
-        return x_position, y_position
-
-    def _gazebo_pause(self):
-        rospy.wait_for_service('/gazebo/pause_physics')
-        try:
-            # resp_pause = pause.call()
-            self.pause()
-        except rospy.ServiceException as e:
-            print("/gazebo/pause_physics service call failed: {}".format(e))
-
-    def _gazebo_unpause(self):
-        rospy.wait_for_service('/gazebo/unpause_physics')
-        try:
-            self.unpause()
-        except rospy.ServiceException as e:
-            print(e)
-            print("/gazebo/unpause_physics service call failed")
 
     @staticmethod
     def all_same(items):
         return all(x == items[0] for x in items)
 
-    def _gazebo_reset(self):
-        # Resets the state of the environment and returns an initial observation.
-        rospy.wait_for_service('/gazebo/reset_simulation')
-        try:
-            # reset_proxy.call()
-            self.reset_proxy()
-            self.unpause()
-        except rospy.ServiceException as e:
-            print("/gazebo/reset_simulation service call failed: {}".format(e))
+    def image_msg_to_image(self, img, cv_image):
 
-    def set_new_pose(self):
-        """
-        (pos_number, pose_x, pose_y, pose_z, or_x, or_y, or_z, or_z)
-        """
-        pos = random.choice(list(enumerate(self.circuit["gaz_pos"])))[0]
-        self.position = pos
+        self.image.width = img.width
+        self.image.height = img.height
+        self.image.format = "RGB8"
+        self.image.timeStamp = img.header.stamp.secs + (img.header.stamp.nsecs * 1e-9)
+        self.image.data = cv_image
 
-        pos_number = self.circuit["gaz_pos"][0]
-
-        state = ModelState()
-        state.model_name = "f1_renault"
-        state.pose.position.x = self.circuit["gaz_pos"][pos][1]
-        state.pose.position.y = self.circuit["gaz_pos"][pos][2]
-        state.pose.position.z = self.circuit["gaz_pos"][pos][3]
-        state.pose.orientation.x = self.circuit["gaz_pos"][pos][4]
-        state.pose.orientation.y = self.circuit["gaz_pos"][pos][5]
-        state.pose.orientation.z = self.circuit["gaz_pos"][pos][6]
-        state.pose.orientation.w = self.circuit["gaz_pos"][pos][7]
-
-        rospy.wait_for_service('/gazebo/set_model_state')
-        try:
-            set_state = rospy.ServiceProxy('/gazebo/set_model_state', SetModelState)
-            set_state(state)
-        except rospy.ServiceException as e:
-            print("Service call failed: {}".format(e))
-        return pos_number
-
-    @staticmethod
-    def image_msg_to_image(img, cv_image):
-
-        image = ImageF1()
-        image.width = img.width
-        image.height = img.height
-        image.format = "RGB8"
-        image.timeStamp = img.header.stamp.secs + (img.header.stamp.nsecs * 1e-9)
-        image.data = cv_image
-
-        return image
+        return self.image
 
     @staticmethod
     def get_center(lines):
@@ -198,28 +103,13 @@ class GazeboF1QlearnCameraEnv(gazebo_env.GazeboEnv):
         self.np_random, seed = seeding.np_random(seed)
         return [seed]
 
-    @staticmethod
-    def show_telemetry(img, points, action, reward):
-        count = 0
-        for idx, point in enumerate(points):
-            cv2.line(img, (320, x_row[idx]), (320, x_row[idx]), (255, 255, 0), thickness=5)
-            # cv2.line(img, (center_image, x_row[idx]), (point, x_row[idx]), (255, 255, 255), thickness=2)
-            cv2.putText(img, str("err{}: {}".format(idx+1, center_image - point)), (18, 340 + count), font, 0.4,
-                        (255, 255, 255), 1)
-            count += 20
-        cv2.putText(img, str("action: {}".format(action)), (18, 280), font, 0.4, (255, 255, 255), 1)
-        cv2.putText(img, str("reward: {}".format(reward)), (18, 320), font, 0.4, (255, 255, 255), 1)
-
-        cv2.imshow("Image window", img[240:])
-        cv2.waitKey(3)
-
     def step(self, action):
 
         self._gazebo_unpause()
 
         vel_cmd = Twist()
-        vel_cmd.linear.x = actions[action][0]
-        vel_cmd.angular.z = actions[action][1]
+        vel_cmd.linear.x = self.actions[action][0]
+        vel_cmd.angular.z = self.actions[action][1]
         self.vel_pub.publish(vel_cmd)
 
         # Get camera info
@@ -264,7 +154,7 @@ class GazeboF1QlearnCameraEnv(gazebo_env.GazeboEnv):
 
     def reset(self):
         # === POSE ===
-        if self.circuit["alternate_pose"]:
+        if self.alternate_pose:
             self.set_new_pose()
         else:
             self._gazebo_reset()
@@ -294,8 +184,8 @@ class GazeboF1QlearnCameraEnv(gazebo_env.GazeboEnv):
         self._gazebo_unpause()
 
         vel_cmd = Twist()
-        vel_cmd.linear.x = actions[action][0]
-        vel_cmd.angular.z = actions[action][1]
+        vel_cmd.linear.x = ACTIONS_SET[action][0]
+        vel_cmd.angular.z = ACTIONS_SET[action][1]
         self.vel_pub.publish(vel_cmd)
 
         image_data = rospy.wait_for_message('/F1ROS/cameraL/image_raw', Image, timeout=1)

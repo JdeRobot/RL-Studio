@@ -66,10 +66,10 @@ class ImageF1:
 
 class GazeboF1ManualCameraEnv(gazebo_env.GazeboEnv):
 
-    def __init__(self):
+    def __init__(self, **config):
         # Launch the simulation with the given launchfile name
         self.circuit = envs_params["simple"]
-        gazebo_env.GazeboEnv.__init__(self, self.circuit["launch"])
+        gazebo_env.GazeboEnv.__init__(self, config["launch"])
         self.vel_pub = rospy.Publisher('/F1ROS/cmd_vel', Twist, queue_size=5)
         self.unpause = rospy.ServiceProxy('/gazebo/unpause_physics', Empty)
         self.pause = rospy.ServiceProxy('/gazebo/pause_physics', Empty)

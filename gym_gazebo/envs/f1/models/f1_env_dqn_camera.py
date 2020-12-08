@@ -56,22 +56,6 @@ positions = [(0, 53.462, -41.988, 0.004, 0, 0, 1.57, -1.57),
              (4, 20.043, 37.130, 0.003, 0, 0.103, -1.4383, -1.4383)]
 
 
-class ImageF1:
-    def __init__(self):
-        self.height = 3  # Image height [pixels]
-        self.width = 3  # Image width [pixels]
-        self.width = 3  # Image width [pixels]
-        self.timeStamp = 0  # Time stamp [s] */
-        self.format = ""  # Image format string (RGB8, BGR,...)
-        self.data = np.zeros((self.height, self.width, 3), np.uint8)  # The image data itself
-        self.data.shape = self.height, self.width, 3
-
-    def __str__(self):
-        s = "Image: {\n   height: " + str(self.height) + "\n   width: " + str(self.width)
-        s = s + "\n  format: " + self.format + "\n   timeStamp: " + str(self.timeStamp)
-        return s + "\n  data: " + str(self.data) + "\n}"
-
-
 class GazeboF1CameraEnvDQN(gazebo_env.GazeboEnv):
     """
     Description:
@@ -109,7 +93,7 @@ class GazeboF1CameraEnvDQN(gazebo_env.GazeboEnv):
         The episode ends when the lower error is outside the established range (see table in the observation space).
     """
 
-    def __init__(self):
+    def __init__(self, **config):
         # Launch the simulation with the given launchfile name
         gazebo_env.GazeboEnv.__init__(self, "F1Cameracircuit_v0.launch")
         self.vel_pub = rospy.Publisher('/F1ROS/cmd_vel', Twist, queue_size=5)

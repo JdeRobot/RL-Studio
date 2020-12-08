@@ -10,5 +10,4 @@ gym
 requests>=2.0
 six
 pyglet>=1.2.0
-#scipy==1.2.3
 environs
