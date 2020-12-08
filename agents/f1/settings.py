@@ -2,6 +2,9 @@
 # Global variables file
 ###########################
 
+
+
+
 # === BASIC CONFIG ===
 debug_level = 0
 telemetry = False
@@ -86,8 +89,9 @@ montreal_gazebo_positions = [(0, -201.88, -91.02, 0, 0.00, 0.001, 0.98, -0.15),
 # === CIRCUIT ===
 envs_params = {
     "simple": {
+        "env": "F1Env-v0",
+        "training_type": "qlearn",
         "circuit_name": "simple",
-        "env": "GazeboF1QlearnCameraEnv-v0",
         "launch": "simple_circuit.launch",
         "gaz_pos": simple_gazebo_positions,
         "start_pose": [simple_gazebo_positions[1][1], simple_gazebo_positions[1][2]],
@@ -96,8 +100,9 @@ envs_params = {
         "sensor": "camera"
     },
     "nurburgring": {
+        "env": "F1Env-v0",
+        "training_type": "qlearn",
         "circuit_name": "nurburgring",
-        "env": "GazeboF1QlearnCameraEnv-v0",
         "launch": "nurburgring_line.launch",
         "gaz_pos": nurburgring_gazebo_positions,
         "start_pose": [nurburgring_gazebo_positions[5][1], nurburgring_gazebo_positions[5][2]],
@@ -106,8 +111,9 @@ envs_params = {
         "sensor": "camera"
     },
     "montreal": {
+        "env": "F1Env-v0",
+        "training_type": "qlearn",
         "circuit_name": "montreal",
-        "env": "GazeboF1QlearnCameraEnv-v0",
         "launch": "montreal_line.launch",
         "gaz_pos": montreal_gazebo_positions,
         "start_pose": [montreal_gazebo_positions[0][1], montreal_gazebo_positions[0][2]],
@@ -116,16 +122,18 @@ envs_params = {
         "sensor": "camera"
     },
     "curves": {
+        "env": "F1Env-v0",
+        "training_type": "qlearn",
         "circuit_name": "curves",
-        "env": "GazeboF1QlearnCameraEnv-v0",
         "launch": "many_curves.launch",
         "gaz_pos": "",
         "alternate_pose": False,
         "sensor": "camera"
     },
     "simple_laser": {
+        "env": "F1Env-v0",
+        "training_type": "qlearn",
         "circuit_name": "montreal",
-        "env": "GazeboF1QlearnLaserEnv-v0",
         "launch": "f1_montreal.launch",
         "gaz_pos": "",
         "start_pose": "",
@@ -133,8 +141,9 @@ envs_params = {
         "sensor": "laser"
     },
     "manual": {
+        "env": "F1Env-v0",
+        "training_type": "qlearn",
         "circuit_name": "simple",
-        "env": "GazeboF1ManualCameraEnv-v0",
         "launch": "simple_circuit.launch",
         "gaz_pos": "",
         "start_pose": [nurburgring_gazebo_positions[5][1], nurburgring_gazebo_positions[5][2]],

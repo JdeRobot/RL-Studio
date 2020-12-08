@@ -1,110 +1,34 @@
 import rospy
 import numpy as np
-import random
 import cv2
 
-from gym import spaces
 from cv_bridge import CvBridge
 
-from gym_gazebo.envs import gazebo_env
-from gazebo_msgs.msg import ModelState
-from gazebo_msgs.srv import SetModelState, GetModelState
-
 from geometry_msgs.msg import Twist
-from std_srvs.srv import Empty
 from sensor_msgs.msg import Image
 
+
+from gym_gazebo.envs.f1.modes.f1_env import GazeboF1Env
+
 from gym.utils import seeding
-from agents.f1.settings import actions, envs_params
+from agents.f1.settings import actions
 from agents.f1.settings import telemetry, x_row, center_image, width, height, telemetry_mask, max_distance
-from gym_gazebo.envs.f1 import ImageF1
 
-font = cv2.FONT_HERSHEY_COMPLEX
+from image_f1 import *
 
 
-class GazeboF1Env(gazebo_env.GazeboEnv):
+class F1QlearnCameraEnv(GazeboF1Env):
 
     def __init__(self):
-        self.circuit = envs_params["simple"]
-        gazebo_env.GazeboEnv.__init__(self, self.circuit["launch"])
-        self.vel_pub = rospy.Publisher('/F1ROS/cmd_vel', Twist, queue_size=5)
-        self.unpause = rospy.ServiceProxy('/gazebo/unpause_physics', Empty)
-        self.pause = rospy.ServiceProxy('/gazebo/pause_physics', Empty)
-        self.reset_proxy = rospy.ServiceProxy('/gazebo/reset_simulation', Empty)
-        self.action_space = spaces.Discrete(len(actions))  # actions  # spaces.Discrete(3)  # F,L,R
-        self.reward_range = (-np.inf, np.inf)
-        self.model_coordinates = rospy.ServiceProxy('/gazebo/get_model_state', GetModelState)
-        self.position = None
-        self.start_pose = np.array(self.circuit["start_pose"])
-        self._seed()
+        GazeboF1Env.__init__(self)
         self.image = ImageF1()
 
     def render(self, mode='human'):
         pass
 
-    def get_position(self):
-        object_coordinates = self.model_coordinates("f1_renault", "")
-        x_position = round(object_coordinates.pose.position.x, 2)
-        y_position = round(object_coordinates.pose.position.y, 2)
-
-        return x_position, y_position
-
-    def _gazebo_pause(self):
-        rospy.wait_for_service('/gazebo/pause_physics')
-        try:
-            # resp_pause = pause.call()
-            self.pause()
-        except rospy.ServiceException as e:
-            print("/gazebo/pause_physics service call failed: {}".format(e))
-
-    def _gazebo_unpause(self):
-        rospy.wait_for_service('/gazebo/unpause_physics')
-        try:
-            self.unpause()
-        except rospy.ServiceException as e:
-            print(e)
-            print("/gazebo/unpause_physics service call failed")
-
     @staticmethod
     def all_same(items):
         return all(x == items[0] for x in items)
-
-    def _gazebo_reset(self):
-        # Resets the state of the environment and returns an initial observation.
-        rospy.wait_for_service('/gazebo/reset_simulation')
-        try:
-            # reset_proxy.call()
-            self.reset_proxy()
-            self.unpause()
-        except rospy.ServiceException as e:
-            print("/gazebo/reset_simulation service call failed: {}".format(e))
-
-    def set_new_pose(self):
-        """
-        (pos_number, pose_x, pose_y, pose_z, or_x, or_y, or_z, or_z)
-        """
-        pos = random.choice(list(enumerate(self.circuit["gaz_pos"])))[0]
-        self.position = pos
-
-        pos_number = self.circuit["gaz_pos"][0]
-
-        state = ModelState()
-        state.model_name = "f1_renault"
-        state.pose.position.x = self.circuit["gaz_pos"][pos][1]
-        state.pose.position.y = self.circuit["gaz_pos"][pos][2]
-        state.pose.position.z = self.circuit["gaz_pos"][pos][3]
-        state.pose.orientation.x = self.circuit["gaz_pos"][pos][4]
-        state.pose.orientation.y = self.circuit["gaz_pos"][pos][5]
-        state.pose.orientation.z = self.circuit["gaz_pos"][pos][6]
-        state.pose.orientation.w = self.circuit["gaz_pos"][pos][7]
-
-        rospy.wait_for_service('/gazebo/set_model_state')
-        try:
-            set_state = rospy.ServiceProxy('/gazebo/set_model_state', SetModelState)
-            set_state(state)
-        except rospy.ServiceException as e:
-            print("Service call failed: {}".format(e))
-        return pos_number
 
     def image_msg_to_image(self, img, cv_image):
 
