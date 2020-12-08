@@ -14,9 +14,7 @@ class F1Env:
         cls.model_coordinates = None
         cls.position = None
 
-        training_type = config.get("env")
-        training_type = config["training_type"]
-
+        training_type = config.get("training_type")
 
         if training_type == TrainingType.qlearn_env.value:
             from gym_gazebo.envs.f1.modes.f1_env_qlearn_camera import F1QlearnCameraEnv

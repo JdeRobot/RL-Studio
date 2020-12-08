@@ -90,7 +90,7 @@ montreal_gazebo_positions = [(0, -201.88, -91.02, 0, 0.00, 0.001, 0.98, -0.15),
 envs_params = {
     "simple": {
         "env": "F1Env-v0",
-        "training_type": "qlearn",
+        "training_type": "qlearn_camera",
         "circuit_name": "simple",
         "launch": "simple_circuit.launch",
         "gaz_pos": simple_gazebo_positions,
@@ -101,7 +101,7 @@ envs_params = {
     },
     "nurburgring": {
         "env": "F1Env-v0",
-        "training_type": "qlearn",
+        "training_type": "qlearn_camera",
         "circuit_name": "nurburgring",
         "launch": "nurburgring_line.launch",
         "gaz_pos": nurburgring_gazebo_positions,
@@ -112,7 +112,7 @@ envs_params = {
     },
     "montreal": {
         "env": "F1Env-v0",
-        "training_type": "qlearn",
+        "training_type": "qlearn_camera",
         "circuit_name": "montreal",
         "launch": "montreal_line.launch",
         "gaz_pos": montreal_gazebo_positions,
@@ -123,7 +123,7 @@ envs_params = {
     },
     "curves": {
         "env": "F1Env-v0",
-        "training_type": "qlearn",
+        "training_type": "qlearn_camera",
         "circuit_name": "curves",
         "launch": "many_curves.launch",
         "gaz_pos": "",
@@ -132,7 +132,7 @@ envs_params = {
     },
     "simple_laser": {
         "env": "F1Env-v0",
-        "training_type": "qlearn",
+        "training_type": "qlearn_laser",
         "circuit_name": "montreal",
         "launch": "f1_montreal.launch",
         "gaz_pos": "",
@@ -142,7 +142,7 @@ envs_params = {
     },
     "manual": {
         "env": "F1Env-v0",
-        "training_type": "qlearn",
+        "training_type": "manual",
         "circuit_name": "simple",
         "launch": "simple_circuit.launch",
         "gaz_pos": "",
