@@ -1,4 +1,5 @@
 import pickle
+import datetime
 from agents.f1 import settings
 
 
@@ -22,7 +23,7 @@ def load_model(qlearn, file_name):
     print(f"    - Start:      {datetime.datetime.now()}")
 
 
-def save_model(current_time, states, states_counter, states_rewards):
+def save_model(qlearn, current_time, states, states_counter, states_rewards):
     # Tabular RL: Tabular Q-learning basically stores the policy (Q-values) of  the agent into a matrix of shape
     # (S x A), where s are all states, a are all the possible actions. After the environment is solved, just save this
     # matrix as a csv file. I have a quick implementation of this on my GitHub under Reinforcement Learning.
@@ -50,3 +51,13 @@ def save_times(checkpoints):
     file_dump = open("./logs/" + file_name + settings.actions_set + '_checkpoints.pkl', 'wb')
     pickle.dump(checkpoints, file_dump)
 
+def render(env, episode):
+    render_skip = 0
+    render_interval = 50
+    render_episodes = 10
+
+    if (episode % render_interval == 0) and (episode != 0) and (episode > render_skip):
+        env.render()
+    elif ((episode - render_episodes) % render_interval == 0) and (episode != 0) and (episode > render_skip) and \
+            (render_episodes < episode):
+        env.render(close=True)
