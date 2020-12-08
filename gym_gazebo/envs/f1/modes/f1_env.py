@@ -14,8 +14,8 @@ from agents.f1.settings import actions, envs_params
 
 class F1Env(gazebo_env.GazeboEnv):
 
-    def __init__(self):
-        gazebo_env.GazeboEnv.__init__(self, self.circuit["launch"])
+    def __init__(self, **config):
+        gazebo_env.GazeboEnv.__init__(self, config["launch"])
         self.circuit = envs_params["simple"]
         self.vel_pub = rospy.Publisher('/F1ROS/cmd_vel', Twist, queue_size=5)
         self.unpause = rospy.ServiceProxy('/gazebo/unpause_physics', Empty)
