@@ -1,0 +1,200 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="AutoImportSettings">
+    <option name="autoReloadType" value="SELECTIVE" />
+  </component>
+  <component name="ChangeListManager">
+    <list default="true" id="9266a817-ece3-4e12-8a80-9a655140d155" name="Default Changelist" comment="">
+      <change beforePath="$PROJECT_DIR$/.jekyll-cache/Jekyll/Cache/Jekyll--Cache/b7/9606fb3afea5bd1609ed40b622142f1c98125abcfe89a76a661b0e8e343910" beforeDir="false" afterPath="$PROJECT_DIR$/.jekyll-cache/Jekyll/Cache/Jekyll--Cache/b7/9606fb3afea5bd1609ed40b622142f1c98125abcfe89a76a661b0e8e343910" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.jekyll-cache/Jekyll/Cache/Jekyll--Converters--Markdown/00/5ee3a8d67abf97e52c0b0598da97cb000500f9be8eea090b0a293e251390fd" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.jekyll-cache/Jekyll/Cache/Jekyll--Converters--Markdown/36/d4d9ca6c838be87a1f3f7b507015f5396f61d6e7c0f03182cff1c6d5e36a0b" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.jekyll-cache/Jekyll/Cache/Jekyll--Converters--Markdown/52/f0e0b5298c564a42480222bfcbd880b63d82a65c4e7426c4bc5f8f37fa1385" beforeDir="false" afterPath="$PROJECT_DIR$/.jekyll-cache/Jekyll/Cache/Jekyll--Converters--Markdown/52/f0e0b5298c564a42480222bfcbd880b63d82a65c4e7426c4bc5f8f37fa1385" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.jekyll-cache/Jekyll/Cache/Jekyll--Converters--Markdown/69/98ec1d3a49e7ccff69561e522646657c5bacd53b58d995f35812fd88f21269" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.jekyll-cache/Jekyll/Cache/Jekyll--Converters--Markdown/73/e04a4089b74d06c367ed31e7ec26826fbe91cf88d12a76d574666d42d2f6d8" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.jekyll-cache/Jekyll/Cache/Jekyll--Converters--Markdown/77/6473af79dc7bd15902e8027262b77c1ff6ae90c9fa40e5d5bde80c37afbaa1" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.jekyll-cache/Jekyll/Cache/Jekyll--Converters--Markdown/9e/3fa18b5e0d9abfc368250a54e864e86eb8a8eca05d310c97f59b15faca7d04" beforeDir="false" afterPath="$PROJECT_DIR$/.jekyll-cache/Jekyll/Cache/Jekyll--Converters--Markdown/9e/3fa18b5e0d9abfc368250a54e864e86eb8a8eca05d310c97f59b15faca7d04" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.jekyll-cache/Jekyll/Cache/Jekyll--Converters--Markdown/a6/fdc9469bfec175d123b753aafb081fc76782a186fa5363e6b16276c4960c39" beforeDir="false" afterPath="$PROJECT_DIR$/.jekyll-cache/Jekyll/Cache/Jekyll--Converters--Markdown/a6/fdc9469bfec175d123b753aafb081fc76782a186fa5363e6b16276c4960c39" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.jekyll-cache/Jekyll/Cache/Jekyll--Converters--Markdown/b2/1da53acd6d521d5d26ca86a9ccf492e5deaeecd76fe384b5db0d45eecb017f" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.jekyll-cache/Jekyll/Cache/Jekyll--Converters--Markdown/c4/3a0ce9c001c51cb20a009ef8c36f7ea03a406f24e748827a5978f9a1444124" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.jekyll-cache/Jekyll/Cache/Jekyll--Converters--Markdown/dc/5ad98445850bc948ea7b184729bfbd523e3846c2dce9d44cb85a9cd44e1ddf" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.jekyll-cache/Jekyll/Cache/Module/03/8172e5e47815fd0a47b2e98832e739879adfffacafd21fef1733478f9a8c62" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.jekyll-cache/Jekyll/Cache/Module/5b/cf2a5011182323126ffac637477dacbe635764a6e7dcaa3af84738892656cd" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.jekyll-cache/Jekyll/Cache/Module/93/64473f7aa2637bd43c98ac852b2490fbcf1135974798d29afeab21e8d60ca0" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.jekyll-cache/Jekyll/Cache/Module/df/8b1c05eb529eccea5276542f79e9f87be76596b56aefe36bf3b0eebc9fa2cd" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/_config.yml" beforeDir="false" afterPath="$PROJECT_DIR$/_config.yml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/_site/404.html" beforeDir="false" afterPath="$PROJECT_DIR$/_site/404.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/_site/about/index.html" beforeDir="false" afterPath="$PROJECT_DIR$/_site/about/index.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/_site/assets/js/lunr/lunr-store.js" beforeDir="false" afterPath="$PROJECT_DIR$/_site/assets/js/lunr/lunr-store.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/_site/feed.xml" beforeDir="false" afterPath="$PROJECT_DIR$/_site/feed.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/_site/index.html" beforeDir="false" afterPath="$PROJECT_DIR$/_site/index.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/_site/install/index.html" beforeDir="false" afterPath="$PROJECT_DIR$/_site/install/index.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/_site/logbook/index.html" beforeDir="false" afterPath="$PROJECT_DIR$/_site/logbook/index.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/_site/your category/ecuations/index.html" beforeDir="false" afterPath="$PROJECT_DIR$/_site/your category/ecuations/index.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/_site/your category/previous-work/index.html" beforeDir="false" afterPath="$PROJECT_DIR$/_site/your category/previous-work/index.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/gym_gazebo/CustomRobots/f1/launch/simple_circuit.launch" beforeDir="false" afterPath="$PROJECT_DIR$/gym_gazebo/CustomRobots/f1/launch/simple_circuit.launch" afterDir="false" />
+    </list>
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="FileTemplateManagerImpl">
+    <option name="RECENT_TEMPLATES">
+      <list>
+        <option value="Python Script" />
+      </list>
+    </option>
+  </component>
+  <component name="FlaskConsoleOptions" custom-start-script="import sys&#10;sys.path.extend([WORKING_DIR_AND_PYTHON_PATHS])&#10;from flask.cli import ScriptInfo&#10;locals().update(ScriptInfo(create_app=None).load_app().make_shell_context())&#10;print(&quot;Python %s on %s\nApp: %s [%s]\nInstance: %s&quot; % (sys.version, sys.platform, app.import_name, app.env, app.instance_path))">
+    <envs>
+      <env key="FLASK_APP" value="app" />
+    </envs>
+    <option name="myCustomStartScript" value="import sys&#10;sys.path.extend([WORKING_DIR_AND_PYTHON_PATHS])&#10;from flask.cli import ScriptInfo&#10;locals().update(ScriptInfo(create_app=None).load_app().make_shell_context())&#10;print(&quot;Python %s on %s\nApp: %s [%s]\nInstance: %s&quot; % (sys.version, sys.platform, app.import_name, app.env, app.instance_path))" />
+    <option name="myEnvs">
+      <map>
+        <entry key="FLASK_APP" value="app" />
+      </map>
+    </option>
+  </component>
+  <component name="Git.Settings">
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+    <option name="ROOT_SYNC" value="DONT_SYNC" />
+  </component>
+  <component name="JupyterTrust" id="2eb39175-f651-48d9-966b-3c0af035d3bf" />
+  <component name="ProjectId" id="1jkKpf34VtG1qlJP3K7hWr9bS4W" />
+  <component name="ProjectLevelVcsManager" settingsEditedManually="true" />
+  <component name="ProjectViewState">
+    <option name="hideEmptyMiddlePackages" value="true" />
+    <option name="showLibraryContents" value="true" />
+  </component>
+  <component name="PropertiesComponent">
+    <property name="ASKED_ADD_EXTERNAL_FILES" value="true" />
+    <property name="RunOnceActivity.OpenProjectViewOnStart" value="true" />
+    <property name="WebServerToolWindowFactoryState" value="false" />
+    <property name="last_opened_file_path" value="$PROJECT_DIR$" />
+    <property name="node.js.detected.package.eslint" value="true" />
+    <property name="node.js.detected.package.tslint" value="true" />
+    <property name="node.js.path.for.package.eslint" value="project" />
+    <property name="node.js.path.for.package.tslint" value="project" />
+    <property name="node.js.selected.package.eslint" value="(autodetect)" />
+    <property name="node.js.selected.package.tslint" value="(autodetect)" />
+    <property name="nodejs_package_manager_path" value="npm" />
+    <property name="settings.editor.selected.configurable" value="Docker" />
+  </component>
+  <component name="RecentsManager">
+    <key name="MoveFile.RECENT_KEYS">
+      <recent name="$PROJECT_DIR$/gym_gazebo/envs/f1" />
+      <recent name="$PROJECT_DIR$/gym_gazebo/envs/f1/modes" />
+      <recent name="$PROJECT_DIR$/gym_gazebo" />
+      <recent name="$PROJECT_DIR$/scripts" />
+    </key>
+  </component>
+  <component name="RunManager">
+    <configuration default="true" type="PythonConfigurationType" factoryName="Python">
+      <module name="gym-gazebo-2" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="" />
+      <option name="IS_MODULE_SDK" value="false" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
+      <option name="SCRIPT_NAME" value="" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="true" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
+      <method v="2" />
+    </configuration>
+    <configuration name="train_qlearn" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
+      <module name="gym-gazebo-2" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/agents/f1" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/agents/f1/train_qlearn.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
+      <method v="2" />
+    </configuration>
+    <recent_temporary>
+      <list>
+        <item itemvalue="Python.train_qlearn" />
+      </list>
+    </recent_temporary>
+  </component>
+  <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="application-level" UseSingleDictionary="true" transferred="true" />
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="Default task">
+      <changelist id="9266a817-ece3-4e12-8a80-9a655140d155" name="Default Changelist" comment="" />
+      <created>1604342835400</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1604342835400</updated>
+      <workItem from="1604342837594" duration="2546000" />
+      <workItem from="1604345731188" duration="1341000" />
+      <workItem from="1604349055916" duration="9000" />
+      <workItem from="1604350696843" duration="1501000" />
+      <workItem from="1604513669531" duration="700000" />
+      <workItem from="1604765921040" duration="34000" />
+      <workItem from="1604765996016" duration="998000" />
+      <workItem from="1604777844061" duration="652000" />
+      <workItem from="1604871871131" duration="13000" />
+      <workItem from="1605045572582" duration="1603000" />
+      <workItem from="1605129659263" duration="447000" />
+      <workItem from="1605130134886" duration="2654000" />
+      <workItem from="1605218035618" duration="2683000" />
+      <workItem from="1606038974538" duration="616000" />
+      <workItem from="1606041247559" duration="7644000" />
+      <workItem from="1606070317334" duration="2638000" />
+      <workItem from="1606407943262" duration="599000" />
+      <workItem from="1606595698305" duration="1650000" />
+      <workItem from="1606689731123" duration="6000" />
+      <workItem from="1607370170477" duration="16880000" />
+      <workItem from="1607447972342" duration="1116000" />
+      <workItem from="1607454231576" duration="5767000" />
+      <workItem from="1607705612687" duration="1201000" />
+      <workItem from="1607970053984" duration="2144000" />
+      <workItem from="1607981135834" duration="157000" />
+      <workItem from="1607981303387" duration="4844000" />
+      <workItem from="1608456379134" duration="2293000" />
+      <workItem from="1608469550176" duration="5323000" />
+    </task>
+    <servers />
+  </component>
+  <component name="TypeScriptGeneratedFilesManager">
+    <option name="version" value="3" />
+  </component>
+  <component name="XDebuggerManager">
+    <breakpoint-manager>
+      <breakpoints>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$USER_HOME$/.virtualenvs/super-venv/lib/python3.8/site-packages/gym/envs/registration.py</url>
+          <line>115</line>
+          <option name="timeStamp" value="6" />
+        </line-breakpoint>
+      </breakpoints>
+    </breakpoint-manager>
+  </component>
+  <component name="com.intellij.coverage.CoverageDataManagerImpl">
+    <SUITE FILE_PATH="coverage/gym_gazebo_2$train_qlearn.coverage" NAME="train_qlearn Coverage Results" MODIFIED="1607459491683" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/agents/f1" />
+    <SUITE FILE_PATH="coverage/gym_gazebo_2$f1_follow_line_qlearn.coverage" NAME="train_qlearn Coverage Results" MODIFIED="1605131924348" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/agents/f1" />
+  </component>
+</project>
