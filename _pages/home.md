@@ -3,16 +3,16 @@ layout: splash
 permalink: /
 header:
   overlay_color: "#5e616c"
-  overlay_image: /assets/images/cover/peloto_texto.png
+  overlay_image: /assets/images/cover/carrousel.jpg
   actions:
     #- label: "<i class='fas fa-download'></i> Install now"
     #  url: "/installation/"
 excerpt: 
   Write your doc title here
 feature_row:
-  - image_path: /assets/images/cover/logbook.jpg
-    alt: "Logbook"
-    title: "Logbook"
+  - image_path: /assets/images/cover/cars_zenit.jpg
+    alt: "Documentation"
+    title: "Documentation"
     excerpt: "Goals, progress, problems and solutions achieved during development"
     url: "/logbook/"
     btn_class: "btn--primary"
@@ -38,14 +38,6 @@ youTube_id: ID7qaEcIu4k
 
 {% include feature_row %}
 
-Hello, everybody.
 
-You can write an introduction about the work you are going to do, links, something about yourself, etc.
+Gym-Gazebo-2 is a library for the creation of artificial intelligence algorithms based on learning by reinforcement and applied to robotics.
 
-In the `README.md` file at the root of the project are the steps to replicate the Minimal mistakes template on your local machine. This way you don't need to upload it to GitHub to be represented until it's ready.
-
-Uploading content to GitHub automatically displays your documentation in the link with a structure of the type:
-
-```
-https://github_user_name.github.io/repository_name/
-```
