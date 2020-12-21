@@ -16,14 +16,14 @@ minimal_mistakes_skin    : "air"
 
 # Site Settings
 #locale                   : "en-US"
-title                    : "Robotics Lab URJC"
+title                    : "Gym-Gazebo-2"
 title_separator          : "-"
-subtitle                 : Programming Robot Intelligence
+subtitle                 : by JdeRobot
 name                     : "JdeRobot"
-description              : "Programming Robot Intelligence"
-url                      : http://jderobot.github.io
+description              : "Gym-Gazebo-2"
+url                      : http://gym-gazebo-2.github.io
 baseurl                  : # the subpath of your site, e.g. "/blog"
-repository               : JdeRobot
+repository               : gym-gazebo-2
 teaser                   : # path of fallback teaser image, e.g. "/assets/images/500x300.png"
 logo                     : /assets/images/peloto.png
 masthead_title           : # overrides the website title displayed in the masthead, use " " for no title
