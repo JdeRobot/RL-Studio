@@ -5,6 +5,10 @@ title: "Installation and use"
 
 sidebar:
   nav: "docs"
+
+toc: true
+toc_label: Installation
+toc_icon: "cog"
 ---
 
 # Requisites

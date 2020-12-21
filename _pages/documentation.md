@@ -1,14 +1,13 @@
 ---
-title: Logbook
-layout: posts
+title: Documentation
 permalink: /logbook/
-
-collection: posts
-
-classes: wide
 
 sidebar:
   nav: "docs"
+
+toc: true
+toc_label: "TOC Documentation"
+toc_icon: "cog"
 ---
 
 ## Working with Posts
