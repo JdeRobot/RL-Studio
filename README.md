@@ -1,6 +1,6 @@
-# Jekyll Local Installation
+## Gym-Gazebo-2 - Documentation
 
-## Prerequisites
+## Install Jekyll on your machine
 
 ### Installing Ruby on Ubuntu
 
