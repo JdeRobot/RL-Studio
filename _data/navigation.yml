@@ -1,4 +1,3 @@
-# main links
 main:
 
   - title: Documentation
@@ -10,7 +9,6 @@ main:
   - title: About
     url: /about/
 
-# left side bar
 docs:
   - title: Documentation
     children:

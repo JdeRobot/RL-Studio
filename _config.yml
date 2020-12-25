@@ -105,59 +105,6 @@ analytics:
     anonymize_ip         : # true, false (default)
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-############################ EDIT THIS SECTION ###############################
-# PROFILE
-# Site Author
-author:
-  name             : "Your Name"
-  avatar           : "/assets/images/profile.jpg"
-  bio              : "Site for my documentation"
-  location         : "Location"
-  email            :
-  links:
-    - label: "Email"
-      icon: "fas fa-fw fa-envelope-square"
-      url: yourmail@domain.com
-    - label: "About Me"
-      icon: "fas fa-fw fa-link"
-      url: "yoursite.com"
-    - label: "Twitter"
-      icon: "fab fa-fw fa-twitter-square"
-      url: "https://twitter.com/"
-    - label: "GitHub"
-      icon: "fab fa-fw fa-github"
-      url: "https://github.com/RoboticsLabURJC"
-    #- label: "Youtube"
-    #  icon: "fab fa-fw fa-youtube"
-    #  url: "https://www.youtube.com/channel/UCgmUgpircYAv_QhLQziHJOQ"
-
-
-#################################################################################
-
-
-
-
-
-
-
-
-
-
-
-
 # Site Footer
 footer:
   links:
@@ -310,6 +257,14 @@ collections:
 
 # Defaults
 defaults:
+
+  # _docs
+  - scope:
+      path: ""
+      type: docs
+    values:
+      sidebar:
+        nav: "docs"
 
   # _pages
   - scope:
