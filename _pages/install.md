@@ -1,5 +1,5 @@
 ---
-permalink: /en/install/
+permalink: /install/
 
 title: "Installation and use"
 

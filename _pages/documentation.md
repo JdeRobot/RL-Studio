@@ -1,6 +1,6 @@
 ---
 title: Documentation
-permalink: /logbook/
+permalink: /documentation/
 
 sidebar:
   nav: "docs"
@@ -10,15 +10,7 @@ toc_label: "TOC Documentation"
 toc_icon: "cog"
 ---
 
-## Working with Posts
+The Gym-Gazebo-2 library is an artificial intelligence algorithm programming environment based on learning by reinforcement.
 
-Posts are stored in the `_posts` directory and named according to the `YEAR-MONTH-DAY-title.MARKUP` format as per the usual.
+By using standard robotic software such as the ROS communications library and the Gazebo simulator, using the Python programming language, environments can be created where the agent can solve a situation.
 
-Where `YEAR` is a four-digit number, `MONTH` and `DAY` are both two-digit numbers, and `MARKUP` is the file extension representing the format used in the file. For example, the following are examples of valid post filenames:
-
-
-```bash
-2019-08-20-writing-jekyll-posts.md
-```
-
-It is recommended to store the images in the `/assets/images/` directory. This way you have a well-defined structure.
