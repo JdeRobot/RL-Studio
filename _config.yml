@@ -110,13 +110,10 @@ footer:
   links:
     - label: "Twitter"
       icon: "fab fa-fw fa-twitter-square"
-      url: "https://twitter.com/roboticslaburjc"
+      url: "https://twitter.com/JdeRobot"
     - label: "GitHub"
       icon: "fab fa-fw fa-github"
-      url: "https://github.com/RoboticsLabURJC"
-    #- label: "GitLab"
-    #  icon: "fab fa-fw fa-gitlab"
-    #  url:
+      url: "https://github.com/JdeRobot/gym-gazebo-2"
     - label: "Youtube"
       icon: "fab fa-fw fa-youtube"
       url: "https://www.youtube.com/channel/UCgmUgpircYAv_QhLQziHJOQ"
