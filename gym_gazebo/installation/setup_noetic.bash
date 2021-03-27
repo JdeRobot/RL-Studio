@@ -4,7 +4,8 @@ DIR="../../CustomRobots"
 if ! [[ -d "$DIR" ]]
 then
     echo "$DIR doesn't exists. Cloning CustomRobots repository."
-    git clone https://github.com/JdeRobot/CustomRobots.git ../../
+    git clone --branch noetic-devel https://github.com/JdeRobot/CustomRobots.git ../../CustomRobots
+
 else
     echo "CustomRobots is already downloaded. Pass."
 fi
