@@ -45,15 +45,15 @@ echo "## ROS workspace compiled ##"
 
 # add own models path to gazebo models path
 if [ -z "$GAZEBO_MODEL_PATH" ]; then
-  bash -c 'echo "export GAZEBO_MODEL_PATH="`pwd`/../../CustomRobots/f1/models >> ~/.bashrc'
+  bash -c 'echo "export GAZEBO_MODEL_PATH="`pwd`/../CustomRobots/f1/models >> ~/.bashrc'
   # exec bash #reload bashrc
 fi
 
-read -p "Do you use zsh? [Y/n]: " zsh
-if [ "${!zsh}" = "" ]; then
-  bash -c 'echo "export GAZEBO_MODEL_PATH="`pwd`/../../CustomRobots/f1/models >> ~/.zshrc'
-  # source $HOME/.zshrc
-fi
+# read -p "Do you use zsh? [Y/n]: " zsh
+# if [ "${!zsh}" = "" ]; then
+  # bash -c 'echo "export GAZEBO_MODEL_PATH="`pwd`/../../CustomRobots/f1/f1 >> ~/.zshrc'
+  # # source $HOME/.zshrc
+# fi
 
-printf ""
-printf "\nRestart the terminal or type: source ~/.bashrc / .zshrc"
+# printf ""
+# printf "\nRestart the terminal or type: source ~/.bashrc / .zshrc"

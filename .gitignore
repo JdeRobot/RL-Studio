@@ -4,6 +4,11 @@
 
 CustomRobots
 .idea
+.vscode
+.jekyll-cache
+_site
+agents/f1/logs/f1_qlearn_gym_experiments
+
 catkin_ws
 
 
