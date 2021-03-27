@@ -8,7 +8,7 @@ CustomRobots
 .jekyll-cache
 _site
 agents/f1/logs/f1_qlearn_gym_experiments
-*.pyc
+
 catkin_ws
 
 
