@@ -49,7 +49,7 @@ cd gym-gazebo/gym_gazebo/envs/installation
 bash setup_noetic.bash
 ```
 
-The installation downloads the CustomRobots repository into the above directory, as follows:
+The installation downloads the [JdeRobot/CustomRobots](JdeRobot/CustomRobots) repository into the above directory, as follows:
 
 ```bash
 CustomRobots/
@@ -84,10 +84,6 @@ The following routes will be added to the `.bashrc` file (for `formula1` environ
 ```bash
 . . .
 export GYM_GAZEBO_WORLD_CIRCUIT_F1=$HOME/gym-gazebo-2/gym_gazebo/installation/../CustomRobots/f1/worlds/simple_circuit.world
-
-​```bash
-git clone -b noetic-devel https://github.com/JdeRobot/CustomRobots.git
-​```
 export GYM_GAZEBO_WORLD_NURBURGRING_F1=$HOME/gym-gazebo-2/gym_gazebo/installation/../CustomRobots/f1/worlds/nurburgring_line.world
 export GYM_GAZEBO_WORLD_MONTREAL_F1=$HOME/gym-gazebo-2/gym_gazebo/installation/../CustomRobots/f1/worlds/montreal_line.world
 . . .
