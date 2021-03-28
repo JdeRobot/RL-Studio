@@ -6,6 +6,7 @@
 gym-gazebo/gym_gazebo/envs/installation/catkin_ws
 
 .env
+installation
 
 # Ruby Gem
 *.gem

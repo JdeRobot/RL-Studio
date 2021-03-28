@@ -42,34 +42,57 @@ cd gym-gazebo
 pip install -e .
 ```
 
-# Set Noetic configuration
+## Set Noetic configuration
 
 ```bash
 cd gym-gazebo/gym_gazebo/envs/installation
 bash setup_noetic.bash
 ```
 
-## Set exercise environment
+The installation downloads the CustomRobots repository into the above directory, as follows:
+
+```bash
+CustomRobots/
+envs/
+installation/
+wrappers/
+```
+
+The following routes will be added to the `.bashrc` file:
+
+```bash
+. . .
+source /opt/ros/noetic/setup.bash
+# Gazebo models
+export GAZEBO_MODEL_PATH=$HOME/gym-gazebo-2/gym_gazebo/installation/catkin_ws/../CustomRobots/f1/models
+source $HOME/gym-gazebo-2/gym_gazebo/installation/catkin_ws/devel/setup.bash
+export GAZEBO_MODEL_PATH=:/home/USER/gym-gazebo-2/gym_gazebo/installation/../CustomRobots/f1/models
+. . .
+```
+
+## Set Formula1 environment
 
 Set Formula 1 environment running the following script (the same folder that before):
 
-```bash
+```
 cd gym-gazebo/gym_gazebo/envs/installation/
 bash formula1_setup.bash
 ```
 
-The following routes must be added to the .bashrc file (for formula1 environment):
+The following routes will be added to the `.bashrc` file (for `formula1` environment):
 
 ```bash
-source /opt/ros/noetic/setup.bash
-export GAZEBO_MODEL_PATH=/home/USER/gym-gazebo-2/gym_gazebo/envs/installation/catkin_ws/../../assets/models
-source /home/USER/gym-gazebo-2/gym_gazebo/envs/installation/catkin_ws/devel/setup.bash
-export GAZEBO_MODEL_PATH=:/home/USER/gym-gazebo-2/gym_gazebo/envs/installation/../assets/models
-export GYM_GAZEBO_WORLD_CIRCUIT_F1=/home/USER/gym-gazebo-2/gym_gazebo/envs/installation/../assets/worlds/f1_1_simplecircuit.world
-```
+. . .
+export GYM_GAZEBO_WORLD_CIRCUIT_F1=$HOME/gym-gazebo-2/gym_gazebo/installation/../CustomRobots/f1/worlds/simple_circuit.world
 
-## Install CustomRobots
-
-```bash
+​```bash
 git clone -b noetic-devel https://github.com/JdeRobot/CustomRobots.git
+​```
+export GYM_GAZEBO_WORLD_NURBURGRING_F1=$HOME/gym-gazebo-2/gym_gazebo/installation/../CustomRobots/f1/worlds/nurburgring_line.world
+export GYM_GAZEBO_WORLD_MONTREAL_F1=$HOME/gym-gazebo-2/gym_gazebo/installation/../CustomRobots/f1/worlds/montreal_line.world
+. . .
 ```
+
+There will be as many variables as there are circuits to be executed.
+
+
