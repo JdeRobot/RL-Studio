@@ -3,7 +3,7 @@
 .index
 .data-00000-of-00001
 
-gym-gazebo/gym_gazebo/envs/installation/catkin_ws
+gym_gazebo/CustomRobots
 
 .env
 installation
