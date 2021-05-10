@@ -1,4 +1,4 @@
-# Gym Gazebo 2
+# Reinforcement Learning Studio (RL-Studio)
 
 ![](https://img.shields.io/badge/Gazebo-11-orange) ![](https://img.shields.io/badge/ROS-Noetic-blue) ![](https://img.shields.io/badge/Python-3.8-yellowInstall)
 
