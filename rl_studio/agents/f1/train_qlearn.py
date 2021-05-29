@@ -2,13 +2,11 @@ import datetime
 import time
 
 import gym
-
 import numpy as np
-
-from gym_gazebo import agents as settings
+from rl_studio import agents as settings
 import liveplot
 import utils
-from gym_gazebo.agents.f1.qlearn import QLearn
+from rl_studio.agents.f1.qlearn import QLearn
 
 
 if __name__ == '__main__':

@@ -1,1 +1,1 @@
-from gym_gazebo.envs.gazebo_env import *
+from rl_studio.envs.gazebo_env import *
