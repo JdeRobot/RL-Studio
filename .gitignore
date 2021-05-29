@@ -7,7 +7,7 @@ CustomRobots
 .vscode
 .jekyll-cache
 _site
-agents/f1/logs/f1_qlearn_gym_experiments
+rl_studio/agents/f1/logs/f1_qlearn_gym_experiments
 
 catkin_ws
 
