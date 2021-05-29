@@ -1,30 +1,20 @@
-import os
 import random
-import sys
 import time
 
 import cv2
-import gym
 import numpy as np
-import roslaunch
-import rospkg
 import rospy
-import skimage as skimage
 
 from cv_bridge import CvBridge, CvBridgeError
 from gazebo_msgs.msg import ModelState
-from gazebo_msgs.srv import GetModelState, SetModelState
+from gazebo_msgs.srv import SetModelState
 from geometry_msgs.msg import Twist
-from gym import spaces, utils
 from gym.utils import seeding
-from sensor_msgs.msg import Image, LaserScan
-from skimage import color, exposure, transform
-from skimage.transform import rotate
-from skimage.viewer import ImageViewer
+from sensor_msgs.msg import Image
 from std_srvs.srv import Empty
 
 from gym_gazebo.envs import gazebo_env
-from agents.f1.settings import telemetry
+from gym_gazebo.agents.f1.settings import telemetry
 
 # Images size
 witdh = 640

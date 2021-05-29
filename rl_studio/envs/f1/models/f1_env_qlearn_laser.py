@@ -14,8 +14,8 @@ from geometry_msgs.msg import Twist
 from std_srvs.srv import Empty
 from sensor_msgs.msg import LaserScan
 
-from agents.f1.settings import actions
-from agents.f1.settings import envs_params
+from gym_gazebo.agents.f1.settings import actions
+from gym_gazebo.agents.f1.settings import envs_params
 
 
 class F1QlearnLaserEnv(gazebo_env.GazeboEnv):

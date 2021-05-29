@@ -1,4 +1,5 @@
 import cv2
+from typing import Tuple
 import numpy as np
 import rospy
 from cv_bridge import CvBridge
@@ -7,7 +8,7 @@ from gym import spaces
 from gym.utils import seeding
 from sensor_msgs.msg import Image
 
-from agents.f1.settings import telemetry, x_row, center_image, width, height, telemetry_mask, max_distance
+from gym_gazebo.agents.f1.settings import telemetry, x_row, center_image, width, height, telemetry_mask, max_distance
 from gym_gazebo.envs.f1.image_f1 import ImageF1
 from gym_gazebo.envs.f1.models.f1_env import F1Env
 
@@ -50,14 +51,14 @@ class F1QlearnCameraEnv(F1Env):
         return point
 
     @staticmethod
-    def calculate_reward(error):
+    def calculate_reward(error: float) -> float:
 
         d = np.true_divide(error, center_image)
         reward = np.round(np.exp(-d), 4)
 
         return reward
 
-    def processed_image(self, img):
+    def processed_image(self, img: Image) -> list:
         """
         Convert img to HSV. Get the image processed. Get 3 lines from the image.
 
@@ -89,7 +90,7 @@ class F1QlearnCameraEnv(F1Env):
         return centrals
 
     @staticmethod
-    def calculate_observation(state):
+    def calculate_observation(state: list) -> list:
 
         normalize = 40
 
@@ -103,7 +104,7 @@ class F1QlearnCameraEnv(F1Env):
         self.np_random, seed = seeding.np_random(seed)
         return [seed]
 
-    def step(self, action):
+    def step(self, action) -> Tuple:
 
         self._gazebo_unpause()
 

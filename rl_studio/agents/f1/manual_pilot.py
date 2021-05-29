@@ -7,7 +7,7 @@ import time
 import gym
 from gym_gazebo.envs.f1.env_manual_pilot import title
 
-import agents.f1.settings as settings
+from gym_gazebo import agents as settings
 
 total_episodes = 200000
 

@@ -5,10 +5,10 @@ import gym
 
 import numpy as np
 
-import agents.f1.settings as settings
+from gym_gazebo import agents as settings
 import liveplot
 import utils
-from agents.f1.qlearn import QLearn
+from gym_gazebo.agents.f1.qlearn import QLearn
 
 
 if __name__ == '__main__':

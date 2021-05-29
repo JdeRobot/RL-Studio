@@ -16,7 +16,7 @@ from geometry_msgs.msg import Twist
 from std_srvs.srv import Empty
 from sensor_msgs.msg import Image
 
-from agents.f1.settings import actions, envs_params
+from gym_gazebo.agents.f1.settings import actions, envs_params
 
 title = '''
 ___  ___                        _  ______ _ _       _   

@@ -1,7 +1,6 @@
 import pickle
 import datetime
-from agents.f1 import settings
-
+from gym_gazebo.agents.f1 import settings
 
 
 def load_model(qlearn, file_name):
