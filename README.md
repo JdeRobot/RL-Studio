@@ -39,7 +39,7 @@ pip install -e .
 ### Set Noetic configuration
 
 ```bash
-cd gym-gazebo/gym_gazebo/envs/installation
+cd gym-gazebo/rl_studio/envs/installation
 bash setup_noetic.bash
 ```
 
@@ -58,9 +58,9 @@ The following routes will be added to the `.bashrc` file:
 . . .
 source /opt/ros/noetic/setup.bash
 # Gazebo models
-export GAZEBO_MODEL_PATH=$HOME/gym-gazebo-2/gym_gazebo/installation/catkin_ws/../CustomRobots/f1/models
-source $HOME/gym-gazebo-2/gym_gazebo/installation/catkin_ws/devel/setup.bash
-export GAZEBO_MODEL_PATH=:/home/USER/gym-gazebo-2/gym_gazebo/installation/../CustomRobots/f1/models
+export GAZEBO_MODEL_PATH=$HOME/gym-gazebo-2/rl_studio/installation/catkin_ws/../CustomRobots/f1/models
+source $HOME/gym-gazebo-2/rl_studio/installation/catkin_ws/devel/setup.bash
+export GAZEBO_MODEL_PATH=:/home/USER/gym-gazebo-2/rl_studio/installation/../CustomRobots/f1/models
 . . .
 ```
 
@@ -77,9 +77,9 @@ The following routes will be added to the `.bashrc` file (for `formula1` environ
 
 ```bash
 . . .
-export GYM_GAZEBO_WORLD_CIRCUIT_F1=$HOME/gym-gazebo-2/gym_gazebo/installation/../CustomRobots/f1/worlds/simple_circuit.world
-export GYM_GAZEBO_WORLD_NURBURGRING_F1=$HOME/gym-gazebo-2/gym_gazebo/installation/../CustomRobots/f1/worlds/nurburgring_line.world
-export GYM_GAZEBO_WORLD_MONTREAL_F1=$HOME/gym-gazebo-2/gym_gazebo/installation/../CustomRobots/f1/worlds/montreal_line.world
+export GYM_GAZEBO_WORLD_CIRCUIT_F1=$HOME/gym-gazebo-2/rl_studio/installation/../CustomRobots/f1/worlds/simple_circuit.world
+export GYM_GAZEBO_WORLD_NURBURGRING_F1=$HOME/gym-gazebo-2/rl_studio/installation/../CustomRobots/f1/worlds/nurburgring_line.world
+export GYM_GAZEBO_WORLD_MONTREAL_F1=$HOME/gym-gazebo-2/rl_studio/installation/../CustomRobots/f1/worlds/montreal_line.world
 . . .
 ```
 
