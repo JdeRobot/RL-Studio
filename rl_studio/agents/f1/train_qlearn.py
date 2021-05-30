@@ -3,14 +3,14 @@ import time
 
 import gym
 import numpy as np
-from rl_studio import agents as settings
+
 import liveplot
 import utils
+from rl_studio.agents.f1 import settings
 from rl_studio.agents.f1.qlearn import QLearn
 
+if __name__ == "__main__":
 
-if __name__ == '__main__':
-    
     print(settings.title)
     print(settings.description)
     print(f"\t- Start hour: {datetime.datetime.now()}")
@@ -19,7 +19,7 @@ if __name__ == '__main__':
     env = gym.make(environment["env"], **environment)
 
     # TODO: Move to settings file
-    outdir = './logs/f1_qlearn_gym_experiments/'
+    outdir = "./logs/f1_qlearn_gym_experiments/"
     stats = {}  # epoch: steps
     states_counter = {}
     states_reward = {}
@@ -40,7 +40,7 @@ if __name__ == '__main__':
 
     if settings.load_model:
         # TODO: Folder to models. Maybe from environment variable?
-        file_name = ''
+        file_name = ""
         utils.load_model(qlearn, file_name)
         highest_reward = max(qlearn.q.values(), key=stats.get)
     else:
@@ -69,7 +69,7 @@ if __name__ == '__main__':
         if qlearn.epsilon > 0.05:
             qlearn.epsilon *= epsilon_discount
 
-        state = ''.join(map(str, observation))
+        state = "".join(map(str, observation))
 
         for step in range(500000):
 
@@ -85,7 +85,7 @@ if __name__ == '__main__':
             if highest_reward < cumulated_reward:
                 highest_reward = cumulated_reward
 
-            nextState = ''.join(map(str, observation))
+            nextState = "".join(map(str, observation))
 
             try:
                 states_counter[nextState] += 1
@@ -101,9 +101,18 @@ if __name__ == '__main__':
                 if now - datetime.timedelta(seconds=3) > previous:
                     previous = datetime.datetime.now()
                     x, y = env.get_position()
-                    checkpoints.append([len(checkpoints), (x, y), datetime.datetime.now().strftime('%M:%S.%f')[-4]])
+                    checkpoints.append(
+                        [
+                            len(checkpoints),
+                            (x, y),
+                            datetime.datetime.now().strftime("%M:%S.%f")[-4],
+                        ]
+                    )
 
-                if datetime.datetime.now() - datetime.timedelta(minutes=3, seconds=12) > start_time:
+                if (
+                    datetime.datetime.now() - datetime.timedelta(minutes=3, seconds=12)
+                    > start_time
+                ):
                     print("Finish. Saving parameters . . .")
                     utils.save_times(checkpoints)
                     env.close()
@@ -115,30 +124,42 @@ if __name__ == '__main__':
                 last_time_steps = np.append(last_time_steps, [int(step + 1)])
                 stats[int(episode)] = step
                 states_reward[int(episode)] = cumulated_reward
-                print(f"EP: {episode + 1} - epsilon: {round(qlearn.epsilon, 2)} - Reward: {cumulated_reward}"
-                      f"- Time: {start_time_format} - Steps: {step}")
+                print(
+                    f"EP: {episode + 1} - epsilon: {round(qlearn.epsilon, 2)} - Reward: {cumulated_reward}"
+                    f"- Time: {start_time_format} - Steps: {step}"
+                )
                 break
 
             if step > estimate_step_per_lap and not lap_completed:
                 lap_completed = True
                 if settings.plotter_graphic:
                     plotter.plot_steps_vs_epoch(stats, save=True)
-                utils.save_model(qlearn, start_time_format, stats, states_counter, states_reward)
-                print(f"\n\n====> LAP COMPLETED in: {datetime.datetime.now() - start_time} - Epoch: {episode}"
-                      f" - Cum. Reward: {cumulated_reward} <====\n\n")
+                utils.save_model(
+                    qlearn, start_time_format, stats, states_counter, states_reward
+                )
+                print(
+                    f"\n\n====> LAP COMPLETED in: {datetime.datetime.now() - start_time} - Epoch: {episode}"
+                    f" - Cum. Reward: {cumulated_reward} <====\n\n"
+                )
 
             if counter > 1000:
                 if settings.plotter_graphic:
                     plotter.plot_steps_vs_epoch(stats, save=True)
                 qlearn.epsilon *= epsilon_discount
-                utils.save_model(qlearn, start_time_format, episode, states_counter, states_reward)
-                print(f"\t- epsilon: {round(qlearn.epsilon, 2)}\n\t- cum reward: {cumulated_reward}\n\t- dict_size: "
-                      f"{len(qlearn.q)}\n\t- time: {datetime.datetime.now()-start_time}\n\t- steps: {step}\n")
+                utils.save_model(
+                    qlearn, start_time_format, episode, states_counter, states_reward
+                )
+                print(
+                    f"\t- epsilon: {round(qlearn.epsilon, 2)}\n\t- cum reward: {cumulated_reward}\n\t- dict_size: "
+                    f"{len(qlearn.q)}\n\t- time: {datetime.datetime.now()-start_time}\n\t- steps: {step}\n"
+                )
                 counter = 0
 
             if datetime.datetime.now() - datetime.timedelta(hours=2) > start_time:
                 print(settings.eop)
-                utils.save_model(qlearn, start_time_format, stats, states_counter, states_reward)
+                utils.save_model(
+                    qlearn, start_time_format, stats, states_counter, states_reward
+                )
                 print(f"    - N epoch:     {episode}")
                 print(f"    - Model size:  {len(qlearn.q)}")
                 print(f"    - Action set:  {settings.actions_set}")
@@ -155,16 +176,16 @@ if __name__ == '__main__':
 
         if episode % 250 == 0 and settings.save_model and episode > 1:
             print(f"\nSaving model . . .\n")
-            utils.save_model(qlearn, start_time_format, stats, states_counter, states_reward)
+            utils.save_model(
+                qlearn, start_time_format, stats, states_counter, states_reward
+            )
 
         m, s = divmod(int(time.time() - telemetry_start_time), 60)
         h, m = divmod(m, 60)
 
-    print("Total EP: {} - epsilon: {} - ep. discount: {} - Highest Reward: {}".format(
-            total_episodes,
-            initial_epsilon,
-            epsilon_discount,
-            highest_reward
+    print(
+        "Total EP: {} - epsilon: {} - ep. discount: {} - Highest Reward: {}".format(
+            total_episodes, initial_epsilon, epsilon_discount, highest_reward
         )
     )
 
@@ -173,7 +194,11 @@ if __name__ == '__main__':
 
     # print("Parameters: a="+str)
     print("Overall score: {:0.2f}".format(last_time_steps.mean()))
-    print("Best 100 score: {:0.2f}".format(reduce(lambda x, y: x + y, l[-100:]) / len(l[-100:])))
+    print(
+        "Best 100 score: {:0.2f}".format(
+            reduce(lambda x, y: x + y, l[-100:]) / len(l[-100:])
+        )
+    )
 
     plotter.plot_steps_vs_epoch(stats, save=True)
 
