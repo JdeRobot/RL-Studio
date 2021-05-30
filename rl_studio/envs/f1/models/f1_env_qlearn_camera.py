@@ -8,9 +8,9 @@ from gym import spaces
 from gym.utils import seeding
 from sensor_msgs.msg import Image
 
-from gym_gazebo.agents.f1.settings import telemetry, x_row, center_image, width, height, telemetry_mask, max_distance
-from gym_gazebo.envs.f1.image_f1 import ImageF1
-from gym_gazebo.envs.f1.models.f1_env import F1Env
+from rl_studio.agents.f1.settings import telemetry, x_row, center_image, width, height, telemetry_mask, max_distance
+from rl_studio.envs.f1.image_f1 import ImageF1
+from rl_studio.envs.f1.models.f1_env import F1Env
 
 
 class F1QlearnCameraEnv(F1Env):

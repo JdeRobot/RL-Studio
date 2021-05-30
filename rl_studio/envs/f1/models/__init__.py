@@ -1,9 +1,8 @@
-from gym_gazebo.envs.f1.env_type import TrainingType
-from gym_gazebo.envs.f1.exceptions import NoValidTrainingType
+from rl_studio.envs.f1.env_type import TrainingType
+from rl_studio.envs.f1.exceptions import NoValidTrainingType
 
 
 class F1Env:
-
     def __new__(cls, **config):
         cls.circuit = None
         cls.vel_pub = None
@@ -18,19 +17,25 @@ class F1Env:
         training_type = config.get("training_type")
         print(config.get("launch"))
         if training_type == TrainingType.qlearn_env_camera.value:
-            from gym_gazebo.envs.f1.models.f1_env_qlearn_camera import F1QlearnCameraEnv
+            from rl_studio.envs.f1.models.f1_env_qlearn_camera import F1QlearnCameraEnv
+
             return F1QlearnCameraEnv(**config)
 
         elif training_type == TrainingType.qlearn_env_laser.value:
-            from gym_gazebo.envs.f1.models.f1_env_qlearn_laser import F1QlearnLaserEnv
+            from rl_studio.envs.f1.models.f1_env_qlearn_laser import F1QlearnLaserEnv
+
             return F1QlearnLaserEnv(**config)
 
         elif training_type == TrainingType.dqn_env.value:
-            from gym_gazebo.envs.f1.models.f1_env_dqn_camera import GazeboF1CameraEnvDQN
+            from rl_studio.envs.f1.models.f1_env_dqn_camera import GazeboF1CameraEnvDQN
+
             return GazeboF1CameraEnvDQN(**config)
 
         elif training_type == TrainingType.manual_env.value:
-            from gym_gazebo.envs.f1.models.f1_env_manual_pilot import GazeboF1ManualCameraEnv
+            from rl_studio.envs.f1.models.f1_env_manual_pilot import (
+                GazeboF1ManualCameraEnv,
+            )
+
             return GazeboF1ManualCameraEnv(**config)
 
         else:
