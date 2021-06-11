@@ -5,6 +5,7 @@ import numpy as np
 from gym import wrappers
 from keras import backend as K
 from keras import optimizers
+
 # from keras.initializers import normal
 from keras.layers import Convolution2D, Flatten, ZeroPadding2D
 from keras.layers.advanced_activations import LeakyReLU
@@ -29,7 +30,18 @@ class DeepQ:
             target = reward(s,a) + gamma * max(Q(s'))
 
     """
-    def __init__(self, outputs, memorySize, discountFactor, learningRate, learnStart, img_rows, img_cols, img_channels):
+
+    def __init__(
+        self,
+        outputs,
+        memorySize,
+        discountFactor,
+        learningRate,
+        learnStart,
+        img_rows,
+        img_cols,
+        img_channels,
+    ):
         """
         Parameters:
             - outputs: output size
@@ -47,32 +59,36 @@ class DeepQ:
         self.learnStart = learnStart
         self.learningRate = learningRate
 
-
     def initNetworks(self):
         model = self.createModel()
         self.model = model
 
-
     def createModel(self):
         # Network structure must be directly changed here.
         model = Sequential()
-        model.add(Convolution2D(16, (3,3), strides=(2,2), input_shape=(self.img_channels, self.img_rows, self.img_cols)))
-        model.add(Activation('relu'))
+        model.add(
+            Convolution2D(
+                16,
+                (3, 3),
+                strides=(2, 2),
+                input_shape=(self.img_channels, self.img_rows, self.img_cols),
+            )
+        )
+        model.add(Activation("relu"))
         model.add(ZeroPadding2D((1, 1)))
-        model.add(Convolution2D(16, (3,3), strides=(2,2)))
-        model.add(Activation('relu'))
-        model.add(MaxPooling2D(pool_size=(2, 2), strides=(2,2)))
+        model.add(Convolution2D(16, (3, 3), strides=(2, 2)))
+        model.add(Activation("relu"))
+        model.add(MaxPooling2D(pool_size=(2, 2), strides=(2, 2)))
         model.add(Flatten())
         model.add(Dense(256))
-        model.add(Activation('relu'))
+        model.add(Activation("relu"))
         model.add(Dense(self.output_size))
-        #adam = Adam(lr=self.learningRate)
-        #model.compile(loss='mse',optimizer=adam)
-        model.compile(RMSprop(lr=self.learningRate), 'MSE')
+        # adam = Adam(lr=self.learningRate)
+        # model.compile(loss='mse',optimizer=adam)
+        model.compile(RMSprop(lr=self.learningRate), "MSE")
         model.summary()
 
         return model
-
 
     def printNetwork(self):
         i = 0
@@ -80,7 +96,6 @@ class DeepQ:
             weights = layer.get_weights()
             print("Layer {}: {}".format(i, weights))
             i += 1
-
 
     def backupNetwork(self, model, backup):
         weightMatrix = []
@@ -93,30 +108,24 @@ class DeepQ:
             layer.set_weights(weights)
             i += 1
 
-
     def updateTargetNetwork(self):
         self.backupNetwork(self.model, self.targetModel)
 
-    
     def getQValues(self, state):
         # predict Q values for all the actions
         predicted = self.model.predict(state)
         return predicted[0]
 
-
     def getTargetQValues(self, state):
         predicted = self.targetModel.predict(state)
         return predicted[0]
 
-
     def getMaxQ(self, qValues):
         return np.max(qValues)
-
 
     def getMaxIndex(self, qValues):
         return np.argmax(qValues)
 
-    
     def calculateTarget(self, qValuesNewState, reward, isFinal):
         """
         # calculate the target function
@@ -125,9 +134,8 @@ class DeepQ:
         if isFinal:
             return reward
         else:
-#             print("Target: {}".format(reward, self.discountFactor, self.getMaxQ(qValuesNewState)))
+            #             print("Target: {}".format(reward, self.discountFactor, self.getMaxQ(qValuesNewState)))
             return reward + self.discountFactor * self.getMaxQ(qValuesNewState)
-
 
     def selectAction(self, qValues, explorationRate):
         """
@@ -140,13 +148,12 @@ class DeepQ:
             action = self.getMaxIndex(qValues)
         return action
 
-
     def selectActionByProbability(self, qValues, bias):
         qValueSum = 0
         shiftBy = 0
         for value in qValues:
             if value + shiftBy < 0:
-                shiftBy = - (value + shiftBy)
+                shiftBy = -(value + shiftBy)
         shiftBy += 1e-06
 
         for value in qValues:
@@ -163,38 +170,37 @@ class DeepQ:
         rand = random.random()
         i = 0
         for value in qValueProbabilities:
-            if (rand <= value):
+            if rand <= value:
                 return i
             i += 1
-
 
     def addMemory(self, state, action, reward, newState, isFinal):
         self.memory.addMemory(state, action, reward, newState, isFinal)
 
-
     def learnOnLastState(self):
         if self.memory.getCurrentSize() >= 1:
             return self.memory.getMemory(self.memory.getCurrentSize() - 1)
-
 
     def learnOnMiniBatch(self, miniBatchSize, useTargetNetwork=True):
         # Do not learn until we've got self.learnStart samples
         if self.memory.getCurrentSize() > self.learnStart:
             # learn in batches of 128
             miniBatch = self.memory.getMiniBatch(miniBatchSize)
-            X_batch = np.empty((1, self.img_channels, self.img_rows, self.img_cols), dtype = np.float64)
-            Y_batch = np.empty((1,self.output_size), dtype = np.float64)
+            X_batch = np.empty(
+                (1, self.img_channels, self.img_rows, self.img_cols), dtype=np.float64
+            )
+            Y_batch = np.empty((1, self.output_size), dtype=np.float64)
             for sample in miniBatch:
-                isFinal = sample['isFinal']
-                state = sample['state']
-                action = sample['action']
-                reward = sample['reward']
-                newState = sample['newState']
+                isFinal = sample["isFinal"]
+                state = sample["state"]
+                action = sample["action"]
+                reward = sample["reward"]
+                newState = sample["newState"]
 
                 qValues = self.getQValues(state)
                 if useTargetNetwork:
                     qValuesNewState = self.getTargetQValues(newState)
-                else :
+                else:
                     qValuesNewState = self.getQValues(newState)
                 targetValue = self.calculateTarget(qValuesNewState, reward, isFinal)
                 X_batch = np.append(X_batch, state.copy(), axis=0)
@@ -203,13 +209,20 @@ class DeepQ:
                 Y_batch = np.append(Y_batch, np.array([Y_sample]), axis=0)
                 if isFinal:
                     X_batch = np.append(X_batch, newState.copy(), axis=0)
-                    Y_batch = np.append(Y_batch, np.array([[reward]*self.output_size]), axis=0)
-            self.model.fit(X_batch, Y_batch, validation_split=0.2, batch_size = len(miniBatch), epochs=1, verbose = 0)
-    
-    
+                    Y_batch = np.append(
+                        Y_batch, np.array([[reward] * self.output_size]), axis=0
+                    )
+            self.model.fit(
+                X_batch,
+                Y_batch,
+                validation_split=0.2,
+                batch_size=len(miniBatch),
+                epochs=1,
+                verbose=0,
+            )
+
     def saveModel(self, path):
         self.model.save(path)
-
 
     def loadWeights(self, path):
         self.model.set_weights(load_model(path).get_weights())

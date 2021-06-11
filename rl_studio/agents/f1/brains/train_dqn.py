@@ -12,15 +12,12 @@ import time
 from distutils.dir_util import copy_tree
 
 import gym
-import gym_gazebo
-import matplotlib
 import matplotlib.pyplot as plt
 import numpy as np
-from gym import logger, wrappers
 from keras import backend as K
 
 from settings import my_board
-from dqn import DeepQ
+from rl_studio.agents.f1.algorithms.dqn import DeepQ
 
 
 # To equal the inputs, we set the channels first and the image next.

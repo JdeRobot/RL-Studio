@@ -7,7 +7,7 @@ import numpy as np
 import liveplot
 import utils
 from rl_studio.agents.f1 import settings
-from rl_studio.agents.f1.qlearn import QLearn
+from rl_studio.agents.f1.algorithms.qlearn import QLearn
 
 if __name__ == "__main__":
 
