@@ -8,21 +8,30 @@ from gym import spaces
 from gym.utils import seeding
 from sensor_msgs.msg import Image
 
-from rl_studio.agents.f1.settings import telemetry, x_row, center_image, width, height, telemetry_mask, max_distance
+from rl_studio.agents.f1.settings import (
+    telemetry,
+    x_row,
+    center_image,
+    width,
+    height,
+    telemetry_mask,
+    max_distance,
+)
 from rl_studio.envs.f1.image_f1 import ImageF1
 from rl_studio.envs.f1.models.f1_env import F1Env
 
 
 class F1QlearnCameraEnv(F1Env):
-
     def __init__(self, **config):
         F1Env.__init__(self, **config)
         print(config)
         self.image = ImageF1()
         self.actions = config.get("actions")
-        self.action_space = spaces.Discrete(len(self.actions))  # actions  # spaces.Discrete(3)  # F,L,R
+        self.action_space = spaces.Discrete(
+            len(self.actions)
+        )  # actions  # spaces.Discrete(3)  # F,L,R
 
-    def render(self, mode='human'):
+    def render(self, mode="human"):
         pass
 
     @staticmethod
@@ -68,7 +77,9 @@ class F1QlearnCameraEnv(F1Env):
 
         img_sliced = img[240:]
         img_proc = cv2.cvtColor(img_sliced, cv2.COLOR_BGR2HSV)
-        line_pre_proc = cv2.inRange(img_proc, (0, 30, 30), (0, 255, 255))  # default: 0, 30, 30 - 0, 255, 200
+        line_pre_proc = cv2.inRange(
+            img_proc, (0, 30, 30), (0, 255, 255)
+        )  # default: 0, 30, 30 - 0, 255, 200
         # gray = cv2.cvtColor(mask, cv2.COLOR_BGR2GRAY)
         _, mask = cv2.threshold(line_pre_proc, 240, 255, cv2.THRESH_BINARY)
 
@@ -82,7 +93,13 @@ class F1QlearnCameraEnv(F1Env):
             mask_points = np.zeros((height, width), dtype=np.uint8)
             for idx, point in enumerate(centrals):
                 # mask_points[x_row[idx], centrals[idx]] = 255
-                cv2.line(mask_points, (point, x_row[idx]), (point, x_row[idx]), (255, 255, 255), thickness=3)
+                cv2.line(
+                    mask_points,
+                    (point, x_row[idx]),
+                    (point, x_row[idx]),
+                    (255, 255, 255),
+                    thickness=3,
+                )
 
             cv2.imshow("MASK", mask_points[240:])
             cv2.waitKey(3)
@@ -117,7 +134,9 @@ class F1QlearnCameraEnv(F1Env):
         image_data = None
         f1_image_camera = None
         while image_data is None:
-            image_data = rospy.wait_for_message('/F1ROS/cameraL/image_raw', Image, timeout=5)
+            image_data = rospy.wait_for_message(
+                "/F1ROS/cameraL/image_raw", Image, timeout=5
+            )
             # Transform the image data from ROS to CVMat
             cv_image = CvBridge().imgmsg_to_cv2(image_data, "bgr8")
             f1_image_camera = self.image_msg_to_image(image_data, cv_image)
@@ -167,7 +186,9 @@ class F1QlearnCameraEnv(F1Env):
         f1_image_camera = None
         success = False
         while image_data is None or success is False:
-            image_data = rospy.wait_for_message('/F1ROS/cameraL/image_raw', Image, timeout=5)
+            image_data = rospy.wait_for_message(
+                "/F1ROS/cameraL/image_raw", Image, timeout=5
+            )
             cv_image = CvBridge().imgmsg_to_cv2(image_data, "bgr8")
             f1_image_camera = self.image_msg_to_image(image_data, cv_image)
             if f1_image_camera:
@@ -189,7 +210,9 @@ class F1QlearnCameraEnv(F1Env):
         vel_cmd.angular.z = ACTIONS_SET[action][1]
         self.vel_pub.publish(vel_cmd)
 
-        image_data = rospy.wait_for_message('/F1ROS/cameraL/image_raw', Image, timeout=1)
+        image_data = rospy.wait_for_message(
+            "/F1ROS/cameraL/image_raw", Image, timeout=1
+        )
         cv_image = CvBridge().imgmsg_to_cv2(image_data, "bgr8")
         f1_image_camera = self.image_msg_to_image(image_data, cv_image)
 

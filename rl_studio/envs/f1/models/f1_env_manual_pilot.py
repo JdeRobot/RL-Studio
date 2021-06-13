@@ -1,24 +1,20 @@
-# coding: utf-8
-
-import rospy
-import numpy as np
 import random
+
 import cv2
-
-from gym import spaces
+import numpy as np
+import rospy
 from cv_bridge import CvBridge
-
-from gym_gazebo.envs import gazebo_env
 from gazebo_msgs.msg import ModelState
 from gazebo_msgs.srv import SetModelState, GetModelState
-
 from geometry_msgs.msg import Twist
-from std_srvs.srv import Empty
+from gym import spaces
 from sensor_msgs.msg import Image
+from std_srvs.srv import Empty
 
-from gym_gazebo.agents.f1.settings import actions, envs_params
+from rl_studio.agents.f1.settings import actions, envs_params
+from rl_studio.envs import gazebo_env
 
-title = '''
+title = """
 ___  ___                        _  ______ _ _       _   
 |  \/  |                       | | | ___ (_) |     | |  
 | .  . | __ _ _ __  _   _  __ _| | | |_/ /_| | ___ | |_ 
@@ -26,7 +22,7 @@ ___  ___                        _  ______ _ _       _
 | |  | | (_| | | | | |_| | (_| | | | |   | | | (_) | |_ 
 \_|  |_/\__,_|_| |_|\__,_|\__,_|_| \_|   |_|_|\___/ \__|
 
-'''
+"""
 
 font = cv2.FONT_HERSHEY_COMPLEX
 time_cycle = 80
@@ -34,7 +30,7 @@ error = 0
 integral = 0
 v = 0
 w = 0
-current = 'recta'
+current = "recta"
 time_cycle = 80
 RED = (255, 0, 0)
 GREEN = (0, 255, 0)
@@ -55,28 +51,33 @@ class ImageF1:
         self.width = 3  # Image width [pixels]
         self.timeStamp = 0  # Time stamp [s] */
         self.format = ""  # Image format string (RGB8, BGR,...)
-        self.data = np.zeros((self.height, self.width, 3), np.uint8)  # The image data itself
+        self.data = np.zeros(
+            (self.height, self.width, 3), np.uint8
+        )  # The image data itself
         self.data.shape = self.height, self.width, 3
 
     def __str__(self):
-        s = "Image: {\n   height: " + str(self.height) + "\n   width: " + str(self.width)
-        s = s + "\n   format: " + self.format + "\n   timeStamp: " + str(self.timeStamp)
-        return s + "\n   data: " + str(self.data) + "\n}"
+        s = f"Image: \n   height: {self.height}\n   width: {self.width}"
+        s = f"{s}\n   format: {self.format}\n   timeStamp: {self.timeStamp}"
+        return f"{s}\n   data: {self.data}"
 
 
 class GazeboF1ManualCameraEnv(gazebo_env.GazeboEnv):
-
     def __init__(self, **config):
         # Launch the simulation with the given launchfile name
         self.circuit = envs_params["simple"]
         gazebo_env.GazeboEnv.__init__(self, config["launch"])
-        self.vel_pub = rospy.Publisher('/F1ROS/cmd_vel', Twist, queue_size=5)
-        self.unpause = rospy.ServiceProxy('/gazebo/unpause_physics', Empty)
-        self.pause = rospy.ServiceProxy('/gazebo/pause_physics', Empty)
-        self.reset_proxy = rospy.ServiceProxy('/gazebo/reset_simulation', Empty)
-        self.action_space = spaces.Discrete(len(actions))  # actions  # spaces.Discrete(3)  # F,L,R
+        self.vel_pub = rospy.Publisher("/F1ROS/cmd_vel", Twist, queue_size=5)
+        self.unpause = rospy.ServiceProxy("/gazebo/unpause_physics", Empty)
+        self.pause = rospy.ServiceProxy("/gazebo/pause_physics", Empty)
+        self.reset_proxy = rospy.ServiceProxy("/gazebo/reset_simulation", Empty)
+        self.action_space = spaces.Discrete(
+            len(actions)
+        )  # actions  # spaces.Discrete(3)  # F,L,R
         self.reward_range = (-np.inf, np.inf)
-        self.model_coordinates = rospy.ServiceProxy('/gazebo/get_model_state', GetModelState)
+        self.model_coordinates = rospy.ServiceProxy(
+            "/gazebo/get_model_state", GetModelState
+        )
         self.position = None
         self.start_pose = np.array(self.circuit["start_pose"])
         self._seed()
@@ -89,15 +90,15 @@ class GazeboF1ManualCameraEnv(gazebo_env.GazeboEnv):
         return x_position, y_position
 
     def _gazebo_pause(self):
-        rospy.wait_for_service('/gazebo/pause_physics')
+        rospy.wait_for_service("/gazebo/pause_physics")
         try:
             # resp_pause = pause.call()
             self.pause()
         except rospy.ServiceException as e:
-            print("/gazebo/pause_physics service call failed: {}".format(e))
+            print(f"/gazebo/pause_physics service call failed: {e}")
 
     def _gazebo_unpause(self):
-        rospy.wait_for_service('/gazebo/unpause_physics')
+        rospy.wait_for_service("/gazebo/unpause_physics")
         try:
             self.unpause()
         except rospy.ServiceException as e:
@@ -106,13 +107,13 @@ class GazeboF1ManualCameraEnv(gazebo_env.GazeboEnv):
 
     def _gazebo_reset(self):
         # Resets the state of the environment and returns an initial observation.
-        rospy.wait_for_service('/gazebo/reset_simulation')
+        rospy.wait_for_service("/gazebo/reset_simulation")
         try:
             # reset_proxy.call()
             self.reset_proxy()
             self.unpause()
         except rospy.ServiceException as e:
-            print("/gazebo/reset_simulation service call failed: {}".format(e))
+            print(f"/gazebo/reset_simulation service call failed: {e}")
 
     def set_new_pose(self):
         """
@@ -133,9 +134,9 @@ class GazeboF1ManualCameraEnv(gazebo_env.GazeboEnv):
         state.pose.orientation.z = self.circuit["gaz_pos"][pos][6]
         state.pose.orientation.w = self.circuit["gaz_pos"][pos][7]
 
-        rospy.wait_for_service('/gazebo/set_model_state')
+        rospy.wait_for_service("/gazebo/set_model_state")
         try:
-            set_state = rospy.ServiceProxy('/gazebo/set_model_state', SetModelState)
+            set_state = rospy.ServiceProxy("/gazebo/set_model_state", SetModelState)
             set_state(state)
         except rospy.ServiceException as e:
             print("Service call failed: {}".format(e))
@@ -170,17 +171,24 @@ class GazeboF1ManualCameraEnv(gazebo_env.GazeboEnv):
         global current
         global buf
         l2 = 0
-        l1 = self.collinear3(points[0][1], points[0][0], points[1][1], points[1][0], points[2][1], points[2][0])
+        l1 = self.collinear3(
+            points[0][1],
+            points[0][0],
+            points[1][1],
+            points[1][0],
+            points[2][1],
+            points[2][0],
+        )
         if l1 > TH:
             buf[0] = 0
-            current = 'curva'
+            current = "curva"
         else:
             # buffer que se alimenta cada vez que se da una deteccion de rectas. Dada la naturaleza del
             # circuito hay muchos falsos positivos, por lo que esto otorga un umbral de seguridad.
             buf = np.roll(buf, 1)
             buf[0] = 1
             if np.all(buf == 1):
-                current = 'recta'
+                current = "recta"
         return (l1, l2)
 
     def get_point(self, index, img):
@@ -198,7 +206,9 @@ class GazeboF1ManualCameraEnv(gazebo_env.GazeboEnv):
         image_data = None
         f1_image_camera = None
         while image_data is None:
-            image_data = rospy.wait_for_message('/F1ROS/cameraL/image_raw', Image, timeout=10)
+            image_data = rospy.wait_for_message(
+                "/F1ROS/cameraL/image_raw", Image, timeout=10
+            )
             # Transform the image data from ROS to CVMat
             cv_image = CvBridge().imgmsg_to_cv2(image_data, "bgr8")
             f1_image_camera = self.image_msg_to_image(image_data, cv_image)
@@ -246,7 +256,7 @@ class GazeboF1ManualCameraEnv(gazebo_env.GazeboEnv):
 
         l, l2 = self.detect(points)
 
-        if current == 'recta':
+        if current == "recta":
             kp = 0.001
             kd = 0.004
             ki = 0
@@ -310,7 +320,7 @@ class GazeboF1ManualCameraEnv(gazebo_env.GazeboEnv):
             return True
         return False
 
-    def render(self, mode='human'):
+    def render(self, mode="human"):
         pass
 
     def step(self, action):

@@ -4,8 +4,8 @@ import time
 import gym
 import numpy as np
 
-import liveplot
-import utils
+from rl_studio.agents.f1 import liveplot
+from rl_studio.agents.f1 import utils
 from rl_studio.agents.f1 import settings
 from rl_studio.agents.f1.algorithms.qlearn import QLearn
 

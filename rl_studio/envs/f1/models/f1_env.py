@@ -5,7 +5,7 @@ from geometry_msgs.msg import Twist
 from gym import spaces
 from std_srvs.srv import Empty
 
-from gym_gazebo.envs import gazebo_env
+from rl_studio.envs import gazebo_env
 
 
 class F1Env(gazebo_env.GazeboEnv):
