@@ -15,7 +15,7 @@ class F1Env:
         cls.position = None
 
         training_type = config.get("training_type")
-        print(config.get("launch"))
+
         if training_type == TrainingType.qlearn_env_camera.value:
             from rl_studio.envs.f1.models.f1_env_qlearn_camera import F1QlearnCameraEnv
 
