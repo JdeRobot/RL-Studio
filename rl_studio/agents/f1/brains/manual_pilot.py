@@ -5,20 +5,20 @@ import pickle
 import time
 
 import gym
-from gym_gazebo.envs.f1.env_manual_pilot import title
 
-from gym_gazebo import agents as settings
+from rl_studio.agents.f1 import settings
+from rl_studio.envs.f1.models.f1_env_manual_pilot import title
 
 total_episodes = 200000
 
 
 def save_times(checkpoints):
     file_name = "manual_pilot_checkpoints"
-    file_dump = open("./logs/" + file_name + '.pkl', 'wb')
+    file_dump = open("./logs/" + file_name + ".pkl", "wb")
     pickle.dump(checkpoints, file_dump)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
 
     print(title)
     print("    - Start hour: {}".format(datetime.datetime.now()))
@@ -37,9 +37,18 @@ if __name__ == '__main__':
         if now - datetime.timedelta(seconds=3) > previous:
             previous = datetime.datetime.now()
             x, y = env.get_position()
-            checkpoints.append([len(checkpoints), (x, y), datetime.datetime.now().strftime('%M:%S.%f')[-4]])
+            checkpoints.append(
+                [
+                    len(checkpoints),
+                    (x, y),
+                    datetime.datetime.now().strftime("%M:%S.%f")[-4],
+                ]
+            )
 
-        if datetime.datetime.now() - datetime.timedelta(minutes=2, seconds=35) > start_time:
+        if (
+            datetime.datetime.now() - datetime.timedelta(minutes=2, seconds=35)
+            > start_time
+        ):
             print("Finish. Saving parameters . . .")
             save_times(checkpoints)
             env.close()
