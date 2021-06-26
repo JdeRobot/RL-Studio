@@ -1,6 +1,6 @@
 #!/bin/bash
 
-DIR="../CustomRobots"
+DIR="../../CustomRobots"
 if ! [[ -d "$DIR" ]]
 then
     echo "$DIR doesn't exists. Cloning CustomRobots repository."
@@ -45,7 +45,7 @@ echo "## ROS workspace compiled ##"
 
 # Add own models path to gazebo models path
 if [ -z "$GAZEBO_MODEL_PATH" ]; then
-  bash -c 'echo "export GAZEBO_MODEL_PATH="`pwd`/../CustomRobots/f1/models >> ~/.bashrc'
+  bash -c 'echo "export GAZEBO_MODEL_PATH="`pwd`/../../CustomRobots/f1/models >> ~/.bashrc'
 else
   printf "GAZEBO_MODEL_PATH env variable already exists in your .bashrc."
 fi
