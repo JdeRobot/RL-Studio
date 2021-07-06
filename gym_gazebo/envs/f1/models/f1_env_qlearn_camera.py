@@ -7,28 +7,50 @@ from gym import spaces
 from gym.utils import seeding
 from sensor_msgs.msg import Image
 
-from agents.f1.settings import telemetry, x_row, center_image, width, height, telemetry_mask, max_distance
+#from agents.f1.settings import telemetry, x_row, center_image, width, height, telemetry_mask, max_distance
+from settings import telemetry, x_row, center_image, width, height, telemetry_mask, max_distance
 from gym_gazebo.envs.f1.image_f1 import ImageF1
 from gym_gazebo.envs.f1.models.f1_env import F1Env
 
+from cprint import cprint
+from icecream import ic
+from datetime import datetime
+
+
+ic.enable()
+#ic.disable()
+#ic.configureOutput(prefix='Debug | ')
+ic.configureOutput(prefix=f'{datetime.now()} | ')
 
 class F1QlearnCameraEnv(F1Env):
 
     def __init__(self, **config):
+
+        cprint.warn(f"\n [F1QlearnCameraEnv] -> --------- Enter in F1QlearnCameraEnv ---------------\n")
+        ic('Enter in F1QlearnCameraEnv')
         F1Env.__init__(self, **config)
-        print(config)
+        #print(f"\n [F1QlearnCameraEnv] -> config: {config}")
         self.image = ImageF1()
         self.actions = config.get("actions")
         self.action_space = spaces.Discrete(len(self.actions))  # actions  # spaces.Discrete(3)  # F,L,R
+
+        self.rewards = config["rewards"]
+        #ic(self.rewards)
+        #ic(self.rewards['from_done'])
+
+
+        cprint.ok(f"\n  [F1QlearnCameraEnv] -> ------------ Out F1QlearnCameraEnv (__init__) -----------\n")
 
     def render(self, mode='human'):
         pass
 
     @staticmethod
     def all_same(items):
+        print(f"\n F1QlearnCameraEnv.all_same()\n")
         return all(x == items[0] for x in items)
 
     def image_msg_to_image(self, img, cv_image):
+        #print(f"\n F1QlearnCameraEnv.image_msg_to_image()\n")
 
         self.image.width = img.width
         self.image.height = img.height
@@ -40,7 +62,7 @@ class F1QlearnCameraEnv(F1Env):
 
     @staticmethod
     def get_center(lines):
-
+        #print(f"\n F1QlearnCameraEnv.get_center()\n")
         try:
             point = np.divide(np.max(np.nonzero(lines)) - np.min(np.nonzero(lines)), 2)
             point = np.min(np.nonzero(lines)) + point
@@ -51,7 +73,7 @@ class F1QlearnCameraEnv(F1Env):
 
     @staticmethod
     def calculate_reward(error):
-
+        print(f"\n F1QlearnCameraEnv.calculate_reward()\n")
         d = np.true_divide(error, center_image)
         reward = np.round(np.exp(-d), 4)
 
@@ -64,6 +86,7 @@ class F1QlearnCameraEnv(F1Env):
         :parameters: input image 640x480
         :return: x, y, z: 3 coordinates
         """
+        #print(f"\n F1QlearnCameraEnv.processed_image()\n")
 
         img_sliced = img[240:]
         img_proc = cv2.cvtColor(img_sliced, cv2.COLOR_BGR2HSV)
@@ -90,7 +113,7 @@ class F1QlearnCameraEnv(F1Env):
 
     @staticmethod
     def calculate_observation(state):
-
+        #print(f"\n F1QlearnCameraEnv.calculate_observation()\n")
         normalize = 40
 
         final_state = []
@@ -100,11 +123,12 @@ class F1QlearnCameraEnv(F1Env):
         return final_state
 
     def _seed(self, seed=None):
+        #print(f"\n F1QlearnCameraEnv._seed()\n")
         self.np_random, seed = seeding.np_random(seed)
         return [seed]
 
     def step(self, action):
-
+        #print(f"\n F1QlearnCameraEnv.step()\n")
         self._gazebo_unpause()
 
         vel_cmd = Twist()
@@ -138,24 +162,28 @@ class F1QlearnCameraEnv(F1Env):
             done = True
         if not done:
             if 0 <= center <= 0.2:
-                reward = 10
+                reward = self.rewards['from_0_02']
             elif 0.2 < center <= 0.4:
-                reward = 2
+                reward = self.rewards['from_02_04']
             else:
-                reward = 1
+                reward = self.rewards['from_others']
         else:
-            reward = -100
+            reward = self.rewards['from_done']
 
         if telemetry:
-            print(f"center: {center} - actions: {action} - reward: {reward}")
+            print(f"\n F1QlearnCameraEnv.step() -> center: {center}"
+            f" - actions: {action} - reward: {reward}")
             # self.show_telemetry(f1_image_camera.data, points, action, reward)
 
         return state, reward, done, {}
 
     def reset(self):
+        #print(f"\n F1QlearnCameraEnv.reset()\n")
+        ic("F1QlearnCameraEnv.reset()")
         # === POSE ===
         if self.alternate_pose:
-            self.set_new_pose()
+            self._gazebo_set_new_pose
+            #self.set_new_pose()
         else:
             self._gazebo_reset()
 
@@ -181,6 +209,7 @@ class F1QlearnCameraEnv(F1Env):
         return state
 
     def inference(self, action):
+        print(f"\n F1QlearnCameraEnv.inference()\n")
         self._gazebo_unpause()
 
         vel_cmd = Twist()
@@ -208,6 +237,7 @@ class F1QlearnCameraEnv(F1Env):
         return state, done
 
     def finish_line(self):
+        print(f"\n F1QlearnCameraEnv.finish_line()\n")
         x, y = self.get_position()
         current_point = np.array([x, y])
 

@@ -20,7 +20,7 @@ class RealEnv(gym.Env):
         # #start roscore
         # subprocess.Popen(["roscore", "-p", self.port])
         # time.sleep(1)
-        print ("Roscore launched!")
+        print ("[RealEnv] -> Roscore launched!")
 
         # Launch the simulation with the given launchfile name
         rospy.init_node('gym', anonymous=True)

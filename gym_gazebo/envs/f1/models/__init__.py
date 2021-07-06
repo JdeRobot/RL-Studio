@@ -16,7 +16,9 @@ class F1Env:
         cls.position = None
 
         training_type = config.get("training_type")
-        print(config.get("launch"))
+       #print(config.get("launch"))
+
+       # Q-Learning
         if training_type == TrainingType.qlearn_env_camera.value:
             from gym_gazebo.envs.f1.models.f1_env_qlearn_camera import F1QlearnCameraEnv
             return F1QlearnCameraEnv(**config)
@@ -25,9 +27,10 @@ class F1Env:
             from gym_gazebo.envs.f1.models.f1_env_qlearn_laser import F1QlearnLaserEnv
             return F1QlearnLaserEnv(**config)
 
+        # DQN
         elif training_type == TrainingType.dqn_env.value:
-            from gym_gazebo.envs.f1.models.f1_env_dqn_camera import GazeboF1CameraEnvDQN
-            return GazeboF1CameraEnvDQN(**config)
+            from gym_gazebo.envs.f1.models.f1_env_DQNCamera import F1DQNCameraEnv
+            return F1DQNCameraEnv(**config)
 
         elif training_type == TrainingType.manual_env.value:
             from gym_gazebo.envs.f1.models.f1_env_manual_pilot import GazeboF1ManualCameraEnv

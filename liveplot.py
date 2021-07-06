@@ -23,7 +23,7 @@ class LivePlot:
         plt.style.use('ggplot')
         plt.xlabel("Episodes")
         plt.ylabel(data_key)
-        fig = plt.gcf().canvas.set_window_title('simulation_graph')
+        fig = plt.gcf().canvas.manager.set_window_title('simulation_graph')
 
     def plot(self, env):
         if self.data_key is rewards_key:

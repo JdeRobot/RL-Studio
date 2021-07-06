@@ -1,0 +1,7 @@
+episode,[0]
+avg,[288.0]
+max,[288]
+min,[288]
+step,[99]
+epsilon,[0.9872299404]
+time_training,"[datetime.timedelta(seconds=12, microseconds=726155)]"

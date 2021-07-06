@@ -1,0 +1,135 @@
+
+# Next params are in setting.py:
+# - Actions 
+# - Gazebo
+# - Camera
+
+Dirspace: /home/parallels/rl-studio-arm64
+
+# Options: qlearning
+Algorithm: qlearning
+
+# Options: f1
+Agent: f1
+
+# Options: train, test
+Method: test
+
+##### For test
+num_test: 20
+table_loaded_tested: train_qlearning_f1_simple_EPISODE_1_20210625-082424-qtable.npy
+
+
+# Hyperparams
+Hyperparams: 
+  alpha: 0.8
+  gamma: 0.9
+  epsilon: 0.99
+  epsilon_discount: 0.9986
+  #highest_reward: 0
+  total_episodes: 2
+
+# Options: simple, nurburgring, montreal, curves, manual
+Model: simple
+
+# Envs 
+envs_params:
+  simple:
+    env: F1Env-v0
+    training_type: qlearn_camera
+    circuit_name: simple
+    #actions: available_actions_simple  # Change 
+    launch: simple_circuit.launch
+    #gaz_pos: gazebo_positions_simple  # Change
+    #start_pose: gazebo_positions_simple
+    alternate_pose: False
+    estimated_steps: 100 #original 4000
+    sensor: camera
+
+# rewards
+Rewards:
+  from_0_02: 10
+  from_02_04: 2
+  from_others: 1
+  from_done: -100 
+
+highest_reward: 0
+
+# ROS and GAZEBO
+ROS_MASTER_URI: '11311'
+GAZEBO_MASTER_URI: '11345'
+
+
+# Flags
+Train_hours: 2
+
+debug_level: 0
+#telemetry: False
+#telemetry_mask: False
+plotter_graphic: False
+
+save_every_episode: 1
+save_episodes: 1
+save_every_step: 100
+
+lap_completed: False
+my_board: True
+save_positions: False
+save_model: True
+
+load_model: False
+file_load_pickle: 1_20210622_1512_actions_set_simple_epsilon_0.99_QTABLE.pkl
+
+load_qtable: False
+table_loaded: train_qlearning_f1_simple_EPISODE_1_20210625-082424-qtable.npy
+
+
+
+# === MODELS OUTPUT DIR ===
+#output_dir: "./logs/qlearn_models/qlearn_camera_solved/"
+
+#max_distance: 0.5
+
+#available_actions_simple: 
+#  0: (3,0)  
+#  1: (2,1)   
+#  2: (2,-1)
+#available_actions_medium: 
+#  0: (3,0)
+#  1: (2,1)
+#  2: (2,-1)
+#  3: (1,1.5)
+#  4: (1,-1.5)
+#available_actions_hard: 
+#  0: (3,0)
+#  1: (2,1)
+#  2: (2,-1)
+#  3: (1.5,1)
+#  4: (1.5,-1)
+#  5: (1,1.5)
+#  6: (1,-1.5)
+
+#gazebo_positions_simple: [(0, 53.462, -41.988, 0.004, 0, 0, 1.57, -1.57),
+#               (1, 53.462, -8.734, 0.004, 0, 0, 1.57, -1.57),
+#               (2, 39.712, -30.741, 0.004, 0, 0, 1.56, 1.56),
+#               (3, -6.861, -36.481, 0.004, 0, 0.01, -0.858, 0.613),
+#               (4, 20.043, 37.130, 0.003, 0, 0.103, -1.4383, -1.4383)]
+
+#gazebo_positions_nurburgring: [(0, -32.3188, 12.2921, 0, 0.0014, 0.0049, -0.2727, 0.9620),
+#                    (1, -30.6566, -21.4929, 0, 0.0014, 0.0049, -0.4727, 0.8720),
+#                    (2, 28.0352, -17.7923, 0, 0.0001, 0.0051, -0.028, 1),
+#                    (3, 88.7408, -31.7120, 0, 0.0030, 0.0041, -0.1683, 0.98),
+#                    (4, -73.2172, 11.8508, 0, 0.0043, -0.0027, 0.8517, 0.5173),
+#                    (5, -73.6672, 37.4308, 0, 0.0043, -0.0027, 0.8517, 0.5173)]
+
+#gazebo_positions_montreal: [(0, -201.88, -91.02, 0, 0.00, 0.001, 0.98, -0.15),
+#                 (1, -278.71, -95.50, 0, 0.00, 0.001, 1, 0.03),
+#                 (2, -272.93, -17.70, 0, 0.0001, 0.001, 0.48, 0.87),
+#                 (3, -132.73, 55.82, 0, 0.0030, 0.0041, -0.02, 0.9991),
+#                 (4, 294.99, 91.54, 0, 0.0043, -0.0027, 0.14, 0.99)]                  
+
+Title: ---------------  JdeROBOT ---------------
+Description: --------------- QLEARN - Camera ---------------
+Lets_go: --------------- GO!! ---------------
+Eop: --------------- TRAINING COMPLETED ---------------
+RaceCompleted: --------------- RACE COMPLETED---------------

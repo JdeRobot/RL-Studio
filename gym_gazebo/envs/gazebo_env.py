@@ -4,6 +4,10 @@ import rospy
 import sys
 import os
 import signal
+from cprint import cprint
+from icecream import ic
+from datetime import datetime, timedelta
+
 from pathlib import Path
 
 from gazebo_msgs.msg import ModelState
@@ -15,6 +19,13 @@ import random
 from rosgraph_msgs.msg import Clock
 
 
+
+ic.enable()
+#ic.disable()
+#ic.configureOutput(prefix='Debug | ')
+ic.configureOutput(prefix=f'{datetime.now()} | ')
+
+
 class GazeboEnv(gym.Env):
     """
     Superclass for all Gazebo environments.
@@ -22,18 +33,26 @@ class GazeboEnv(gym.Env):
     
     metadata = {'render.models': ['human']}
 
-    def __init__(self, launchfile):
-        print(launchfile)
+    #def __init__(self, launchfile):
+    def __init__(self, **config):
+
+        cprint.ok(f"\n -------- Enter in GazeboEnv -----------\n")
+        self.launchfile = config.get("launch")
+        #cprint.info(f"[GazeboEnv] -> launchfile: {self.launchfile}")
+        self.agent = config.get("agent")
         self.last_clock_msg = Clock()
-        self.port = "11311"  # str(random_number) #os.environ["ROS_PORT_SIM"]
-        self.port_gazebo = "11345"  # str(random_number+1) #os.environ["ROS_PORT_SIM"]
+        #self.port = "11311"  # str(random_number) #os.environ["ROS_PORT_SIM"]
+        #self.port_gazebo = "11345"  # str(random_number+1) #os.environ["ROS_PORT_SIM"]
+        self.port = config['ROS_MASTER_URI']  # str(random_number) #os.environ["ROS_PORT_SIM"]
+        self.port_gazebo = config['GAZEBO_MASTER_URI']        
         # self.ros_master_uri = os.environ["ROS_MASTER_URI"];
         # self.port = os.environ.get("ROS_PORT_SIM", "11311")
 
-        print(f"\nROS_MASTER_URI = http://localhost:{self.port}\n")
-        print(f"GAZEBO_MASTER_URI = http://localhost:{self.port_gazebo}\n")
+        #print(f"\n[GazeboEnv] -> ROS_MASTER_URI = http://localhost:{self.port}\n")
+        #print(f"\n[GazeboEnv] -> GAZEBO_MASTER_URI = http://localhost:{self.port_gazebo}\n")
 
         ros_path = os.path.dirname(subprocess.check_output(["which", "roscore"]))
+        cprint.warn(f"\n[GazeboEnv] -> ros_path: {ros_path}")
 
         # NOTE: It doesn't make sense to launch a roscore because it will be done when spawing Gazebo, which also need
         #   to be the first node in order to initialize the clock.
@@ -42,24 +61,31 @@ class GazeboEnv(gym.Env):
         # time.sleep(1)
         # print ("Roscore launched!")
 
-        if launchfile.startswith("/"):
-            fullpath = launchfile
+        if self.launchfile.startswith("/"):
+            fullpath = self.launchfile
         else:
             # TODO: Global env for 'f1'. It must be passed in constructor.
-            fullpath = str(Path(Path(__file__).resolve().parents[1] / "CustomRobots" / "f1" / "launch" / launchfile))
-            print(f"-----> {fullpath}")
+            fullpath = str(Path(Path(__file__).resolve().parents[1] / "CustomRobots" / self.agent / "launch" / self.launchfile))
+            #print(f"\n[GazeboEnv] -> fullpath: {fullpath}")
         if not os.path.exists(fullpath):
-            raise IOError(f"File {fullpath} does not exist")
+            raise IOError(f"[GazeboEnv] -> File {fullpath} does not exist")
 
+        ic("GAZEBO LAUNCHING")
+        # launching GAZEBO
+        ic(fullpath)
         self._roslaunch = subprocess.Popen([
             sys.executable, os.path.join(ros_path, b"roslaunch"), "-p", self.port, fullpath
         ])
-        print("Gazebo launched!")
+        ic(self._roslaunch)
+        #print("\n[GazeboEnv] -> Gazebo launched!")
+        ic("GAZEBO LAUNCHED")
 
         self.gzclient_pid = 0
 
         # Launch the simulation with the given launchfile name
         rospy.init_node('gym', anonymous=True)
+
+        cprint.ok(f"\n [GazeboEnv] -> -------- Out GazeboEnv (__init__) ----------------\n")
 
         ################################################################################################################
         # r = rospy.Rate(1)
@@ -104,11 +130,13 @@ class GazeboEnv(gym.Env):
         object_coordinates = self.model_coordinates("f1_renault", "")
         x_position = round(object_coordinates.pose.position.x, 2)
         y_position = round(object_coordinates.pose.position.y, 2)
+        print(f"\n GazeboEnv.get_position()\n")
 
         return x_position, y_position
 
     def _gazebo_reset(self):
         # Resets the state of the environment and returns an initial observation.
+        #print(f"\n GazeboEnv._gazebo_reset()\n")
         rospy.wait_for_service('/gazebo/reset_simulation')
         try:
             # reset_proxy.call()
@@ -118,6 +146,7 @@ class GazeboEnv(gym.Env):
             print(f"/gazebo/reset_simulation service call failed: {e}")
 
     def _gazebo_pause(self):
+        #print(f"\n GazeboEnv._gazebo_pause()\n")
         rospy.wait_for_service('/gazebo/pause_physics')
         try:
             # resp_pause = pause.call()
@@ -126,6 +155,7 @@ class GazeboEnv(gym.Env):
             print(f"/gazebo/pause_physics service call failed: {e}")
 
     def _gazebo_unpause(self):
+        #print(f"\n GazeboEnv._gazebo_unpause()\n")
         rospy.wait_for_service('/gazebo/unpause_physics')
         try:
             self.unpause()
@@ -136,6 +166,7 @@ class GazeboEnv(gym.Env):
         """
         (pos_number, pose_x, pose_y, pose_z, or_x, or_y, or_z, or_z)
         """
+        print(f"\n GazeboEnv._gazebo_set_new_pose()\n")
         pos = random.choice(list(enumerate(self.circuit["gaz_pos"])))[0]
         self.position = pos
 
@@ -160,7 +191,7 @@ class GazeboEnv(gym.Env):
         return pos_number
 
     def _render(self, mode="human", close=False):
-
+        print(f"\n GazeboEnv._render()\n")
         if close:
             tmp = os.popen("ps -Af").read()
             proccount = tmp.count('gzclient')
@@ -180,7 +211,7 @@ class GazeboEnv(gym.Env):
 
     @staticmethod
     def _close():
-
+        print(f"\n GazeboEnv._close()\n")
         # Kill gzclient, gzserver and roscore
         tmp = os.popen("ps -Af").read()
         gzclient_count = tmp.count('gzclient')

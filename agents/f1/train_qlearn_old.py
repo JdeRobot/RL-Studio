@@ -1,5 +1,7 @@
 import datetime
 import time
+from cprint import cprint
+from functools import reduce
 
 import gym
 
@@ -13,12 +15,19 @@ from agents.f1.qlearn import QLearn
 
 if __name__ == '__main__':
     
-    print(settings.title)
-    print(settings.description)
-    print(f"\t- Start hour: {datetime.datetime.now()}")
+    cprint.ok(settings.title)
+    print("\n")
+    cprint.ok(settings.description)
+    cprint.info(f"- Start hour: {datetime.datetime.now()}")
 
     environment = settings.envs_params["simple"]
+    cprint.ok(f"\n environment: {environment}")
+
     env = gym.make(environment["env"], **environment)
+
+    cprint.info(f"\n ---- come back train_qlearn ------------")
+
+
 
     # TODO: Move to settings file
     outdir = './logs/f1_qlearn_gym_experiments/'
@@ -26,16 +35,27 @@ if __name__ == '__main__':
     states_counter = {}
     states_reward = {}
 
+
     plotter = liveplot.LivePlot(outdir)
+    #print(f"\n plotter: {plotter}") #es un object
 
     last_time_steps = np.ndarray(0)
 
-    actions = range(env.action_space.n)
+    actions = range(env.action_space.n) # lo recibe de F1QlearnCameraEnv
+    cprint.info(f"\n actions: {actions}")
+
+
+
     env = gym.wrappers.Monitor(env, outdir, force=True)
     counter = 0
     estimate_step_per_lap = environment["estimated_steps"]
+    cprint.info(f"\n estimate_step_per_lap: {estimate_step_per_lap}")
+
+
     lap_completed = False
-    total_episodes = 20000
+    total_episodes = 20 #original 20_000
+    cprint.info(f"\n total_episodes: {total_episodes}")
+
     epsilon_discount = 0.9986  # Default 0.9986
 
     qlearn = QLearn(actions=actions, alpha=0.8, gamma=0.9, epsilon=0.99)
@@ -47,7 +67,9 @@ if __name__ == '__main__':
         highest_reward = max(qlearn.q.values(), key=stats.get)
     else:
         highest_reward = 0
+
     initial_epsilon = qlearn.epsilon
+    cprint.info(f"\n initial_epsilon: {initial_epsilon}")
 
     telemetry_start_time = time.time()
     start_time = datetime.datetime.now()
@@ -57,6 +79,7 @@ if __name__ == '__main__':
 
     previous = datetime.datetime.now()
     checkpoints = []  # "ID" - x, y - time
+
 
     # START ############################################################################################################
     for episode in range(total_episodes):
@@ -68,20 +91,27 @@ if __name__ == '__main__':
         cumulated_reward = 0
         observation = env.reset()
 
+
         if qlearn.epsilon > 0.05:
             qlearn.epsilon *= epsilon_discount
 
         state = ''.join(map(str, observation))
+        print(f"\n -> START episode {episode}")
+        print(f"counter: {counter}, observation: {observation}, done: {done}, lap_completed: {lap_completed}, cumulated_reward: {cumulated_reward}. state {state} with type {type(state)} in episode {episode}")
 
-        for step in range(500000):
+
+        for step in range(100): #original range(500_000)
 
             counter += 1
 
             # Pick an action based on the current state
             action = qlearn.selectAction(state)
+            print(f"\n ---- > START step {step}: action: {action} in episode {episode}")
 
             # Execute the action and get feedback
             observation, reward, done, info = env.step(action)
+            print(f"\n In each step ==> observation: {observation}, reward: {reward}, done: {done}, info: {info} in episode {episode}")
+            
             cumulated_reward += reward
 
             if highest_reward < cumulated_reward:
@@ -126,10 +156,10 @@ if __name__ == '__main__':
                 if settings.plotter_graphic:
                     plotter.plot_steps_vs_epoch(stats, save=True)
                 utils.save_model(qlearn, start_time_format, stats, states_counter, states_reward)
-                print(f"\n\n====> LAP COMPLETED in: {datetime.datetime.now() - start_time} - Epoch: {episode}"
+                print(f"\n\n====> LAP COMPLETED in: {datetime.datetime.now() - start_time} - episode: {episode}"
                       f" - Cum. Reward: {cumulated_reward} <====\n\n")
 
-            if counter > 1000:
+            if counter > 100: #oroginal 1000
                 if settings.plotter_graphic:
                     plotter.plot_steps_vs_epoch(stats, save=True)
                 qlearn.epsilon *= epsilon_discount
@@ -155,7 +185,7 @@ if __name__ == '__main__':
             plotter.plot_steps_vs_epoch(stats)
             # plotter.full_plot(env, stats, 2)  # optional parameter = mode (0, 1, 2)
 
-        if episode % 250 == 0 and settings.save_model and episode > 1:
+        if episode % 25 == 0 and settings.save_model and episode > 1:  #OJO: episode % 250 originally
             print(f"\nSaving model . . .\n")
             utils.save_model(qlearn, start_time_format, stats, states_counter, states_reward)
 
@@ -177,6 +207,8 @@ if __name__ == '__main__':
     print("Overall score: {:0.2f}".format(last_time_steps.mean()))
     print("Best 100 score: {:0.2f}".format(reduce(lambda x, y: x + y, l[-100:]) / len(l[-100:])))
 
-    plotter.plot_steps_vs_epoch(stats, save=True)
+    #plotter.plot_steps_vs_epoch(stats, save=True)
 
     env.close()
+
+

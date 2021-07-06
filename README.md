@@ -5,22 +5,21 @@
 ### Clone the repository
 
 ```bash
-git clone https://github.com/JdeRobot/gym-gazebo-2.git
+git clone https://github.com/JdeRobot/RL-Studio.git
 ```
 
 ### ROS
 
 You can [install ROS Noetic in your official documentation](http://wiki.ros.org/noetic/Installation/Ubuntu). We recommend installing the ROS Noetic Full Desktop.
 
+
+
+
+### Install Gym-Gazebo inside RL-Studio
+
 ```bash
-sudo apt-get install \
-python-pip python3-vcstool python3-pyqt4 \
-pyqt5-dev-tools \
-libbluetooth-dev libspnav-dev \
-pyqt4-dev-tools libcwiid-dev \
-cmake gcc g++ qt4-qmake libqt4-dev \
-libusb-dev libftdi-dev \
-python3-defusedxml python3-vcstool
+cd rl-studio
+pip install -e .
 ```
 
 ### Install Python packages
@@ -29,17 +28,10 @@ python3-defusedxml python3-vcstool
 pip install -r requirements.txt
 ```
 
-### Install Gym-Gazebo
-
-```bash
-cd gym-gazebo
-pip install -e .
-```
-
 ### Set Noetic configuration
 
 ```bash
-cd gym-gazebo/gym_gazebo/envs/installation
+cd gym_gazebo/installation
 bash setup_noetic.bash
 ```
 
@@ -52,15 +44,17 @@ installation/
 wrappers/
 ```
 
-The following routes will be added to the `.bashrc` file:
+The following routes will be added to the `.bashrc` file. Please check it out in order to well functioning:
 
 ```bash
 . . .
 source /opt/ros/noetic/setup.bash
 # Gazebo models
-export GAZEBO_MODEL_PATH=$HOME/gym-gazebo-2/gym_gazebo/installation/catkin_ws/../CustomRobots/f1/models
-source $HOME/gym-gazebo-2/gym_gazebo/installation/catkin_ws/devel/setup.bash
-export GAZEBO_MODEL_PATH=:/home/USER/gym-gazebo-2/gym_gazebo/installation/../CustomRobots/f1/models
+source $HOME/rl-studio/gym_gazebo/installation/catkin_ws/devel/setup.bash
+export GAZEBO_MODEL_PATH=$HOME/rl-studio/gym_gazebo/installation/catkin_ws/../CustomRobots/f1/models
+export GAZEBO_MODEL_PATH=:$HOME/rl-studio/gym_gazebo/installation/../CustomRobots/f1/models
+export GAZEBO_RESOURCE_PATH=$GAZEBO_RESOURCE_PATH:$HOME/rl-studio/gym_gazebo/CustomRobots/f1/models/:/$HOME/rl-studio/gym_gazebo/CustomRobots/f1/worlds/
+
 . . .
 ```
 
@@ -69,7 +63,7 @@ export GAZEBO_MODEL_PATH=:/home/USER/gym-gazebo-2/gym_gazebo/installation/../Cus
 Set Formula 1 environment running the following script (the same folder that before):
 
 ```
-cd gym-gazebo/gym_gazebo/envs/installation/
+cd rl-studio/gym_gazebo/installation/
 bash formula1_setup.bash
 ```
 
@@ -77,11 +71,35 @@ The following routes will be added to the `.bashrc` file (for `formula1` environ
 
 ```bash
 . . .
-export GYM_GAZEBO_WORLD_CIRCUIT_F1=$HOME/gym-gazebo-2/gym_gazebo/installation/../CustomRobots/f1/worlds/simple_circuit.world
-export GYM_GAZEBO_WORLD_NURBURGRING_F1=$HOME/gym-gazebo-2/gym_gazebo/installation/../CustomRobots/f1/worlds/nurburgring_line.world
-export GYM_GAZEBO_WORLD_MONTREAL_F1=$HOME/gym-gazebo-2/gym_gazebo/installation/../CustomRobots/f1/worlds/montreal_line.world
+export GYM_GAZEBO_WORLD_CIRCUIT_F1=$HOME/rl-studio/gym_gazebo/installation/../CustomRobots/f1/worlds/simple_circuit.world
+export GYM_GAZEBO_WORLD_NURBURGRING_F1=$HOME/rl-studio/gym_gazebo/installation/../CustomRobots/f1/worlds/nurburgring_line.world
+export GYM_GAZEBO_WORLD_MONTREAL_F1=$HOME/rl-studio/gym_gazebo/installation/../CustomRobots/f1/worlds/montreal_line.world
 . . .
 ```
 
 There will be as many variables as there are circuits to be executed.
+
+
+
+### Launching application
+
+To check if the app is working go to
+
+```
+cd /gym_gazebo/CustomRobots/f1/worlds/
+roslaunch simple_circuit.launch
+
+```
+
+Gazebo and ROS should launch the circuit showing the stopped car in the starting line.
+Next, to start training the RL algorithm, 
+
+```
+cd /rl-studio
+python3 RLStudio.py RLStudio-params.yml
+
+```
+The car should begin to run. RL Studio is working fine!!!
+
+
 
