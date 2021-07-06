@@ -7,7 +7,7 @@ import time
 import gym
 
 from rl_studio.agents.f1 import settings
-from rl_studio.envs.f1.models.f1_env_manual_pilot import title
+from rl_studio.visual.ascii.text import MANUAL_PILOT
 
 total_episodes = 200000
 
@@ -20,7 +20,7 @@ def save_times(checkpoints):
 
 if __name__ == "__main__":
 
-    print(title)
+    print(MANUAL_PILOT)
     print("    - Start hour: {}".format(datetime.datetime.now()))
 
     environment = settings.envs_params["manual"]

@@ -8,11 +8,14 @@ from rl_studio.agents.f1 import liveplot
 from rl_studio.agents.f1 import utils
 from rl_studio.agents.f1 import settings
 from rl_studio.agents.f1.algorithms.qlearn import QLearn
+from rl_studio.visual.ascii.text import JDEROBOT, QLEARN_CAMERA, LETS_GO
+from rl_studio.visual.ascii.images import JDEROBOT_LOGO
 
 if __name__ == "__main__":
 
-    print(settings.title)
-    print(settings.description)
+    print(JDEROBOT)
+    print(JDEROBOT_LOGO)
+    print(QLEARN_CAMERA)
     print(f"\t- Start hour: {datetime.datetime.now()}")
 
     environment = settings.envs_params["simple"]
@@ -51,7 +54,7 @@ if __name__ == "__main__":
     start_time = datetime.datetime.now()
     start_time_format = start_time.strftime("%Y%m%d_%H%M")
 
-    print(settings.lets_go)
+    print(LETS_GO)
 
     previous = datetime.datetime.now()
     checkpoints = []  # "ID" - x, y - time
