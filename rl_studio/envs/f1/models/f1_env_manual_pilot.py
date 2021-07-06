@@ -14,15 +14,6 @@ from std_srvs.srv import Empty
 from rl_studio.agents.f1.settings import actions, envs_params
 from rl_studio.envs import gazebo_env
 
-title = """
-___  ___                        _  ______ _ _       _   
-|  \/  |                       | | | ___ (_) |     | |  
-| .  . | __ _ _ __  _   _  __ _| | | |_/ /_| | ___ | |_ 
-| |\/| |/ _` | '_ \| | | |/ _` | | |  __/| | |/ _ \| __|
-| |  | | (_| | | | | |_| | (_| | | | |   | | | (_) | |_ 
-\_|  |_/\__,_|_| |_|\__,_|\__,_|_| \_|   |_|_|\___/ \__|
-
-"""
 
 font = cv2.FONT_HERSHEY_COMPLEX
 time_cycle = 80
