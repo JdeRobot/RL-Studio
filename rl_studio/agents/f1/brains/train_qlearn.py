@@ -1,17 +1,19 @@
 import datetime
 import time
+from functools import reduce
 
 import gym
 import numpy as np
 
 from rl_studio.agents.f1 import liveplot
-from rl_studio.agents.f1 import utils
 from rl_studio.agents.f1 import settings
+from rl_studio.agents.f1 import utils
 from rl_studio.agents.f1.algorithms.qlearn import QLearn
-from rl_studio.visual.ascii.text import JDEROBOT, QLEARN_CAMERA, LETS_GO
 from rl_studio.visual.ascii.images import JDEROBOT_LOGO
+from rl_studio.visual.ascii.text import JDEROBOT, QLEARN_CAMERA, LETS_GO
 
-if __name__ == "__main__":
+
+def main():
 
     print(JDEROBOT)
     print(JDEROBOT_LOGO)
@@ -206,3 +208,7 @@ if __name__ == "__main__":
     plotter.plot_steps_vs_epoch(stats, save=True)
 
     env.close()
+
+
+if __name__ == "__main__":
+    main()
