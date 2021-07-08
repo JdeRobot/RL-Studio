@@ -55,12 +55,20 @@ wrappers/
 The following routes will be added to the `.bashrc` file:
 
 ```bash
+cd ~/gym-gazebo-2/rl_studio/CustomRobots/f1/launch
+export GAZEBO_RESOURCE_PATH=$PWD
+```
+
+The final variables to be stored are:
+
+```bash
 . . .
 source /opt/ros/noetic/setup.bash
 # Gazebo models
 export GAZEBO_MODEL_PATH=$HOME/gym-gazebo-2/rl_studio/installation/catkin_ws/../CustomRobots/f1/models
 source $HOME/gym-gazebo-2/rl_studio/installation/catkin_ws/devel/setup.bash
-export GAZEBO_MODEL_PATH=:/home/USER/gym-gazebo-2/rl_studio/installation/../CustomRobots/f1/models
+export GAZEBO_MODEL_PATH=:$HOME/gym-gazebo-2/rl_studio/installation/../CustomRobots/f1/models
+export GAZEBO_RESOURCE_PATH=$HOME/igarag/jderobot/gym-gazebo-2/rl_studio/CustomRobots/f1/worlds
 . . .
 ```
 
