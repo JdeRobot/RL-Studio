@@ -1,7 +1,4 @@
-
-# Created by https://www.toptal.com/developers/gitignore/api/python,vscode,pycharm,opencv,images
-# Edit at https://www.toptal.com/developers/gitignore?templates=python,vscode,pycharm,opencv,images
-
+### CUSTOM
 CustomRobots
 .idea
 .vscode
@@ -10,6 +7,7 @@ _site
 rl_studio/agents/f1/brains/logs/f1_qlearn_gym_experiments
 *.manifest.json
 *.stats.json
+*.pkl
 
 catkin_ws
 
