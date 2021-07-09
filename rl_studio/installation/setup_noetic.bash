@@ -43,9 +43,9 @@ catkin_make
 bash -c 'echo source `pwd`/devel/setup.bash >> ~/.bashrc'
 
 echo "## ROS workspace compiled ##"
-# ---------------------------------
 
-# Add own models path to gazebo models path
+# --- Adding Environment variables -----------------
+# --- BASH
 if [ -z "$GAZEBO_MODEL_PATH" ]; then
   bash -c 'echo "export GAZEBO_MODEL_PATH="`pwd`/../CustomRobots/f1/models >> ~/.bashrc'
 else
@@ -58,16 +58,18 @@ else
   printf "GAZEBO_RESOURCE_PATH env variable already exist in your .bashrc\n"
 fi
 
-# ZSH config
-# read -p "Do you use zsh? [Y/n]: " zsh
-#if [ -n "$!zsh" ]; then
-#  zsh -c 'echo "export GAZEBO_MODEL_PATH="`pwd`/../CustomRobots/f1/models >> ~/.zshrc'
-#  zsh -c 'echo "export GAZEBO_RESOURCE_PATH="`pwd`/../CustomRobots/f1/worlds >> ~/.zshrc'
-#  zsh -c 'echo source `pwd`/devel/setup.bash >> ~/.zshrc'
-#  exec zsh
-#fi
+# --- ZSH
+ read -p "Do you use zsh? [Y/n]: " zsh
+if [ -n "$!zsh" ]; then
+  zsh -c 'echo "export GAZEBO_MODEL_PATH="`pwd`/../CustomRobots/f1/models >> ~/.zshrc'
+  zsh -c 'echo "export GAZEBO_RESOURCE_PATH="`pwd`/../CustomRobots/f1/worlds >> ~/.zshrc'
+  zsh -c 'echo source `pwd`/devel/setup.zsh >> ~/.zshrc'
+  printf ""
+  printf "\nRestarting zsh terminal . . . \n"
+  exec zsh
+fi
 
+# --- Restarting Bash
 printf ""
-printf "\nRestarting the terminal...\n"
-# exec bash
+printf "\nRestarting the terminal . . .\n"
 exec bash
