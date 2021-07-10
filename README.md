@@ -15,8 +15,6 @@
 
 RL-Studio is a platform for training reinforcement learning algorithms for robots with different environments and algorithms. You can create your agent, environment and algorithm and compare it with others.
 
-
-
 ## Install
 
 ### Clone the RL-studio repository
@@ -43,7 +41,7 @@ poetry install
 pip install -r requirements.txt
 ```
 
-
+The commits follow the [gitmoji](https://gitmoji.dev/) convention and the code is formatted with [Black](https://black.readthedocs.io/en/stable/).
 
 ### ROS
 
