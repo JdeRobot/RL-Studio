@@ -1,0 +1,29 @@
+[tool.poetry]
+name = "rl-studio"
+version = "0.1.0"
+description = "Platform for training reinforcement-learning algorithms for robots"
+authors = ["NachoAz <n.arranz.agueda@gmail.com>"]
+readme = 'README.md'
+repository = "https://github.com/JdeRobot/RL-Studio"
+keywords = ["python", "reinforcement-learning", "artificial-intelligence", "jderobot"]
+# Avoid publish: https://twitter.com/pypi/status/1097241506304454656
+classifiers = ["Private :: Do Not Upload"]
+
+[tool.poetry.dependencies]
+python = "^3.8"
+catkin-pkg = "0.4.23"
+rospkg = "1.2.8"
+matplotlib = "3.3.2"
+defusedxml = "0.6.0"
+opencv-python = "4.2.0.32"
+scikit-image = "0.17.2"
+netifaces = "0.10.9"
+numpy = "1.20.2"
+gym = "0.17.3"
+requests = "^2.25.1"
+six = "1.14.0"
+pyglet = "^1.2.0"
+environs = "9.2.0"
+
+[tool.poetry.dev-dependencies]
+pytest = "^6.2.4"
