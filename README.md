@@ -5,7 +5,7 @@
 
 [![forthebadge](https://forthebadge.com/images/badges/for-robots.svg)](https://forthebadge.com) [![forthebadge](https://forthebadge.com/images/badges/made-with-python.svg)](https://forthebadge.com)
 ------
-[![Dependencies Status](https://img.shields.io/badge/dependencies-up%20to%20date-brightgreen.svg)](https://github.com/TezRomacH/python-package-template/pulls?utf8=%E2%9C%93&q=is%3Apr%20author%3Aapp%2Fdependabot)[![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)[![Pre-commit](https://img.shields.io/badge/pre--commit-enabled-brightgreen?logo=pre-commit&logoColor=white)](https://github.com/TezRomacH/python-package-template/blob/master/.pre-commit-config.yaml)[![License](https://img.shields.io/github/license/TezRomacH/python-package-template)](https://github.com/JdeRobot/RL-Studio/blob/main/LICENSE.md)
+[![Dependencies Status](https://img.shields.io/badge/dependencies-up%20to%20date-brightgreen.svg) ](https://github.com/TezRomacH/python-package-template/pulls?utf8=%E2%9C%93&q=is%3Apr%20author%3Aapp%2Fdependabot)[![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg) ](https://github.com/psf/black) [![Pre-commit](https://img.shields.io/badge/pre--commit-enabled-brightgreen?logo=pre-commit&logoColor=white)](https://github.com/TezRomacH/python-package-template/blob/master/.pre-commit-config.yaml) [![License](https://img.shields.io/github/license/TezRomacH/python-package-template)](https://github.com/JdeRobot/RL-Studio/blob/main/LICENSE.md) ![](https://img.shields.io/badge/Dependencies-Poetry-blue)
 -----
 ![](https://img.shields.io/badge/Gazebo-11-orange) ![](https://img.shields.io/badge/ROS-Noetic-blue) ![](https://img.shields.io/badge/Python-3.8-yellowInstall)
 
@@ -24,6 +24,26 @@ RL-Studio is a platform for training reinforcement learning algorithms for robot
 ```bash
 git clone git@github.com:JdeRobot/RL-Studio.git
 ```
+
+### Install Poetry (optional):
+
+```bash
+curl -sSL https://raw.githubusercontent.com/python-poetry/poetry/master/get-poetry.py | python3 -
+```
+
+Install dependencies:
+
+```bash
+poetry install
+```
+
+*Note: In case you don't want to use Poetry as a dependency manager, you can install it with pip as follows:*
+
+```bash
+pip install -r requirements.txt
+```
+
+
 
 ### ROS
 
