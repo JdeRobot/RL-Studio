@@ -2,7 +2,6 @@ import numpy as np
 import rospy
 from gazebo_msgs.srv import GetModelState
 from geometry_msgs.msg import Twist
-from gym import spaces
 from std_srvs.srv import Empty
 
 from rl_studio.envs import gazebo_env

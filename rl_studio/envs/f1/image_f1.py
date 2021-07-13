@@ -1,6 +1,8 @@
 import cv2
 import numpy as np
 
+from rl_studio.agents.f1.settings import x_row, center_image
+
 
 class ImageF1:
 
@@ -26,16 +28,15 @@ class ImageF1:
     @staticmethod
     def image_msg_to_image(img, cv_image):
 
-        image.width = img.width
-        image.height = img.height
-        image.format = "RGB8"
-        image.timeStamp = img.header.stamp.secs + (img.header.stamp.nsecs * 1e-9)
-        image.data = cv_image
+        img.width = img.width
+        img.height = img.height
+        img.format = "RGB8"
+        img.timeStamp = img.header.stamp.secs + (img.header.stamp.nsecs * 1e-9)
+        img.data = cv_image
 
-        return image
+        return img
 
-    @staticmethod
-    def show_telemetry(img, points, action, reward):
+    def show_telemetry(self, img, points, action, reward):
         count = 0
         for idx, point in enumerate(points):
             cv2.line(
@@ -46,7 +47,7 @@ class ImageF1:
                 img,
                 str("err{}: {}".format(idx + 1, center_image - point)),
                 (18, 340 + count),
-                font,
+                self.font,
                 0.4,
                 (255, 255, 255),
                 1,
@@ -54,18 +55,18 @@ class ImageF1:
             count += 20
         cv2.putText(
             img,
-            str("action: {}".format(action)),
+            str(f"action: {action}"),
             (18, 280),
-            font,
+            self,
             0.4,
             (255, 255, 255),
             1,
         )
         cv2.putText(
             img,
-            str("reward: {}".format(reward)),
+            str(f"reward: {reward}"),
             (18, 320),
-            font,
+            self,
             0.4,
             (255, 255, 255),
             1,

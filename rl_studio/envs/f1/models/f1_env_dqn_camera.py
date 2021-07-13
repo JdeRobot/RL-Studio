@@ -15,6 +15,8 @@ from std_srvs.srv import Empty
 
 from rl_studio.envs import gazebo_env
 from rl_studio.agents.f1.settings import telemetry
+from rl_studio.envs.f1.image_f1 import ImageF1
+from rl_studio.envs.f1.models.f1_env import F1Env
 
 # Images size
 witdh = 640
@@ -46,7 +48,7 @@ positions = [(0, 53.462, -41.988, 0.004, 0, 0, 1.57, -1.57),
              (4, 20.043, 37.130, 0.003, 0, 0.103, -1.4383, -1.4383)]
 
 
-class GazeboF1CameraEnvDQN(gazebo_env.GazeboEnv):
+class GazeboF1CameraEnvDQN(F1Env):
     """
     Description:
         A Formula 1 car has to complete one lap of a circuit following a red line painted on the ground. Initially it
