@@ -1,0 +1,11 @@
+# https://docs.github.com/en/code-security/supply-chain-security/configuration-options-for-dependency-updates#about-the-dependabotyml-file
+
+version: 2
+
+updates:
+  - package-ecosystem: "pip"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    commit-message:
+      prefix: ":arrow_up:"
