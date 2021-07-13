@@ -1,5 +1,6 @@
 import random
 
+
 class Sarsa:
     def __init__(self, actions, epsilon, alpha, gamma):
         self.q = {}
@@ -15,7 +16,7 @@ class Sarsa:
     def learnQ(self, state, action, reward, value):
         oldv = self.q.get((state, action), None)
         if oldv is None:
-            self.q[(state, action)] = reward 
+            self.q[(state, action)] = reward
         else:
             self.q[(state, action)] = oldv + self.alpha * (value - oldv)
 

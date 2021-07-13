@@ -23,5 +23,5 @@ fi
 
 echo 'Formula 1 env variables loaded succesfully'
 
-# Reload bash 
+# Reload bash
 exec bash

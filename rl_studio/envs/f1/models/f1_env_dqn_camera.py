@@ -13,8 +13,10 @@ from gym.utils import seeding
 from sensor_msgs.msg import Image
 from std_srvs.srv import Empty
 
-from gym_gazebo.envs import gazebo_env
-from gym_gazebo.agents.f1.settings import telemetry
+from rl_studio.envs import gazebo_env
+from rl_studio.agents.f1.settings import telemetry
+from rl_studio.envs.f1.image_f1 import ImageF1
+from rl_studio.envs.f1.models.f1_env import F1Env
 
 # Images size
 witdh = 640
@@ -46,7 +48,7 @@ positions = [(0, 53.462, -41.988, 0.004, 0, 0, 1.57, -1.57),
              (4, 20.043, 37.130, 0.003, 0, 0.103, -1.4383, -1.4383)]
 
 
-class GazeboF1CameraEnvDQN(gazebo_env.GazeboEnv):
+class GazeboF1CameraEnvDQN(F1Env):
     """
     Description:
         A Formula 1 car has to complete one lap of a circuit following a red line painted on the ground. Initially it
@@ -54,7 +56,7 @@ class GazeboF1CameraEnvDQN(gazebo_env.GazeboEnv):
         respect to the center of the line.
     Source:
         Master's final project at Universidad Rey Juan Carlos. RoboticsLab Urjc. JdeRobot. Author: Ignacio Arranz
-    Observation: 
+    Observation:
         Type: Array
         Num	Observation               Min   Max
         ----------------------------------------
@@ -140,12 +142,12 @@ class GazeboF1CameraEnvDQN(gazebo_env.GazeboEnv):
 
         action_space = {}
 
-        for action in range(actions):    
+        for action in range(actions):
             if action > actions/2:
                 diff = action - round(actions/2)
             vel_ang = round((action - actions/2) * max_ang_speed * 0.1, 2)  # from (-1 to + 1)
             action_space[action] = vel_ang
-    
+
         return action_space
 
     @staticmethod
@@ -158,7 +160,7 @@ class GazeboF1CameraEnvDQN(gazebo_env.GazeboEnv):
 
         action_space_dict = {}
 
-        for action in range(actions):    
+        for action in range(actions):
             if action > actions/2:
                 diff = action - round(actions/2)
                 vel_lin = max_lin_speed - diff  # from (3 to 15)
@@ -168,7 +170,7 @@ class GazeboF1CameraEnvDQN(gazebo_env.GazeboEnv):
             action_space_dict[action] = (vel_lin, vel_ang)
             # print("Action: {} - V: {} - W: {}".format(action, vel_lin, vel_ang))
         # print(action_space_dict)
-    
+
         return action_space_dict
 
     def _seed(self, seed=None):
@@ -276,7 +278,7 @@ class GazeboF1CameraEnvDQN(gazebo_env.GazeboEnv):
         # print("CALLBACK!!!!: ", ros_data.height, ros_data.width)
         # np_arr = np.fromstring(ros_data.data, np.uint8)
         # image_np = cv2.imdecode(np_arr, cv2.IMREAD_COLOR)
-        
+
         # self.my_image = image_np
         # rospy.loginfo(rospy.get_caller_id() + "I see %s", data.data)
 
@@ -284,14 +286,14 @@ class GazeboF1CameraEnvDQN(gazebo_env.GazeboEnv):
             cv_image = self.bridge.imgmsg_to_cv2(data, "bgr8")
         except CvBridgeError as e:
             print(e)
-    
+
         (rows, cols,channels) = cv_image.shape
         if cols > 60 and rows > 60:
             cv2.circle(cv_image, (50, 50), 10, 255)
-    
+
         cv2.imshow("Image window", cv_image)
         cv2.waitKey(3)
-    
+
         # try:
         #   self.image_pub.publish(self.bridge.cv2_to_imgmsg(cv_image, "bgr8"))
         # except CvBridgeError as e:
@@ -305,7 +307,7 @@ class GazeboF1CameraEnvDQN(gazebo_env.GazeboEnv):
         error_3 = abs(center_image - point_3)
 
         return error_1, error_2, error_3
-        
+
     @staticmethod
     def calculate_reward(error_1, error_2, error_3):
 
@@ -339,7 +341,7 @@ class GazeboF1CameraEnvDQN(gazebo_env.GazeboEnv):
     def is_game_over(point_1, point_2, point_3):
 
         done = False
-    
+
         if center_image-RANGES[2] < point_3 < center_image+RANGES[2]:
             if center_image-RANGES[0] < point_1 < center_image+RANGES[0] or \
                     center_image-RANGES[1] < point_2 < center_image+RANGES[1]:
@@ -375,7 +377,7 @@ class GazeboF1CameraEnvDQN(gazebo_env.GazeboEnv):
                 success = True
 
         point_1, point_2, point_3 = self.processed_image(f1_image_camera.data)
-        
+
         # DONE
         done = self.is_game_over(point_1, point_2, point_3)
 
@@ -405,7 +407,7 @@ class GazeboF1CameraEnvDQN(gazebo_env.GazeboEnv):
         cv_image = cv2.cvtColor(cv_image, cv2.COLOR_BGR2GRAY)
         cv_image = cv2.resize(cv_image, (self.img_rows, self.img_cols))
         observation = cv_image.reshape(1, 1, cv_image.shape[0], cv_image.shape[1])
-        
+
         # info = [vel_cmd.linear.x, vel_cmd.angular.z, error_1, error_2, error_3]
         # OpenAI standard return: observation, reward, done, info
         return observation, reward, done, {}
@@ -416,14 +418,14 @@ class GazeboF1CameraEnvDQN(gazebo_env.GazeboEnv):
         # return self.s_t, reward, done, {} # observation, reward, done, info
 
     def reset(self):
-        
+
         self.last50actions = [0] * 50  # used for looping avoidance
 
         # === POSE ===
         pos = random.choice(list(enumerate(positions)))[0]
         self.position = pos
         self.set_new_pose(pos)
-        
+
         # === RESET ===
         # Resets the state of the environment and returns an initial observation.
         time.sleep(0.05)

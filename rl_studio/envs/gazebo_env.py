@@ -1,6 +1,7 @@
 import gym
 import rospy
-#import roslaunch
+
+# import roslaunch
 import sys
 import os
 import signal
@@ -19,8 +20,8 @@ class GazeboEnv(gym.Env):
     """
     Superclass for all Gazebo environments.
     """
-    
-    metadata = {'render.models': ['human']}
+
+    metadata = {"render.models": ["human"]}
 
     def __init__(self, launchfile):
         print(launchfile)
@@ -46,20 +47,34 @@ class GazeboEnv(gym.Env):
             fullpath = launchfile
         else:
             # TODO: Global env for 'f1'. It must be passed in constructor.
-            fullpath = str(Path(Path(__file__).resolve().parents[1] / "CustomRobots" / "f1" / "launch" / launchfile))
+            fullpath = str(
+                Path(
+                    Path(__file__).resolve().parents[1]
+                    / "CustomRobots"
+                    / "f1"
+                    / "launch"
+                    / launchfile
+                )
+            )
             print(f"-----> {fullpath}")
         if not os.path.exists(fullpath):
             raise IOError(f"File {fullpath} does not exist")
 
-        self._roslaunch = subprocess.Popen([
-            sys.executable, os.path.join(ros_path, b"roslaunch"), "-p", self.port, fullpath
-        ])
+        self._roslaunch = subprocess.Popen(
+            [
+                sys.executable,
+                os.path.join(ros_path, b"roslaunch"),
+                "-p",
+                self.port,
+                fullpath,
+            ]
+        )
         print("Gazebo launched!")
 
         self.gzclient_pid = 0
 
         # Launch the simulation with the given launchfile name
-        rospy.init_node('gym', anonymous=True)
+        rospy.init_node("gym", anonymous=True)
 
         ################################################################################################################
         # r = rospy.Rate(1)
@@ -109,7 +124,7 @@ class GazeboEnv(gym.Env):
 
     def _gazebo_reset(self):
         # Resets the state of the environment and returns an initial observation.
-        rospy.wait_for_service('/gazebo/reset_simulation')
+        rospy.wait_for_service("/gazebo/reset_simulation")
         try:
             # reset_proxy.call()
             self.reset_proxy()
@@ -118,7 +133,7 @@ class GazeboEnv(gym.Env):
             print(f"/gazebo/reset_simulation service call failed: {e}")
 
     def _gazebo_pause(self):
-        rospy.wait_for_service('/gazebo/pause_physics')
+        rospy.wait_for_service("/gazebo/pause_physics")
         try:
             # resp_pause = pause.call()
             self.pause()
@@ -126,7 +141,7 @@ class GazeboEnv(gym.Env):
             print(f"/gazebo/pause_physics service call failed: {e}")
 
     def _gazebo_unpause(self):
-        rospy.wait_for_service('/gazebo/unpause_physics')
+        rospy.wait_for_service("/gazebo/unpause_physics")
         try:
             self.unpause()
         except rospy.ServiceException as e:
@@ -151,9 +166,9 @@ class GazeboEnv(gym.Env):
         state.pose.orientation.z = self.circuit["gaz_pos"][pos][6]
         state.pose.orientation.w = self.circuit["gaz_pos"][pos][7]
 
-        rospy.wait_for_service('/gazebo/set_model_state')
+        rospy.wait_for_service("/gazebo/set_model_state")
         try:
-            set_state = rospy.ServiceProxy('/gazebo/set_model_state', SetModelState)
+            set_state = rospy.ServiceProxy("/gazebo/set_model_state", SetModelState)
             set_state(state)
         except rospy.ServiceException as e:
             print(f"Service call failed: {e}")
@@ -163,7 +178,7 @@ class GazeboEnv(gym.Env):
 
         if close:
             tmp = os.popen("ps -Af").read()
-            proccount = tmp.count('gzclient')
+            proccount = tmp.count("gzclient")
             if proccount > 0:
                 if self.gzclient_pid != 0:
                     os.kill(self.gzclient_pid, signal.SIGTERM)
@@ -171,10 +186,12 @@ class GazeboEnv(gym.Env):
             return
 
         tmp = os.popen("ps -Af").read()
-        proccount = tmp.count('gzclient')
+        proccount = tmp.count("gzclient")
         if proccount < 1:
             subprocess.Popen("gzclient")
-            self.gzclient_pid = int(subprocess.check_output(["pidof", "-s", "gzclient"]))
+            self.gzclient_pid = int(
+                subprocess.check_output(["pidof", "-s", "gzclient"])
+            )
         else:
             self.gzclient_pid = 0
 
@@ -183,10 +200,10 @@ class GazeboEnv(gym.Env):
 
         # Kill gzclient, gzserver and roscore
         tmp = os.popen("ps -Af").read()
-        gzclient_count = tmp.count('gzclient')
-        gzserver_count = tmp.count('gzserver')
-        roscore_count = tmp.count('roscore')
-        rosmaster_count = tmp.count('rosmaster')
+        gzclient_count = tmp.count("gzclient")
+        gzserver_count = tmp.count("gzserver")
+        roscore_count = tmp.count("roscore")
+        rosmaster_count = tmp.count("rosmaster")
 
         if gzclient_count > 0:
             os.system("killall -9 gzclient")
