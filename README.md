@@ -143,4 +143,3 @@ Or a Python training:
 cd $HOME/rl_studio/rl_studio/agents/f1/brains
 python train_qlearn.py
 ```
-

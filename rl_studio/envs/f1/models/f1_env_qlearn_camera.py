@@ -16,6 +16,7 @@ from rl_studio.agents.f1.settings import (
     height,
     telemetry_mask,
     max_distance,
+
 )
 from rl_studio.envs.f1.image_f1 import ImageF1
 from rl_studio.envs.f1.models.f1_env import F1Env
