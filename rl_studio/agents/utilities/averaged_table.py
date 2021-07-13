@@ -1,10 +1,10 @@
 #!/usr/bin/env python
 """
-This script creates a simple table from environemnt monitoring 
-data obtained from '/tmp/gazebo_gym_experiments/', which has been 
+This script creates a simple table from environemnt monitoring
+data obtained from '/tmp/gazebo_gym_experiments/', which has been
 created when calling a gazebo environment monitoring function in a test.
 
-Args: 
+Args:
 
   arg1       Creates a table using 'arg1' as average size delimiter.
 

@@ -11,13 +11,17 @@ class ImageF1:
         self.width = 3  # Image width [pixels]
         self.timeStamp = 0  # Time stamp [s] */
         self.format = ""  # Image format string (RGB8, BGR,...)
-        self.data = np.zeros((self.height, self.width, 3), np.uint8)  # The image data itself
+        self.data = np.zeros(
+            (self.height, self.width, 3), np.uint8
+        )  # The image data itself
         self.data.shape = self.height, self.width, 3
 
     def __str__(self):
-        return f"Image:" \
-               f"\nHeight: {self.height}\nWidth: {self.width}\n" \
-               f"Format: {self.format}\nTimeStamp: {self.timeStamp}\nData: {self.data}"
+        return (
+            f"Image:"
+            f"\nHeight: {self.height}\nWidth: {self.width}\n"
+            f"Format: {self.format}\nTimeStamp: {self.timeStamp}\nData: {self.data}"
+        )
 
     @staticmethod
     def image_msg_to_image(img, cv_image):
@@ -30,18 +34,42 @@ class ImageF1:
 
         return image
 
-
     @staticmethod
     def show_telemetry(img, points, action, reward):
         count = 0
         for idx, point in enumerate(points):
-            cv2.line(img, (320, x_row[idx]), (320, x_row[idx]), (255, 255, 0), thickness=5)
+            cv2.line(
+                img, (320, x_row[idx]), (320, x_row[idx]), (255, 255, 0), thickness=5
+            )
             # cv2.line(img, (center_image, x_row[idx]), (point, x_row[idx]), (255, 255, 255), thickness=2)
-            cv2.putText(img, str("err{}: {}".format(idx+1, center_image - point)), (18, 340 + count), font, 0.4,
-                        (255, 255, 255), 1)
+            cv2.putText(
+                img,
+                str("err{}: {}".format(idx + 1, center_image - point)),
+                (18, 340 + count),
+                font,
+                0.4,
+                (255, 255, 255),
+                1,
+            )
             count += 20
-        cv2.putText(img, str("action: {}".format(action)), (18, 280), font, 0.4, (255, 255, 255), 1)
-        cv2.putText(img, str("reward: {}".format(reward)), (18, 320), font, 0.4, (255, 255, 255), 1)
+        cv2.putText(
+            img,
+            str("action: {}".format(action)),
+            (18, 280),
+            font,
+            0.4,
+            (255, 255, 255),
+            1,
+        )
+        cv2.putText(
+            img,
+            str("reward: {}".format(reward)),
+            (18, 320),
+            font,
+            0.4,
+            (255, 255, 255),
+            1,
+        )
 
         cv2.imshow("Image window", img[240:])
         cv2.waitKey(3)

@@ -19,22 +19,23 @@ from gym_gazebo.agents.f1.settings import envs_params
 
 
 class F1QlearnLaserEnv(gazebo_env.GazeboEnv):
-
     def __init__(self, **config):
         # Launch the simulation with the given launchfile name
         self.circuit = envs_params["simple"]
         gazebo_env.GazeboEnv.__init__(self, self.circuit["launch"])
         # gazebo_env.GazeboEnv.__init__(self, "f1_1_nurburgrinlineROS_laser.launch")
-        self.vel_pub = rospy.Publisher('/F1ROS/cmd_vel', Twist, queue_size=5)
-        self.unpause = rospy.ServiceProxy('/gazebo/unpause_physics', Empty)
-        self.pause = rospy.ServiceProxy('/gazebo/pause_physics', Empty)
-        self.reset_proxy = rospy.ServiceProxy('/gazebo/reset_simulation', Empty)
-        self.action_space = spaces.Discrete(3)  # actions  # spaces.Discrete(5)  # F, L, R
+        self.vel_pub = rospy.Publisher("/F1ROS/cmd_vel", Twist, queue_size=5)
+        self.unpause = rospy.ServiceProxy("/gazebo/unpause_physics", Empty)
+        self.pause = rospy.ServiceProxy("/gazebo/pause_physics", Empty)
+        self.reset_proxy = rospy.ServiceProxy("/gazebo/reset_simulation", Empty)
+        self.action_space = spaces.Discrete(
+            3
+        )  # actions  # spaces.Discrete(5)  # F, L, R
         self.reward_range = (-np.inf, np.inf)
         self.position = None
         self._seed()
 
-    def render(self, mode='human'):
+    def render(self, mode="human"):
         pass
 
     def get_position(self):
@@ -45,7 +46,7 @@ class F1QlearnLaserEnv(gazebo_env.GazeboEnv):
         return x_position, y_position
 
     def _gazebo_pause(self):
-        rospy.wait_for_service('/gazebo/pause_physics')
+        rospy.wait_for_service("/gazebo/pause_physics")
         try:
             # resp_pause = pause.call()
             self.pause()
@@ -53,7 +54,7 @@ class F1QlearnLaserEnv(gazebo_env.GazeboEnv):
             print("/gazebo/pause_physics service call failed: {}".format(e))
 
     def _gazebo_unpause(self):
-        rospy.wait_for_service('/gazebo/unpause_physics')
+        rospy.wait_for_service("/gazebo/unpause_physics")
         try:
             self.unpause()
         except rospy.ServiceException as e:
@@ -62,7 +63,7 @@ class F1QlearnLaserEnv(gazebo_env.GazeboEnv):
 
     def _gazebo_reset(self):
         # Resets the state of the environment and returns an initial observation.
-        rospy.wait_for_service('/gazebo/reset_simulation')
+        rospy.wait_for_service("/gazebo/reset_simulation")
         try:
             # reset_proxy.call()
             self.reset_proxy()
@@ -89,9 +90,9 @@ class F1QlearnLaserEnv(gazebo_env.GazeboEnv):
         state.pose.orientation.z = self.circuit["gaz_pos"][pos][6]
         state.pose.orientation.w = self.circuit["gaz_pos"][pos][7]
 
-        rospy.wait_for_service('/gazebo/set_model_state')
+        rospy.wait_for_service("/gazebo/set_model_state")
         try:
-            set_state = rospy.ServiceProxy('/gazebo/set_model_state', SetModelState)
+            set_state = rospy.ServiceProxy("/gazebo/set_model_state", SetModelState)
             set_state(state)
         except rospy.ServiceException as e:
             print("Service call failed: {}".format(e))
@@ -107,7 +108,7 @@ class F1QlearnLaserEnv(gazebo_env.GazeboEnv):
         filter_data = data.ranges[10:-10]
         for i, item in enumerate(filter_data):
             if i % mod == 0:
-                if filter_data[i] == float('Inf') or np.isinf(filter_data[i]):
+                if filter_data[i] == float("Inf") or np.isinf(filter_data[i]):
                     discrete_ranges.append(6)
                 elif np.isnan(filter_data[i]):
                     discrete_ranges.append(0)
@@ -124,8 +125,10 @@ class F1QlearnLaserEnv(gazebo_env.GazeboEnv):
     def get_center_of_laser(data):
 
         laser_len = len(data.ranges)
-        left_sum = sum(data.ranges[laser_len - (laser_len / 5):laser_len - (laser_len / 10)])  # 80-90
-        right_sum = sum(data.ranges[(laser_len / 10):(laser_len / 5)])  # 10-20
+        left_sum = sum(
+            data.ranges[laser_len - (laser_len / 5) : laser_len - (laser_len / 10)]
+        )  # 80-90
+        right_sum = sum(data.ranges[(laser_len / 10) : (laser_len / 5)])  # 10-20
 
         center_detour = (right_sum - left_sum) / 5
 
@@ -148,7 +151,9 @@ class F1QlearnLaserEnv(gazebo_env.GazeboEnv):
         success = False
         while laser_data is None or not success:
             try:
-                laser_data = rospy.wait_for_message('/F1ROS/laser/scan', LaserScan, timeout=5)
+                laser_data = rospy.wait_for_message(
+                    "/F1ROS/laser/scan", LaserScan, timeout=5
+                )
             finally:
                 success = True
 
@@ -157,8 +162,12 @@ class F1QlearnLaserEnv(gazebo_env.GazeboEnv):
         state, _ = self.discrete_observation(laser_data, 5)
 
         laser_len = len(laser_data.ranges)
-        left_sum = sum(laser_data.ranges[laser_len - (laser_len / 5):laser_len - (laser_len / 10)])  # 80-90
-        right_sum = sum(laser_data.ranges[(laser_len / 10):(laser_len / 5)])  # 10-20
+        left_sum = sum(
+            laser_data.ranges[
+                laser_len - (laser_len / 5) : laser_len - (laser_len / 10)
+            ]
+        )  # 80-90
+        right_sum = sum(laser_data.ranges[(laser_len / 10) : (laser_len / 5)])  # 10-20
         left_boundary = left_sum / 5
         right_boundary = right_sum / 5
         center_detour = right_boundary - left_boundary
@@ -181,7 +190,11 @@ class F1QlearnLaserEnv(gazebo_env.GazeboEnv):
         else:
             reward = -200
 
-        print("center: {} - actions: {} - reward: {}".format(center_detour, action, reward))
+        print(
+            "center: {} - actions: {} - reward: {}".format(
+                center_detour, action, reward
+            )
+        )
 
         return state, reward, done, {}
 
@@ -198,7 +211,9 @@ class F1QlearnLaserEnv(gazebo_env.GazeboEnv):
         success = False
         while laser_data is None or not success:
             try:
-                laser_data = rospy.wait_for_message('/F1ROS/laser/scan', LaserScan, timeout=5)
+                laser_data = rospy.wait_for_message(
+                    "/F1ROS/laser/scan", LaserScan, timeout=5
+                )
             finally:
                 success = True
 

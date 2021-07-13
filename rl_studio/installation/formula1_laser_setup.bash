@@ -10,6 +10,5 @@ bash -c 'echo "export GYM_GAZEBO_WORLD_CIRCUIT_F1="`pwd`/../assets/worlds/f1_1_s
 bash -c 'echo "export GYM_GAZEBO_WORLD_CIRCUIT_F1_LASER="`pwd`/../assets/worlds/f1_1_simplecircuit_laser.world >> ~/.bashrc'
 #export GYM_GAZEBO_WORLD_CIRCUIT_F1=`pwd`/../assets/worlds/f1_1_simplecircuit.world
 echo 'Formula 1 env variables loaded succesfully'
- 
-exec bash # reload bash
 
+exec bash # reload bash

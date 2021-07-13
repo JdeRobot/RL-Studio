@@ -3,10 +3,11 @@ import matplotlib
 import matplotlib.pyplot as plt
 import gym
 
-rewards_key = 'episode_rewards'
+rewards_key = "episode_rewards"
+
 
 class LivePlot(object):
-    def __init__(self, outdir, data_key=rewards_key, line_color='blue'):
+    def __init__(self, outdir, data_key=rewards_key, line_color="blue"):
         """
         Liveplot renders a graph of either episode_rewards or episode_lengths
         Args:
@@ -18,12 +19,12 @@ class LivePlot(object):
         self.data_key = data_key
         self.line_color = line_color
 
-        #styling options
-        matplotlib.rcParams['toolbar'] = 'None'
-        plt.style.use('ggplot')
+        # styling options
+        matplotlib.rcParams["toolbar"] = "None"
+        plt.style.use("ggplot")
         plt.xlabel("Episodes")
         plt.ylabel(data_key)
-        fig = plt.gcf().canvas.set_window_title('simulation_graph')
+        fig = plt.gcf().canvas.set_window_title("simulation_graph")
 
     def plot(self, env):
         if self.data_key is rewards_key:

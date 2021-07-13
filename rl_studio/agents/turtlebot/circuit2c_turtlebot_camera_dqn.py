@@ -1,11 +1,11 @@
 #!/usr/bin/env python
 
-'''
+"""
 Based on:
 =======
 https://github.com/vmayoral/basic_reinforcement_learning
 https://gist.github.com/wingedsheep/4199594b02138dd427c22a540d6d6b8d
-'''
+"""
 import gym
 from gym import wrappers
 import time
@@ -27,16 +27,16 @@ import tensorflow as tf
 from keras import backend as K
 
 # To equal the inputs, we set the channels first and the image next.
-K.set_image_data_format('channels_first')
+K.set_image_data_format("channels_first")
 
 
 def plot_durations():
     plt.figure(1)
     plt.clf()
 
-    plt.title('Training...')
-    plt.xlabel('Episode')
-    plt.ylabel('Duration')
+    plt.title("Training...")
+    plt.xlabel("Episode")
+    plt.ylabel("Duration")
     plt.plot(episode_durations)
 
     # Take 100 episode averages and plot them too
@@ -45,7 +45,6 @@ def plot_durations():
         plt.plot(mean_episode)
 
     plt.pause(0.001)  # pause a bit so that plots are updated
-
 
 
 episode_durations = []
@@ -62,6 +61,7 @@ class DeepQ:
             target = reward(s,a) + gamma * max(Q(s'))
 
     """
+
     def __init__(self, outputs, memorySize, discountFactor, learningRate, learnStart):
         """
         Parameters:
@@ -84,19 +84,26 @@ class DeepQ:
     def createModel(self):
         # Network structure must be directly changed here.
         model = Sequential()
-        model.add(Convolution2D(16, (3,3), strides=(2,2), input_shape=(img_channels,img_rows,img_cols)))
-        model.add(Activation('relu'))
+        model.add(
+            Convolution2D(
+                16,
+                (3, 3),
+                strides=(2, 2),
+                input_shape=(img_channels, img_rows, img_cols),
+            )
+        )
+        model.add(Activation("relu"))
         model.add(ZeroPadding2D((1, 1)))
-        model.add(Convolution2D(16, (3,3), strides=(2,2)))
-        model.add(Activation('relu'))
-        model.add(MaxPooling2D(pool_size=(2, 2), strides=(2,2)))
+        model.add(Convolution2D(16, (3, 3), strides=(2, 2)))
+        model.add(Activation("relu"))
+        model.add(MaxPooling2D(pool_size=(2, 2), strides=(2, 2)))
         model.add(Flatten())
         model.add(Dense(256))
-        model.add(Activation('relu'))
+        model.add(Activation("relu"))
         model.add(Dense(network_outputs))
-        #adam = Adam(lr=self.learningRate)
-        #model.compile(loss='mse',optimizer=adam)
-        model.compile(RMSprop(lr=self.learningRate), 'MSE')
+        # adam = Adam(lr=self.learningRate)
+        # model.compile(loss='mse',optimizer=adam)
+        model.compile(RMSprop(lr=self.learningRate), "MSE")
         model.summary()
 
         return model
@@ -144,7 +151,7 @@ class DeepQ:
         """
         if isFinal:
             return reward
-        else :
+        else:
             return reward + self.discountFactor * self.getMaxQ(qValuesNewState)
 
     # select the action with the highest Q value
@@ -161,7 +168,7 @@ class DeepQ:
         shiftBy = 0
         for value in qValues:
             if value + shiftBy < 0:
-                shiftBy = - (value + shiftBy)
+                shiftBy = -(value + shiftBy)
         shiftBy += 1e-06
 
         for value in qValues:
@@ -178,7 +185,7 @@ class DeepQ:
         rand = random.random()
         i = 0
         for value in qValueProbabilities:
-            if (rand <= value):
+            if rand <= value:
                 return i
             i += 1
 
@@ -194,19 +201,19 @@ class DeepQ:
         if self.memory.getCurrentSize() > self.learnStart:
             # learn in batches of 128
             miniBatch = self.memory.getMiniBatch(miniBatchSize)
-            X_batch = np.empty((1,img_channels,img_rows,img_cols), dtype = np.float64)
-            Y_batch = np.empty((1,self.output_size), dtype = np.float64)
+            X_batch = np.empty((1, img_channels, img_rows, img_cols), dtype=np.float64)
+            Y_batch = np.empty((1, self.output_size), dtype=np.float64)
             for sample in miniBatch:
-                isFinal = sample['isFinal']
-                state = sample['state']
-                action = sample['action']
-                reward = sample['reward']
-                newState = sample['newState']
+                isFinal = sample["isFinal"]
+                state = sample["state"]
+                action = sample["action"]
+                reward = sample["reward"]
+                newState = sample["newState"]
 
                 qValues = self.getQValues(state)
                 if useTargetNetwork:
                     qValuesNewState = self.getTargetQValues(newState)
-                else :
+                else:
                     qValuesNewState = self.getQValues(newState)
                 targetValue = self.calculateTarget(qValuesNewState, reward, isFinal)
                 X_batch = np.append(X_batch, state.copy(), axis=0)
@@ -215,8 +222,17 @@ class DeepQ:
                 Y_batch = np.append(Y_batch, np.array([Y_sample]), axis=0)
                 if isFinal:
                     X_batch = np.append(X_batch, newState.copy(), axis=0)
-                    Y_batch = np.append(Y_batch, np.array([[reward]*self.output_size]), axis=0)
-            self.model.fit(X_batch, Y_batch, validation_split=0.2, batch_size = len(miniBatch), nb_epoch=1, verbose = 0)
+                    Y_batch = np.append(
+                        Y_batch, np.array([[reward] * self.output_size]), axis=0
+                    )
+            self.model.fit(
+                X_batch,
+                Y_batch,
+                validation_split=0.2,
+                batch_size=len(miniBatch),
+                nb_epoch=1,
+                verbose=0,
+            )
 
     def saveModel(self, path):
         self.model.save(path)
@@ -224,8 +240,14 @@ class DeepQ:
     def loadWeights(self, path):
         self.model.set_weights(load_model(path).get_weights())
 
+
 def detect_monitor_files(training_dir):
-    return [os.path.join(training_dir, f) for f in os.listdir(training_dir) if f.startswith('openaigym')]
+    return [
+        os.path.join(training_dir, f)
+        for f in os.listdir(training_dir)
+        if f.startswith("openaigym")
+    ]
+
 
 def clear_monitor_files(training_dir):
     files = detect_monitor_files(training_dir)
@@ -235,39 +257,40 @@ def clear_monitor_files(training_dir):
         os.unlink(file)
 
 
-
 def setup_summaries():
-    episode_reward = tf.Variable(0.)
+    episode_reward = tf.Variable(0.0)
     tf.summary.scalar("Episode_Reward", episode_reward)
-    episode_ave_max_q = tf.Variable(0.)
+    episode_ave_max_q = tf.Variable(0.0)
     tf.summary.scalar("Max_Q_Value", episode_ave_max_q)
-    logged_epsilon = tf.Variable(0.)
+    logged_epsilon = tf.Variable(0.0)
     tf.summary.scalar("Epsilon", logged_epsilon)
-    logged_T = tf.Variable(0.)
+    logged_T = tf.Variable(0.0)
     summary_vars = [episode_reward, episode_ave_max_q, logged_epsilon]
     summary_placeholders = [tf.placeholder("float") for i in range(len(summary_vars))]
-    update_ops = [summary_vars[i].assign(summary_placeholders[i]) for i in range(len(summary_vars))]
+    update_ops = [
+        summary_vars[i].assign(summary_placeholders[i])
+        for i in range(len(summary_vars))
+    ]
     summary_op = tf.summary.merge_all()
     return summary_placeholders, update_ops, summary_op
-
 
 
 ####################################################################################################################
 # MAIN PROGRAM
 ####################################################################################################################
-if __name__ == '__main__':
+if __name__ == "__main__":
 
-    #REMEMBER!: turtlebot_cnn_setup.bash must be executed.
-    env = gym.make('GazeboCircuit2cTurtlebotCameraNnEnv-v0')
-    outdir = '/tmp/gazebo_gym_experiments/'
+    # REMEMBER!: turtlebot_cnn_setup.bash must be executed.
+    env = gym.make("GazeboCircuit2cTurtlebotCameraNnEnv-v0")
+    outdir = "/tmp/gazebo_gym_experiments/"
 
     print("=====================\nENV CREATED\n=====================")
 
     continue_execution = False
     # Fill this if continue_execution=True
-    weights_path = '/home/nachoaz/Desktop/turtle_c2c_dqn_ep6000.h5'
-    monitor_path = '/home/nachoaz/Desktop/turtle_c2c_dqn_ep6000'
-    params_json  = '/home/nachoaz/Desktop/turtle_c2c_dqn_ep6000.json'
+    weights_path = "/home/nachoaz/Desktop/turtle_c2c_dqn_ep6000.h5"
+    monitor_path = "/home/nachoaz/Desktop/turtle_c2c_dqn_ep6000"
+    params_json = "/home/nachoaz/Desktop/turtle_c2c_dqn_ep6000.json"
 
     img_rows, img_cols, img_channels = env.img_rows, env.img_cols, env.img_channels
 
@@ -276,48 +299,51 @@ if __name__ == '__main__':
 
     if not continue_execution:
         minibatch_size = 32
-        learningRate = 1e-3#1e6
+        learningRate = 1e-3  # 1e6
         discountFactor = 0.95
         network_outputs = 3
         memorySize = 100000
-        learnStart = 10000 # timesteps to observe before training
-        EXPLORE = memorySize # frames over which to anneal epsilon
-        INITIAL_EPSILON = 1 # starting value of epsilon
-        FINAL_EPSILON = 0.01 # final value of epsilon
+        learnStart = 10000  # timesteps to observe before training
+        EXPLORE = memorySize  # frames over which to anneal epsilon
+        INITIAL_EPSILON = 1  # starting value of epsilon
+        FINAL_EPSILON = 0.01  # final value of epsilon
         explorationRate = INITIAL_EPSILON
         current_epoch = 0
         stepCounter = 0
         loadsim_seconds = 0
 
-        deepQ = DeepQ(network_outputs, memorySize, discountFactor, learningRate, learnStart)
+        deepQ = DeepQ(
+            network_outputs, memorySize, discountFactor, learningRate, learnStart
+        )
         deepQ.initNetworks()
         env = gym.wrappers.Monitor(env, outdir, force=True)
     else:
-        #Load weights, monitor info and parameter info.
+        # Load weights, monitor info and parameter info.
         with open(params_json) as outfile:
             d = json.load(outfile)
-            explorationRate = d.get('explorationRate')
-            minibatch_size = d.get('minibatch_size')
-            learnStart = d.get('learnStart')
-            learningRate = d.get('learningRate')
-            discountFactor = d.get('discountFactor')
-            memorySize = d.get('memorySize')
-            network_outputs = d.get('network_outputs')
-            current_epoch = d.get('current_epoch')
-            stepCounter = d.get('stepCounter')
-            EXPLORE = d.get('EXPLORE')
-            INITIAL_EPSILON = d.get('INITIAL_EPSILON')
-            FINAL_EPSILON = d.get('FINAL_EPSILON')
-            loadsim_seconds = d.get('loadsim_seconds')
+            explorationRate = d.get("explorationRate")
+            minibatch_size = d.get("minibatch_size")
+            learnStart = d.get("learnStart")
+            learningRate = d.get("learningRate")
+            discountFactor = d.get("discountFactor")
+            memorySize = d.get("memorySize")
+            network_outputs = d.get("network_outputs")
+            current_epoch = d.get("current_epoch")
+            stepCounter = d.get("stepCounter")
+            EXPLORE = d.get("EXPLORE")
+            INITIAL_EPSILON = d.get("INITIAL_EPSILON")
+            FINAL_EPSILON = d.get("FINAL_EPSILON")
+            loadsim_seconds = d.get("loadsim_seconds")
 
-        deepQ = DeepQ(network_outputs, memorySize, discountFactor, learningRate, learnStart)
+        deepQ = DeepQ(
+            network_outputs, memorySize, discountFactor, learningRate, learnStart
+        )
         deepQ.initNetworks()
         deepQ.loadWeights(weights_path)
 
         clear_monitor_files(outdir)
-        copy_tree(monitor_path,outdir)
+        copy_tree(monitor_path, outdir)
         env = gym.wrappers.Monitor(env, outdir, resume=True)
-
 
     last100Rewards = [0] * 100
     last100RewardsIndex = 0
@@ -329,14 +355,14 @@ if __name__ == '__main__':
     start_time = time.time()
 
     # Start iterating from 'current epoch'.
-    for epoch in xrange(current_epoch+1, epochs+1, 1):
+    for epoch in xrange(current_epoch + 1, epochs + 1, 1):
         observation = env.reset()
         cumulated_reward = 0
 
         # Number of timesteps
         for step in xrange(steps):
             qValues = deepQ.getQValues(observation)
-            
+
             action = deepQ.selectAction(qValues, explorationRate)
 
             # print(action)
@@ -359,7 +385,7 @@ if __name__ == '__main__':
             if stepCounter >= learnStart:
                 deepQ.learnOnMiniBatch(minibatch_size, False)
 
-            if (step == steps-1):
+            if step == steps - 1:
                 print("reached the end")
                 done = True
 
@@ -376,21 +402,73 @@ if __name__ == '__main__':
                 m, s = divmod(int(time.time() - start_time + loadsim_seconds), 60)
                 h, m = divmod(m, 60)
                 if not last100Filled:
-                    print("EP "+str(epoch)+" - {} steps".format(step+1)+" - CReward: "+str(round(cumulated_reward, 2))+"  Eps="+str(round(explorationRate, 2))+"  Time: %d:%02d:%02d" % (h, m, s))
+                    print(
+                        "EP "
+                        + str(epoch)
+                        + " - {} steps".format(step + 1)
+                        + " - CReward: "
+                        + str(round(cumulated_reward, 2))
+                        + "  Eps="
+                        + str(round(explorationRate, 2))
+                        + "  Time: %d:%02d:%02d" % (h, m, s)
+                    )
                 else:
-                    print("EP "+str(epoch)+" - {} steps".format(step+1)+" - last100 C_Rewards : "+str(int((sum(last100Rewards)/len(last100Rewards))))+" - CReward: "+str(round(cumulated_reward, 2))+"  Eps="+str(round(explorationRate, 2))+"  Time: %d:%02d:%02d" % (h, m, s))
+                    print(
+                        "EP "
+                        + str(epoch)
+                        + " - {} steps".format(step + 1)
+                        + " - last100 C_Rewards : "
+                        + str(int((sum(last100Rewards) / len(last100Rewards))))
+                        + " - CReward: "
+                        + str(round(cumulated_reward, 2))
+                        + "  Eps="
+                        + str(round(explorationRate, 2))
+                        + "  Time: %d:%02d:%02d" % (h, m, s)
+                    )
                     1
                     # SAVE SIMULATION DATA
-                    if (epoch)%100==0:
-                        #save model weights and monitoring data every 100 epochs.
-                        deepQ.saveModel('/tmp/turtle_c2c_dqn_ep'+str(epoch)+'.h5')
+                    if (epoch) % 100 == 0:
+                        # save model weights and monitoring data every 100 epochs.
+                        deepQ.saveModel("/tmp/turtle_c2c_dqn_ep" + str(epoch) + ".h5")
                         env._flush()
-                        copy_tree(outdir,'/tmp/turtle_c2c_dqn_ep'+str(epoch))
-                        #save simulation parameters.
-                        parameter_keys = ['explorationRate','minibatch_size','learnStart','learningRate','discountFactor','memorySize','network_outputs','current_epoch','stepCounter','EXPLORE','INITIAL_EPSILON','FINAL_EPSILON','loadsim_seconds']
-                        parameter_values = [explorationRate, minibatch_size, learnStart, learningRate, discountFactor, memorySize, network_outputs, epoch, stepCounter, EXPLORE, INITIAL_EPSILON, FINAL_EPSILON,s]
-                        parameter_dictionary = dict(zip(parameter_keys, parameter_values))
-                        with open('/tmp/turtle_c2c_dqn_ep'+str(epoch)+'.json', 'w') as outfile:
+                        copy_tree(outdir, "/tmp/turtle_c2c_dqn_ep" + str(epoch))
+                        # save simulation parameters.
+                        parameter_keys = [
+                            "explorationRate",
+                            "minibatch_size",
+                            "learnStart",
+                            "learningRate",
+                            "discountFactor",
+                            "memorySize",
+                            "network_outputs",
+                            "current_epoch",
+                            "stepCounter",
+                            "EXPLORE",
+                            "INITIAL_EPSILON",
+                            "FINAL_EPSILON",
+                            "loadsim_seconds",
+                        ]
+                        parameter_values = [
+                            explorationRate,
+                            minibatch_size,
+                            learnStart,
+                            learningRate,
+                            discountFactor,
+                            memorySize,
+                            network_outputs,
+                            epoch,
+                            stepCounter,
+                            EXPLORE,
+                            INITIAL_EPSILON,
+                            FINAL_EPSILON,
+                            s,
+                        ]
+                        parameter_dictionary = dict(
+                            zip(parameter_keys, parameter_values)
+                        )
+                        with open(
+                            "/tmp/turtle_c2c_dqn_ep" + str(epoch) + ".json", "w"
+                        ) as outfile:
                             json.dump(parameter_dictionary, outfile)
                 break
 
