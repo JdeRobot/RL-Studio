@@ -22,10 +22,9 @@ from rl_studio.envs.f1.image_f1 import ImageF1
 from rl_studio.envs.f1.models.f1_env import F1Env
 
 
-class F1QlearnCameraEnv(F1Env):
+class F1CameraEnv(F1Env):
     def __init__(self, **config):
         F1Env.__init__(self, **config)
-        print(config)
         self.image = ImageF1()
         self.actions = config.get("actions")
         self.action_space = spaces.Discrete(
@@ -52,13 +51,8 @@ class F1QlearnCameraEnv(F1Env):
     @staticmethod
     def get_center(lines):
 
-        try:
-            point = np.divide(np.max(np.nonzero(lines)) - np.min(np.nonzero(lines)), 2)
-            point = np.min(np.nonzero(lines)) + point
-        except:
-            point = 9
-
-        return point
+        point = np.divide(np.max(np.nonzero(lines)) - np.min(np.nonzero(lines)), 2)
+        return np.min(np.nonzero(lines)) + point
 
     @staticmethod
     def calculate_reward(error: float) -> float:
@@ -118,9 +112,6 @@ class F1QlearnCameraEnv(F1Env):
 
         return final_state
 
-    def _seed(self, seed=None):
-        self.np_random, seed = seeding.np_random(seed)
-        return [seed]
 
     def step(self, action) -> Tuple:
 
