@@ -6,9 +6,9 @@ import gym
 import numpy as np
 
 from rl_studio.agents.f1 import liveplot
-from rl_studio.agents.f1 import settings
+from rl_studio.agents.f1.settings import QLearnConfig
 from rl_studio.agents.f1 import utils
-from rl_studio.agents.f1.algorithms.qlearn import QLearn
+from algorithms.qlearn import QLearn
 from rl_studio.visual.ascii.images import JDEROBOT_LOGO
 from rl_studio.visual.ascii.text import JDEROBOT, QLEARN_CAMERA, LETS_GO
 
@@ -20,7 +20,9 @@ def main():
     print(QLEARN_CAMERA)
     print(f"\t- Start hour: {datetime.datetime.now()}")
 
-    environment = settings.envs_params["simple"]
+    config = QLearnConfig()
+
+    environment = config.envs_params["simple"]
     env = gym.make(environment["env"], **environment)
 
     # TODO: Move to settings file
@@ -43,7 +45,7 @@ def main():
 
     qlearn = QLearn(actions=actions, alpha=0.8, gamma=0.9, epsilon=0.99)
 
-    if settings.load_model:
+    if config.load_model:
         # TODO: Folder to models. Maybe from environment variable?
         file_name = ""
         utils.load_model(qlearn, file_name)
@@ -61,7 +63,7 @@ def main():
     previous = datetime.datetime.now()
     checkpoints = []  # "ID" - x, y - time
 
-    # START ############################################################################################################
+    # START
     for episode in range(total_episodes):
 
         counter = 0
@@ -101,7 +103,7 @@ def main():
 
             env._flush(force=True)
 
-            if settings.save_positions:
+            if config.save_positions:
                 now = datetime.datetime.now()
                 if now - datetime.timedelta(seconds=3) > previous:
                     previous = datetime.datetime.now()
@@ -137,7 +139,7 @@ def main():
 
             if step > estimate_step_per_lap and not lap_completed:
                 lap_completed = True
-                if settings.plotter_graphic:
+                if config.plotter_graphic:
                     plotter.plot_steps_vs_epoch(stats, save=True)
                 utils.save_model(
                     qlearn, start_time_format, stats, states_counter, states_reward
@@ -148,7 +150,7 @@ def main():
                 )
 
             if counter > 1000:
-                if settings.plotter_graphic:
+                if config.plotter_graphic:
                     plotter.plot_steps_vs_epoch(stats, save=True)
                 qlearn.epsilon *= epsilon_discount
                 utils.save_model(
@@ -161,25 +163,25 @@ def main():
                 counter = 0
 
             if datetime.datetime.now() - datetime.timedelta(hours=2) > start_time:
-                print(settings.eop)
+                print(config.eop)
                 utils.save_model(
                     qlearn, start_time_format, stats, states_counter, states_reward
                 )
                 print(f"    - N epoch:     {episode}")
                 print(f"    - Model size:  {len(qlearn.q)}")
-                print(f"    - Action set:  {settings.actions_set}")
+                print(f"    - Action set:  {config.actions_set}")
                 print(f"    - Epsilon:     {round(qlearn.epsilon, 2)}")
                 print(f"    - Cum. reward: {cumulated_reward}")
 
                 env.close()
                 exit(0)
 
-        if episode % 1 == 0 and settings.plotter_graphic:
+        if episode % 1 == 0 and config.plotter_graphic:
             # plotter.plot(env)
             plotter.plot_steps_vs_epoch(stats)
             # plotter.full_plot(env, stats, 2)  # optional parameter = mode (0, 1, 2)
 
-        if episode % 250 == 0 and settings.save_model and episode > 1:
+        if episode % 250 == 0 and config.save_model and episode > 1:
             print(f"\nSaving model . . .\n")
             utils.save_model(
                 qlearn, start_time_format, stats, states_counter, states_reward

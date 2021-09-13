@@ -1,20 +1,13 @@
 import random
 
-import gym
 import numpy as np
-from gym import wrappers
-from keras import backend as K
-from keras import optimizers
 
 # from keras.initializers import normal
 from keras.layers import Convolution2D, Flatten, ZeroPadding2D
-from keras.layers.advanced_activations import LeakyReLU
-from keras.layers.core import Activation, Dense, Dropout
-from keras.layers.normalization import BatchNormalization
+from keras.layers.core import Activation, Dense
 from keras.layers.pooling import MaxPooling2D
 from keras.models import Sequential, load_model
-from keras.optimizers import SGD, Adam, RMSprop
-from keras.regularizers import l2
+from keras.optimizers import RMSprop
 
 import memory
 
