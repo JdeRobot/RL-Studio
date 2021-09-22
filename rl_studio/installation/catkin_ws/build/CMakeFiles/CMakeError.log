@@ -1,0 +1,58 @@
+Performing C SOURCE FILE Test CMAKE_HAVE_LIBC_PTHREAD failed with the following output:
+Change Dir: /home/rlucasz/Desktop/RL-Studio/rl_studio/installation/catkin_ws/build/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/make cmTC_dca6d/fast && /usr/bin/make -f CMakeFiles/cmTC_dca6d.dir/build.make CMakeFiles/cmTC_dca6d.dir/build
+make[1]: se entra en el directorio '/home/rlucasz/Desktop/RL-Studio/rl_studio/installation/catkin_ws/build/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_dca6d.dir/src.c.o
+/usr/bin/cc   -DCMAKE_HAVE_LIBC_PTHREAD   -o CMakeFiles/cmTC_dca6d.dir/src.c.o   -c /home/rlucasz/Desktop/RL-Studio/rl_studio/installation/catkin_ws/build/CMakeFiles/CMakeTmp/src.c
+Linking C executable cmTC_dca6d
+/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_dca6d.dir/link.txt --verbose=1
+/usr/bin/cc  -DCMAKE_HAVE_LIBC_PTHREAD    -rdynamic CMakeFiles/cmTC_dca6d.dir/src.c.o  -o cmTC_dca6d 
+/usr/bin/ld: CMakeFiles/cmTC_dca6d.dir/src.c.o: en la función `main':
+src.c:(.text+0x46): referencia a `pthread_create' sin definir
+/usr/bin/ld: src.c:(.text+0x52): referencia a `pthread_detach' sin definir
+/usr/bin/ld: src.c:(.text+0x63): referencia a `pthread_join' sin definir
+collect2: error: ld returned 1 exit status
+make[1]: *** [CMakeFiles/cmTC_dca6d.dir/build.make:87: cmTC_dca6d] Error 1
+make[1]: se sale del directorio '/home/rlucasz/Desktop/RL-Studio/rl_studio/installation/catkin_ws/build/CMakeFiles/CMakeTmp'
+make: *** [Makefile:121: cmTC_dca6d/fast] Error 2
+
+
+Source file was:
+#include <pthread.h>
+
+void* test_func(void* data)
+{
+  return data;
+}
+
+int main(void)
+{
+  pthread_t thread;
+  pthread_create(&thread, NULL, test_func, NULL);
+  pthread_detach(thread);
+  pthread_join(thread, NULL);
+  pthread_atfork(NULL, NULL, NULL);
+  pthread_exit(NULL);
+
+  return 0;
+}
+
+Determining if the function pthread_create exists in the pthreads failed with the following output:
+Change Dir: /home/rlucasz/Desktop/RL-Studio/rl_studio/installation/catkin_ws/build/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/make cmTC_a77ed/fast && /usr/bin/make -f CMakeFiles/cmTC_a77ed.dir/build.make CMakeFiles/cmTC_a77ed.dir/build
+make[1]: se entra en el directorio '/home/rlucasz/Desktop/RL-Studio/rl_studio/installation/catkin_ws/build/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_a77ed.dir/CheckFunctionExists.c.o
+/usr/bin/cc   -DCHECK_FUNCTION_EXISTS=pthread_create   -o CMakeFiles/cmTC_a77ed.dir/CheckFunctionExists.c.o   -c /usr/share/cmake-3.16/Modules/CheckFunctionExists.c
+Linking C executable cmTC_a77ed
+/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_a77ed.dir/link.txt --verbose=1
+/usr/bin/cc  -DCHECK_FUNCTION_EXISTS=pthread_create    -rdynamic CMakeFiles/cmTC_a77ed.dir/CheckFunctionExists.c.o  -o cmTC_a77ed  -lpthreads 
+/usr/bin/ld: no se puede encontrar -lpthreads
+collect2: error: ld returned 1 exit status
+make[1]: *** [CMakeFiles/cmTC_a77ed.dir/build.make:87: cmTC_a77ed] Error 1
+make[1]: se sale del directorio '/home/rlucasz/Desktop/RL-Studio/rl_studio/installation/catkin_ws/build/CMakeFiles/CMakeTmp'
+make: *** [Makefile:121: cmTC_a77ed/fast] Error 2
+
+
+

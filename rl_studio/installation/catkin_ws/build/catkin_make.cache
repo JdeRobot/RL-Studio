@@ -1,0 +1,2 @@
+
+-DCATKIN_DEVEL_PREFIX=/home/rlucasz/Desktop/RL-Studio/rl_studio/installation/catkin_ws/devel -DCMAKE_INSTALL_PREFIX=/home/rlucasz/Desktop/RL-Studio/rl_studio/installation/catkin_ws/install -G Unix Makefiles
