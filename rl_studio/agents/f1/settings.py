@@ -33,7 +33,7 @@ elif poi == 5:
     x_row = [250, 300, 350, 400, 450]
 
 
-algorithm_params = {"alpha": 0.25, "gamma": 0.8, "epsilon": 0.05, "highest_reward": 4000}
+algorithm_params = {"alpha": 0.2, "gamma": 0.9, "epsilon": 0.05, "highest_reward": 4000}
 
 # === ACTIONS === (lineal, angular)
 AVAILABLE_ACTIONS = {
