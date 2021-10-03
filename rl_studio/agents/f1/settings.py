@@ -3,14 +3,13 @@
 ###########################
 
 from pydantic import BaseModel
-from pprint import pprint
 
 
 class QLearnConfig(BaseModel):
     actions: int = 3
     debug_level: int = 0
     telemetry: bool = False
-    telemetry_mask: bool = False
+    telemetry_mask: bool = True
     plotter_graphic: bool = False
     my_board: bool = True
     save_positions: bool = False
@@ -25,11 +24,7 @@ class QLearnConfig(BaseModel):
     elif poi == 2:
         x_row = [60, 110]
     elif poi == 3:
-        x_row = [
-            10,
-            60,
-            110,
-        ]  # The first and last element is not used. Just for metrics
+        x_row = [10, 60, 110]  # The first and last element is not used. Just for metrics
     elif poi == 5:
         x_row = [250, 300, 350, 400, 450]
 
@@ -190,6 +185,3 @@ class QLearnConfig(BaseModel):
 
 
 qlearn = QLearnConfig()
-
-print(qlearn.actions)
-pprint(qlearn.dict())

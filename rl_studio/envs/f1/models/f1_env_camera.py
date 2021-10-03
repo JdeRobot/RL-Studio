@@ -42,9 +42,12 @@ class F1CameraEnv(F1Env):
 
     @staticmethod
     def get_center(lines):
-
-        point = np.divide(np.max(np.nonzero(lines)) - np.min(np.nonzero(lines)), 2)
-        return np.min(np.nonzero(lines)) + point
+        try:
+            point = np.divide(np.max(np.nonzero(lines)) - np.min(np.nonzero(lines)), 2)
+            return np.min(np.nonzero(lines)) + point
+        except ValueError:
+            print(f"No lines detected in the image")
+            return 0
 
     def calculate_reward(self, error: float) -> float:
 
@@ -55,7 +58,9 @@ class F1CameraEnv(F1Env):
 
     def processed_image(self, img: Image) -> list:
         """
-        Convert img to HSV. Get the image processed. Get 3 lines from the image.
+        - Convert img to HSV.
+        - Get the image processed.
+        - Get 3 lines from the image.
 
         :parameters: input image 640x480
         :return: x, y, z: 3 coordinates
@@ -81,8 +86,8 @@ class F1CameraEnv(F1Env):
                 # mask_points[x_row[idx], centrals[idx]] = 255
                 cv2.line(
                     mask_points,
-                    (point, self.config.x_row[idx]),
-                    (point, self.config.x_row[idx]),
+                    (int(point), int(self.config.x_row[idx])),
+                    (int(point), int(self.config.x_row[idx])),
                     (255, 255, 255),
                     thickness=3,
                 )

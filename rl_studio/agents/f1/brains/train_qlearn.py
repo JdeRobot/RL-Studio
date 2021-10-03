@@ -133,7 +133,7 @@ def main():
                 states_reward[int(episode)] = cumulated_reward
                 print(
                     f"EP: {episode + 1} - epsilon: {round(qlearn.epsilon, 2)} - Reward: {cumulated_reward}"
-                    f"- Time: {start_time_format} - Steps: {step}"
+                    f" - Time: {start_time_format} - Steps: {step}"
                 )
                 break
 
