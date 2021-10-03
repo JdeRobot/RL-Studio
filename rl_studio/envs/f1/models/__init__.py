@@ -17,9 +17,9 @@ class F1Env:
         training_type = config.get("training_type")
 
         if training_type == TrainingType.qlearn_env_camera.value:
-            from rl_studio.envs.f1.models.f1_env_qlearn_camera import F1QlearnCameraEnv
+            from rl_studio.envs.f1.models.f1_env_camera import F1CameraEnv
 
-            return F1QlearnCameraEnv(**config)
+            return F1CameraEnv(**config)
 
         elif training_type == TrainingType.qlearn_env_laser.value:
             from rl_studio.envs.f1.models.f1_env_qlearn_laser import F1QlearnLaserEnv

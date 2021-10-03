@@ -8,29 +8,20 @@ from gym import spaces
 from gym.utils import seeding
 from sensor_msgs.msg import Image
 
-from rl_studio.agents.f1.settings import (
-    telemetry,
-    x_row,
-    center_image,
-    width,
-    height,
-    telemetry_mask,
-    max_distance,
-
-)
+from rl_studio.agents.f1.settings import QLearnConfig
 from rl_studio.envs.f1.image_f1 import ImageF1
 from rl_studio.envs.f1.models.f1_env import F1Env
 
 
-class F1QlearnCameraEnv(F1Env):
+class F1CameraEnv(F1Env):
     def __init__(self, **config):
         F1Env.__init__(self, **config)
-        print(config)
         self.image = ImageF1()
         self.actions = config.get("actions")
         self.action_space = spaces.Discrete(
             len(self.actions)
         )  # actions  # spaces.Discrete(3)  # F,L,R
+        self.config = QLearnConfig()
 
     def render(self, mode="human"):
         pass
@@ -51,26 +42,25 @@ class F1QlearnCameraEnv(F1Env):
 
     @staticmethod
     def get_center(lines):
-
         try:
             point = np.divide(np.max(np.nonzero(lines)) - np.min(np.nonzero(lines)), 2)
-            point = np.min(np.nonzero(lines)) + point
-        except:
-            point = 9
+            return np.min(np.nonzero(lines)) + point
+        except ValueError:
+            print(f"No lines detected in the image")
+            return 0
 
-        return point
+    def calculate_reward(self, error: float) -> float:
 
-    @staticmethod
-    def calculate_reward(error: float) -> float:
-
-        d = np.true_divide(error, center_image)
+        d = np.true_divide(error, self.config.center_image)
         reward = np.round(np.exp(-d), 4)
 
         return reward
 
     def processed_image(self, img: Image) -> list:
         """
-        Convert img to HSV. Get the image processed. Get 3 lines from the image.
+        - Convert img to HSV.
+        - Get the image processed.
+        - Get 3 lines from the image.
 
         :parameters: input image 640x480
         :return: x, y, z: 3 coordinates
@@ -84,20 +74,20 @@ class F1QlearnCameraEnv(F1Env):
         # gray = cv2.cvtColor(mask, cv2.COLOR_BGR2GRAY)
         _, mask = cv2.threshold(line_pre_proc, 240, 255, cv2.THRESH_BINARY)
 
-        lines = [mask[x_row[idx], :] for idx, x in enumerate(x_row)]
+        lines = [mask[self.config.x_row[idx], :] for idx, x in enumerate(self.config.x_row)]
         centrals = list(map(self.get_center, lines))
 
         # if centrals[-1] == 9:
         #     centrals[-1] = center_image
 
-        if telemetry_mask:
-            mask_points = np.zeros((height, width), dtype=np.uint8)
+        if self.config.telemetry_mask:
+            mask_points = np.zeros((self.config.height, self.config.width), dtype=np.uint8)
             for idx, point in enumerate(centrals):
                 # mask_points[x_row[idx], centrals[idx]] = 255
                 cv2.line(
                     mask_points,
-                    (point, x_row[idx]),
-                    (point, x_row[idx]),
+                    (int(point), int(self.config.x_row[idx])),
+                    (int(point), int(self.config.x_row[idx])),
                     (255, 255, 255),
                     thickness=3,
                 )
@@ -107,20 +97,15 @@ class F1QlearnCameraEnv(F1Env):
 
         return centrals
 
-    @staticmethod
-    def calculate_observation(state: list) -> list:
+    def calculate_observation(self, state: list) -> list:
 
         normalize = 40
 
         final_state = []
         for _, x in enumerate(state):
-            final_state.append(int((center_image - x) / normalize) + 1)
+            final_state.append(int((self.config.center_image - x) / normalize) + 1)
 
         return final_state
-
-    def _seed(self, seed=None):
-        self.np_random, seed = seeding.np_random(seed)
-        return [seed]
 
     def step(self, action) -> Tuple:
 
@@ -150,7 +135,7 @@ class F1QlearnCameraEnv(F1Env):
         points = self.processed_image(f1_image_camera.data)
         state = self.calculate_observation(points)
 
-        center = float(center_image - points[0]) / (float(width) // 2)
+        center = float(self.config.center_image - points[0]) / (float(self.config.width) // 2)
 
         done = False
         center = abs(center)
@@ -167,7 +152,7 @@ class F1QlearnCameraEnv(F1Env):
         else:
             reward = -100
 
-        if telemetry:
+        if self.config.telemetry:
             print(f"center: {center} - actions: {action} - reward: {reward}")
             # self.show_telemetry(f1_image_camera.data, points, action, reward)
 
@@ -207,8 +192,8 @@ class F1QlearnCameraEnv(F1Env):
         self._gazebo_unpause()
 
         vel_cmd = Twist()
-        vel_cmd.linear.x = ACTIONS_SET[action][0]
-        vel_cmd.angular.z = ACTIONS_SET[action][1]
+        vel_cmd.linear.x = self.config.ACTIONS_SET[action][0]
+        vel_cmd.angular.z = self.config.ACTIONS_SET[action][1]
         self.vel_pub.publish(vel_cmd)
 
         image_data = rospy.wait_for_message(
@@ -222,7 +207,7 @@ class F1QlearnCameraEnv(F1Env):
         points = self.processed_image(f1_image_camera.data)
         state = self.calculate_observation(points)
 
-        center = float(center_image - points[0]) / (float(width) // 2)
+        center = float(self.configcenter_image - points[0]) / (float(self.config.width) // 2)
 
         done = False
         center = abs(center)
@@ -240,6 +225,6 @@ class F1QlearnCameraEnv(F1Env):
         dist = np.sum(dist, axis=0)
         dist = np.sqrt(dist)
         # print(dist)
-        if dist < max_distance:
+        if dist < self.config.max_distance:
             return True
         return False

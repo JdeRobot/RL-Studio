@@ -59,7 +59,7 @@ else
 fi
 
 # --- ZSH
- read -p "Do you use zsh? [Y/n]: " zsh
+read -p "Do you use zsh? [Y/n]: " zsh
 if [ -n "$!zsh" ]; then
   zsh -c 'echo "export GAZEBO_MODEL_PATH="`pwd`/../CustomRobots/f1/models >> ~/.zshrc'
   zsh -c 'echo "export GAZEBO_RESOURCE_PATH="`pwd`/../CustomRobots/f1/worlds >> ~/.zshrc'
@@ -67,9 +67,10 @@ if [ -n "$!zsh" ]; then
   printf ""
   printf "\nRestarting zsh terminal . . . \n"
   exec zsh
+else
+  # --- Restarting Bash
+  printf ""
+  printf "\nRestarting the terminal . . .\n"
+  exec bash
 fi
 
-# --- Restarting Bash
-printf ""
-printf "\nRestarting the terminal . . .\n"
-exec bash
