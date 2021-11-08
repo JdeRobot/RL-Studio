@@ -13,7 +13,7 @@ from rl_studio.visual.ascii.images import JDEROBOT_LOGO
 from rl_studio.visual.ascii.text import JDEROBOT, QLEARN_CAMERA, LETS_GO
 
 
-def main():
+def train_qlearn():
 
     print(JDEROBOT)
     print(JDEROBOT_LOGO)

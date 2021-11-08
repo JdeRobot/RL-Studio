@@ -1,0 +1,96 @@
+
+Dirspace: ~/RL-Studio/rl_studio #/home/docker/RL-Studio/rl_studio
+
+# Options: 
+Algorithm: qlearn
+
+# Options: f1
+Agent: f1
+
+# Options: train, test
+Method: train
+
+# Hyperparams
+Hyperparams: 
+  alpha: 0.8
+  gamma: 0.9
+  epsilon: 0.99
+  epsilon_discount: 0.9986
+  #highest_reward: 0
+  total_episodes: 3
+
+height_image: 480
+width_image: 640
+center_image: 240
+
+
+# Options: simple, nurburgring, montreal, curves, manual
+Circuit: simple
+
+# Envs 
+envs_params:
+  simple:
+    env: F1Env-v0
+    training_type: qlearn_camera #HERE YOU CHANGE THE ENV
+    circuit_name: simple
+    #actions: available_actions_simple  # Change 
+    launch: simple_circuit.launch
+    #gaz_pos: gazebo_positions_simple  # Change
+    #start_pose: gazebo_positions_simple
+    alternate_pose: False
+    estimated_steps: 4_000 #original 4000
+    sensor: camera
+    min_reward: 1_000
+
+
+actions_set: discrete_simple # values: continuous, discrete_simple, discrete_medium, discrete_hard, discrete_test    
+actions_continuous:
+  f1:
+    v_min: 0
+    v_max: 100 # m/seg
+    v_const: 30 # for testing
+    w_min: -3 # rad/seg
+    w_max: 3
+
+# rewards
+Rewards:
+  from_0_02: 10
+  from_02_04: 2
+  from_others: 1
+  from_done: -100 
+
+highest_reward: 0
+
+# ROS and GAZEBO
+ROS_MASTER_URI: '11311'
+GAZEBO_MASTER_URI: '11345'
+
+# Flags
+training_time: 6
+
+debug_level: 0
+telemetry: False
+telemetry_mask: False
+plotter_graphic: False
+
+save_every_episode: 1
+save_episodes: 1
+save_every_step: 100
+
+lap_completed: False
+my_board: True
+save_positions: False
+save_model: True
+
+load_model: False
+file_load_pickle: 1_20210622_1512_actions_set_simple_epsilon_0.99_QTABLE.pkl
+
+load_qtable: False
+table_loaded: train_qlearning_f1_simple_EPISODE_1_20210625-082424-qtable.npy
+                
+
+Title: ---------------  JdeROBOT ---------------
+Description: --------------- QLEARN - Camera ---------------
+Lets_go: --------------- GO!! ---------------
+Eop: --------------- TRAINING COMPLETED ---------------
+RaceCompleted: --------------- RACE COMPLETED---------------
