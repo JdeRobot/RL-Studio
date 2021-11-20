@@ -1,0 +1,124 @@
+settings:
+  output_dir: "./logs/"
+  save_model: True
+  save_positions: True
+  debug_level: DEBUG
+  telemetry: False
+
+agent:
+  actions: 3
+  camera:
+    witdh:
+    height:
+
+environments:
+  simple:
+    env_name: F1Env-v0
+    training_type: qlearn_camera
+    launch: simple_circuit.launch
+    gazebo_pose: simple
+    start_pose: 0
+    alternate_pose: True
+    estimated_steps: 4000
+    sensor: camera
+  nurburgring:
+    env_name: F1Env-v0
+    training_type: qlearn_camera
+    launch: nurburgring_line.launch
+    gazebo_pose: simple
+    start_pose: 0
+    alternate_pose: True
+    estimated_steps: 3500
+    sensor: camera
+  montreal:
+    env_name: F1Env-v0
+    training_type: qlearn_camera
+    launch: montreal_line.launch
+    gazebo_pose: simple
+    start_pose: 0
+    alternate_pose: True
+    estimated_steps: 8000
+    sensor: camera
+  curves:
+    env_name: F1Env-v0
+    training_type: qlearn_camera
+    launch: many_curves.launch
+    gazebo_pose: simple
+    start_pose: 0
+    alternate_pose: False
+    estimated_steps: 4000
+    sensor: camera
+  simple_laser:
+    env_name: F1Env-v0
+    training_type: qlearn_laser
+    launch: f1_montreal.launch
+    gazebo_pose: simple
+    start_pose: 0
+    alternate_pose: False
+    estimated_steps: 4000
+    sensor: laser
+  manual:
+    env_name: F1Env-v0
+    training_type: qlearn_camera
+    launch: simple_circuit.launch
+    gazebo_pose: simple
+    start_pose: 0
+    alternate_pose: False
+    estimated_steps: 4000
+    sensor: camera
+
+
+algorithm:
+    qlearn:
+      alpha: 0.2
+      epsilon: 0.95
+      gamma: 0.9
+      actions_set: simple
+      available_actions:
+        # [lineal, angular]
+        simple:
+          0: [3, 0]
+          1: [2, 1]
+          2: [2, -1]
+        medium:
+          0: [3, 0]
+          1: [2, 1]
+          2: [2, -1]
+          3: [1, 1.5]
+          4: [1, -1.5]
+        hard:
+          0: [3, 0]
+          1: [2, 1]
+          2: [2, -1]
+          3: [1.5, 1]
+          4: [1.5, -1]
+          5: [1, -1.5]
+          6: [1, -1.5]
+        test:
+          0: [0, 0]
+    dqn:
+
+    sarsa:
+
+gazebo:
+  circuit_positions:  #  x, y, z, roll, pith, ???. yaw
+    simple:
+      - [0, 53.462, -41.988, 0.004, 0, 0, 1.57, -1.57]
+      - [1, 53.462, -8.734, 0.004, 0, 0, 1.57, -1.57]
+      - [2, 39.712, -30.741, 0.004, 0, 0, 1.56, 1.56]
+      - [3, -6.861, -36.481, 0.004, 0, 0.01, -0.858, 0.613]
+      - [4, 20.043, 37.130, 0.003, 0, 0.103, -1.4383, -1.4383]
+    nurburgring:
+      - [0, -32.3188, 12.2921, 0, 0.0014, 0.0049, -0.2727, 0.9620]
+      - [1, -30.6566, -21.4929, 0, 0.0014, 0.0049, -0.4727, 0.8720]
+      - [2, 28.0352, -17.7923, 0, 0.0001, 0.0051, -0.028, 1]
+      - [3, 88.7408, -31.7120, 0, 0.0030, 0.0041, -0.1683, 0.98]
+      - [4, -73.2172, 11.8508, 0, 0.0043, -0.0027, 0.8517, 0.5173]
+      - [5, -73.6672, 37.4308, 0, 0.0043, -0.0027, 0.8517, 0.5173]
+    montreal:
+      - [0, -201.88, -91.02, 0, 0.00, 0.001, 0.98, -0.15]
+      - [1, -278.71, -95.50, 0, 0.00, 0.001, 1, 0.03]
+      - [2, -272.93, -17.70, 0, 0.0001, 0.001, 0.48, 0.87]
+      - [3, -132.73, 55.82, 0, 0.0030, 0.0041, -0.02, 0.9991]
+      - [4, 294.99, 91.54, 0, 0.0043, -0.0027, 0.14, 0.99]
+
