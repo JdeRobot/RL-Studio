@@ -5,11 +5,12 @@ settings:
   debug_level: DEBUG
   telemetry: False
 
-agent:
-  actions: 3
-  camera:
-    witdh:
-    height:
+agents:
+  f1:
+    actions: 3
+    camera:
+      witdh: 640
+      height: 480
 
 environments:
   simple:

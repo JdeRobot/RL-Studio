@@ -14,12 +14,19 @@ from rl_studio.visual.ascii.text import JDEROBOT, QLEARN_CAMERA, LETS_GO
 
 class QlearnTrainer:
 
-    def __init__(self, **kwargs):
-        self.alpha = kwargs.get("alpha")
-        self.epsilon = kwargs.get("epsilon")
-        self.gamma = kwargs.get("gamma")
-        self.actions_set = kwargs.get("actions_set")
-        self.action_values = kwargs.get("action_values")
+    def __init__(self, trainer_params):
+        # self.alpha = kwargs.get("alpha")
+        # self.epsilon = kwargs.get("epsilon")
+        # self.gamma = kwargs.get("gamma")
+        # self.actions_set = kwargs.get("actions_set")
+        # self.action_values = kwargs.get("action_values")
+
+        self.params = trainer_params.algorithm
+        # self.alpha = trainer_params.alpha
+        # self.epsilon = trainer_params.epsilon
+        # self.gamma = trainer_params.gamma
+        self.actions_set = trainer_params.actions_set
+        self.action_values = trainer_params.action_values
 
     def main(self):
 
