@@ -11,8 +11,13 @@ from algorithms.qlearn import QLearn
 from rl_studio.visual.ascii.images import JDEROBOT_LOGO
 from rl_studio.visual.ascii.text import JDEROBOT, QLEARN_CAMERA, LETS_GO
 
+from pydantic import BaseModel
 
 class QlearnTrainer:
+
+    # class QlearnValidator(BaseModel):
+
+
 
     def __init__(self, trainer_params):
         # self.alpha = kwargs.get("alpha")
@@ -21,11 +26,14 @@ class QlearnTrainer:
         # self.actions_set = kwargs.get("actions_set")
         # self.action_values = kwargs.get("action_values")
 
-        self.params = trainer_params.algorithm
+        self.params = self.QlearnValidator(trainer_params)
+        print(self.params["qlearn"])
+        print("-----------------")
+        print(self.params.extra.action_set)
         # self.alpha = trainer_params.alpha
         # self.epsilon = trainer_params.epsilon
         # self.gamma = trainer_params.gamma
-        self.actions_set = trainer_params.actions_set
+        self.actions_set = trainer_params.algorithm
         self.action_values = trainer_params.action_values
 
     def main(self):

@@ -14,4 +14,5 @@ class TrainerValidator(BaseModel):
     settings: dict
     agent: dict
     environments: dict
-    algorithm = dict
+    algorithm: dict
+    gazebo: dict
