@@ -17,10 +17,11 @@ class F1CameraEnv(F1Env):
     def __init__(self, **config):
         F1Env.__init__(self, **config)
         self.image = ImageF1()
+        print(f"\n\nCONFIGGGG: {config}")
         self.actions = config.get("actions")
-        self.action_space = spaces.Discrete(
-            len(self.actions)
-        )  # actions  # spaces.Discrete(3)  # F,L,R
+        self.action_space = spaces.Discrete(3)
+            # len(self.actions)
+        # )  # actions  # spaces.Discrete(3)  # F,L,R
         self.config = QLearnConfig()
 
     def render(self, mode="human"):

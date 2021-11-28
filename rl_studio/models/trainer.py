@@ -13,6 +13,6 @@ class QlearnValidator(BaseModel):
 class TrainerValidator(BaseModel):
     settings: dict
     agent: dict
-    environments: dict
+    environment: dict
     algorithm: dict
     gazebo: dict

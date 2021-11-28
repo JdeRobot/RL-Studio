@@ -40,9 +40,11 @@ def main():
     # print(f"INPUT CONFIGURATION FILE:\n{yaml.dump(config_file, indent=4)}")
 
     trainer_params = {
+        "settings": config_file["settings"],
         "algorithm": get_algorithm(config_file, args.algorithm),
         "environment": get_environment(config_file, args.environment),
         "agent": get_agent(config_file, args.agent),
+        "gazebo": config_file["gazebo"]
     }
 
     # config = read_config(args.config_file)
@@ -53,9 +55,9 @@ def main():
     # os.makedirs("images", exist_ok=True)
 
     # PARAMS
-    print(yaml.dump(trainer_params, indent=4))
+    # print(yaml.dump(trainer_params, indent=4))
     params = TrainerValidator(**trainer_params)
-    print(params)
+    # print(params)
     #print(params)
     trainer = QlearnTrainer(params)
     trainer.main()

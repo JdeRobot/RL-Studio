@@ -7,10 +7,34 @@ settings:
 
 agent:
   f1:
-    actions: 3
-    camera:
+    camera_params:
       witdh: 640
       height: 480
+    actions_number: 3
+    actions_set: simple
+    available_actions:
+      # [lineal, angular]
+      simple:
+        0: [ 3, 0 ]
+        1: [ 2, 1 ]
+        2: [ 2, -1 ]
+      medium:
+        0: [ 3, 0 ]
+        1: [ 2, 1 ]
+        2: [ 2, -1 ]
+        3: [ 1, 1.5 ]
+        4: [ 1, -1.5 ]
+      hard:
+        0: [ 3, 0 ]
+        1: [ 2, 1 ]
+        2: [ 2, -1 ]
+        3: [ 1.5, 1 ]
+        4: [ 1.5, -1 ]
+        5: [ 1, -1.5 ]
+        6: [ 1, -1.5 ]
+      test:
+        0: [ 0, 0 ]
+
 
 environments:
   simple:
@@ -74,30 +98,7 @@ algorithm:
       alpha: 0.2
       epsilon: 0.95
       gamma: 0.9
-      extra:
-        actions_set: simple
-        available_actions:
-          # [lineal, angular]
-          simple:
-            0: [3, 0]
-            1: [2, 1]
-            2: [2, -1]
-          medium:
-            0: [3, 0]
-            1: [2, 1]
-            2: [2, -1]
-            3: [1, 1.5]
-            4: [1, -1.5]
-          hard:
-            0: [3, 0]
-            1: [2, 1]
-            2: [2, -1]
-            3: [1.5, 1]
-            4: [1.5, -1]
-            5: [1, -1.5]
-            6: [1, -1.5]
-          test:
-            0: [0, 0]
+
     dqn:
 
     sarsa:

@@ -1,52 +1,44 @@
 import datetime
 import time
 from functools import reduce
+from pprint import pprint
 
 import gym
 import numpy as np
 
-from rl_studio.agents.f1.settings import QLearnConfig
 from agents import utils, liveplot
 from algorithms.qlearn import QLearn
+from rl_studio.agents.f1.settings import QLearnConfig
 from rl_studio.visual.ascii.images import JDEROBOT_LOGO
 from rl_studio.visual.ascii.text import JDEROBOT, QLEARN_CAMERA, LETS_GO
 
-from pydantic import BaseModel
 
 class QlearnTrainer:
 
-    # class QlearnValidator(BaseModel):
-
-
-
-    def __init__(self, trainer_params):
-        # self.alpha = kwargs.get("alpha")
-        # self.epsilon = kwargs.get("epsilon")
-        # self.gamma = kwargs.get("gamma")
-        # self.actions_set = kwargs.get("actions_set")
-        # self.action_values = kwargs.get("action_values")
-
-        self.params = self.QlearnValidator(trainer_params)
-        print(self.params["qlearn"])
-        print("-----------------")
-        print(self.params.extra.action_set)
-        # self.alpha = trainer_params.alpha
-        # self.epsilon = trainer_params.epsilon
-        # self.gamma = trainer_params.gamma
-        self.actions_set = trainer_params.algorithm
-        self.action_values = trainer_params.action_values
+    def __init__(self, params):
+        # TODO: Create a pydantic metaclass to simplify the way we extract the params
+        # environment params
+        self.environment = params.environment["params"]
+        self.env_name = params.environment["params"]["env_name"]
+        # algorithm params
+        self.alpha = params.algorithm["params"]["alpha"]
+        self.epsilon = params.algorithm["params"]["epsilon"]
+        self.gamma = params.algorithm["params"]["gamma"]
+        # agent
+        self.action_number = params.agent["params"]["actions_number"]
+        self.actions_set = params.agent["params"]["actions_set"]
+        self.actions_values = params.agent["params"]["available_actions"][self.actions_set]
 
     def main(self):
 
         print(JDEROBOT)
         print(JDEROBOT_LOGO)
         print(QLEARN_CAMERA)
-        print(f"\t- Start hour: {datetime.datetime.now()}")
-
+        print(f"\t- Start hour: {datetime.datetime.now()}\n")
+        pprint(f"\t- Environment params:\n{self.environment}", indent=4)
         config = QLearnConfig()
 
-        environment = config.envs_params["simple"]
-        env = gym.make(environment["env"], **environment)
+        env = gym.make(self.env_name, **self.environment)
 
         # TODO: Move to settings file
         outdir = "./logs/f1_qlearn_gym_experiments/"
@@ -58,10 +50,10 @@ class QlearnTrainer:
 
         last_time_steps = np.ndarray(0)
 
-        actions = range(env.action_space.n)
+        actions = range(3)# range(env.action_space.n)
         env = gym.wrappers.Monitor(env, outdir, force=True)
         counter = 0
-        estimate_step_per_lap = environment["estimated_steps"]
+        estimate_step_per_lap = self.environment["estimated_steps"]
         lap_completed = False
         total_episodes = 20000
         epsilon_discount = 0.9986  # Default 0.9986
