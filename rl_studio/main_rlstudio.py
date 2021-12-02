@@ -55,10 +55,7 @@ def main():
     # os.makedirs("images", exist_ok=True)
 
     # PARAMS
-    # print(yaml.dump(trainer_params, indent=4))
     params = TrainerValidator(**trainer_params)
-    # print(params)
-    #print(params)
     trainer = QlearnTrainer(params)
     trainer.main()
 

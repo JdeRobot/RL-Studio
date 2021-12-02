@@ -18,8 +18,9 @@ class QlearnTrainer:
     def __init__(self, params):
         # TODO: Create a pydantic metaclass to simplify the way we extract the params
         # environment params
-        self.environment = params.environment["params"]
+        self.environment_params = params.environment["params"]
         self.env_name = params.environment["params"]["env_name"]
+        self.env = gym.make(self.env_name, **params.environment["params"])
         # algorithm params
         self.alpha = params.algorithm["params"]["alpha"]
         self.epsilon = params.algorithm["params"]["epsilon"]
@@ -38,8 +39,6 @@ class QlearnTrainer:
         pprint(f"\t- Environment params:\n{self.environment}", indent=4)
         config = QLearnConfig()
 
-        env = gym.make(self.env_name, **self.environment)
-
         # TODO: Move to settings file
         outdir = "./logs/f1_qlearn_gym_experiments/"
         stats = {}  # epoch: steps
@@ -50,8 +49,8 @@ class QlearnTrainer:
 
         last_time_steps = np.ndarray(0)
 
-        actions = range(3)# range(env.action_space.n)
-        env = gym.wrappers.Monitor(env, outdir, force=True)
+        actions = range(3)  # range(env.action_space.n)
+        env = gym.wrappers.Monitor(self.env, outdir, force=True)
         counter = 0
         estimate_step_per_lap = self.environment["estimated_steps"]
         lap_completed = False
