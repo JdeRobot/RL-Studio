@@ -1,5 +1,5 @@
 from rl_studio.envs.f1.env_type import EnvironmentType
-from rl_studio.envs.f1.exceptions import NoValidTrainingType
+from rl_studio.envs.f1.exceptions import NoValidEnvironmentType
 
 
 class F1Env:
@@ -39,4 +39,4 @@ class F1Env:
             return GazeboF1ManualCameraEnv(**config)
 
         else:
-            raise NoValidTrainingType(training_type)
+            raise NoValidEnvironmentType(training_type)
