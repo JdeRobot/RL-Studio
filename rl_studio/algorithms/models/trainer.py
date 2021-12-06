@@ -1,13 +1,4 @@
-from pydantic import BaseModel, create_model
-from typing import Dict
-
-
-class QlearnValidator(BaseModel):
-    alpha: float
-    epsilon: float
-    gamma: float
-    actions_set: str = "simple"
-    available_actions: dict
+from pydantic import BaseModel
 
 
 class TrainerValidator(BaseModel):
@@ -16,3 +7,8 @@ class TrainerValidator(BaseModel):
     environment: dict
     algorithm: dict
     gazebo: dict
+
+
+# class TrainerFactory:
+#
+#     def __init__(self):
