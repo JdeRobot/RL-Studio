@@ -11,7 +11,7 @@ class F1Env(gazebo_env.GazeboEnv):
     def __init__(self, **config):
         gazebo_env.GazeboEnv.__init__(self, config.get("launch"))
         self.circuit = config.get("simple")
-        self.alternate_pose = config.get("algernate_pose")
+        self.alternate_pose = config.get("alternate_pose")
         self.vel_pub = rospy.Publisher("/F1ROS/cmd_vel", Twist, queue_size=5)
         self.unpause = rospy.ServiceProxy("/gazebo/unpause_physics", Empty)
         self.pause = rospy.ServiceProxy("/gazebo/pause_physics", Empty)
