@@ -1,10 +1,10 @@
-import json
 import argparse
 
 import yaml
 
-from rl_studio.agents.f1.train_qlearn import QlearnTrainer
-from rl_studio.models.trainer import TrainerValidator
+from agents.trainer import TrainerValidator
+from rl_studio.agents import TrainerFactory
+from rl_studio.agents.trainer import AgentTrainer, TrainerValidator
 
 
 def get_algorithm(config_file: dict, input_algorithm: str) -> dict:
@@ -56,7 +56,8 @@ def main():
 
     # PARAMS
     params = TrainerValidator(**trainer_params)
-    trainer = QlearnTrainer(params)
+    # trainer = QlearnTrainer(params)
+    trainer = TrainerFactory(params)
     trainer.main()
 
 
