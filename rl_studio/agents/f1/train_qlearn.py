@@ -14,10 +14,9 @@ from rl_studio.visual.ascii.text import JDEROBOT, QLEARN_CAMERA, LETS_GO
 from rl_studio.agents import TrainerFactory
 
 
-class F1Trainer(TrainerFactory):
+class F1Trainer:
 
     def __init__(self, params):
-        TrainerFactory.__init__(self, **params)
         # TODO: Create a pydantic metaclass to simplify the way we extract the params
         # environment params
         self.environment_params = params.environment["params"]
