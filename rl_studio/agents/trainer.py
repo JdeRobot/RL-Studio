@@ -1,3 +1,5 @@
+from abc import ABC
+
 from pydantic import BaseModel
 
 
@@ -9,6 +11,5 @@ class TrainerValidator(BaseModel):
     gazebo: dict
 
 
-# class TrainerFactory:
-#
-#     def __init__(self):
+class AgentTrainer(ABC):
+    pass

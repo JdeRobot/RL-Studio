@@ -11,11 +11,13 @@ from algorithms.qlearn import QLearn
 from rl_studio.agents.f1.settings import QLearnConfig
 from rl_studio.visual.ascii.images import JDEROBOT_LOGO
 from rl_studio.visual.ascii.text import JDEROBOT, QLEARN_CAMERA, LETS_GO
+from rl_studio.agents import TrainerFactory
 
 
-class QlearnTrainer:
+class F1Trainer(TrainerFactory):
 
     def __init__(self, params):
+        TrainerFactory.__init__(self, **params)
         # TODO: Create a pydantic metaclass to simplify the way we extract the params
         # environment params
         self.environment_params = params.environment["params"]

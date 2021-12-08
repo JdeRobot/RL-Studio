@@ -3,19 +3,19 @@ from rl_studio.agents.exceptions import NoValidTrainingType
 
 
 class TrainerFactory:
-    def __new__(cls, **config):
+    def __new__(cls, config):
 
-        agent = config.get("agent")
+        agent = config.agent["name"]
 
         if agent == AgentsType.F1.value:
-            from rl_studio.agents.f1.train_qlearn import QlearnTrainer
+            from rl_studio.agents.f1.train_qlearn import F1Trainer
 
-            return QlearnTrainer(**config)
+            return F1Trainer(config)
 
         elif agent == AgentsType.TURTLEBOT.value:
             from rl_studio.agents.turtlebot.turtlebot_trainer import TurtlebotTrainer
 
-            return TurtlebotTrainer(**config)
+            return TurtlebotTrainer(config)
 
         else:
             raise NoValidTrainingType(agent)
