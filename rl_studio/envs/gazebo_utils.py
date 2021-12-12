@@ -5,24 +5,26 @@ from gazebo_msgs.msg import ModelState
 from gazebo_msgs.srv import SetModelState
 
 
-def set_new_pose(self):
+def set_new_pose(circuit_positions_set):
     """
+    Receives the set of circuit positions (specified in the yml configuration file)
+    and returns the index of the selected random position.
+
     (pos_number, pose_x, pose_y, pose_z, or_x, or_y, or_z, or_z)
     """
-    pos = random.choice(list(enumerate(self.circuit["gaz_pos"])))[0]
-    self.position = pos
-
-    pos_number = self.circuit["gaz_pos"][0]
+    position = random.choice(list(enumerate(circuit_positions_set)))[0]
+    print(position)
+    # pos_number = int(circuit_positions_set[0])
 
     state = ModelState()
     state.model_name = "f1_renault"
-    state.pose.position.x = self.circuit["gaz_pos"][pos][1]
-    state.pose.position.y = self.circuit["gaz_pos"][pos][2]
-    state.pose.position.z = self.circuit["gaz_pos"][pos][3]
-    state.pose.orientation.x = self.circuit["gaz_pos"][pos][4]
-    state.pose.orientation.y = self.circuit["gaz_pos"][pos][5]
-    state.pose.orientation.z = self.circuit["gaz_pos"][pos][6]
-    state.pose.orientation.w = self.circuit["gaz_pos"][pos][7]
+    state.pose.position.x = circuit_positions_set[position][1]
+    state.pose.position.y = circuit_positions_set[position][2]
+    state.pose.position.z = circuit_positions_set[position][3]
+    state.pose.orientation.x = circuit_positions_set[position][4]
+    state.pose.orientation.y = circuit_positions_set[position][5]
+    state.pose.orientation.z = circuit_positions_set[position][6]
+    state.pose.orientation.w = circuit_positions_set[position][7]
 
     rospy.wait_for_service("/gazebo/set_model_state")
     try:
@@ -30,4 +32,4 @@ def set_new_pose(self):
         set_state(state)
     except rospy.ServiceException as e:
         print("Service call failed: {}".format(e))
-    return pos_number
+    return position
