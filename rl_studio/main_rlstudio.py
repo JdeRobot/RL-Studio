@@ -56,6 +56,7 @@ def main():
 
     # PARAMS
     params = TrainerValidator(**trainer_params)
+    print(f"\n\nPARAMS:\n{params}\n")
     # trainer = QlearnTrainer(params)
     trainer = TrainerFactory(params)
     trainer.main()

@@ -11,7 +11,6 @@ from algorithms.qlearn import QLearn
 from rl_studio.agents.f1.settings import QLearnConfig
 from rl_studio.visual.ascii.images import JDEROBOT_LOGO
 from rl_studio.visual.ascii.text import JDEROBOT, QLEARN_CAMERA, LETS_GO
-from rl_studio.agents import TrainerFactory
 
 
 class F1Trainer:
@@ -37,7 +36,7 @@ class F1Trainer:
         print(JDEROBOT_LOGO)
         print(QLEARN_CAMERA)
         print(f"\t- Start hour: {datetime.datetime.now()}\n")
-        pprint(f"\t- Environment params:\n{self.environment}", indent=4)
+        pprint(f"\t- Environment params:\n{self.environment_params}", indent=4)
         config = QLearnConfig()
 
         # TODO: Move to settings file
@@ -53,7 +52,7 @@ class F1Trainer:
         actions = range(3)  # range(env.action_space.n)
         env = gym.wrappers.Monitor(self.env, outdir, force=True)
         counter = 0
-        estimate_step_per_lap = self.environment["estimated_steps"]
+        estimate_step_per_lap = self.environment_params["estimated_steps"]
         lap_completed = False
         total_episodes = 20000
         epsilon_discount = 0.9986  # Default 0.9986

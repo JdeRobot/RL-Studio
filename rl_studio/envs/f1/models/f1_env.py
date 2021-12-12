@@ -10,8 +10,10 @@ from rl_studio.envs import gazebo_env
 class F1Env(gazebo_env.GazeboEnv):
     def __init__(self, **config):
         gazebo_env.GazeboEnv.__init__(self, config.get("launch"))
-        self.circuit = config.get("simple")
+        self.circuit_name = config.get("circuit_name")
+        self.circuit_positions_set = config.get("circuit_positions_set")
         self.alternate_pose = config.get("alternate_pose")
+
         self.vel_pub = rospy.Publisher("/F1ROS/cmd_vel", Twist, queue_size=5)
         self.unpause = rospy.ServiceProxy("/gazebo/unpause_physics", Empty)
         self.pause = rospy.ServiceProxy("/gazebo/pause_physics", Empty)
