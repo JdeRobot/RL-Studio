@@ -8,7 +8,7 @@ class TrainerValidator(BaseModel):
     agent: dict
     environment: dict
     algorithm: dict
-    gazebo: dict
+    # gazebo: dict
 
 
 class AgentTrainer(ABC):

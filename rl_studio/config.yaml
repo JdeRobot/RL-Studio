@@ -10,6 +10,8 @@ agent:
     camera_params:
       witdh: 640
       height: 480
+
+actions:
     actions_number: 3
     actions_set: simple
     available_actions:

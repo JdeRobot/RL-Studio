@@ -20,15 +20,18 @@ class F1Trainer:
         # environment params
         self.environment_params = params.environment["params"]
         self.env_name = params.environment["params"]["env_name"]
-        self.env = gym.make(self.env_name, **params.environment["params"])
+        env_params = params.environment["params"]
+        actions = params.environment["actions"]
+        env_params["actions"] = actions
+        self.env = gym.make(self.env_name, **env_params)
         # algorithm params
         self.alpha = params.algorithm["params"]["alpha"]
         self.epsilon = params.algorithm["params"]["epsilon"]
         self.gamma = params.algorithm["params"]["gamma"]
         # agent
-        self.action_number = params.agent["params"]["actions_number"]
-        self.actions_set = params.agent["params"]["actions_set"]
-        self.actions_values = params.agent["params"]["available_actions"][self.actions_set]
+        # self.action_number = params.agent["params"]["actions_number"]
+        # self.actions_set = params.agent["params"]["actions_set"]
+        # self.actions_values = params.agent["params"]["available_actions"][self.actions_set]
 
     def main(self):
 

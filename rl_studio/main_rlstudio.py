@@ -1,5 +1,5 @@
 import argparse
-
+import json
 import yaml
 
 from agents.trainer import TrainerValidator
@@ -18,6 +18,7 @@ def get_environment(config_file: dict, input_env: str) -> dict:
     return {
         "name": input_env,
         "params": config_file["environments"][input_env],
+        "actions": config_file["actions"]["available_actions"][input_env],
     }
 
 
@@ -44,7 +45,6 @@ def main():
         "algorithm": get_algorithm(config_file, args.algorithm),
         "environment": get_environment(config_file, args.environment),
         "agent": get_agent(config_file, args.agent),
-        "gazebo": config_file["gazebo"]
     }
 
     # config = read_config(args.config_file)
@@ -56,7 +56,8 @@ def main():
 
     # PARAMS
     params = TrainerValidator(**trainer_params)
-    print(f"\n\nPARAMS:\n{params}\n")
+    print("PARAMS:\n")
+    print(json.dumps(dict(params), indent=2))
     # trainer = QlearnTrainer(params)
     trainer = TrainerFactory(params)
     trainer.main()

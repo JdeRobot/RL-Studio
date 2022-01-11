@@ -9,7 +9,6 @@ class TrainerFactory:
 
         if agent == AgentsType.F1.value:
             from rl_studio.agents.f1.train_qlearn import F1Trainer
-
             return F1Trainer(config)
 
         elif agent == AgentsType.TURTLEBOT.value:
