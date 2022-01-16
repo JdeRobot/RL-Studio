@@ -1,3 +1,7 @@
+"""
+References: http://www.patorjk.com/software/taag/#p=display&f=Sub-Zero&t=Aliasrc%20
+"""
+
 JDEROBOT_LOGO = """
                       ``..--------..``                      
                  `.-:/::--.........--:/:-.`                 
