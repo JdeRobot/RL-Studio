@@ -11,6 +11,7 @@ from sensor_msgs.msg import Image
 from rl_studio.agents.f1.settings import QLearnConfig
 from rl_studio.envs.f1.image_f1 import ImageF1
 from rl_studio.envs.f1.models.f1_env import F1Env
+from rl_studio.envs.gazebo_utils import set_new_pose
 
 
 class F1CameraEnv(F1Env):
@@ -18,9 +19,9 @@ class F1CameraEnv(F1Env):
         F1Env.__init__(self, **config)
         self.image = ImageF1()
         self.actions = config.get("actions")
-        self.action_space = spaces.Discrete(
-            len(self.actions)
-        )  # actions  # spaces.Discrete(3)  # F,L,R
+        self.action_space = spaces.Discrete(3)
+            # len(self.actions)
+        # )  # actions  # spaces.Discrete(3)  # F,L,R
         self.config = QLearnConfig()
 
     def render(self, mode="human"):
@@ -161,7 +162,7 @@ class F1CameraEnv(F1Env):
     def reset(self):
         # === POSE ===
         if self.alternate_pose:
-            self.set_new_pose()
+            pos_number = set_new_pose(self.circuit_positions_set)
         else:
             self._gazebo_reset()
 
