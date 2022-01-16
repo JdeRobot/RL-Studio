@@ -2,9 +2,8 @@ import argparse
 import json
 import yaml
 
-from agents.trainer import TrainerValidator
 from rl_studio.agents import TrainerFactory
-from rl_studio.agents.trainer import AgentTrainer, TrainerValidator
+from rl_studio.agents.trainer import TrainerValidator
 
 
 def get_algorithm(config_file: dict, input_algorithm: str) -> dict:
@@ -47,10 +46,7 @@ def main():
         "agent": get_agent(config_file, args.agent),
     }
 
-    # config = read_config(args.config_file)
-    # execute_algor = f"{config['Method']}_{config['Algorithm']}"
-
-    # CHECK DIRS
+    # TODO: Create function to check dirs
     # os.makedirs("logs", exist_ok=True)
     # os.makedirs("images", exist_ok=True)
 
@@ -58,7 +54,6 @@ def main():
     params = TrainerValidator(**trainer_params)
     print("PARAMS:\n")
     print(json.dumps(dict(params), indent=2))
-    # trainer = QlearnTrainer(params)
     trainer = TrainerFactory(params)
     trainer.main()
 

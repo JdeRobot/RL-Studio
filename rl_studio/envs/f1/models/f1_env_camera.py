@@ -18,7 +18,6 @@ class F1CameraEnv(F1Env):
     def __init__(self, **config):
         F1Env.__init__(self, **config)
         self.image = ImageF1()
-        print(f"\n\nCONFIGGGG: {config}")
         self.actions = config.get("actions")
         self.action_space = spaces.Discrete(3)
             # len(self.actions)
@@ -164,7 +163,6 @@ class F1CameraEnv(F1Env):
         # === POSE ===
         if self.alternate_pose:
             pos_number = set_new_pose(self.circuit_positions_set)
-            print(f"Pos number: {pos_number}")
         else:
             self._gazebo_reset()
 

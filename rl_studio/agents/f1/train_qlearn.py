@@ -42,7 +42,7 @@ class F1Trainer:
         pprint(f"\t- Environment params:\n{self.environment_params}", indent=4)
         config = QLearnConfig()
 
-        # TODO: Move to settings file
+        # TODO: Move init method
         outdir = "./logs/f1_qlearn_gym_experiments/"
         stats = {}  # epoch: steps
         states_counter = {}
@@ -60,6 +60,7 @@ class F1Trainer:
         total_episodes = 20000
         epsilon_discount = 0.9986  # Default 0.9986
 
+        # TODO: Call the algorithm factory passing "qlearn" as parameter.
         qlearn = QLearn(actions=actions, alpha=self.alpha, gamma=0.9, epsilon=0.99)
 
         if config.load_model:
@@ -216,7 +217,6 @@ class F1Trainer:
         l = last_time_steps.tolist()
         l.sort()
 
-        # print("Parameters: a="+str)
         print("Overall score: {:0.2f}".format(last_time_steps.mean()))
         print(
             "Best 100 score: {:0.2f}".format(
