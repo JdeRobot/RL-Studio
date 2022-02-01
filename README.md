@@ -92,7 +92,7 @@ wrappers/
 The following routes will be added to the `.bashrc` file:
 
 ```bash
-cd ~/PATH/TO/rl_studio/rl_studio/CustomRobots/f1/worlds
+cd ~/PATH/TO/rl_studio/CustomRobots/f1/worlds
 export GAZEBO_RESOURCE_PATH=$PWD
 ```
 
