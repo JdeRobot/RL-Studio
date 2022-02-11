@@ -30,7 +30,7 @@ ic.enable()
 ic.configureOutput(prefix=f'{datetime.now()} | ')
 
 
-def save_stats_episodes(config, outdir, aggr_ep_rewards, current_time):
+def save_stats_episodes(environment, outdir, aggr_ep_rewards, current_time):
     '''
             We save info of EPISODES in a dataframe to export or manage
     '''
@@ -38,18 +38,19 @@ def save_stats_episodes(config, outdir, aggr_ep_rewards, current_time):
     outdir_episode = f"{outdir}_stats"
     os.makedirs(f"{outdir_episode}", exist_ok=True)
 
-    #file = open(f"{outdir_episode}/{current_time}_Circuit-{config['circuit']}_States-{config['state_space']}_Actions-{config['action_space']}_rewards.csv", "a")
-    file_csv = f"{outdir_episode}/{current_time}_Circuit-{config['circuit']}_States-{config['state_space']}_Actions-{config['action_space']}_rewards-{config['reward_function']}.csv"
-    file_excel = f"{outdir_episode}/{current_time}_Circuit-{config['circuit']}_States-{config['state_space']}_Actions-{config['action_space']}_rewards-{config['reward_function']}.xlsx"
-    #writer = csv.writer(file)
-    #print(f"file:{file_csv}")
+    file_csv = f"{outdir_episode}/{current_time}_Circuit-{environment['circuit_name']}_States-{environment['state_space']}_Actions-{environment['action_space']}_rewards-{environment['reward_function']}.csv"
+    file_excel = f"{outdir_episode}/{current_time}_Circuit-{environment['circuit_name']}_States-{environment['state_space']}_Actions-{environment['action_space']}_rewards-{environment['reward_function']}.xlsx"
 
-    #for key, value in aggr_ep_rewards.items():
-    #    writer.writerow([key, value])
     df = pd.DataFrame(aggr_ep_rewards)
     df.to_csv(file_csv, mode='a', index = False, header=None)
-    #with pd.ExcelWriter(file_excel) as writer:
     df.to_excel(file_excel)
+
+
+def print_messages(*args, **kwargs):
+
+    print(f"\t------{args[0]}:")
+    for key, value in kwargs.items():
+        print(f"\t[INFO] {key} = {value}")
 
 
 class F1TrainerDDPG:
@@ -119,6 +120,8 @@ class F1TrainerDDPG:
         self.environment['width_image'] = params.agent["params"]["camera_params"]["width"]
         self.environment['center_image'] = params.agent["params"]["camera_params"]["center_image"]
         self.environment['image_resizing'] = params.agent["params"]["camera_params"]["image_resizing"]
+        self.environment['new_image_size'] = params.agent["params"]["camera_params"]["new_image_size"]
+        self.environment['raw_image'] = params.agent["params"]["camera_params"]["raw_image"]
         self.environment['num_regions'] = params.agent["params"]["camera_params"]["num_regions"]
 
         # States
@@ -174,9 +177,7 @@ class F1TrainerDDPG:
         state, state_size = self.env.reset()   
 
         # Checking state and actions 
-        print(f"\t[INFO]\t state_size: {state_size}")
-        print(f"\t[INFO]\t action_space: {self.action_space}")
-        print(f"\t[INFO]\t action_size: {self.actions_size}\n")
+        print_messages('In RL-Studio main', state_size = state_size, action_space = self.action_space, action_size = self.actions_size)
 
 
         ## --------------------- Deep Nets ------------------
@@ -218,25 +219,16 @@ class F1TrainerDDPG:
                 step += 1
 
                 # save model
-                if (step > self.estimated_steps and highest_reward < cumulated_reward) or ((datetime.now() - timedelta(hours=self.training_time) > start_time) and highest_reward < cumulated_reward):
-                    highest_reward = cumulated_reward
-                    print(f"\n[INFO]: Lap completed in: {datetime.now() - start_time_epoch} - episode: {episode}"
-                        f" - Cum. Reward: {cumulated_reward} in {(datetime.now() - timedelta(hours=self.training_time))} time<====\n\n")
-                    print(f"\t[INFO]: Saving model in episode {episode} in step {step}--------> \n")
-                    print(f"\t- N epoch: {episode}")
-                    print(f"\t- Cum. reward: {cumulated_reward}")      
-                    print(f"\t- time of epoch: {datetime.now()-start_time_epoch}\n\t")
+                if (step > self.estimated_steps and self.highest_reward < cumulated_reward) or ((datetime.now() - timedelta(hours=self.training_time) > start_time) and self.highest_reward < cumulated_reward):
+                    self.highest_reward = cumulated_reward
+                    print_messages('Lap completed in:', time = datetime.now() - start_time_epoch, episode = episode, cumulated_reward = cumulated_reward, total_time = (datetime.now() - timedelta(hours=self.training_time)))
                     ac_agent.actor_model.save(f"{self.outdir}/models/{self.model_name}_INTOEPOCH_ACTOR_Max{max_reward}_Avg{average_reward}_Epoch{episode}_EpochTime{start_time_epoch}_inTime{time.strftime('%Y%m%d-%H%M%S')}.model")
-                    ac_agent.actor_model.save(f"{self.outdir}/models/{self.model_name}_INTOEPOCH_CRITIC_Max{max_reward}_Avg{average_reward}_Epoch{episode}_EpochTime{start_time_epoch}_inTime{time.strftime('%Y%m%d-%H%M%S')}.model")
+                    ac_agent.critic_model.save(f"{self.outdir}/models/{self.model_name}_INTOEPOCH_CRITIC_Max{max_reward}_Avg{average_reward}_Epoch{episode}_EpochTime{start_time_epoch}_inTime{time.strftime('%Y%m%d-%H%M%S')}.model")
 
 
                 # Show stats for debugging
                 if not step % self.save_every_step:
-                    print(f"[INFO]: show stats but not saving")
-                    print(f"\t- episode {episode} in step {step}")
-                    print(f"\t- Cum. reward: {cumulated_reward}")      
-                    print(f"\t- Total time: {datetime.now()-start_time}")
-                    print(f"\t- epoch time: {datetime.now()-start_time_epoch}\n\t")
+                    print_messages('Showing stats but not saving', episode = episode, cumulated_reward = cumulated_reward, total_time = (datetime.now() - start_time), epoch_time = datetime.now() - start_time_epoch)
 
 
             # WE SAVE BEST VALUES IN EVERY EPISODE
@@ -247,15 +239,7 @@ class F1TrainerDDPG:
                 max_reward = max(self.ep_rewards[-self.save_episodes:])
                 tensorboard.update_stats(reward_avg=average_reward, reward_max=max_reward, steps = step)
 
-                if max_reward >= self.highest_reward:
-                    ac_agent.actor_model.save(f"{self.outdir}/models/{self.model_name}_ACTOR_Max{max_reward}_Avg{average_reward}_Epoch{episode}_EpochTime{start_time_epoch}_inTime{time.strftime('%Y%m%d-%H%M%S')}.model")
-                    ac_agent.actor_model.save(f"{self.outdir}/models/{self.model_name}_CRITIC_Max{max_reward}_Avg{average_reward}_Epoch{episode}_EpochTime{start_time_epoch}_inTime{time.strftime('%Y%m%d-%H%M%S')}.model")
-                    save_stats_episodes(self.config, self.outdir, self.aggr_ep_rewards, start_time)
-
-                print(f"\n[INFO]: Saving episodes with Total Highest Reward {max(self.ep_rewards)}, max reward in episode {episode}: {max_reward}")            
-                print(f"\t- Num epochs: {episode}")
-                print(f"\t- Total Time: {datetime.now()-start_time}") 
-                print(f"\t- Epoch time: {datetime.now()-start_time_epoch}\n\t")
+                print_messages('Saving episodes with', episodes = episode, Total_highest_reward = max(self.ep_rewards), max_reward = max_reward, total_time = (datetime.now() - start_time), epoch_time = datetime.now() - start_time_epoch)
                 self.aggr_ep_rewards['episode'].append(episode)
                 self.aggr_ep_rewards['step'].append(step)
                 self.aggr_ep_rewards['avg'].append(average_reward)
@@ -264,6 +248,12 @@ class F1TrainerDDPG:
                 self.aggr_ep_rewards['epoch_training_time'].append((datetime.now()-start_time_epoch).total_seconds())
                 self.aggr_ep_rewards['total_training_time'].append((datetime.now()-start_time).total_seconds())
 
-        save_stats_episodes(self.config, self.outdir, self.aggr_ep_rewards, start_time)
+                if max_reward >= self.highest_reward:
+                    tensorboard.update_stats(reward_avg=average_reward, reward_max=max_reward, steps = step)
+                    ac_agent.actor_model.save(f"{self.outdir}/models/{self.model_name}_ACTOR_Max{max_reward}_Avg{average_reward}_Epoch{episode}_EpochTime{start_time_epoch}_inTime{time.strftime('%Y%m%d-%H%M%S')}.model")
+                    ac_agent.critic_model.save(f"{self.outdir}/models/{self.model_name}_CRITIC_Max{max_reward}_Avg{average_reward}_Epoch{episode}_EpochTime{start_time_epoch}_inTime{time.strftime('%Y%m%d-%H%M%S')}.model")
+                    save_stats_episodes(self.environment, self.outdir, self.aggr_ep_rewards, start_time)
+
+        save_stats_episodes(self.environment, self.outdir, self.aggr_ep_rewards, start_time)
         self.env.close()
 

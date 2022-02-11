@@ -6,11 +6,10 @@ settings:
   telemetry: False
   telemetry_mask: False
   plotter_graphic: False
-  #path: /home/docker/RL-Studio #/home/dir/to/RLStudio
   model_state_name: f1_renault
-  total_episodes: 10_000 #20000
-  training_time: 15 #in hours
-  save_episodes: 10
+  total_episodes: 500_000
+  training_time: 19
+  save_episodes: 50
   save_every_step: 1_000
   lap_completed: False
   my_board: True
@@ -27,44 +26,43 @@ agent:
     camera_params:
       width: 640
       height: 480
-      center_image: 320 # related to width_image param
-      image_resizing: 100 # percentage resizing image. Number should be multiple of 2 and 5 (5, 10, 20, 25...), otherwise could be unexpected results. Avoid 0
-      num_regions: 16 # divisions in image to get the positions for simplified perception
+      center_image: 320
+      raw_image: True
+      image_resizing: 5
+      new_image_size: 32
+      num_regions: 16
     states:
-      state_space: sp1 #sp1 (simplified perception 1 poi), sp3(simplified perception 3 poi), 
-      #sp5(simplified perception 5 poi), spn(simplified perception N poi), image, centers, laser, lidar
-      image: #DQN, DDPG
-        0: [12] # % to get the line from where get the center
+      state_space: image 
+      image:
+        0: [3]
       sp1: 
-        0: [10] #is the line which is going to be processed to get the center
+        0: [10]
       sp3:
-        0: [5, 15, 22] #be careful with the bottom of image (480 height x 640 width regular size, but we can take second half: 320 pixels long)
-        # but remember image_resizing: it is easy getting out of image borders
+        0: [5, 15, 22]
       sp5: 
         0: [3, 5, 10, 15, 20]  
       spn: 
-        0: [10] # Calculating center   
+        0: [10]   
     rewards:
-      reward_function: discrete # discrete, linear
+      reward_function: discrete
       discrete:
-        from_0_to_02: 10 #discrete ad hoc
-        from_02_to_04: 2 #discrete ad hoc
-        from_others: 1 #discrete ad hoc
-        from_done: -100 #discrete ad hoc
+        from_0_to_02: 10
+        from_02_to_04: 2
+        from_others: 1
+        from_done: -100
         min_reward: 1_000
-        highest_reward: 10_000
+        highest_reward: 20_000
       linear:
         beta_0: 5
         beta_1: -0.05
         penal: -100
         min_reward: 1_000
-        highest_reward: 10_000
+        highest_reward: 20_000
 
 actions:
     actions_number: 2
     actions_set: continuous
     available_actions:
-      # [lineal, angular]
       simple:
         0: [ 3, 0 ]
         1: [ 2, 1 ]
@@ -86,10 +84,10 @@ actions:
       test:
         0: [ 0, 0 ]
       continuous:
-        v_min: 2 # m/sec
-        v_max: 3 # m/sec
-        w_right: -1 # rad/sec
-        w_left: 1 # rad/sec
+        v_min: 2
+        v_max: 3
+        w_right: -1
+        w_left: 1
 
 environments:
   simple:
@@ -99,9 +97,9 @@ environments:
     launch: simple_circuit.launch
     start_pose: 0
     alternate_pose: False
-    estimated_steps: 4000
+    estimated_steps: 11_000
     sensor: camera
-    circuit_positions_set: #  x, y, z, roll, pith, ???. yaw
+    circuit_positions_set:
       0: [53.462, -41.988, 0.004, 0, 0, 1.57, -1.57]
       1: [53.462, -8.734, 0.004, 0, 0, 1.57, -1.57]
       2: [39.712, -30.741, 0.004, 0, 0, 1.56, 1.56]
@@ -116,7 +114,7 @@ environments:
     alternate_pose: True
     estimated_steps: 3500
     sensor: camera
-    circuit_positions_set: #  x, y, z, roll, pith, ???. yaw
+    circuit_positions_set:
       0: [-32.3188, 12.2921, 0, 0.0014, 0.0049, -0.2727, 0.9620]
       1: [-30.6566, -21.4929, 0, 0.0014, 0.0049, -0.4727, 0.8720]
       2: [28.0352, -17.7923, 0, 0.0001, 0.0051, -0.028, 1]
@@ -132,7 +130,7 @@ environments:
     alternate_pose: True
     estimated_steps: 8000
     sensor: camera
-    circuit_positions_set: #  x, y, z, roll, pith, ???. yaw
+    circuit_positions_set:
       0: [-201.88, -91.02, 0, 0.00, 0.001, 0.98, -0.15]
       1: [-278.71, -95.50, 0, 0.00, 0.001, 1, 0.03]
       2: [-272.93, -17.70, 0, 0.0001, 0.001, 0.48, 0.87]
@@ -178,30 +176,23 @@ algorithm:
       epsilon: 0.99
       epsilon_discount: 0.9986
       epsilon_min: 0.05
-      model_name: DQN_sp_16x16 # DDPG_256x3x3, DQN_128x3, qlearn ...
-      replay_memory_size: 50_000 # How many last steps to keep for model training
-      min_replay_memory_size: 1000 # Minimum number of steps in a memory to start training
-      minibatch_size: 64 # How many steps (samples) to use for training
-      update_target_every: 5 # Terminal states (end of episodes)
+      model_name: DQN_sp_16x16
+      replay_memory_size: 50_000
+      min_replay_memory_size: 1000
+      minibatch_size: 64
+      update_target_every: 5
       memory_fraction: 0.20
       buffer_capacity: 100_000
       batch_size: 64
     sarsa:
     ddpg:
-      #alpha: 0.8
       gamma: 0.9
       tau: 0.005
-      #epsilon: 0.99
-      #epsilon_discount: 0.9986
-      #epsilon_min: 0.05
       std_dev: 0.2
-      model_name: DDPG_16x16 # DDPG_256x3x3, DQN_128x3, qlearn ...
-      replay_memory_size: 50_000 # How many last steps to keep for model training
-      #min_replay_memory_size: 1000 # Minimum number of steps in a memory to start training
-      #minibatch_size: 64 # How many steps (samples) to use for training
-      update_target_every: 5 # Terminal states (end of episodes)
+      model_name: DDPG_Actor_conv2d32x64_Critic_conv2d32x64
+      replay_memory_size: 50_000
       memory_fraction: 0.20
       critic_lr: 0.002
       actor_lr: 0.001
-      buffer_capacity: 100_000 # DDPG
-      batch_size: 64 # DDPG
+      buffer_capacity: 100_000
+      batch_size: 64
