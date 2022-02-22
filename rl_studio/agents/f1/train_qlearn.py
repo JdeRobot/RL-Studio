@@ -8,7 +8,7 @@ import numpy as np
 
 from agents import utils, liveplot
 from algorithms.qlearn import QLearn
-from rl_studio.agents.f1.settings import QLearnConfig
+from agents.settings import QLearnConfig
 from rl_studio.visual.ascii.images import JDEROBOT_LOGO
 from rl_studio.visual.ascii.text import JDEROBOT, QLEARN_CAMERA, LETS_GO
 

@@ -11,8 +11,8 @@ from gym import spaces
 from sensor_msgs.msg import Image
 from std_srvs.srv import Empty
 
-from rl_studio.agents.f1.settings import actions, envs_params
-from rl_studio.envs import gazebo_env
+from agents.settings import actions, envs_params
+from envs.f1 import gazebo_env
 from rl_studio.envs.f1.image_f1 import ImageF1
 
 font = cv2.FONT_HERSHEY_COMPLEX

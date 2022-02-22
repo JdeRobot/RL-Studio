@@ -13,8 +13,8 @@ from gym.utils import seeding
 from sensor_msgs.msg import Image
 from std_srvs.srv import Empty
 
-from rl_studio.envs import gazebo_env
-from rl_studio.agents.f1.settings import telemetry
+from envs.f1 import gazebo_env
+from agents.settings import telemetry
 from rl_studio.envs.f1.image_f1 import ImageF1
 from rl_studio.envs.f1.models.f1_env import F1Env
 

@@ -5,10 +5,9 @@ import rospy
 from cv_bridge import CvBridge
 from geometry_msgs.msg import Twist
 from gym import spaces
-from gym.utils import seeding
 from sensor_msgs.msg import Image
 
-from rl_studio.agents.f1.settings import QLearnConfig
+from agents.settings import QLearnConfig
 from rl_studio.envs.f1.image_f1 import ImageF1
 from rl_studio.envs.f1.models.f1_env import F1Env
 from rl_studio.envs.gazebo_utils import set_new_pose
