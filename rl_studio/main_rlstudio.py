@@ -30,7 +30,9 @@ def get_agent(config_file: dict, input_agent: str) -> dict:
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("-f", "--file", type=argparse.FileType("r"), required=True, default="config.yml")
+    parser.add_argument(
+        "-f", "--file", type=argparse.FileType("r"), required=True, default="config.yml"
+    )
     parser.add_argument("-a", "--agent", type=str, required=True)
     parser.add_argument("-e", "--environment", type=str, required=True)
     parser.add_argument("-n", "--algorithm", type=str, required=True)
@@ -58,5 +60,5 @@ def main():
     trainer.main()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

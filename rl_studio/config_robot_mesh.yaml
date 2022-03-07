@@ -37,7 +37,9 @@ environments:
     env_name: RobotMeshEnv-v0
     circuit_name: simple
     training_type: qlearn_camera
-    launch: my_simple_world.launch
+    launchfile: my_simple_world.launch
+    environment_folder: robot_mesh
+    robot_name: my_robot
     start_pose: 1, 2
     alternate_pose: True
     estimated_steps: 4000
@@ -59,8 +61,9 @@ environments:
     env_name: RobotMeshEnv-v0
     circuit_name: complex
     training_type: qlearn_camera
-    launch: my_complex_world.launch
-
+    launchfile: my_complex_world.launch
+    environment_folder: robot_mesh
+    robot_name: my_robot
     start_pose: 0
     alternate_pose: True
     estimated_steps: 4000

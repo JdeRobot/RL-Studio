@@ -1,7 +1,7 @@
 import cv2
 import numpy as np
 
-from agents.settings import QLearnConfig
+from agents.f1.settings import QLearnConfig
 
 
 class ImageF1:

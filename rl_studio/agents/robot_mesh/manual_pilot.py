@@ -2,17 +2,14 @@ import datetime
 import time
 
 import sys as system
-import gym
-from envs.robot_mesh.gazebo_envs import *
+from envs.gazebo_envs import *
 
 import numpy as np
 from functools import reduce
 
-from agents import settings as settings
-from agents.settings import QLearnConfig
+from agents.f1.settings import QLearnConfig
 
 # from gym.envs.registration import register
-import agents.utils as utils
 
 # # my envs
 # register(
@@ -21,8 +18,8 @@ import agents.utils as utils
 #     # More arguments here
 # )
 
-class RobotMeshTrainer:
 
+class RobotMeshTrainer:
     def __init__(self, params):
         # TODO: Create a pydantic metaclass to simplify the way we extract the params
         # environment params
@@ -41,20 +38,17 @@ class RobotMeshTrainer:
         # self.actions_set = params.agent["params"]["actions_set"]
         # self.actions_values = params.agent["params"]["available_actions"][self.actions_set]
 
-
     def main(self):
-
 
         print(f"\t- Start hour: {datetime.datetime.now()}\n")
         print(f"\t- Environment params:\n{self.environment_params}")
         config = QLearnConfig()
 
         # TODO: Move to settings file
-        outdir = './logs/robot_mesh_experiments/'
+        outdir = "./logs/robot_mesh_experiments/"
         stats = {}  # epoch: steps
         states_counter = {}
         states_reward = {}
-
 
         last_time_steps = np.ndarray(0)
 
@@ -64,7 +58,7 @@ class RobotMeshTrainer:
         print(f"\t- Start hour: {datetime.datetime.now()}")
 
         # TODO: Move to settings file
-        outdir = './logs/robot_mesh_experiments/'
+        outdir = "./logs/robot_mesh_experiments/"
         stats = {}  # epoch: steps
         states_counter = {}
         states_reward = {}
@@ -79,7 +73,7 @@ class RobotMeshTrainer:
         lap_completed = False
         total_episodes = 20000
         epsilon_discount = 0.999  # Default 0.9986
-        rewards_per_run=[0, 0]
+        rewards_per_run = [0, 0]
         env.done = False
 
         # START ############################################################################################################
@@ -88,7 +82,7 @@ class RobotMeshTrainer:
             counter = 0
             lap_completed = False
 
-            initial_epsilon=0.999
+            initial_epsilon = 0.999
             highest_reward = 0
             cumoviulated_reward = 0
             print("resetting")
@@ -100,8 +94,8 @@ class RobotMeshTrainer:
             for step in range(50000):
 
                 inpt = input("provide action (0-up, 1-right, 2-down, 3-left): ")
-                if inpt=="0" or inpt=="1" or inpt=="2"  or inpt=="3":
-                    action=int(inpt)
+                if inpt == "0" or inpt == "1" or inpt == "2" or inpt == "3":
+                    action = int(inpt)
                     print("Selected Action!! " + str(action))
                     # Execute the action and get feedback
                     nextState, reward, env.done, lap_completed = env.step(action)
@@ -111,17 +105,14 @@ class RobotMeshTrainer:
                         state = nextState
                     else:
                         break
-                elif inpt=="q":
+                elif inpt == "q":
                     system.exit(1)
                 else:
                     print("wrong action! Try again")
 
-
-        print("Total EP: {} - epsilon: {} - ep. discount: {} - Highest Reward: {}".format(
-                total_episodes,
-                initial_epsilon,
-                epsilon_discount,
-                highest_reward
+        print(
+            "Total EP: {} - epsilon: {} - ep. discount: {} - Highest Reward: {}".format(
+                total_episodes, initial_epsilon, epsilon_discount, highest_reward
             )
         )
 
@@ -130,7 +121,10 @@ class RobotMeshTrainer:
 
         # print("Parameters: a="+str)
         print("Overall score: {:0.2f}".format(last_time_steps.mean()))
-        print("Best 100 score: {:0.2f}".format(reduce(lambda x, y: x + y, l[-100:]) / len(l[-100:])))
-
+        print(
+            "Best 100 score: {:0.2f}".format(
+                reduce(lambda x, y: x + y, l[-100:]) / len(l[-100:])
+            )
+        )
 
         env.close()

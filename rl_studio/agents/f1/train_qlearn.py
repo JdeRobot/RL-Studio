@@ -6,18 +6,19 @@ from pprint import pprint
 import gym
 import numpy as np
 
-from agents import utils, liveplot
+from agents import liveplot
+from agents.f1 import utils
 from algorithms.qlearn import QLearn
-from agents.settings import QLearnConfig
+from agents.f1.settings import QLearnConfig
 from rl_studio.visual.ascii.images import JDEROBOT_LOGO
 from rl_studio.visual.ascii.text import JDEROBOT, QLEARN_CAMERA, LETS_GO
 
 
 class F1Trainer:
-
     def __init__(self, params):
         # TODO: Create a pydantic metaclass to simplify the way we extract the params
         # environment params
+        self.params=params
         self.environment_params = params.environment["params"]
         self.env_name = params.environment["params"]["env_name"]
         env_params = params.environment["params"]
@@ -66,7 +67,7 @@ class F1Trainer:
         if config.load_model:
             # TODO: Folder to models. Maybe from environment variable?
             file_name = ""
-            utils.load_model(qlearn, file_name)
+            utils.load_model(self.params, qlearn, file_name)
             highest_reward = max(qlearn.q.values(), key=stats.get)
         else:
             highest_reward = 0
@@ -135,7 +136,8 @@ class F1Trainer:
                         )
 
                     if (
-                        datetime.datetime.now() - datetime.timedelta(minutes=3, seconds=12)
+                        datetime.datetime.now()
+                        - datetime.timedelta(minutes=3, seconds=12)
                         > start_time
                     ):
                         print("Finish. Saving parameters . . .")
@@ -172,7 +174,11 @@ class F1Trainer:
                         plotter.plot_steps_vs_epoch(stats, save=True)
                     qlearn.epsilon *= epsilon_discount
                     utils.save_model(
-                        qlearn, start_time_format, episode, states_counter, states_reward
+                        qlearn,
+                        start_time_format,
+                        episode,
+                        states_counter,
+                        states_reward,
                     )
                     print(
                         f"\t- epsilon: {round(qlearn.epsilon, 2)}\n\t- cum reward: {cumulated_reward}\n\t- dict_size: "

@@ -8,19 +8,20 @@ from functools import reduce
 
 import agents.robot_mesh.liveplot as liveplot
 
-from agents.settings import QLearnConfig
+from agents.f1.settings import QLearnConfig
 from rl_studio.visual.ascii.images import JDEROBOT_LOGO
 from rl_studio.visual.ascii.text import JDEROBOT, QLEARN_CAMERA, LETS_GO
 
 
-from algorithms.qlearn_mesh import QLearn
-import agents.utils as utils
+from algorithms.qlearn import QLearn
+import agents.robot_mesh.utils as utils
+
 
 class RobotMeshTrainer:
-
     def __init__(self, params):
         # TODO: Create a pydantic metaclass to simplify the way we extract the params
         # environment params
+        self.params=params
         self.environment_params = params.environment["params"]
         self.env_name = params.environment["params"]["env_name"]
         env_params = params.environment["params"]
@@ -36,7 +37,6 @@ class RobotMeshTrainer:
         # self.actions_set = params.agent["params"]["actions_set"]
         # self.actions_values = params.agent["params"]["available_actions"][self.actions_set]
 
-
     def main(self):
 
         print(JDEROBOT)
@@ -47,7 +47,7 @@ class RobotMeshTrainer:
         config = QLearnConfig()
 
         # TODO: Move to settings file
-        outdir = './logs/robot_mesh_experiments/'
+        outdir = "./logs/robot_mesh_experiments/"
         stats = {}  # epoch: steps
         states_counter = {}
         states_reward = {}
@@ -65,12 +65,14 @@ class RobotMeshTrainer:
         total_episodes = 20000
         epsilon_discount = 0.999  # Default 0.9986
 
-        qlearn = QLearn(actions=actions, alpha=self.alpha, gamma=self.gamma, epsilon=self.epsilon)
+        qlearn = QLearn(
+            actions=actions, alpha=self.alpha, gamma=self.gamma, epsilon=self.epsilon
+        )
 
         if config.load_model:
             # TODO: Folder to models. Maybe from environment variable?
             file_name = "1_20210701_0848_act_set_simple_epsilon_0.19_QTABLE.pkl"
-            utils.load_model(qlearn, file_name)
+            utils.load_model(self.params, qlearn, file_name)
             qvalues = np.array(list(qlearn.q.values()), dtype=np.float64)
             print(qvalues)
             highest_reward = max(qvalues)
@@ -90,7 +92,6 @@ class RobotMeshTrainer:
         # START ############################################################################################################
         for episode in range(total_episodes):
 
-            counter = 0
             done = False
             lap_completed = False
 
@@ -101,11 +102,8 @@ class RobotMeshTrainer:
 
             for step in range(50000):
 
-                counter += 1
-
                 if qlearn.epsilon > 0.05:
                     qlearn.epsilon *= epsilon_discount
-
 
                 # Pick an action based on the current state
                 action = qlearn.selectAction(state)
@@ -125,8 +123,9 @@ class RobotMeshTrainer:
                 except KeyError:
                     states_counter[nextState] = 1
 
-                qlearn.learn(state, action, reward, nextState, done)
-
+                # qlearn.learn(state, action, reward, nextState, done)
+                qlearn.learn(state, action, reward, nextState)
+                
                 env._flush(force=True)
 
                 if config.save_positions:
@@ -134,9 +133,19 @@ class RobotMeshTrainer:
                     if now - datetime.timedelta(seconds=3) > previous:
                         previous = datetime.datetime.now()
                         x, y = env.get_position()
-                        checkpoints.append([len(checkpoints), (x, y), datetime.datetime.now().strftime('%M:%S.%f')[-4]])
+                        checkpoints.append(
+                            [
+                                len(checkpoints),
+                                (x, y),
+                                datetime.datetime.now().strftime("%M:%S.%f")[-4],
+                            ]
+                        )
 
-                    if datetime.datetime.now() - datetime.timedelta(minutes=3, seconds=12) > start_time:
+                    if (
+                        datetime.datetime.now()
+                        - datetime.timedelta(minutes=3, seconds=12)
+                        > start_time
+                    ):
                         print("Finish. Saving parameters . . .")
                         #       utils.save_times(checkpoints)
                         env.close()
@@ -148,37 +157,23 @@ class RobotMeshTrainer:
                     last_time_steps = np.append(last_time_steps, [int(step + 1)])
                     stats[int(episode)] = step
                     states_reward[int(episode)] = cumulated_reward
-                    print(f"EP: {episode + 1} - epsilon: {round(qlearn.epsilon, 2)} - Reward: {cumulated_reward}"
-                          f"- Time: {start_time_format} - Steps: {step}")
+                    print(
+                        f"EP: {episode + 1} - epsilon: {round(qlearn.epsilon, 2)} - Reward: {cumulated_reward}"
+                        f"- Time: {start_time_format} - Steps: {step}"
+                    )
                     break
 
-                if lap_completed:
-                    if config.plotter_graphic:
-                        plotter.plot_steps_vs_epoch(stats, save=True)
-                   # utils.save_model(qlearn, start_time_format, stats, states_counter, states_reward)
-                    print(f"\n\n====> LAP COMPLETED in: {datetime.datetime.now() - start_time} - Epoch: {episode}"
-                          f" - Cum. Reward: {cumulated_reward} <====\n\n")
-
-                if counter > 1000:
-                    if config.plotter_graphic:
-                        plotter.plot_steps_vs_epoch(stats, save=True)
-                    qlearn.epsilon *= epsilon_discount
-                    #  utils.save_model(qlearn, start_time_format, episode, states_counter, states_reward)
-                    print(f"\t- epsilon: {round(qlearn.epsilon, 2)}\n\t- cum reward: {cumulated_reward}\n\t- dict_size: "
-                          f"{len(qlearn.q)}\n\t- time: {datetime.datetime.now()-start_time}\n\t- steps: {step}\n")
-                    counter = 0
-
-                #if datetime.datetime.now() - datetime.timedelta(hours=2) > start_time:
-                 #   print(config.eop)
-                  #  #    utils.save_model(qlearn, start_time_format, stats, states_counter, states_reward)
-                   # print(f"    - N epoch:     {episode}")
-                    #print(f"    - Model size:  {len(qlearn.q)}")
-              #      print(f"    - Action set:  {config.actions_set}")
-               #     print(f"    - Epsilon:     {round(qlearn.epsilon, 2)}")
+                # if datetime.datetime.now() - datetime.timedelta(hours=2) > start_time:
+                #   print(config.eop)
+                #  #    utils.save_model(qlearn, start_time_format, stats, states_counter, states_reward)
+                # print(f"    - N epoch:     {episode}")
+                # print(f"    - Model size:  {len(qlearn.q)}")
+                #      print(f"    - Action set:  {config.actions_set}")
+                #     print(f"    - Epsilon:     {round(qlearn.epsilon, 2)}")
                 #    print(f"    - Cum. reward: {cumulated_reward}")
-                 #   start_time = datetime.datetime.now()
-                    #env.close()
-                    #exit(0)
+                #   start_time = datetime.datetime.now()
+                # env.close()
+                # exit(0)
 
             if episode % 1 == 0 and config.plotter_graphic:
                 # plotter.plot(env)
@@ -187,16 +182,14 @@ class RobotMeshTrainer:
 
             if episode % 250 == 0 and config.save_model and episode > 1:
                 print(f"\nSaving model . . .\n")
-                #    utils.save_model(qlearn, start_time_format, stats, states_counter, states_reward)
+                utils.save_model(qlearn, start_time_format, stats, states_counter, states_reward)
 
             m, s = divmod(int(time.time() - telemetry_start_time), 60)
             h, m = divmod(m, 60)
 
-        print("Total EP: {} - epsilon: {} - ep. discount: {} - Highest Reward: {}".format(
-                total_episodes,
-                initial_epsilon,
-                epsilon_discount,
-                highest_reward
+        print(
+            "Total EP: {} - epsilon: {} - ep. discount: {} - Highest Reward: {}".format(
+                total_episodes, initial_epsilon, epsilon_discount, highest_reward
             )
         )
 
@@ -205,7 +198,11 @@ class RobotMeshTrainer:
 
         # print("Parameters: a="+str)
         print("Overall score: {:0.2f}".format(last_time_steps.mean()))
-        print("Best 100 score: {:0.2f}".format(reduce(lambda x, y: x + y, l[-100:]) / len(l[-100:])))
+        print(
+            "Best 100 score: {:0.2f}".format(
+                reduce(lambda x, y: x + y, l[-100:]) / len(l[-100:])
+            )
+        )
 
         plotter.plot_steps_vs_epoch(stats, save=True)
 

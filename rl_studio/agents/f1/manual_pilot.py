@@ -6,7 +6,7 @@ import time
 
 import gym
 
-from agents import settings
+from agents.f1 import settings
 from rl_studio.visual.ascii.text import MANUAL_PILOT
 
 total_episodes = 200000
