@@ -26,7 +26,9 @@ environments:
     env_name: MyMountainCarEnv-v0
     circuit_name: simple
     training_type: qlearn_camera
-    launch: my_mountain_world.launch
+    launchfile: my_mountain_world.launch
+    environment_folder: mountain_car
+    robot_name: my_robot
     start_pose: 1, 2
     alternate_pose: True
     estimated_steps: 4000

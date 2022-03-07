@@ -1,50 +1,50 @@
-import cv2
+import time
+
 import numpy as np
 import rospy
-from cv_bridge import CvBridge
-from geometry_msgs.msg import Twist
-from gym import spaces
-from gym.utils import seeding
+
 # from sensor_msgs.msg import Image
 # import gazebo_msgs.msg
 # from gazebo_msgs.msg import geometry_msgs
-from gazebo_msgs.msg import ModelState
-from gazebo_msgs.srv import SetModelState, GetModelState, ApplyJointEffort
-from std_msgs.msg import Float64
-from gazebo_msgs.srv import SetPhysicsProperties
+from gazebo_msgs.srv import GetModelState, ApplyJointEffort
+from geometry_msgs.msg import Twist
+from gym import spaces
+from gym.utils import seeding
 from std_srvs.srv import Empty
 
-
 # from agents.robot.settings import telemetry, x_row, center_image, width, height, telemetry_mask, max_distance
-from . import gazebo_envs
+from .. import gazebo_envs
 
-import time
-import math
 
 class MountainCarEnv(gazebo_envs.GazeboEnv):
-
     def __init__(self, **config):
         self.actions = config.get("actions")
-        self.action_space = spaces.Discrete(len(self.actions))  # actions  # spaces.Discrete(3)  # F,L,R
-        gazebo_envs.GazeboEnv.__init__(self, config.get("launch"))
+        self.action_space = spaces.Discrete(
+            len(self.actions)
+        )  # actions  # spaces.Discrete(3)  # F,L,R
+        gazebo_envs.GazeboEnv.__init__(self, config)
         self.circuit = config.get("simple")
         self.alternate_pose = config.get("alternate_pose")
-        self.goal=config.get("goal")
-        self.reset_pos_x=config.get("pos_x")
-        self.reset_pos_y=config.get("pos_y")
-        self.reset_pos_z=config.get("pos_z")
-        self.vel_pub = rospy.Publisher('/cmd_vel', Twist, queue_size=5)
-        self.unpause = rospy.ServiceProxy('/gazebo/unpause_physics', Empty)
-        self.pause = rospy.ServiceProxy('/gazebo/pause_physics', Empty)
-        self.reset_proxy = rospy.ServiceProxy('/gazebo/reset_simulation', Empty)
-        self.apply_joint_effort = rospy.ServiceProxy('/gazebo/apply_joint_effort', ApplyJointEffort)
+        self.goal = config.get("goal")
+        self.reset_pos_x = config.get("pos_x")
+        self.reset_pos_y = config.get("pos_y")
+        self.reset_pos_z = config.get("pos_z")
+        self.vel_pub = rospy.Publisher("/cmd_vel", Twist, queue_size=5)
+        self.unpause = rospy.ServiceProxy("/gazebo/unpause_physics", Empty)
+        self.pause = rospy.ServiceProxy("/gazebo/pause_physics", Empty)
+        self.reset_proxy = rospy.ServiceProxy("/gazebo/reset_simulation", Empty)
+        self.apply_joint_effort = rospy.ServiceProxy(
+            "/gazebo/apply_joint_effort", ApplyJointEffort
+        )
         self.reward_range = (-np.inf, np.inf)
-        self.model_coordinates = rospy.ServiceProxy('/gazebo/get_model_state', GetModelState)
+        self.model_coordinates = rospy.ServiceProxy(
+            "/gazebo/get_model_state", GetModelState
+        )
         self.position = None
         self.start_pose = np.array(config.get("start_pose"))
         self._seed()
 
-    def render(self, mode='human'):
+    def render(self, mode="human"):
         pass
 
     def _seed(self, seed=None):
@@ -52,11 +52,11 @@ class MountainCarEnv(gazebo_envs.GazeboEnv):
         return [seed]
 
     def step(self, action):
-        lap_completed=False
+        lap_completed = False
         if action < 0:
             return [0, 0], 0, True, lap_completed
 
-        state=[]
+        state = []
         self._gazebo_unpause()
 
         # vel_cmd = Twist()
@@ -68,11 +68,15 @@ class MountainCarEnv(gazebo_envs.GazeboEnv):
             effort = self.actions[action]
             start_time = rospy.Duration.from_sec(0)
             duration = rospy.Duration.from_sec(1)
-            #Effort just applied to one wheel because otherwise the car will spin due to the difference of start time (ms)
+            # Effort just applied to one wheel because otherwise the car will spin due to the difference of start time (ms)
             self.apply_joint_effort("left_wheel_back", effort[0], start_time, duration)
             self.apply_joint_effort("right_wheel_back", effort[1], start_time, duration)
-            self.apply_joint_effort("wheel_front_left_steer", effort[2], start_time, duration)
-            self.apply_joint_effort("wheel_front_right_steer", effort[3], start_time, duration)
+            self.apply_joint_effort(
+                "wheel_front_left_steer", effort[2], start_time, duration
+            )
+            self.apply_joint_effort(
+                "wheel_front_right_steer", effort[3], start_time, duration
+            )
         except rospy.ServiceException as e:
             print("Service did not process request: {}".format(str(e)))
 
@@ -85,20 +89,20 @@ class MountainCarEnv(gazebo_envs.GazeboEnv):
         z_position = object_coordinates.pose.position.z
         x_orientation = object_coordinates.pose.orientation.x
         y_orientation = object_coordinates.pose.orientation.y
-        z_orientation= object_coordinates.pose.orientation.z
-        w_orientation= object_coordinates.pose.orientation.w
-        x_linear_vel=object_coordinates.twist.linear.x
-        y_linear_vel=object_coordinates.twist.linear.y
+        z_orientation = object_coordinates.pose.orientation.z
+        w_orientation = object_coordinates.pose.orientation.w
+        x_linear_vel = object_coordinates.twist.linear.x
+        y_linear_vel = object_coordinates.twist.linear.y
 
         # y, x, ori = self.get_position()
 
         print("pos x -> " + str(x_position))
         print("pos y -> " + str(y_position))
 
-        pos_x = round(x_position*2)
-        vel = round(x_linear_vel*2)
+        pos_x = round(x_position * 2)
+        vel = round(x_linear_vel * 2)
 
-        #assign state
+        # assign state
         state.append(pos_x)
         state.append(vel)
 
@@ -106,31 +110,29 @@ class MountainCarEnv(gazebo_envs.GazeboEnv):
         print("pos_x!!!!!!!!!! -> " + str(pos_x))
 
         done = False
-        reward=0
+        reward = 0
 
-        #Give reward
-        if pos_x>self.goal:
-            done=True
-            lap_completed=True
+        # Give reward
+        if pos_x > self.goal:
+            done = True
+            lap_completed = True
             print("Car has reached the goal")
-            reward=1
+            reward = 1
         # elif z_position>=3:
         #     reward=(z_position)**2
         # if z_orientation<-0.15 or z_orientation>0.15:
         #     reward=reward*1.5
         else:
-            reward=0
-
+            reward = 0
 
         # if z_orientation<-0.3 or z_orientation>0.3:
         #     done=True
-        if y_position<-3.56 or y_position>-0.43:
-            done=True
+        if y_position < -3.56 or y_position > -0.43:
+            done = True
 
         return state, reward, done, lap_completed
 
     def reset(self):
-
 
         self._gazebo_set_new_pose_robot()
 
@@ -166,24 +168,24 @@ class MountainCarEnv(gazebo_envs.GazeboEnv):
         z_position = object_coordinates.pose.position.z
         x_orientation = object_coordinates.pose.orientation.x
         y_orientation = object_coordinates.pose.orientation.y
-        z_orientation= object_coordinates.pose.orientation.z
-        w_orientation= object_coordinates.pose.orientation.w
-        x_linear_vel=object_coordinates.twist.linear.x
-        y_linear_vel=object_coordinates.twist.linear.y
+        z_orientation = object_coordinates.pose.orientation.z
+        w_orientation = object_coordinates.pose.orientation.w
+        x_linear_vel = object_coordinates.twist.linear.x
+        y_linear_vel = object_coordinates.twist.linear.y
 
         print("pos x -> " + str(x_position))
         print("pos y -> " + str(y_position))
         pos_x = round(x_position)
         vel = round(x_linear_vel)
 
-        state=[]
+        state = []
 
         state.append(pos_x)
         state.append(vel)
-        #Note that state[2]=3 means that orientation is between 1.5 and -1.5 which must be true in start pos
+        # Note that state[2]=3 means that orientation is between 1.5 and -1.5 which must be true in start pos
         state.append(3)
 
-        done=False
+        done = False
 
         # self._gazebo_pause()
 
@@ -217,7 +219,7 @@ class MountainCarEnv(gazebo_envs.GazeboEnv):
     #     return state, done
 
     def finish_line(self):
-        x, y, z = self.get_position()
+        x, y = self.get_position()
         current_point = np.array([x, y])
 
         dist = (self.start_pose - current_point) ** 2

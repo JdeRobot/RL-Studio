@@ -5,10 +5,9 @@ import rospy
 from cv_bridge import CvBridge
 from geometry_msgs.msg import Twist
 from gym import spaces
-from gym.utils import seeding
 from sensor_msgs.msg import Image
 
-from rl_studio.agents.f1.settings import QLearnConfig
+from agents.f1.settings import QLearnConfig
 from rl_studio.envs.f1.image_f1 import ImageF1
 from rl_studio.envs.f1.models.f1_env import F1Env
 from rl_studio.envs.gazebo_utils import set_new_pose
@@ -20,7 +19,7 @@ class F1CameraEnv(F1Env):
         self.image = ImageF1()
         self.actions = config.get("actions")
         self.action_space = spaces.Discrete(3)
-            # len(self.actions)
+        # len(self.actions)
         # )  # actions  # spaces.Discrete(3)  # F,L,R
         self.config = QLearnConfig()
 
@@ -75,14 +74,18 @@ class F1CameraEnv(F1Env):
         # gray = cv2.cvtColor(mask, cv2.COLOR_BGR2GRAY)
         _, mask = cv2.threshold(line_pre_proc, 240, 255, cv2.THRESH_BINARY)
 
-        lines = [mask[self.config.x_row[idx], :] for idx, x in enumerate(self.config.x_row)]
+        lines = [
+            mask[self.config.x_row[idx], :] for idx, x in enumerate(self.config.x_row)
+        ]
         centrals = list(map(self.get_center, lines))
 
         # if centrals[-1] == 9:
         #     centrals[-1] = center_image
 
         if self.config.telemetry_mask:
-            mask_points = np.zeros((self.config.height, self.config.width), dtype=np.uint8)
+            mask_points = np.zeros(
+                (self.config.height, self.config.width), dtype=np.uint8
+            )
             for idx, point in enumerate(centrals):
                 # mask_points[x_row[idx], centrals[idx]] = 255
                 cv2.line(
@@ -136,7 +139,9 @@ class F1CameraEnv(F1Env):
         points = self.processed_image(f1_image_camera.data)
         state = self.calculate_observation(points)
 
-        center = float(self.config.center_image - points[0]) / (float(self.config.width) // 2)
+        center = float(self.config.center_image - points[0]) / (
+            float(self.config.width) // 2
+        )
 
         done = False
         center = abs(center)
@@ -208,7 +213,9 @@ class F1CameraEnv(F1Env):
         points = self.processed_image(f1_image_camera.data)
         state = self.calculate_observation(points)
 
-        center = float(self.configcenter_image - points[0]) / (float(self.config.width) // 2)
+        center = float(self.configcenter_image - points[0]) / (
+            float(self.config.width) // 2
+        )
 
         done = False
         center = abs(center)

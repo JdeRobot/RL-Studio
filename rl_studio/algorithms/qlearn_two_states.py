@@ -9,8 +9,8 @@ class QLearn:
     def __init__(self, actions, epsilon, alpha, gamma):
         self.q = {}
         self.epsilon = epsilon  # exploration constant
-        self.alpha = alpha      # discount constant
-        self.gamma = gamma      # discount factor
+        self.alpha = alpha  # discount constant
+        self.gamma = gamma  # discount factor
         self.actions = actions
 
     def getQValues(self, state1, state2, action):
@@ -25,7 +25,6 @@ class QLearn:
             print("randomly choosing")
             return random.choice(list(self.actions))
 
-
         count = q.count(maxQ)
         # In case there're several state-action max values
         # we select a random one among them
@@ -36,7 +35,7 @@ class QLearn:
             i = q.index(maxQ)
 
         action = self.actions[i]
-        if return_q: # if they want it, give it!
+        if return_q:  # if they want it, give it!
             return action, q
         return action
 
@@ -44,12 +43,19 @@ class QLearn:
         maxqnew = max([self.getQValues(state2[0], state2[1], a) for a in self.actions])
 
         if done == True:
-            self.q[(state1[0], state1[1], action1)]  = reward
-            q_update = self.alpha * (reward - self.getQValues(state1[0], state1[1], action1))
+            self.q[(state1[0], state1[1], action1)] = reward
+            q_update = self.alpha * (
+                reward - self.getQValues(state1[0], state1[1], action1)
+            )
         else:
-            q_update = self.alpha *(reward + self.gamma * maxqnew - self.getQValues(state1[0], state1[1], action1))
-            self.q[(state1[0], state1[1], action1)] =self.getQValues(state1[0], state1[1], action1) + q_update
-
+            q_update = self.alpha * (
+                reward
+                + self.gamma * maxqnew
+                - self.getQValues(state1[0], state1[1], action1)
+            )
+            self.q[(state1[0], state1[1], action1)] = (
+                self.getQValues(state1[0], state1[1], action1) + q_update
+            )
 
     def reset(self):
         self.state = self.np_random.uniform(low=-0.05, high=0.05, size=(4,))

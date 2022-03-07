@@ -43,7 +43,9 @@ environments:
     env_name: F1Env-v0
     circuit_name: simple
     training_type: qlearn_camera
-    launch: simple_circuit.launch
+    launchfile: simple_circuit.launch
+    environment_folder: f1
+    robot_name: f1_renault
     start_pose: 0
     alternate_pose: True
     estimated_steps: 4000
@@ -58,7 +60,9 @@ environments:
     env_name: F1Env-v0
     circuit_name: nurburgring
     training_type: qlearn_camera
-    launch: nurburgring_line.launch
+    launchfile: nurburgring_line.launch
+    environment_folder: f1
+    robot_name: f1_renault
     start_pose: 0
     alternate_pose: True
     estimated_steps: 3500
@@ -74,7 +78,9 @@ environments:
     env_name: F1Env-v0
     circuit_name: montreal
     training_type: qlearn_camera
-    launch: montreal_line.launch
+    launchfile: montreal_line.launch
+    environment_folder: f1
+    robot_name: f1_renault
     start_pose: 0
     alternate_pose: True
     estimated_steps: 8000
@@ -89,7 +95,9 @@ environments:
     env_name: F1Env-v0
     circuit_name: curves
     training_type: qlearn_camera
-    launch: many_curves.launch
+    launchfile: many_curves.launch
+    environment_folder: f1
+    robot_name: f1_renault
     start_pose: 0
     alternate_pose: False
     estimated_steps: 4000
@@ -98,7 +106,9 @@ environments:
     env_name: F1Env-v0
     circuit_name: simple_laser
     training_type: qlearn_laser
-    launch: f1_montreal.launch
+    launchfile: f1_montreal.launch
+    environment_folder: f1
+    robot_name: f1_renault
     start_pose: 0
     alternate_pose: False
     estimated_steps: 4000
@@ -107,7 +117,9 @@ environments:
     env_name: F1Env-v0
     circuit_name: manual
     training_type: qlearn_camera
-    launch: simple_circuit.launch
+    launchfile: simple_circuit.launch
+    environment_folder: f1
+    robot_name: f1_renault
     start_pose: 0
     alternate_pose: False
     estimated_steps: 4000

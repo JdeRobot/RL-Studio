@@ -1,8 +1,8 @@
 from .env_type import TrainingType
 from .exceptions import NoValidTrainingType
 
-class MountainCarEnv:
 
+class MountainCarEnv:
     def __new__(cls, **config):
         cls.circuit = None
         cls.vel_pub = None
@@ -15,9 +15,10 @@ class MountainCarEnv:
         cls.position = None
 
         training_type = config.get("training_type")
-        print(config.get("launch"))
+        print(config.get("launchfile"))
         if training_type == TrainingType.qlearn_env_camera.value:
             from .mountain_car_env import MountainCarEnv
+
             return MountainCarEnv(**config)
 
         else:

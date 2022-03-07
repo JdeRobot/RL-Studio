@@ -23,13 +23,14 @@ class GazeboEnv(gym.Env):
 
     metadata = {"render.models": ["human"]}
 
-    def __init__(self, launchfile):
-        print(launchfile)
+    def __init__(self, config):
+        print(config.get("launchfile"))
         self.last_clock_msg = Clock()
         self.port = "11311"  # str(random_number) #os.environ["ROS_PORT_SIM"]
         self.port_gazebo = "11345"  # str(random_number+1) #os.environ["ROS_PORT_SIM"]
         # self.ros_master_uri = os.environ["ROS_MASTER_URI"];
         # self.port = os.environ.get("ROS_PORT_SIM", "11311")
+        self.robot_name = config.get("robot_name")
 
         print(f"\nROS_MASTER_URI = http://localhost:{self.port}\n")
         print(f"GAZEBO_MASTER_URI = http://localhost:{self.port_gazebo}\n")
@@ -43,17 +44,18 @@ class GazeboEnv(gym.Env):
         # time.sleep(1)
         # print ("Roscore launched!")
 
-        if launchfile.startswith("/"):
-            fullpath = launchfile
+        if config.get("launch_absolute_path") != None:
+            fullpath = config.get("launch_absolute_path")
         else:
-            # TODO: Global env for 'f1'. It must be passed in constructor.
+            # TODO: Global env for 'my_env'. It must be passed in constructor.
             fullpath = str(
                 Path(
-                    Path(__file__).resolve().parents[1]
+                    Path(__file__).resolve().parents[2]
+                    / "rl_studio"
                     / "CustomRobots"
-                    / "f1"
+                    / config.get("environment_folder")
                     / "launch"
-                    / launchfile
+                    / config.get("launchfile")
                 )
             )
             print(f"-----> {fullpath}")
@@ -116,7 +118,7 @@ class GazeboEnv(gym.Env):
         raise NotImplementedError
 
     def get_position(self):
-        object_coordinates = self.model_coordinates("f1_renault", "")
+        object_coordinates = self.model_coordinates(self.robot_name, "")
         x_position = round(object_coordinates.pose.position.x, 2)
         y_position = round(object_coordinates.pose.position.y, 2)
 
@@ -157,7 +159,7 @@ class GazeboEnv(gym.Env):
         pos_number = self.circuit["gaz_pos"][0]
 
         state = ModelState()
-        state.model_name = "f1_renault"
+        state.model_name = self.config.get("robot_name")
         state.pose.position.x = self.circuit["gaz_pos"][pos][1]
         state.pose.position.y = self.circuit["gaz_pos"][pos][2]
         state.pose.position.z = self.circuit["gaz_pos"][pos][3]
@@ -165,6 +167,33 @@ class GazeboEnv(gym.Env):
         state.pose.orientation.y = self.circuit["gaz_pos"][pos][5]
         state.pose.orientation.z = self.circuit["gaz_pos"][pos][6]
         state.pose.orientation.w = self.circuit["gaz_pos"][pos][7]
+
+        rospy.wait_for_service("/gazebo/set_model_state")
+        try:
+            set_state = rospy.ServiceProxy("/gazebo/set_model_state", SetModelState)
+            set_state(state)
+        except rospy.ServiceException as e:
+            print(f"Service call failed: {e}")
+        return pos_number
+
+    def _gazebo_set_new_pose_robot(self):
+        """
+        (pos_number, pose_x, pose_y, pose_z, or_x, or_y, or_z, or_z)
+        """
+        # pos = random.choice(list(enumerate(self.circuit["gaz_pos"])))[0]
+        # self.position = pos
+
+        pos_number = 0
+
+        state = ModelState()
+        state.model_name = self.robot_name
+        state.pose.position.x = self.reset_pos_x
+        state.pose.position.y = self.reset_pos_y
+        state.pose.position.z = self.reset_pos_z
+        state.pose.orientation.x = 0
+        state.pose.orientation.y = 0
+        state.pose.orientation.z = 0
+        state.pose.orientation.w = 0
 
         rospy.wait_for_service("/gazebo/set_model_state")
         try:
