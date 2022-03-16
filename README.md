@@ -1,4 +1,4 @@
-## Gym-Gazebo-2 - Documentation
+## RL-Studio - Documentation
 
 ## Install Jekyll on your machine
 

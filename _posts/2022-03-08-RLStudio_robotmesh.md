@@ -22,8 +22,10 @@ author: Rubén Lucas
 pinned: false
 ---
 
-After running the Nacho TFM and understanding how the training and inferencing work, the previous practice "robot_mesh" has been migrated to RL-Studio.
+<strong>MIGRATION</strong>
 
+
+The previous implementation (no RL-Studio related) is documented [in this post](https://roboticslaburjc.github.io/2020-phd-ruben-lucas/projects/2021-01-08-model_free_qlearning_algorithm/)
 This migration consisted of:
   -  Migrating the learning algorithm to make the robot behave well in maze problem.
   -  Adapt robot actions to step from one maze cell to the other on each step.
@@ -40,6 +42,25 @@ In there you will notice that there is not need to give plenty of information to
 
 The optimal reward configuration and hyperparameters can be found in the [uploaded agent code](https://github.com/RoboticsLabURJC/2020-phd-ruben-lucas/tree/master/RL_Unibotics/RL-Studio/robot_mesh/agents)
 In the same way, there you will find the [worlds](https://github.com/RoboticsLabURJC/2020-phd-ruben-lucas/tree/master/RL_Unibotics/RL-Studio/robot_mesh/world) and [models](https://github.com/RoboticsLabURJC/2020-phd-ruben-lucas/tree/master/RL_Unibotics/RL-Studio/robot_mesh/model) used.
+
+Note also that two different environments were implemented and a robot has been build for each one.
+This is not a coincidence. Due to the algorithm used constraints, each step must lead to the same consecuent state. If a 
+step in a status leads to different states in different iterations, that means that the problem is not following the premise stated by the markov rules to the qlearning algorithm implementation.
+That said, when the robot dimensions are not fitting closely the aisle dimensions, the robot could collide to the wall and the complete problem will change if the maze matrix is not matching the robot actions.
+
+**conclussion** -> solution is not guaranteed when robot radius is not close to the aisle width.
+
+However, to minimize this behavior, a parameter "reset_on_crash" has been enabled in the [configuration.yml]
+
+<strong>RL-Studio related<strong>
+
+Additionally, the following steps were accomplished to adapt the problem to RL-Studio:
+- Create a .yml configuration file
+- Including the algorithm in "algorithms" folder
+- Including the agent in "agents" folder
+- Push the model and world referenced in the configuration file to the [CustomRobots repository](https://github.com/JdeRobot/CustomRobots)
+- Adding the environment in /rl-studio/__init__ file
+- Adding a folder in /rl-studio/envs (no major modifications with respect to the other implementations in rl-studio)
 
 <strong>DEMO</strong>
 

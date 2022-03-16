@@ -21,7 +21,9 @@ tags:
 author: Rubén Lucas
 pinned: false
 ---
+<strong>MIGRATION</strong>
 
+The previous implementation (no RL-Studio related) is documented [in this post](https://roboticslaburjc.github.io/2020-phd-ruben-lucas/projects/2021-02-07-customized-mountainCar/) which is an evolution of [this one](https://roboticslaburjc.github.io/2020-phd-ruben-lucas/projects/2021-01-22-mountainCar_qlearning/) in which you can see more details of this problem solution.
 This migration consisted of:
   -  Creating models and world for mountain car problem.
   -  Ensuring actions doesnt provoke and unconsistent state (robot must always be within the "mountain" platform and move just to right and left).
@@ -38,6 +40,16 @@ In there you will notice that there is not need to give plenty of information to
 
 The optimal reward configuration and hyperparameters can be found in the [uploaded agent code](https://github.com/RoboticsLabURJC/2020-phd-ruben-lucas/tree/master/RL_Unibotics/RL-Studio/mountain_car/agents)
 In the same way, there you will find the [worlds](https://github.com/RoboticsLabURJC/2020-phd-ruben-lucas/tree/master/RL_Unibotics/RL-Studio/mountain_car/world) and [models](https://github.com/RoboticsLabURJC/2020-phd-ruben-lucas/tree/master/RL_Unibotics/RL-Studio/mountain_car/model) used.
+
+<strong>RL-Studio related<strong>
+
+Additionally, the following steps were accomplished to adapt the problem to RL-Studio:
+- Create a .yml configuration file
+- Including the algorithm in "algorithms" folder
+- Including the agent in "agents" folder
+- Push the model and world referenced in the configuration file to the [CustomRobots repository](https://github.com/JdeRobot/CustomRobots)
+- Adding the environment in /rl-studio/__init__ file
+- Adding a folder in /rl-studio/envs (no major modifications with respect to the other implementations in rl-studio)
 
 <strong>DEMO</strong>
 
