@@ -39,5 +39,5 @@ youTube_id: ID7qaEcIu4k
 {% include feature_row %}
 
 
-Gym-Gazebo-2 is a library for the creation of artificial intelligence algorithms based on learning by reinforcement and applied to robotics.
+RL-Studio is a library for the creation of artificial intelligence algorithms based on learning by reinforcement and applied to robotics.
 
