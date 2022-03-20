@@ -48,7 +48,7 @@ poetry install
 
 ```bash
 git clone git@github.com:JdeRobot/RL-Studio.git
-cd gym-gazebo
+cd rl-studio
 ```
 
 ## Set Noetic configuration
@@ -95,9 +95,9 @@ The following routes will be added to the `.bashrc` or `.zshrc`file (for `formul
 
 ```bash
 . . .
-export GYM_GAZEBO_WORLD_CIRCUIT_F1=$HOME/RL-Studio/rl_studio/installation/../CustomRobots/f1/worlds/simple_circuit.world
-export GYM_GAZEBO_WORLD_NURBURGRING_F1=$HOME/RL-Studio/rl_studio/installation/../CustomRobots/f1/worlds/nurburgring_line.world
-export GYM_GAZEBO_WORLD_MONTREAL_F1=$HOME/RL-Studio/rl_studio/installation/../CustomRobots/f1/worlds/montreal_line.world
+export RL_STUDIO_WORLD_CIRCUIT_F1=$HOME/RL-Studio/rl_studio/installation/../CustomRobots/f1/worlds/simple_circuit.world
+export RL_STUDIO_WORLD_NURBURGRING_F1=$HOME/RL-Studio/rl_studio/installation/../CustomRobots/f1/worlds/nurburgring_line.world
+export RL_STUDIO_WORLD_MONTREAL_F1=$HOME/RL-Studio/rl_studio/installation/../CustomRobots/f1/worlds/montreal_line.world
 . . .
 ```
 

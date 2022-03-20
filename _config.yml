@@ -21,9 +21,9 @@ title_separator          : "-"
 subtitle                 : by JdeRobot
 name                     : "JdeRobot"
 description              : "RL-Studio"
-url                      : http://gym-gazebo-2.github.io
+url                      : https://jderobot.github.io/RL-Studio/
 baseurl                  : # the subpath of your site, e.g. "/blog"
-repository               : gym-gazebo-2
+repository               : rl-studio
 teaser                   : # path of fallback teaser image, e.g. "/assets/images/500x300.png"
 logo                     : /assets/images/peloto.png
 masthead_title           : # overrides the website title displayed in the masthead, use " " for no title
@@ -113,7 +113,7 @@ footer:
       url: "https://twitter.com/JdeRobot"
     - label: "GitHub"
       icon: "fab fa-fw fa-github"
-      url: "https://github.com/JdeRobot/gym-gazebo-2"
+      url: "https://github.com/JdeRobot/RL-Studio/tree/main"
     - label: "Youtube"
       icon: "fab fa-fw fa-youtube"
       url: "https://www.youtube.com/channel/UCgmUgpircYAv_QhLQziHJOQ"
