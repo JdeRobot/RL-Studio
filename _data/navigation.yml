@@ -19,6 +19,11 @@ docs:
     children: 
     - title: How to install
       url: /install/
+      
+  - title: Contribution
+    children:
+    - title: How to contribute
+      url: /contribute/
 
   - title: About
     children:
