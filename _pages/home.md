@@ -8,7 +8,7 @@ header:
     #- label: "<i class='fas fa-download'></i> Install now"
     #  url: "/installation/"
 excerpt: 
-  Write your doc title here
+  Tool for testing reinforcement learning agents and algorithms.
 feature_row:
   - image_path: /assets/images/cover/cars_zenit.jpg
     alt: "Documentation"
@@ -39,5 +39,5 @@ youTube_id: ID7qaEcIu4k
 {% include feature_row %}
 
 
-RL-Studio is a library for the creation of artificial intelligence algorithms based on learning by reinforcement and applied to robotics.
+RL-Studio is a library for the creation of artificial intelligence algorithms based on reinforcement learning and applied to robotics.
 
