@@ -63,7 +63,7 @@ environments:
     training_type: qlearn_camera
     launchfile: my_complex_world.launch
     environment_folder: robot_mesh
-    robot_name: my_robot
+    robot_name: my_bigger_robot
     start_pose: 0
     alternate_pose: True
     estimated_steps: 4000
@@ -75,7 +75,7 @@ environments:
       - [ 3, -6.861, -36.481, 0.004, 0, 0.01, -0.858, 0.613 ]
       - [ 4, 20.043, 37.130, 0.003, 0, 0.103, -1.4383, -1.4383 ]
     actions_force: 24
-    boot_on_crash: True
+    boot_on_crash: False
     goal_x: -100
     goal_y: 14
     pos_x: 17

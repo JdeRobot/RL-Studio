@@ -32,6 +32,7 @@ class RobotMeshEnv(gazebo_envs.GazeboEnv):
         self.boot_on_crash = config.get("boot_on_crash")
         self.goal_x = config.get("goal_x")
         self.goal_y = config.get("goal_y")
+        self.robot_name = config.get("robot_name")
         self.reset_pos_x = config.get("pos_x")
         self.reset_pos_y = config.get("pos_y")
         self.reset_pos_z = config.get("pos_z")
@@ -67,7 +68,7 @@ class RobotMeshEnv(gazebo_envs.GazeboEnv):
         pos_y_prev = math.ceil((y_prev + 10) / self.cells_span) * 40
         # pos_or_prev=np.round((or_prev+4.5/self.cells_span))
 
-        object_coordinates = self.model_coordinates("my_robot", "")
+        object_coordinates = self.model_coordinates(self.robot_name, "")
         x_position = object_coordinates.pose.position.x
         y_position = object_coordinates.pose.position.y
         z_position = object_coordinates.pose.position.z
@@ -77,7 +78,7 @@ class RobotMeshEnv(gazebo_envs.GazeboEnv):
         w_orientation = object_coordinates.pose.orientation.w
 
         state = ModelState()
-        state.model_name = "my_robot"
+        state.model_name = self.robot_name
         state.pose.position.x = x_position
         state.pose.position.y = y_position
         state.pose.position.z = z_position
