@@ -187,7 +187,6 @@ class F1Trainer:
                     counter = 0
 
                 if datetime.datetime.now() - datetime.timedelta(hours=2) > start_time:
-                    print(config.eop)
                     utils.save_model(
                         qlearn, start_time_format, stats, states_counter, states_reward
                     )
