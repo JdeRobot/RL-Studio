@@ -48,7 +48,8 @@ This is not a coincidence. Due to the algorithm used constraints, each step must
 step in a status leads to different states in different iterations, that means that the problem is not following the premise stated by the markov rules to the qlearning algorithm implementation.
 That said, when the robot dimensions are not fitting closely the aisle dimensions, the robot could collide to the wall and the complete problem will change if the maze matrix is not matching the robot actions.
 
-**conclussion** -> solution is not guaranteed when robot radius is not close to the aisle width.
+**conclussion** 
+solution is not guaranteed when robot radius is not close to the aisle width.
 
 However, to minimize this behavior, a parameter "reset_on_crash" has been enabled in the [configuration.yml]
 
@@ -70,4 +71,4 @@ Additionally, the following steps were accomplished to adapt the problem to RL-S
 
 <strong>Complex maze</strong>
 
-<iframe width="560" height="315" src="https://www.youtube.com/embed/UssHBsG9Ats" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+<iframe width="560" height="315" src="https://www.youtube.com/embed/36Zko9hSY6k" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
