@@ -106,7 +106,7 @@ There will be as many variables as there are circuits to be executed.
 With all the libraries installed, the yml [configuration file](https://github.com/JdeRobot/RL-Studio/blob/main/rl_studio/config.yaml) can be configured to launch a run through the [main program](https://github.com/JdeRobot/RL-Studio/blob/main/rl_studio/main_rlstudio.py) and single point of access.
 
 ```bash
-python main_rlstudio.py -n qlearn -a f1 -e simple -f config.yaml 
+poetry run python main_rlstudio.py -n qlearn -a f1 -e simple -f config.yaml
 ```
 
 This program should open a Gazebo environment on the simple circuit, using an agent with the formula 1 model that solves the circuit using the Qlearn algorithm.
