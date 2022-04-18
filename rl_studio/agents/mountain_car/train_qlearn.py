@@ -10,13 +10,13 @@ from functools import reduce
 import multiprocessing
 
 
-from agents.f1.settings import QLearnConfig
+from rl_studio.agents.f1.settings import QLearnConfig
 from rl_studio.visual.ascii.images import JDEROBOT_LOGO
 from rl_studio.visual.ascii.text import JDEROBOT, QLEARN_CAMERA, LETS_GO
 
-from algorithms.qlearn_two_states import QLearn
+from rl_studio.algorithms.qlearn_two_states import QLearn
 from . import utils as specific_utils
-import agents.mountain_car.utils as utils
+import rl_studio.agents.mountain_car.utils as utils
 
 # my envs
 # register(
@@ -41,10 +41,6 @@ class MountainCarTrainer:
         self.alpha = params.algorithm["params"]["alpha"]
         self.epsilon = params.algorithm["params"]["epsilon"]
         self.gamma = params.algorithm["params"]["gamma"]
-        # agent
-        # self.action_number = params.agent["params"]["actions_number"]
-        # self.actions_set = params.agent["params"]["actions_set"]
-        # self.actions_values = params.agent["params"]["available_actions"][self.actions_set]
 
     def simulation(self, queue):
 
@@ -68,8 +64,7 @@ class MountainCarTrainer:
         env = gym.wrappers.Monitor(self.env, outdir, force=True)
         actions = range(env.action_space.n)
         env.done = True
-        counter = 0
-        estimate_step_per_lap = self.environment_params["estimated_steps"]
+
         total_episodes = 20000
         epsilon_discount = 0.99999  # Default 0.9986
         qlearn = QLearn(
@@ -93,10 +88,6 @@ class MountainCarTrainer:
 
         print(LETS_GO)
 
-        previous = datetime.datetime.now()
-        checkpoints = []  # "ID" - x, y - time
-        rewards_per_run = []
-        counter = 0
 
         # START ############################################################################################################
         for episode in range(total_episodes):
@@ -111,8 +102,6 @@ class MountainCarTrainer:
             # state = ''.join(map(str, observation))
 
             for step in range(50000):
-
-                counter += 1
 
                 if qlearn.epsilon > 0.01:
                     qlearn.epsilon *= epsilon_discount
@@ -145,25 +134,6 @@ class MountainCarTrainer:
                 qlearn.learn(state, action, reward, nextState, done)
 
                 env._flush(force=True)
-
-                if config.save_positions:
-                    now = datetime.datetime.now()
-                    if now - datetime.timedelta(seconds=3) > previous:
-                        previous = datetime.datetime.now()
-                        x, y = env.get_position()
-                        checkpoints.append(
-                            [
-                                len(checkpoints),
-                                (x, y),
-                                datetime.datetime.now().strftime("%M:%S.%f")[-4],
-                            ]
-                        )
-
-                #             if datetime.datetime.now() - datetime.timedelta(minutes=3, seconds=12) > start_time:
-                ##                print("Finish. Saving parameters . . .")
-                #              utils.save_times(checkpoints)
-                #             env.close()
-                #            exit(0)
 
                 if not done:
                     state = nextState
@@ -209,7 +179,6 @@ class MountainCarTrainer:
             )
         )
 
-        # plotter.plot_steps_vs_epoch(stats, save=True)
 
         env.close()
 
