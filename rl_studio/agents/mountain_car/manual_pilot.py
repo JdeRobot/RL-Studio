@@ -77,8 +77,6 @@ if __name__ == "__main__":
         counter = 0
         lap_completed = False
 
-        initial_epsilon = 0.999
-
         print("resetting")
         time.sleep(5)
         state = env.reset()
