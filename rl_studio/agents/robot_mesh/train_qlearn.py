@@ -6,14 +6,12 @@ import gym
 import numpy as np
 from functools import reduce
 
-import agents.robot_mesh.liveplot as liveplot
-
-from agents.f1.settings import QLearnConfig
+from rl_studio.agents.f1.settings import QLearnConfig
 from rl_studio.visual.ascii.images import JDEROBOT_LOGO
 from rl_studio.visual.ascii.text import JDEROBOT, QLEARN_CAMERA, LETS_GO
 
-from algorithms.qlearn import QLearn
-import agents.robot_mesh.utils as utils
+from rl_studio.algorithms.qlearn import QLearn
+import rl_studio.agents.robot_mesh.utils as utils
 
 
 
@@ -33,14 +31,13 @@ class RobotMeshTrainer:
         self.epsilon = params.algorithm["params"]["epsilon"]
         self.gamma = params.algorithm["params"]["gamma"]
         self.config = QLearnConfig()
-        self.outdir = "./logs/robot_mesh_experiments/"
         self.stats = {}  # epoch: steps
         self.states_counter = {}
         self.states_reward = {}
-        self.plotter = liveplot.LivePlot(outdir)
         self.last_time_steps = np.ndarray(0)
 
-        self.env = gym.wrappers.Monitor(self.env, outdir, force=True)
+        self.outdir = "./logs/robot_mesh_experiments/"
+        self.env = gym.wrappers.Monitor(self.env, self.outdir, force=True)
         self.actions = range(self.env.action_space.n)
 
         self.total_episodes = 20000
@@ -62,7 +59,7 @@ class RobotMeshTrainer:
             self.qlearn.epsilon *= self.epsilon_discount
 
         # Pick an action based on the current state
-        action = self.qlearn.selectAction(self.state)
+        action = self.qlearn.selectAction(state)
 
         print("Selected Action!! " + str(action))
         # Execute the action and get feedback
@@ -106,7 +103,7 @@ class RobotMeshTrainer:
         print(LETS_GO)
         for episode in range(self.total_episodes):
 
-            cumulated_reward = 0
+            self.cumulated_reward = 0
             state = self.env.reset()
 
             for step in range(50000):
