@@ -12,16 +12,16 @@ from agents.f1.settings import QLearnConfig
 from rl_studio.visual.ascii.images import JDEROBOT_LOGO
 from rl_studio.visual.ascii.text import JDEROBOT, QLEARN_CAMERA, LETS_GO
 
-
 from algorithms.qlearn import QLearn
 import agents.robot_mesh.utils as utils
+
 
 
 class RobotMeshTrainer:
     def __init__(self, params):
         # TODO: Create a pydantic metaclass to simplify the way we extract the params
         # environment params
-        self.params=params
+        self.params = params
         self.environment_params = params.environment["params"]
         self.env_name = params.environment["params"]["env_name"]
         env_params = params.environment["params"]
@@ -32,164 +32,109 @@ class RobotMeshTrainer:
         self.alpha = params.algorithm["params"]["alpha"]
         self.epsilon = params.algorithm["params"]["epsilon"]
         self.gamma = params.algorithm["params"]["gamma"]
-        # agent
-        # self.action_number = params.agent["params"]["actions_number"]
-        # self.actions_set = params.agent["params"]["actions_set"]
-        # self.actions_values = params.agent["params"]["available_actions"][self.actions_set]
+        self.config = QLearnConfig()
+        self.outdir = "./logs/robot_mesh_experiments/"
+        self.stats = {}  # epoch: steps
+        self.states_counter = {}
+        self.states_reward = {}
+        self.plotter = liveplot.LivePlot(outdir)
+        self.last_time_steps = np.ndarray(0)
 
-    def main(self):
+        self.env = gym.wrappers.Monitor(self.env, outdir, force=True)
+        self.actions = range(self.env.action_space.n)
 
+        self.total_episodes = 20000
+        self.epsilon_discount = 0.999  # Default 0.9986
+
+        self.qlearn = QLearn(
+            actions=self.actions, alpha=self.alpha, gamma=self.gamma, epsilon=self.epsilon
+        )
+
+    def print_init_info(self):
         print(JDEROBOT)
         print(JDEROBOT_LOGO)
         print(QLEARN_CAMERA)
         print(f"\t- Start hour: {datetime.datetime.now()}\n")
         print(f"\t- Environment params:\n{self.environment_params}")
-        config = QLearnConfig()
 
-        # TODO: Move to settings file
-        outdir = "./logs/robot_mesh_experiments/"
-        stats = {}  # epoch: steps
-        states_counter = {}
-        states_reward = {}
+    def evaluate_and_learn_from_step(self, state):
+        if self.qlearn.epsilon > 0.05:
+            self.qlearn.epsilon *= self.epsilon_discount
 
-        plotter = liveplot.LivePlot(outdir)
+        # Pick an action based on the current state
+        action = self.qlearn.selectAction(self.state)
 
-        last_time_steps = np.ndarray(0)
+        print("Selected Action!! " + str(action))
+        # Execute the action and get feedback
+        nextState, reward, done, lap_completed = self.env.step(action)
+        self.cumulated_reward += reward
 
-        env = gym.wrappers.Monitor(self.env, outdir, force=True)
-        actions = range(env.action_space.n)
+        if  self.highest_reward <  self.cumulated_reward:
+            self.highest_reward =  self.cumulated_reward
 
-        counter = 0
-        estimate_step_per_lap = self.environment_params["estimated_steps"]
-        lap_completed = False
-        total_episodes = 20000
-        epsilon_discount = 0.999  # Default 0.9986
+        # nextState = ''.join(map(str, observation))
 
-        qlearn = QLearn(
-            actions=actions, alpha=self.alpha, gamma=self.gamma, epsilon=self.epsilon
-        )
+        try:
+            self.states_counter[nextState] += 1
+        except KeyError:
+            self.states_counter[nextState] = 1
 
-        if config.load_model:
-            # TODO: Folder to models. Maybe from environment variable?
+        self.qlearn.learn(state, action, reward, nextState)
+
+        self.env._flush(force=True)
+        return nextState, done
+
+
+    def main(self):
+
+        self.print_init_info()
+
+        if self.config.load_model:
             file_name = "1_20210701_0848_act_set_simple_epsilon_0.19_QTABLE.pkl"
-            utils.load_model(self.params, qlearn, file_name)
-            qvalues = np.array(list(qlearn.q.values()), dtype=np.float64)
+            utils.load_model(self.params, self.qlearn, file_name)
+            qvalues = np.array(list(self.qlearn.q.values()), dtype=np.float64)
             print(qvalues)
-            highest_reward = max(qvalues)
+            self.highest_reward = max(qvalues)
         else:
-            highest_reward = 0
-        initial_epsilon = qlearn.epsilon
+            self.highest_reward = 0
+        initial_epsilon = self.qlearn.epsilon
 
         telemetry_start_time = time.time()
-        start_time = datetime.datetime.now()
-        start_time_format = start_time.strftime("%Y%m%d_%H%M")
+        self.start_time = datetime.datetime.now()
+        self.start_time_format = self.start_time.strftime("%Y%m%d_%H%M")
 
         print(LETS_GO)
-
-        previous = datetime.datetime.now()
-        checkpoints = []  # "ID" - x, y - time
-
-        # START ############################################################################################################
-        for episode in range(total_episodes):
-
-            done = False
-            lap_completed = False
+        for episode in range(self.total_episodes):
 
             cumulated_reward = 0
-            state = env.reset()
-
-            # state = ''.join(map(str, observation))
+            state = self.env.reset()
 
             for step in range(50000):
 
-                if qlearn.epsilon > 0.05:
-                    qlearn.epsilon *= epsilon_discount
-
-                # Pick an action based on the current state
-                action = qlearn.selectAction(state)
-
-                print("Selected Action!! " + str(action))
-                # Execute the action and get feedback
-                nextState, reward, done, lap_completed = env.step(action)
-                cumulated_reward += reward
-
-                if highest_reward < cumulated_reward:
-                    highest_reward = cumulated_reward
-
-                # nextState = ''.join(map(str, observation))
-
-                try:
-                    states_counter[nextState] += 1
-                except KeyError:
-                    states_counter[nextState] = 1
-
-                # qlearn.learn(state, action, reward, nextState, done)
-                qlearn.learn(state, action, reward, nextState)
-                
-                env._flush(force=True)
-
-                if config.save_positions:
-                    now = datetime.datetime.now()
-                    if now - datetime.timedelta(seconds=3) > previous:
-                        previous = datetime.datetime.now()
-                        x, y = env.get_position()
-                        checkpoints.append(
-                            [
-                                len(checkpoints),
-                                (x, y),
-                                datetime.datetime.now().strftime("%M:%S.%f")[-4],
-                            ]
-                        )
-
-                    if (
-                        datetime.datetime.now()
-                        - datetime.timedelta(minutes=3, seconds=12)
-                        > start_time
-                    ):
-                        print("Finish. Saving parameters . . .")
-                        #       utils.save_times(checkpoints)
-                        env.close()
-                        exit(0)
+                next_state, done = self.evaluate_and_learn_from_step(state);
 
                 if not done:
-                    state = nextState
+                    state = next_state
                 else:
-                    last_time_steps = np.append(last_time_steps, [int(step + 1)])
-                    stats[int(episode)] = step
-                    states_reward[int(episode)] = cumulated_reward
+                    last_time_steps = np.append(self.last_time_steps, [int(self.step + 1)])
+                    self.stats[int(self.episode)] = self.step
+                    self.states_reward[int(self.episode)] = self.cumulated_reward
                     print(
-                        f"EP: {episode + 1} - epsilon: {round(qlearn.epsilon, 2)} - Reward: {cumulated_reward}"
-                        f"- Time: {start_time_format} - Steps: {step}"
+                        f"EP: {self.episode + 1} - epsilon: {round(self.qlearn.epsilon, 2)} - Reward: {self.cumulated_reward}"
+                        f"- Time: {self.start_time_format} - Steps: {self.step}"
                     )
                     break
 
-                # if datetime.datetime.now() - datetime.timedelta(hours=2) > start_time:
-                #   print(config.eop)
-                #  #    utils.save_model(qlearn, start_time_format, stats, states_counter, states_reward)
-                # print(f"    - N epoch:     {episode}")
-                # print(f"    - Model size:  {len(qlearn.q)}")
-                #      print(f"    - Action set:  {config.actions_set}")
-                #     print(f"    - Epsilon:     {round(qlearn.epsilon, 2)}")
-                #    print(f"    - Cum. reward: {cumulated_reward}")
-                #   start_time = datetime.datetime.now()
-                # env.close()
-                # exit(0)
-
-            if episode % 1 == 0 and config.plotter_graphic:
-                # plotter.plot(env)
-                plotter.plot_steps_vs_epoch(stats)
-                # plotter.full_plot(env, stats, 2)  # optional parameter = mode (0, 1, 2)
-
-            if episode % 250 == 0 and config.save_model and episode > 1:
+            if episode % 250 == 0 and self.config.save_model and episode > 1:
                 print(f"\nSaving model . . .\n")
-                utils.save_model(qlearn, start_time_format, stats, states_counter, states_reward)
+                utils.save_model(self.qlearn, self.start_time_format, self.stats, self.states_counter, self.states_reward)
 
             m, s = divmod(int(time.time() - telemetry_start_time), 60)
             h, m = divmod(m, 60)
 
         print(
             "Total EP: {} - epsilon: {} - ep. discount: {} - Highest Reward: {}".format(
-                total_episodes, initial_epsilon, epsilon_discount, highest_reward
+                self.total_episodes, initial_epsilon, self.epsilon_discount, self.highest_reward
             )
         )
 
@@ -204,6 +149,4 @@ class RobotMeshTrainer:
             )
         )
 
-        plotter.plot_steps_vs_epoch(stats, save=True)
-
-        env.close()
+        self.env.close()

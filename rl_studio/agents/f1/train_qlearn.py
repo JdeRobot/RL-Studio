@@ -6,10 +6,10 @@ from pprint import pprint
 import gym
 import numpy as np
 
-from agents import liveplot
-from agents.f1 import utils
-from algorithms.qlearn import QLearn
-from agents.f1.settings import QLearnConfig
+from rl_studio.agents import liveplot
+from rl_studio.agents.f1 import utils
+from rl_studio.algorithms.qlearn import QLearn
+from settings import QLearnConfig
 from rl_studio.visual.ascii.images import JDEROBOT_LOGO
 from rl_studio.visual.ascii.text import JDEROBOT, QLEARN_CAMERA, LETS_GO
 
@@ -190,6 +190,8 @@ class F1Trainer:
                     utils.save_model(
                         qlearn, start_time_format, stats, states_counter, states_reward
                     )
+                    start_time = datetime.datetime.now()
+
                     print(f"    - N epoch:     {episode}")
                     print(f"    - Model size:  {len(qlearn.q)}")
                     print(f"    - Action set:  {config.actions_set}")

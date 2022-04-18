@@ -1,10 +1,10 @@
 ###########################
 # Global variables file
 ###########################
-from pydantic import BaseModel
+from pydantic import BaseSettings
 
 
-class QLearnConfig(BaseModel):
+class QLearnConfig(BaseSettings):
     actions: int = 3
     debug_level: int = 0
     telemetry: bool = False

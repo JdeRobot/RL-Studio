@@ -157,30 +157,3 @@ class RobotMeshEnv(gazebo_envs.GazeboEnv):
         self._gazebo_pause()
 
         return state
-
-    # def inference(self, action):
-    #     self._gazebo_unpause()
-    #
-    #     vel_cmd = Twist()
-    #     vel_cmd.linear.x = ACTIONS_SET[action][0]
-    #     vel_cmd.angular.z = ACTIONS_SET[action][1]
-    #     self.vel_pub.publish(vel_cmd)
-    #
-    #     image_data = rospy.wait_for_message('/robotROS/cameraL/image_raw', Image, timeout=1)
-    #     cv_image = CvBridge().imgmsg_to_cv2(image_data, "bgr8")
-    #     robot_image_camera = self.image_msg_to_image(image_data, cv_image)
-    #
-    #     self._gazebo_pause()
-    #
-    #     points = self.processed_image(robot_image_camera.data)
-    #     state = self.calculate_observation(points)
-    #
-    #     center = float(center_image - points[0]) / (float(width) // 2)
-    #
-    #     done = False
-    #     center = abs(center)
-    #
-    #     if center > 0.9:
-    #         done = True
-    #
-    #     return state, done

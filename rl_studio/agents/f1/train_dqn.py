@@ -13,9 +13,9 @@ import gym
 import matplotlib.pyplot as plt
 import numpy as np
 from keras import backend as K
-from agents.f1.settings import my_board
+from settings import my_board
 
-from algorithms.dqn import DeepQ
+from rl_studio.algorithms.dqn import DeepQ
 
 # To equal the inputs, we set the channels first and the image next.
 K.set_image_data_format("channels_first")
