@@ -1,6 +1,6 @@
 import pickle
 import datetime
-from agents.mountain_car import settings
+from rl_studio.agents.mountain_car import settings
 
 
 #TODO Since these utils are algorithm specific, those should stay in the algorithm folder somehow tied to its algorithm class
