@@ -9,7 +9,7 @@ from gazebo_msgs.msg import ModelState
 from gazebo_msgs.srv import SetModelState, GetModelState
 from std_srvs.srv import Empty
 
-# from agents.robot.settings import telemetry, x_row, center_image, width, height, telemetry_mask, max_distance
+# from rl_studio.agents.robot.settings import telemetry, x_row, center_image, width, height, telemetry_mask, max_distance
 from .. import gazebo_envs
 import time
 import math

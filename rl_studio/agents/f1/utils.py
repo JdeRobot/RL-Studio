@@ -1,6 +1,6 @@
 import pickle
 import datetime
-from agents.f1 import settings
+from rl_studio.agents.f1 import settings
 
 
 #TODO Since these utils are algorithm specific, those should stay in the algorithm folder somehow tied to its algorithm class
