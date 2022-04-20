@@ -13,13 +13,14 @@ from gym.utils import seeding
 from sensor_msgs.msg import Image
 from std_srvs.srv import Empty
 
-from agents.f1.settings import telemetry
+from rl_studio.envs import gazebo_env
+from rl_studio.agents.f1.settings import telemetry
 from rl_studio.envs.f1.image_f1 import ImageF1
 from rl_studio.envs.f1.models.f1_env import F1Env
 
 # Images size
 witdh = 640
-center_image = int(witdh / 2)
+center_image = int(witdh/2)
 
 # Coord X ROW
 x_row = [260, 360, 450]
@@ -40,13 +41,11 @@ v_lineal = [3, 8, 15]
 w_angular = [-1, -0.6, 0, 1, 0.6]
 
 # POSES
-positions = [
-    (0, 53.462, -41.988, 0.004, 0, 0, 1.57, -1.57),
-    (1, 53.462, -8.734, 0.004, 0, 0, 1.57, -1.57),
-    (2, 39.712, -30.741, 0.004, 0, 0, 1.56, 1.56),
-    (3, -7.894, -39.051, 0.004, 0, 0.01, -2.021, 2.021),
-    (4, 20.043, 37.130, 0.003, 0, 0.103, -1.4383, -1.4383),
-]
+positions = [(0, 53.462, -41.988, 0.004, 0, 0, 1.57, -1.57),
+             (1, 53.462, -8.734, 0.004, 0, 0, 1.57, -1.57),
+             (2, 39.712, -30.741, 0.004, 0, 0, 1.56, 1.56),
+             (3, -7.894, -39.051, 0.004, 0, 0.01, -2.021, 2.021),
+             (4, 20.043, 37.130, 0.003, 0, 0.103, -1.4383, -1.4383)]
 
 
 class GazeboF1CameraEnvDQN(F1Env):
@@ -89,10 +88,10 @@ class GazeboF1CameraEnvDQN(F1Env):
     def __init__(self, **config):
         # Launch the simulation with the given launchfile name
         gazebo_env.GazeboEnv.__init__(self, "F1Cameracircuit_v0.launch")
-        self.vel_pub = rospy.Publisher("/F1ROS/cmd_vel", Twist, queue_size=5)
-        self.unpause = rospy.ServiceProxy("/gazebo/unpause_physics", Empty)
-        self.pause = rospy.ServiceProxy("/gazebo/pause_physics", Empty)
-        self.reset_proxy = rospy.ServiceProxy("/gazebo/reset_simulation", Empty)
+        self.vel_pub = rospy.Publisher('/F1ROS/cmd_vel', Twist, queue_size=5)
+        self.unpause = rospy.ServiceProxy('/gazebo/unpause_physics', Empty)
+        self.pause = rospy.ServiceProxy('/gazebo/pause_physics', Empty)
+        self.reset_proxy = rospy.ServiceProxy('/gazebo/reset_simulation', Empty)
         # self.state_msg = ModelState()
         # self.set_state = rospy.ServiceProxy("/gazebo/set_model_state", SetModelState)
         self.position = None
@@ -106,11 +105,11 @@ class GazeboF1CameraEnvDQN(F1Env):
         # self.image_sub = rospy.Subscriber("/F1ROS/cameraL/image_raw", Image, self.callback)
         self.action_space = self._generate_simple_action_space()
 
-    def render(self, mode="human"):
+    def render(self, mode='human'):
         pass
 
     def _gazebo_pause(self):
-        rospy.wait_for_service("/gazebo/pause_physics")
+        rospy.wait_for_service('/gazebo/pause_physics')
         try:
             # resp_pause = pause.call()
             self.pause()
@@ -118,7 +117,7 @@ class GazeboF1CameraEnvDQN(F1Env):
             print("/gazebo/pause_physics service call failed: {}".format(e))
 
     def _gazebo_unpause(self):
-        rospy.wait_for_service("/gazebo/unpause_physics")
+        rospy.wait_for_service('/gazebo/unpause_physics')
         try:
             self.unpause()
         except rospy.ServiceException as e:
@@ -127,7 +126,7 @@ class GazeboF1CameraEnvDQN(F1Env):
 
     def _gazebo_reset(self):
         # Resets the state of the environment and returns an initial observation.
-        rospy.wait_for_service("/gazebo/reset_simulation")
+        rospy.wait_for_service('/gazebo/reset_simulation')
         try:
             # reset_proxy.call()
             self.reset_proxy()
@@ -142,11 +141,9 @@ class GazeboF1CameraEnvDQN(F1Env):
         action_space = {}
 
         for action in range(actions):
-            if action > actions / 2:
-                diff = action - round(actions / 2)
-            vel_ang = round(
-                (action - actions / 2) * max_ang_speed * 0.1, 2
-            )  # from (-1 to + 1)
+            if action > actions/2:
+                diff = action - round(actions/2)
+            vel_ang = round((action - actions/2) * max_ang_speed * 0.1, 2)  # from (-1 to + 1)
             action_space[action] = vel_ang
 
         return action_space
@@ -162,14 +159,12 @@ class GazeboF1CameraEnvDQN(F1Env):
         action_space_dict = {}
 
         for action in range(actions):
-            if action > actions / 2:
-                diff = action - round(actions / 2)
+            if action > actions/2:
+                diff = action - round(actions/2)
                 vel_lin = max_lin_speed - diff  # from (3 to 15)
             else:
                 vel_lin = action + min_lin_speed  # from (3 to 15)
-            vel_ang = round(
-                (action - actions / 2) * max_ang_speed * 0.1, 2
-            )  # from (-1 to + 1)
+            vel_ang = round((action - actions/2) * max_ang_speed * 0.1, 2)  # from (-1 to + 1)
             action_space_dict[action] = (vel_lin, vel_ang)
             # print("Action: {} - V: {} - W: {}".format(action, vel_lin, vel_ang))
         # print(action_space_dict)
@@ -186,91 +181,17 @@ class GazeboF1CameraEnvDQN(F1Env):
         cv2.line(img, (320, x_row[1]), (320, x_row[1]), (255, 255, 0), thickness=5)
         cv2.line(img, (320, x_row[2]), (320, x_row[2]), (255, 255, 0), thickness=5)
         # Linea diferencia entre punto central - error (blanco)
-        cv2.line(
-            img,
-            (center_image, x_row[0]),
-            (int(point_1), x_row[0]),
-            (255, 255, 255),
-            thickness=2,
-        )
-        cv2.line(
-            img,
-            (center_image, x_row[1]),
-            (int(point_2), x_row[1]),
-            (255, 255, 255),
-            thickness=2,
-        )
-        cv2.line(
-            img,
-            (center_image, x_row[2]),
-            (int(point_3), x_row[2]),
-            (255, 255, 255),
-            thickness=2,
-        )
+        cv2.line(img, (center_image, x_row[0]), (int(point_1), x_row[0]), (255, 255, 255), thickness=2)
+        cv2.line(img, (center_image, x_row[1]), (int(point_2), x_row[1]), (255, 255, 255), thickness=2)
+        cv2.line(img, (center_image, x_row[2]), (int(point_3), x_row[2]), (255, 255, 255), thickness=2)
         # Telemetry
-        cv2.putText(
-            img,
-            str("action: {}".format(action)),
-            (18, 280),
-            font,
-            0.4,
-            (255, 255, 255),
-            1,
-        )
-        cv2.putText(
-            img,
-            str("w ang: {}".format(w_angular)),
-            (18, 300),
-            font,
-            0.4,
-            (255, 255, 255),
-            1,
-        )
-        cv2.putText(
-            img,
-            str("reward: {}".format(reward)),
-            (18, 320),
-            font,
-            0.4,
-            (255, 255, 255),
-            1,
-        )
-        cv2.putText(
-            img,
-            str("err1: {}".format(center_image - point_1)),
-            (18, 340),
-            font,
-            0.4,
-            (255, 255, 255),
-            1,
-        )
-        cv2.putText(
-            img,
-            str("err2: {}".format(center_image - point_2)),
-            (18, 360),
-            font,
-            0.4,
-            (255, 255, 255),
-            1,
-        )
-        cv2.putText(
-            img,
-            str("err3: {}".format(center_image - point_3)),
-            (18, 380),
-            font,
-            0.4,
-            (255, 255, 255),
-            1,
-        )
-        cv2.putText(
-            img,
-            str("pose: {}".format(self.position)),
-            (18, 400),
-            font,
-            0.4,
-            (255, 255, 255),
-            1,
-        )
+        cv2.putText(img, str("action: {}".format(action)), (18, 280), font, 0.4, (255, 255, 255), 1)
+        cv2.putText(img, str("w ang: {}".format(w_angular)), (18, 300), font, 0.4, (255, 255, 255), 1)
+        cv2.putText(img, str("reward: {}".format(reward)), (18, 320), font, 0.4, (255, 255, 255), 1)
+        cv2.putText(img, str("err1: {}".format(center_image - point_1)), (18, 340), font, 0.4, (255, 255, 255), 1)
+        cv2.putText(img, str("err2: {}".format(center_image - point_2)), (18, 360), font, 0.4, (255, 255, 255), 1)
+        cv2.putText(img, str("err3: {}".format(center_image - point_3)), (18, 380), font, 0.4, (255, 255, 255), 1)
+        cv2.putText(img, str("pose: {}".format(self.position)), (18, 400), font, 0.4, (255, 255, 255), 1)
 
         cv2.imshow("Image window", img)
         cv2.waitKey(3)
@@ -292,10 +213,10 @@ class GazeboF1CameraEnvDQN(F1Env):
         state.pose.orientation.z = positions[new_pos][6]
         state.pose.orientation.w = positions[new_pos][7]
 
-        rospy.wait_for_service("/gazebo/set_model_state")
+        rospy.wait_for_service('/gazebo/set_model_state')
 
         try:
-            set_state = rospy.ServiceProxy("/gazebo/set_model_state", SetModelState)
+            set_state = rospy.ServiceProxy('/gazebo/set_model_state', SetModelState)
             set_state(state)
         except rospy.ServiceException as e:
             print("Service call failed: {}".format(e))
@@ -317,9 +238,7 @@ class GazeboF1CameraEnvDQN(F1Env):
     @staticmethod
     def get_center(image_line):
         try:
-            coords = np.divide(
-                np.max(np.nonzero(image_line)) - np.min(np.nonzero(image_line)), 2
-            )
+            coords = np.divide(np.max(np.nonzero(image_line)) - np.min(np.nonzero(image_line)), 2)
             coords = np.min(np.nonzero(image_line)) + coords
         except:
             coords = -1
@@ -366,7 +285,7 @@ class GazeboF1CameraEnvDQN(F1Env):
         except CvBridgeError as e:
             print(e)
 
-        (rows, cols, channels) = cv_image.shape
+        (rows, cols,channels) = cv_image.shape
         if cols > 60 and rows > 60:
             cv2.circle(cv_image, (50, 50), 10, 255)
 
@@ -421,11 +340,9 @@ class GazeboF1CameraEnvDQN(F1Env):
 
         done = False
 
-        if center_image - RANGES[2] < point_3 < center_image + RANGES[2]:
-            if (
-                center_image - RANGES[0] < point_1 < center_image + RANGES[0]
-                or center_image - RANGES[1] < point_2 < center_image + RANGES[1]
-            ):
+        if center_image-RANGES[2] < point_3 < center_image+RANGES[2]:
+            if center_image-RANGES[0] < point_1 < center_image+RANGES[0] or \
+                    center_image-RANGES[1] < point_2 < center_image+RANGES[1]:
                 pass  # In Line
         else:
             done = True
@@ -449,9 +366,7 @@ class GazeboF1CameraEnvDQN(F1Env):
         cv_image = None
         f1_image_camera = None
         while image_data is None or success is False:
-            image_data = rospy.wait_for_message(
-                "/F1ROS/cameraL/image_raw", Image, timeout=5
-            )
+            image_data = rospy.wait_for_message('/F1ROS/cameraL/image_raw', Image, timeout=5)
             # Transform the image data from ROS to CVMat
             cv_image = CvBridge().imgmsg_to_cv2(image_data, "bgr8")
             f1_image_camera = self.image_msg_to_image(image_data, cv_image)
@@ -485,9 +400,7 @@ class GazeboF1CameraEnvDQN(F1Env):
 
         # == TELEMETRY ==
         if telemetry:
-            self.show_telemetry(
-                f1_image_camera.data, point_1, point_2, point_3, action, reward
-            )
+            self.show_telemetry(f1_image_camera.data, point_1, point_2, point_3, action, reward)
 
         cv_image = cv2.cvtColor(cv_image, cv2.COLOR_BGR2GRAY)
         cv_image = cv2.resize(cv_image, (self.img_rows, self.img_cols))
@@ -521,9 +434,7 @@ class GazeboF1CameraEnvDQN(F1Env):
         cv_image = None
         success = False
         while image_data is None or success is False:
-            image_data = rospy.wait_for_message(
-                "/F1ROS/cameraL/image_raw", Image, timeout=5
-            )
+            image_data = rospy.wait_for_message('/F1ROS/cameraL/image_raw', Image, timeout=5)
             # Transform the image data from ROS to CVMat
             cv_image = CvBridge().imgmsg_to_cv2(image_data, "bgr8")
             f1_image_camera = self.image_msg_to_image(image_data, cv_image)
