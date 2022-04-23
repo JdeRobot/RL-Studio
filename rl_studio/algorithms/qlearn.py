@@ -1,3 +1,5 @@
+import pickle
+
 import gym
 from gym import wrappers
 
@@ -63,3 +65,34 @@ class QLearn:
         self.state = self.np_random.uniform(low=-0.05, high=0.05, size=(4,))
         self.steps_beyond_done = None
         return np.array(self.state)
+
+    def inference(self, state, return_q=False):
+        q = [self.getQValues(state, a) for a in self.actions]
+        maxQ = max(q)
+
+        count = q.count(maxQ)
+        # In case there're several state-action max values
+        # we select a random one among them
+        if count > 1:
+            best = [i for i in range(len(self.actions)) if q[i] == maxQ]
+            i = random.choice(best)
+        else:
+            i = q.index(maxQ)
+
+        action = self.actions[i]
+        if return_q:  # if they want it, give it!
+            return action, q
+        return action
+
+    def load_model(self, file_path, actions_path):
+
+        qlearn_file = open(file_path, "rb")
+        actions_file = open(actions_path, "rb")
+
+        self.q = pickle.load(qlearn_file)
+        # TODO it may be possible to infer the actions from the model. I don know enough to assume that for every algorithm
+        self.actions = pickle.load(actions_file)
+
+        print(f"\n\nMODEL LOADED.")
+        print(f"    - Loading:    {file_path}")
+        print(f"    - Model size: {len(self.q)}")

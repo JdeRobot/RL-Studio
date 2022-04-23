@@ -72,10 +72,7 @@ class RobotMeshEnv(gazebo_envs.GazeboEnv):
         x_position = object_coordinates.pose.position.x
         y_position = object_coordinates.pose.position.y
         z_position = object_coordinates.pose.position.z
-        x_orientation = object_coordinates.pose.orientation.x
-        y_orientation = object_coordinates.pose.orientation.y
-        z_orientation = object_coordinates.pose.orientation.z
-        w_orientation = object_coordinates.pose.orientation.w
+
 
         state = ModelState()
         state.model_name = self.robot_name

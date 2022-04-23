@@ -78,6 +78,11 @@ class F1Trainer:
         start_time = datetime.datetime.now()
         start_time_format = start_time.strftime("%Y%m%d_%H%M")
 
+
+        if config.save_model:
+            print(f"\nSaving actions . . .\n")
+            utils.save_actions(self.actions, start_time_format)
+
         print(LETS_GO)
 
         previous = datetime.datetime.now()

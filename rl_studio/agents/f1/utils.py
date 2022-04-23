@@ -57,6 +57,11 @@ def save_times(checkpoints):
     file_dump = open(f"/logs/{file_name}{settings.qlearn.actions_set}_checkpoints.pkl", "wb")
     pickle.dump(checkpoints, file_dump)
 
+def save_actions(actions, current_time):
+    file_dump = open(
+        "./logs/qlearn_models/actions_set_" + current_time, "wb"
+    )
+    pickle.dump(actions, file_dump)
 
 def render(env, episode):
     render_skip = 0

@@ -89,6 +89,7 @@ class MountainCarTrainer:
 
         self.print_init_info()
 
+
         if self.config.load_model:
             file_name = "1_20210701_0848_act_set_simple_epsilon_0.19_QTABLE.pkl"
             utils.load_model(self.params, self.qlearn, file_name)
@@ -99,9 +100,12 @@ class MountainCarTrainer:
             self.highest_reward = 0
         initial_epsilon = self.qlearn.epsilon
 
-        telemetry_start_time = time.time()
         start_time = datetime.datetime.now()
         start_time_format = start_time.strftime("%Y%m%d_%H%M")
+
+        if self.config.save_model:
+            print(f"\nSaving actions . . .\n")
+            utils.save_actions(self.actions, start_time_format)
 
         print(LETS_GO)
 
