@@ -125,6 +125,11 @@ environments:
     estimated_steps: 4000
     sensor: camera
 
+inference:
+  qlearn:
+    qvalues_file: /home/rubenlucas93/1_20220428_2115_act_set_simple_epsilon_0.8_QTABLE.pkl
+    actions_file: /home/rubenlucas93/actions_set_20220428_2115
+
 
 algorithm:
     qlearn:

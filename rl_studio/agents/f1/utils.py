@@ -43,8 +43,7 @@ def save_model(qlearn, current_time, states, states_counter, states_rewards):
     pickle.dump(states_counter, file_dump)
     # STATES CUMULATED REWARD
     states_cum_reward_file_name = base_file_name + "_STATES_CUM_REWARD.pkl"
-    file_dump = open(f"/logs/qlearn_models/3_{current_time}{states_cum_reward_file_name}", "wb"
-    )
+    file_dump = open(f"./logs/qlearn_models/3_{current_time}{states_cum_reward_file_name}", "wb")
     pickle.dump(states_rewards, file_dump)
     # STATES
     steps = base_file_name + "_STATES_STEPS.pkl"

@@ -46,12 +46,12 @@ class InferenceExecutorFactory:
             from rl_studio.agents.robot_mesh.inference_qlearn import RobotMeshInferencer
 
             return RobotMeshInferencer(config)
-        #
-        # elif agent == AgentsType.F1.value:
-        #     from rl_studio.agents.f1.inference_qlearn import F1Inferencer
-        #
-        #     return F1Inferencer(config)
-        #
+
+        elif agent == AgentsType.F1.value:
+            from rl_studio.agents.f1.inference_qlearn import F1Inferencer
+
+            return F1Inferencer(config)
+
         # elif agent == AgentsType.TURTLEBOT.value:
         #     from rl_studio.agents.turtlebot.turtlebot_Inferencer import TurtlebotInferencer
         #
