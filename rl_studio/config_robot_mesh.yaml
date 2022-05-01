@@ -93,7 +93,7 @@ environments:
 
 inference:
   qlearn_mesh:
-    qvalues_file: /home/rubenlucas93/qvalues.pkl
+    inference_file: /home/rubenlucas93/qvalues.pkl
     actions_file: /home/rubenlucas93/actions_set.pkl
 
 algorithm:

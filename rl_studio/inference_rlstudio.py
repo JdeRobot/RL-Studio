@@ -11,7 +11,7 @@ from pydantic import BaseModel
 
 
 class InferenceValidator(BaseModel):
-    q_file: str
+    inference_file: str
     algorithm: str
     actions_file: str
 
@@ -19,11 +19,11 @@ class InferenceValidator(BaseModel):
 #TODO future iteration -> make it language agnostic. Right now it is imported and instantiated like a library.
 # In the future, it could be launched, binded to a port or a topic, and just answering to what it is listening
 class InferencerWrapper:
-    def __init__(self, algorithm, q_file, actions_file):
+    def __init__(self, algorithm, inference_file, actions_file):
 
         inference_params = {
             "algorithm": algorithm,
-            "q_file": q_file,
+            "inference_file": inference_file,
             "actions_file": actions_file
         }
 

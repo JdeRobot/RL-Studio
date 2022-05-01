@@ -11,14 +11,14 @@ class InferencerFactory:
     def __new__(cls, config):
 
         algorithm = config.algorithm
-        qvalues_file_name = config.q_file
+        inference_file_name = config.inference_file
         actions_file_name = config.actions_file
 
         if algorithm == AlgorithmsType.QLEARN.value:
             from rl_studio.algorithms.qlearn import QLearn
 
             brain = QLearn(config)
-            brain.load_model(qvalues_file_name, actions_file_name)
+            brain.load_model(inference_file_name, actions_file_name)
 
             return brain
 

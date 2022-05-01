@@ -1,18 +1,12 @@
 import datetime
-import time
 
 import gym
-
 import numpy as np
-from functools import reduce
 
-from rl_studio.agents.f1.settings import QLearnConfig
+from rl_studio.agents.robot_mesh.settings import QLearnConfig
+from rl_studio.inference_rlstudio import InferencerWrapper
 from rl_studio.visual.ascii.images import JDEROBOT_LOGO
 from rl_studio.visual.ascii.text import JDEROBOT, QLEARN_CAMERA, LETS_GO
-
-from rl_studio.inference_rlstudio import InferencerWrapper
-import rl_studio.agents.robot_mesh.utils as utils
-
 
 
 class RobotMeshInferencer:
@@ -37,11 +31,11 @@ class RobotMeshInferencer:
         self.outdir = "./logs/robot_mesh_experiments/"
         self.env = gym.wrappers.Monitor(self.env, self.outdir, force=True)
 
-        q_file = params.inference["params"]["qvalues_file"]
+        inference_file = params.inference["params"]["inference_file"]
         actions_file = params.inference["params"]["actions_file"]
         self.highest_reward = 0
 
-        self.inferencer = InferencerWrapper("qlearn", q_file, actions_file)
+        self.inferencer = InferencerWrapper("qlearn", inference_file, actions_file)
 
     def print_init_info(self):
         print(JDEROBOT)
@@ -100,10 +94,6 @@ class RobotMeshInferencer:
                         f"- Time: {start_time_format} - Steps: {step}"
                     )
                     break
-
-            if episode % 250 == 0 and self.config.save_model and episode > 1:
-                print(f"\nSaving model . . .\n")
-                utils.save_model(self.qlearn, start_time_format, self.stats, self.states_counter, self.states_reward)
 
         print(
             "Total EP: {} - Highest Reward: {}".format(

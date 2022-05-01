@@ -9,14 +9,15 @@ import numpy as np
 from rl_studio.agents import liveplot
 from rl_studio.agents.f1 import utils
 from rl_studio.agents.f1.settings import QLearnConfig
+from rl_studio.inference_rlstudio import InferencerWrapper
 from rl_studio.visual.ascii.images import JDEROBOT_LOGO
 from rl_studio.visual.ascii.text import JDEROBOT, QLEARN_CAMERA, LETS_GO
-from rl_studio.inference_rlstudio import InferencerWrapper
+
 
 class F1Inferencer:
 
     def __init__(self, params):
-        # TODO: Create a pydantic metaclass to simplify the way we extract the params
+        # TODO: Create a pydantic metaclass to simplifyactions thactionse way we extract the params
         # environment params
         self.params=params
         self.environment_params = params.environment["params"]
@@ -29,7 +30,7 @@ class F1Inferencer:
         self.alpha = params.algorithm["params"]["alpha"]
         self.epsilon = params.algorithm["params"]["epsilon"]
         self.gamma = params.algorithm["params"]["gamma"]
-        self.q_file = params.inference["params"]["qvalues_file"]
+        self.inference_file = params.inference["params"]["inference_file"]
         self.actions_file = params.inference["params"]["actions_file"]
         # agent
         # self.action_number = params.agent["params"]["actions_number"]
@@ -64,7 +65,7 @@ class F1Inferencer:
         epsilon_discount = 0.9986  # Default 0.9986
 
         # TODO: Call the algorithm factory passing "qlearn" as parameter.
-        self.inferencer = InferencerWrapper("qlearn", self.q_file, self.actions_file)
+        self.inferencer = InferencerWrapper("qlearn", self.inference_file, self.actions_file)
 
         highest_reward = 0
 
