@@ -46,4 +46,4 @@ The following steps must be performed to launch those two problems in "inference
 
 <strong>F1 inference module with successfully training</strong>
 
-<iframe width="560" height="315" src="https://www.youtube.com/embed/en9G6ca1TWY" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+<iframe width="560" height="315" src="https://www.youtube.com/embed/KnQ3zd_VgrY" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
