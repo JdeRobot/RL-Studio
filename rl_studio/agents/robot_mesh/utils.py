@@ -1,17 +1,21 @@
 import pickle
 import datetime
-from rl_studio.agents import settings
+from rl_studio.agents.robot_mesh import settings
 
 
-def load_model(qlearn, file_name):
+#TODO Since these utils are algorithm specific, those should stay in the algorithm folder somehow tied to its algorithm class
+
+
+def load_model(params, qlearn, file_name):
 
     qlearn_file = open("./logs/qlearn_models/" + file_name)
     model = pickle.load(qlearn_file)
 
     qlearn.q = model
-    qlearn.alpha = settings.algorithm_params["alpha"]
-    qlearn.gamma = settings.algorithm_params["gamma"]
-    qlearn.epsilon = settings.algorithm_params["epsilon"]
+    qlearn.alpha = params.algorithm["params"]["alpha"]
+    qlearn.gamma = params.algorithm["params"]["epsilon"]
+    qlearn.epsilon = params.algorithm["params"]["gamma"]
+
     # highest_reward = settings.algorithm_params["highest_reward"]
 
     print(f"\n\nMODEL LOADED. Number of (action, state): {len(model)}")
@@ -27,9 +31,10 @@ def save_model(qlearn, current_time, states, states_counter, states_rewards):
     # (S x A), where s are all states, a are all the possible actions. After the environment is solved, just save this
     # matrix as a csv file. I have a quick implementation of this on my GitHub under Reinforcement Learning.
 
+    #TODO The paths are not relative to the agents folder
     # Q TABLE
     base_file_name = "_act_set_{}_epsilon_{}".format(
-        settings.actions_set, round(qlearn.epsilon, 2)
+        settings.qlearn.actions_set, round(qlearn.epsilon, 2)
     )
     file_dump = open(
         "./logs/qlearn_models/1_" + current_time + base_file_name + "_QTABLE.pkl", "wb"
@@ -56,7 +61,7 @@ def save_model(qlearn, current_time, states, states_counter, states_rewards):
 def save_times(checkpoints):
     file_name = "actions_"
     file_dump = open(
-        "./logs/" + file_name + settings.actions_set + "_checkpoints.pkl", "wb"
+        "./logs/" + file_name + settings.qlearn.actions_set + "_checkpoints.pkl", "wb"
     )
     pickle.dump(checkpoints, file_dump)
 

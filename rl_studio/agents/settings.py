@@ -1,10 +1,10 @@
 ###########################
 # Global variables file
 ###########################
-from pydantic import BaseModel
+from pydantic import BaseSettings
 
 
-class QLearnConfig(BaseModel):
+class QLearnConfig(BaseSettings):
     actions: int = 3
     debug_level: int = 0
     telemetry: bool = False
@@ -33,11 +33,7 @@ class QLearnConfig(BaseModel):
     elif poi == 2:
         x_row = [60, 110]
     elif poi == 3:
-        x_row = [
-            10,
-            60,
-            110,
-        ]  # The first and last element is not used. Just for metrics
+        x_row = [10, 60, 110]  # The first and last element is not used. Just for metrics
     elif poi == 5:
         x_row = [250, 300, 350, 400, 450]
 
