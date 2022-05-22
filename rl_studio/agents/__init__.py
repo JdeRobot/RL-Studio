@@ -32,6 +32,11 @@ class TrainerFactory:
 
             return MountainCarTrainer(config)
 
+        elif agent == AgentsType.CARTPOLE.value:
+            from rl_studio.agents.cartpole.train_qlearn import CartpoleTrainer
+
+            return CartpoleTrainer(config)
+
         else:
             raise NoValidTrainingType(agent)
 
@@ -57,12 +62,15 @@ class InferenceExecutorFactory:
         #
         #     return TurtlebotInferencer(config)
         #
-        #
-        #
-        # elif agent == AgentsType.MOUNTAIN_CAR.value:
-        #     from rl_studio.agents.mountain_car.inference_qlearn import MountainCarInferencer
-        #
-        #     return MountainCarInferencer(config)
+        elif agent == AgentsType.CARTPOLE.value:
+            from rl_studio.agents.cartpole.inference_qlearn import CartpoleInferencer
+
+            return CartpoleInferencer(config)
+
+        elif agent == AgentsType.MOUNTAIN_CAR.value:
+            from rl_studio.agents.mountain_car.inference_qlearn import MountainCarInferencer
+
+            return MountainCarInferencer(config)
 
         else:
             raise NoValidTrainingType(agent)

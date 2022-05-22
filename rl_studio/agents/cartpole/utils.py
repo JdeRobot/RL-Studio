@@ -1,39 +1,19 @@
-import datetime
+import numpy as np
 import pickle
-
+import datetime
 from rl_studio.agents.robot_mesh import settings
 
+# How much new info will override old info. 0 means nothing is learned, 1 means only most recent is considered, old knowledge is discarded
+LEARNING_RATE = 0.1
+# Between 0 and 1, mesue of how much we carre about future reward over immedate reward
+DISCOUNT = 0.95
+# Exploration settings
+epsilon = 1  # not a constant, going to be decayed
+START_EPSILON_DECAYING = 1
+END_EPSILON_DECAYING = 10000 // 2
+epsilon_decay_value = epsilon / (END_EPSILON_DECAYING - START_EPSILON_DECAYING)
 
-#TODO Since these utils are algorithm specific, those should stay in the algorithm folder somehow tied to its algorithm class
 
-import matplotlib.pyplot as plt
-import pandas as pd
-
-from rl_studio.agents.mountain_car import settings
-
-
-#TODO Since these utils are algorithm specific, those should stay in the algorithm folder somehow tied to its algorithm class
-
-
-def update_line(axes, runs_rewards):
-    plot_rewards_per_run(axes, runs_rewards)
-    plt.draw()
-    plt.pause(0.01)
-
-def get_stats_figure(runs_rewards):
-    fig, axes = plt.subplots()
-    fig.set_size_inches(12, 4)
-    plot_rewards_per_run(axes, runs_rewards)
-    plt.ion()
-    plt.show()
-    return fig, axes
-
-def plot_rewards_per_run(axes, runs_rewards):
-    rewards_graph=pd.DataFrame(runs_rewards)
-    ax=rewards_graph.plot(ax=axes, title="steps per run");
-    ax.set_xlabel("runs")
-    ax.set_ylabel("steps")
-    ax.legend().set_visible(False)
 
 def load_model(params, qlearn, file_name):
 
@@ -100,17 +80,35 @@ def save_actions(actions, start_time):
     )
     pickle.dump(actions, file_dump)
 
-def render(env, episode):
-    render_skip = 0
-    render_interval = 50
-    render_episodes = 10
+# Create bins and Q table
+def create_bins_and_q_table(env):
+    # env.observation_space.high
+    # [4.8000002e+00 3.4028235e+38 4.1887903e-01 3.4028235e+38]
+    # env.observation_space.low
+    # [-4.8000002e+00 -3.4028235e+38 -4.1887903e-01 -3.4028235e+38]
 
-    if (episode % render_interval == 0) and (episode != 0) and (episode > render_skip):
-        env.render()
-    elif (
-        ((episode - render_episodes) % render_interval == 0)
-        and (episode != 0)
-        and (episode > render_skip)
-        and (render_episodes < episode)
-    ):
-        env.render(close=True)
+    # remove hard coded Values when I know how to
+
+    numBins = 20
+    obsSpaceSize = len(env.observation_space.high)
+
+    # Get the size of each bucket
+    bins = [
+        np.linspace(-4.8, 4.8, numBins),
+        np.linspace(-4, 4, numBins),
+        np.linspace(-.418, .418, numBins),
+        np.linspace(-4, 4, numBins)
+    ]
+
+    qTable = np.random.uniform(low=-2, high=0, size=([numBins] * obsSpaceSize + [env.action_space.n]))
+
+    return bins, obsSpaceSize, qTable
+
+
+# Given a state of the enviroment, return its descreteState index in qTable
+def get_discrete_state(state, bins, obsSpaceSize):
+    stateIndex = []
+    for i in range(obsSpaceSize):
+        stateIndex.append(np.digitize(state[i], bins[i]) - 1)  # -1 will turn bin into index
+    return tuple(stateIndex)
+

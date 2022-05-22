@@ -8,11 +8,9 @@ import numpy as np
 
 import rl_studio.agents.mountain_car.utils as utils
 from rl_studio.agents.f1.settings import QLearnConfig
-from rl_studio.algorithms.qlearn_two_states import QLearn
+from rl_studio.algorithms.qlearn_multiple_states import QLearn
 from rl_studio.visual.ascii.images import JDEROBOT_LOGO
 from rl_studio.visual.ascii.text import JDEROBOT, QLEARN_CAMERA, LETS_GO
-from . import utils as specific_utils
-
 
 class MountainCarTrainer:
     def __init__(self, params):
@@ -31,6 +29,7 @@ class MountainCarTrainer:
         self.gamma = params.algorithm["params"]["gamma"]
         self.states_counter = {}
         self.states_reward = {}
+        self.stats= {}
         self.last_time_steps = np.ndarray(0)
 
         self.config = QLearnConfig()
@@ -41,6 +40,7 @@ class MountainCarTrainer:
 
         self.total_episodes = 20000
         self.epsilon_discount = 0.999  # Default 0.9986
+        self.cumulated_reward = 0
 
         self.qlearn = QLearn(
             actions=self.actions, alpha=self.alpha, gamma=self.gamma, epsilon=self.epsilon
@@ -53,7 +53,7 @@ class MountainCarTrainer:
         print(f"\t- Start hour: {datetime.datetime.now()}\n")
         print(f"\t- Environment params:\n{self.environment_params}")
 
-    def evaluate_and_learn_from_step(self, state):
+    def evaluate_and_learn_from_step(self, state, step):
         if self.qlearn.epsilon > 0.01:
             self.qlearn.epsilon *= self.epsilon_discount
             print("epsilon = " + str(self.qlearn.epsilon))
@@ -63,12 +63,11 @@ class MountainCarTrainer:
 
         print("Selected Action!! " + str(action))
         # Execute the action and get feedback
-        if self.n_steps >= self.environment_params["max_steps"]:
+        if step >= self.environment_params["max_steps"]:
             nextState, reward, done, info = self.env.step(-1)
         else:
             nextState, reward, done, info = self.env.step(action)
-        n_steps = self.n_steps + 1
-        print("step " + str(n_steps) + "!!!! ----------------------------")
+        print("step " + str(step) + "!!!! ----------------------------")
 
         self.cumulated_reward += reward
 
@@ -107,8 +106,6 @@ class MountainCarTrainer:
         for episode in range(self.total_episodes):
 
             done = False
-            self.n_steps = 0
-
             cumulated_reward = 0
             print("resetting")
             state = self.env.reset()
@@ -117,12 +114,12 @@ class MountainCarTrainer:
             for step in range(50000):
 
 
-                next_state, done = self.evaluate_and_learn_from_step(state);
+                next_state, done = self.evaluate_and_learn_from_step(state, step);
 
                 if not done:
                     state = next_state
                 else:
-                    last_time_steps = np.append(last_time_steps, [int(step + 1)])
+                    self.last_time_steps = np.append(self.last_time_steps, [int(step + 1)])
                     self.stats[int(episode)] = step
                     self.states_reward[int(episode)] = cumulated_reward
                     print(
@@ -133,9 +130,7 @@ class MountainCarTrainer:
                         f"- Time: {start_time_format} - Steps: {step}"
                     )
 
-                    # get_stats_figure(rewards_per_run)
-                    self.rewards_per_run.append(cumulated_reward)
-                    queue.put(self.n_steps)
+                    queue.put(step)
 
                     break
 
@@ -151,11 +146,11 @@ class MountainCarTrainer:
             )
         )
 
-        l = last_time_steps.tolist()
+        l = self.last_time_steps.tolist()
         l.sort()
 
         # print("Parameters: a="+str)
-        print("Overall score: {:0.2f}".format(last_time_steps.mean()))
+        print("Overall score: {:0.2f}".format(self.last_time_steps.mean()))
         print(
             "Best 100 score: {:0.2f}".format(
                 reduce(lambda x, y: x + y, l[-100:]) / len(l[-100:])
@@ -178,7 +173,7 @@ class MountainCarTrainer:
         # Call a function to update the plot when there is new data
         result = queue.get(block=True, timeout=None)
         rewards.append(result)
-        figure, axes = specific_utils.get_stats_figure(rewards)
+        figure, axes = utils.get_stats_figure(rewards)
 
         while True:
             while queue.empty():
@@ -192,4 +187,4 @@ class MountainCarTrainer:
                 )
                 rewards.append(result)
                 axes.cla()
-                specific_utils.update_line(axes, rewards)
+                utils.update_line(axes, rewards)

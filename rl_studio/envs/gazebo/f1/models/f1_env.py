@@ -3,7 +3,7 @@ import rospy
 from gazebo_msgs.srv import GetModelState
 from geometry_msgs.msg import Twist
 from std_srvs.srv import Empty
-from rl_studio.envs import gazebo_envs
+from rl_studio.envs.gazebo import gazebo_envs
 
 class F1Env(gazebo_envs.GazeboEnv):
     def __init__(self, **config):

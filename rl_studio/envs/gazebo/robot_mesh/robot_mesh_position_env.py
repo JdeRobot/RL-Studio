@@ -10,7 +10,7 @@ from gym import spaces
 from gym.utils import seeding
 from std_srvs.srv import Empty
 
-from .. import gazebo_envs
+from rl_studio.envs.gazebo import gazebo_envs
 
 
 def euclidean_distance(x_a, x_b, y_a, y_b):

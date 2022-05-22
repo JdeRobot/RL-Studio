@@ -25,6 +25,7 @@ six = "1.14.0"
 pyglet = "^1.2.0"
 environs = "9.2.0"
 pre-commit = "^2.12.1"
+pygame = "^2.1.2"
 
 [tool.poetry.dev-dependencies]
 pytest = "^6.2.4"
