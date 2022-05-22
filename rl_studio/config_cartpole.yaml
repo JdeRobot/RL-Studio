@@ -1,0 +1,49 @@
+settings:
+  output_dir: "./logs/"
+  save_model: True
+  save_positions: True
+  debug_level: DEBUG
+  telemetry: False
+
+actions:
+    actions_number: 4
+    actions_set: simple
+    available_actions:
+      # [lineal, angular] TODO To be removed
+      simple:
+        0: [ 0, 0, -1, 0 ]
+        1: [ 0, 0, 0.7, 0.7]
+        2: [ 0, 0, 0, -1]
+        3: [0, 0, -0.7, 0.7]
+
+
+# TODO To be removed
+agent:
+  cartpole:
+    camera_params:
+      witdh: 640
+      height: 480
+
+environments:
+  simple:
+    env_name: my-cartpole
+    environment_folder: cartpole
+    runs: 1000000
+    update_every: 1000
+    show_every: 3000
+
+inference:
+  qlearn:
+    inference_file: /home/ruben/Desktop/my-RL-Studio/rl_studio/logs/qlearn_models/1_20220603_1950_act_set_simple_epsilon_0.01_QTABLE.pkl
+    actions_file: /home/ruben/Desktop/my-RL-Studio/rl_studio/logs/qlearn_models/actions_set_20220603_1959
+
+algorithm:
+    qlearn:
+      alpha: 0.15
+      epsilon: 0.99
+      gamma: 0.8
+      epsilon_discount: 0.9999999
+
+    dqn:
+
+    sarsa:

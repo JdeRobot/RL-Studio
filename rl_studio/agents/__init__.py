@@ -32,6 +32,11 @@ class TrainerFactory:
 
             return MountainCarTrainer(config)
 
+        elif agent == AgentsType.CARTPOLE.value:
+            from rl_studio.agents.cartpole.train_qlearn import CartpoleTrainer
+
+            return CartpoleTrainer(config)
+
         else:
             raise NoValidTrainingType(agent)
 

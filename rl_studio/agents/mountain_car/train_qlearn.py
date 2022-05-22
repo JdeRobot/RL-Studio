@@ -8,7 +8,7 @@ import numpy as np
 
 import rl_studio.agents.mountain_car.utils as utils
 from rl_studio.agents.f1.settings import QLearnConfig
-from rl_studio.algorithms.qlearn_two_states import QLearn
+from rl_studio.algorithms.qlearn_multiple_states import QLearn
 from rl_studio.visual.ascii.images import JDEROBOT_LOGO
 from rl_studio.visual.ascii.text import JDEROBOT, QLEARN_CAMERA, LETS_GO
 from . import utils as specific_utils
