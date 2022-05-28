@@ -15,6 +15,7 @@ from rl_studio.visual.ascii.text import JDEROBOT, QLEARN_CAMERA, LETS_GO
 
 
 class F1Trainer:
+
     def __init__(self, params):
         # TODO: Create a pydantic metaclass to simplify the way we extract the params
         # environment params
@@ -187,11 +188,10 @@ class F1Trainer:
                     counter = 0
 
                 if datetime.datetime.now() - datetime.timedelta(hours=2) > start_time:
+                    print(config.eop)
                     utils.save_model(
                         qlearn, start_time_format, stats, states_counter, states_reward
                     )
-                    start_time = datetime.datetime.now()
-
                     print(f"    - N epoch:     {episode}")
                     print(f"    - Model size:  {len(qlearn.q)}")
                     print(f"    - Action set:  {config.actions_set}")

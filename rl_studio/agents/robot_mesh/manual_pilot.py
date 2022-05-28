@@ -20,10 +20,7 @@ class RobotMeshTrainer:
         self.alpha = params.algorithm["params"]["alpha"]
         self.epsilon = params.algorithm["params"]["epsilon"]
         self.gamma = params.algorithm["params"]["gamma"]
-        # agent
-        # self.action_number = params.agent["params"]["actions_number"]
-        # self.actions_set = params.agent["params"]["actions_set"]
-        # self.actions_values = params.agent["params"]["available_actions"][self.actions_set]
+
 
     def execute_action(self, env):
         for step in range(50000):

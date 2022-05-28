@@ -13,7 +13,7 @@ import gym
 import matplotlib.pyplot as plt
 import numpy as np
 from keras import backend as K
-from settings import my_board
+from agents.f1.settings import my_board
 
 from rl_studio.algorithms.dqn import DeepQ
 

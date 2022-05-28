@@ -69,7 +69,6 @@ class RobotMeshTrainer:
         if  self.highest_reward <  self.cumulated_reward:
             self.highest_reward =  self.cumulated_reward
 
-        # nextState = ''.join(map(str, observation))
 
         try:
             self.states_counter[nextState] += 1
@@ -113,7 +112,7 @@ class RobotMeshTrainer:
                 if not done:
                     state = next_state
                 else:
-                    last_time_steps = np.append(self.last_time_steps, [int(self.step + 1)])
+                    self.last_time_steps = np.append(self.last_time_steps, [int(self.step + 1)])
                     self.stats[int(self.episode)] = self.step
                     self.states_reward[int(self.episode)] = self.cumulated_reward
                     print(
@@ -126,24 +125,11 @@ class RobotMeshTrainer:
                 print(f"\nSaving model . . .\n")
                 utils.save_model(self.qlearn, self.start_time_format, self.stats, self.states_counter, self.states_reward)
 
-            m, s = divmod(int(time.time() - telemetry_start_time), 60)
-            h, m = divmod(m, 60)
-
         print(
             "Total EP: {} - epsilon: {} - ep. discount: {} - Highest Reward: {}".format(
                 self.total_episodes, initial_epsilon, self.epsilon_discount, self.highest_reward
             )
         )
 
-        l = last_time_steps.tolist()
-        l.sort()
-
-        # print("Parameters: a="+str)
-        print("Overall score: {:0.2f}".format(last_time_steps.mean()))
-        print(
-            "Best 100 score: {:0.2f}".format(
-                reduce(lambda x, y: x + y, l[-100:]) / len(l[-100:])
-            )
-        )
 
         self.env.close()
