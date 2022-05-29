@@ -1,7 +1,7 @@
 import cv2
 import numpy as np
 
-from rl_studio.agents.f1.settings import x_row, center_image
+from agents.f1.settings import QLearnConfig
 
 
 class ImageF1:
@@ -17,6 +17,7 @@ class ImageF1:
             (self.height, self.width, 3), np.uint8
         )  # The image data itself
         self.data.shape = self.height, self.width, 3
+        self.config = QLearnConfig()
 
     def __str__(self):
         return (
@@ -40,12 +41,16 @@ class ImageF1:
         count = 0
         for idx, point in enumerate(points):
             cv2.line(
-                img, (320, x_row[idx]), (320, x_row[idx]), (255, 255, 0), thickness=5
+                img,
+                (320, self.config.x_row[idx]),
+                (320, self.config.x_row[idx]),
+                (255, 255, 0),
+                thickness=5,
             )
             # cv2.line(img, (center_image, x_row[idx]), (point, x_row[idx]), (255, 255, 255), thickness=2)
             cv2.putText(
                 img,
-                str("err{}: {}".format(idx + 1, center_image - point)),
+                str("err{}: {}".format(idx + 1, self.config.center_image - point)),
                 (18, 340 + count),
                 self.font,
                 0.4,

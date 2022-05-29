@@ -1,8 +1,9 @@
 #!/usr/bin/env python
-import gym
-import numpy
 import random
 import time
+
+import gym
+import numpy
 
 import liveplot
 

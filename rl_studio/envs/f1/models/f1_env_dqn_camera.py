@@ -137,9 +137,7 @@ class GazeboF1CameraEnvDQN(F1Env):
     @staticmethod
     def _generate_simple_action_space():
         actions = 5
-
         max_ang_speed = -4
-
         action_space = {}
 
         for action in range(actions):
