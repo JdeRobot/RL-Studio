@@ -1,24 +1,16 @@
 import datetime
+import multiprocessing
 import time
-
-import gym
-
-import numpy as np
 from functools import reduce
 
-from rl_studio.inference_rlstudio import InferencerWrapper
-
-# import liveplot
-import multiprocessing
-
+import gym
+import numpy as np
 
 from rl_studio.agents.f1.settings import QLearnConfig
+from rl_studio.inference_rlstudio import InferencerWrapper
 from rl_studio.visual.ascii.images import JDEROBOT_LOGO
 from rl_studio.visual.ascii.text import JDEROBOT, QLEARN_CAMERA, LETS_GO
-
-from rl_studio.algorithms.qlearn_two_states import QLearn
 from . import utils as specific_utils
-import rl_studio.agents.mountain_car.utils as utils
 
 
 class MountainCarTrainer:
@@ -95,8 +87,6 @@ class MountainCarTrainer:
             print("resetting")
             state = self.env.reset()
 
-            # state = ''.join(map(str, observation))
-
             for step in range(50000):
 
 
@@ -116,7 +106,6 @@ class MountainCarTrainer:
                         f"- Time: {start_time_format} - Steps: {step}"
                     )
 
-                    # get_stats_figure(rewards_per_run)
                     self.rewards_per_run.append(cumulated_reward)
                     queue.put(self.n_steps)
 
@@ -132,7 +121,6 @@ class MountainCarTrainer:
         l = last_time_steps.tolist()
         l.sort()
 
-        # print("Parameters: a="+str)
         print("Overall score: {:0.2f}".format(last_time_steps.mean()))
         print(
             "Best 100 score: {:0.2f}".format(
