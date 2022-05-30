@@ -1,10 +1,7 @@
 import pickle
-
-import gym
-from gym import wrappers
+import random
 
 import numpy as np
-import random
 
 
 class QLearn:

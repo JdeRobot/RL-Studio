@@ -8,7 +8,6 @@ class TrainerValidator(BaseModel):
     agent: dict
     environment: dict
     algorithm: dict
-    # gazebo: dict
 
 class InferenceExecutorValidator(BaseModel):
     settings: dict

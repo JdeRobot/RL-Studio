@@ -1,12 +1,8 @@
+import os
+import subprocess
+
 import gym
 import rospy
-import os
-import signal
-import subprocess
-import time
-from os import path
-from std_srvs.srv import Empty
-import random
 
 
 class RealEnv(gym.Env):

@@ -1,7 +1,6 @@
 import random
 
 import numpy as np
-
 # from keras.initializers import normal
 from keras.layers import Convolution2D, Flatten, ZeroPadding2D
 from keras.layers.core import Activation, Dense
@@ -76,8 +75,8 @@ class DeepQ:
         model.add(Dense(256))
         model.add(Activation("relu"))
         model.add(Dense(self.output_size))
-        # adam = Adam(lr=self.learningRate)
-        # model.compile(loss='mse',optimizer=adam)
+
+
         model.compile(RMSprop(lr=self.learningRate), "MSE")
         model.summary()
 

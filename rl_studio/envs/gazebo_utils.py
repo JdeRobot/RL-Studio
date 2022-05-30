@@ -14,7 +14,6 @@ def set_new_pose(circuit_positions_set):
     """
     position = random.choice(list(enumerate(circuit_positions_set)))[0]
     print(position)
-    # pos_number = int(circuit_positions_set[0])
 
     state = ModelState()
     state.model_name = "f1_renault"

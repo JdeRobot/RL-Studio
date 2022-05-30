@@ -9,9 +9,9 @@ import numpy as np
 from rl_studio.agents import liveplot
 from rl_studio.agents.f1 import utils
 from rl_studio.algorithms.qlearn import QLearn
-from rl_studio.agents.f1.settings import QLearnConfig
 from rl_studio.visual.ascii.images import JDEROBOT_LOGO
 from rl_studio.visual.ascii.text import JDEROBOT, QLEARN_CAMERA, LETS_GO
+from settings import QLearnConfig
 
 
 class F1Trainer:

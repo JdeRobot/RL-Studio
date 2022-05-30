@@ -1,18 +1,16 @@
+import math
+import time
+
 import numpy as np
 import rospy
+from gazebo_msgs.msg import ModelState
+from gazebo_msgs.srv import SetModelState, GetModelState
 from geometry_msgs.msg import Twist
 from gym import spaces
 from gym.utils import seeding
-
-# from sensor_msgs.msg import Image
-from gazebo_msgs.msg import ModelState
-from gazebo_msgs.srv import SetModelState, GetModelState
 from std_srvs.srv import Empty
 
-# from rl_studio.agents.robot.settings import telemetry, x_row, center_image, width, height, telemetry_mask, max_distance
 from .. import gazebo_envs
-import time
-import math
 
 
 def euclidean_distance(x_a, x_b, y_a, y_b):
@@ -64,15 +62,12 @@ class RobotMeshEnv(gazebo_envs.GazeboEnv):
         print("pos x prev -> " + str(x_prev))
         print("pos y prev -> " + str(y_prev))
 
-        pos_x_prev = math.ceil((x_prev + 10) / self.cells_span)
-        pos_y_prev = math.ceil((y_prev + 10) / self.cells_span) * 40
-        # pos_or_prev=np.round((or_prev+4.5/self.cells_span))
+
 
         object_coordinates = self.model_coordinates(self.robot_name, "")
         x_position = object_coordinates.pose.position.x
         y_position = object_coordinates.pose.position.y
         z_position = object_coordinates.pose.position.z
-
 
         state = ModelState()
         state.model_name = self.robot_name
@@ -109,7 +104,6 @@ class RobotMeshEnv(gazebo_envs.GazeboEnv):
 
         pos_x = math.ceil((x + 10) / self.cells_span)
         pos_y = math.ceil((y + 10) / self.cells_span) * 40
-        # pos_ori=np.round((ori+4.5)/self.cells_span)
 
         state = pos_x + pos_y
         print("¡¡¡¡¡¡¡state!!!!!!!!!! -> " + str(state))
@@ -147,7 +141,6 @@ class RobotMeshEnv(gazebo_envs.GazeboEnv):
 
         pos_x = math.ceil((x + 10) / self.cells_span)
         pos_y = math.ceil((y + 10) / self.cells_span) * 40
-        # pos_ori=np.round((ori+4.5)/self.cells_span)
 
         state = pos_x + pos_y
 
