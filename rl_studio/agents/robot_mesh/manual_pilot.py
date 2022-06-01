@@ -1,9 +1,6 @@
 import datetime
-import time
-
 import sys as system
-
-from rl_studio.envs.gazebo_envs import *
+import time
 
 
 class RobotMeshTrainer:

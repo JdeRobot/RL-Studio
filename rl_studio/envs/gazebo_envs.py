@@ -1,18 +1,14 @@
-import gym
-import rospy
-
-# import roslaunch
-import sys
 import os
+import random
 import signal
+import subprocess
+import sys
 from pathlib import Path
 
+import gym
+import rospy
 from gazebo_msgs.msg import ModelState
-from gazebo_msgs.srv import SetModelState, GetModelState
-
-import subprocess
-from std_srvs.srv import Empty
-import random
+from gazebo_msgs.srv import SetModelState
 from rosgraph_msgs.msg import Clock
 
 
@@ -28,8 +24,8 @@ class GazeboEnv(gym.Env):
         self.last_clock_msg = Clock()
         self.port = "11311"  # str(random_number) #os.environ["ROS_PORT_SIM"]
         self.port_gazebo = "11345"  # str(random_number+1) #os.environ["ROS_PORT_SIM"]
-        # self.ros_master_uri = os.environ["ROS_MASTER_URI"];
-        # self.port = os.environ.get("ROS_PORT_SIM", "11311")
+
+
         self.robot_name = config.get("robot_name")
 
         print(f"\nROS_MASTER_URI = http://localhost:{self.port}\n")

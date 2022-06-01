@@ -1,5 +1,6 @@
-import pickle
 import datetime
+import pickle
+
 from rl_studio.agents.f1 import settings
 
 
@@ -43,8 +44,7 @@ def save_model(qlearn, current_time, states, states_counter, states_rewards):
     pickle.dump(states_counter, file_dump)
     # STATES CUMULATED REWARD
     states_cum_reward_file_name = base_file_name + "_STATES_CUM_REWARD.pkl"
-    file_dump = open(f"/logs/qlearn_models/3_{current_time}{states_cum_reward_file_name}", "wb"
-    )
+    file_dump = open(f"./logs/qlearn_models/3_{current_time}{states_cum_reward_file_name}", "wb")
     pickle.dump(states_rewards, file_dump)
     # STATES
     steps = base_file_name + "_STATES_STEPS.pkl"
@@ -57,6 +57,11 @@ def save_times(checkpoints):
     file_dump = open(f"/logs/{file_name}{settings.qlearn.actions_set}_checkpoints.pkl", "wb")
     pickle.dump(checkpoints, file_dump)
 
+def save_actions(actions, current_time):
+    file_dump = open(
+        "./logs/qlearn_models/actions_set_" + current_time, "wb"
+    )
+    pickle.dump(actions, file_dump)
 
 def render(env, episode):
     render_skip = 0

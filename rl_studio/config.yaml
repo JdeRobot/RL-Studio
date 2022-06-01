@@ -125,12 +125,17 @@ environments:
     estimated_steps: 4000
     sensor: camera
 
+inference:
+  qlearn:
+    inference_file: /home/rubenlucas93/1_20220428_2115_act_set_simple_epsilon_0.8_QTABLE.pkl
+    actions_file: /home/rubenlucas93/actions_set_20220428_2115
+
 
 algorithm:
     qlearn:
-      alpha: 0.2
-      epsilon: 0.95
-      gamma: 0.9
+      alpha: 0.3
+      epsilon: 0.99
+      gamma: 0.7
 
     dqn:
 

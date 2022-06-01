@@ -13,8 +13,8 @@ import gym
 import matplotlib.pyplot as plt
 import numpy as np
 from keras import backend as K
-from agents.f1.settings import my_board
 
+from rl_studio.agents.f1.settings import my_board
 from rl_studio.algorithms.dqn import DeepQ
 
 # To equal the inputs, we set the channels first and the image next.

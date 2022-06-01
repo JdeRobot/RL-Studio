@@ -1,15 +1,11 @@
 import datetime
-import time
-
 import sys as system
-
-from rl_studio.envs.gazebo_envs import *
+import time
 
 import numpy as np
 
-from rl_studio.agents.f1 import settings as settings
-
 import utils
+from rl_studio.agents.f1 import settings as settings
 
 
 def execute_steps():

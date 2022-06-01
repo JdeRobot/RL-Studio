@@ -6,25 +6,23 @@ Based on:
 https://github.com/vmayoral/basic_reinforcement_learning
 https://gist.github.com/wingedsheep/4199594b02138dd427c22a540d6d6b8d
 """
-import gym
-from gym import wrappers
+import json
+import os
+import random
 import time
 from distutils.dir_util import copy_tree
-import os
-import json
-import random
+
+import gym
 import numpy as np
-from keras.models import Sequential, load_model
-from keras.initializers import normal
-from keras import optimizers
-from keras.optimizers import RMSprop
-from keras.layers import Convolution2D, Flatten, ZeroPadding2D
-from keras.layers.core import Dense, Dropout, Activation
-from keras.layers.advanced_activations import LeakyReLU
-from keras.layers.pooling import MaxPooling2D
-import memory
 import tensorflow as tf
 from keras import backend as K
+from keras.layers import Convolution2D, Flatten, ZeroPadding2D
+from keras.layers.core import Dense, Activation
+from keras.layers.pooling import MaxPooling2D
+from keras.models import Sequential, load_model
+from keras.optimizers import RMSprop
+
+import memory
 
 # To equal the inputs, we set the channels first and the image next.
 K.set_image_data_format("channels_first")
