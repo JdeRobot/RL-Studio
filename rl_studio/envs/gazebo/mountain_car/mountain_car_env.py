@@ -142,15 +142,3 @@ class MountainCarEnv(gazebo_envs.GazeboEnv):
 
 
         return state
-
-    def finish_line(self):
-        x, y = self.get_position()
-        current_point = np.array([x, y])
-
-        dist = (self.start_pose - current_point) ** 2
-        dist = np.sum(dist, axis=0)
-        dist = np.sqrt(dist)
-
-        if dist < max_distance:
-            return True
-        return False
