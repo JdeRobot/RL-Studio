@@ -17,18 +17,13 @@ from rl_studio.algorithms.qlearn import QLearn
 import rl_studio.agents.robot_mesh.utils as utils
 
 
-
 class RobotMeshTrainer:
     def __init__(self, params):
         # TODO: Create a pydantic metaclass to simplify the way we extract the params
         # environment params
         self.params = params
         self.environment_params = params.environment["params"]
-        self.env_name = params.environment["params"]["env_name"]
-        env_params = params.environment["params"]
-        actions = params.environment["actions"]
-        env_params["actions"] = actions
-        self.env = gym.make(self.env_name, **env_params)
+
         # algorithm params
         self.alpha = params.algorithm["params"]["alpha"]
         self.epsilon = params.algorithm["params"]["epsilon"]
@@ -40,15 +35,6 @@ class RobotMeshTrainer:
         self.last_time_steps = np.ndarray(0)
 
         self.outdir = "./logs/robot_mesh_experiments/"
-        self.env = gym.wrappers.Monitor(self.env, self.outdir, force=True)
-        self.actions = range(self.env.action_space.n)
-
-        self.total_episodes = 20000
-        self.epsilon_discount = 0.999  # Default 0.9986
-
-        self.qlearn = QLearn(
-            actions=self.actions, alpha=self.alpha, gamma=self.gamma, epsilon=self.epsilon
-        )
 
     def print_init_info(self):
         print(JDEROBOT)
@@ -56,6 +42,23 @@ class RobotMeshTrainer:
         print(QLEARN_CAMERA)
         print(f"\t- Start hour: {datetime.datetime.now()}\n")
         print(f"\t- Environment params:\n{self.environment_params}")
+
+    def init_environment(self):
+        self.env_name = self.params.environment["params"]["env_name"]
+        env_params = self.params.environment["params"]
+        actions = self.params.environment["actions"]
+        env_params["actions"] = actions
+        self.env = gym.make(self.env_name, **env_params)
+        self.env = gym.wrappers.Monitor(self.env, self.outdir, force=True)
+        self.actions = range(self.env.action_space.n)
+
+        self.cumulated_reward = 0
+        self.total_episodes = 20000
+        self.epsilon_discount = 0.999  # Default 0.9986
+
+        self.qlearn = QLearn(
+            actions=self.actions, alpha=self.alpha, gamma=self.gamma, epsilon=self.epsilon
+        )
 
     def evaluate_and_learn_from_step(self, state):
         if self.qlearn.epsilon > 0.05:
@@ -69,9 +72,8 @@ class RobotMeshTrainer:
         nextState, reward, done, lap_completed = self.env.step(action)
         self.cumulated_reward += reward
 
-        if  self.highest_reward <  self.cumulated_reward:
-            self.highest_reward =  self.cumulated_reward
-
+        if self.highest_reward < self.cumulated_reward:
+            self.highest_reward = self.cumulated_reward
 
         try:
             self.states_counter[nextState] += 1
@@ -85,6 +87,8 @@ class RobotMeshTrainer:
 
     def simulation(self, queue):
         self.print_init_info()
+
+        self.init_environment()
 
         if self.config.load_model:
             file_name = "1_20210701_0848_act_set_simple_epsilon_0.19_QTABLE.pkl"
@@ -137,7 +141,6 @@ class RobotMeshTrainer:
             )
         )
 
-
         self.env.close()
 
     def main(self):
@@ -152,6 +155,7 @@ class RobotMeshTrainer:
         rewards = []
         while queue.empty():
             time.sleep(5)
+
         # Call a function to update the plot when there is new data
         result = queue.get(block=True, timeout=None)
         rewards.append(result)
@@ -170,4 +174,3 @@ class RobotMeshTrainer:
                 rewards.append(result)
                 axes.cla()
                 utils.update_line(axes, rewards)
-
