@@ -1,5 +1,6 @@
-import pickle
 import datetime
+import pickle
+
 from rl_studio.agents import settings
 
 
@@ -12,7 +13,6 @@ def load_model(qlearn, file_name):
     qlearn.alpha = settings.algorithm_params["alpha"]
     qlearn.gamma = settings.algorithm_params["gamma"]
     qlearn.epsilon = settings.algorithm_params["epsilon"]
-    # highest_reward = settings.algorithm_params["highest_reward"]
 
     print(f"\n\nMODEL LOADED. Number of (action, state): {len(model)}")
     print(f"    - Loading:    {file_name}")

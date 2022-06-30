@@ -34,3 +34,35 @@ class TrainerFactory:
 
         else:
             raise NoValidTrainingType(agent)
+
+
+class InferenceExecutorFactory:
+    def __new__(cls, config):
+
+        agent = config.agent["name"]
+
+
+        if agent == AgentsType.ROBOT_MESH.value:
+            from rl_studio.agents.robot_mesh.inference_qlearn import RobotMeshInferencer
+
+            return RobotMeshInferencer(config)
+
+        elif agent == AgentsType.F1.value:
+            from rl_studio.agents.f1.inference_qlearn import F1Inferencer
+
+            return F1Inferencer(config)
+
+        # elif agent == AgentsType.TURTLEBOT.value:
+        #     from rl_studio.agents.turtlebot.turtlebot_Inferencer import TurtlebotInferencer
+        #
+        #     return TurtlebotInferencer(config)
+        #
+        #
+        #
+        # elif agent == AgentsType.MOUNTAIN_CAR.value:
+        #     from rl_studio.agents.mountain_car.inference_qlearn import MountainCarInferencer
+        #
+        #     return MountainCarInferencer(config)
+
+        else:
+            raise NoValidTrainingType(agent)

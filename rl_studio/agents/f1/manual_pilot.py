@@ -6,7 +6,7 @@ import time
 
 import gym
 
-from agents.f1 import settings
+from rl_studio.agents.f1 import settings
 from rl_studio.visual.ascii.text import MANUAL_PILOT
 
 total_episodes = 200000
@@ -53,12 +53,7 @@ if __name__ == "__main__":
             save_times(checkpoints)
             env.close()
             exit(0)
-        #
-        # if env.finish_line() and datetime.datetime.now() - datetime.timedelta(seconds=10) > start_time:
-        #     print(settings.race_completed)
-        #     save_times(checkpoints)
-        #     env.close()
-        #     exit(0)
+
 
         env.execute()
 

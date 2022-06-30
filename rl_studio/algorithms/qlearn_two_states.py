@@ -1,8 +1,6 @@
-import gym
-from gym import wrappers
+import random
 
 import numpy as np
-import random
 
 
 class QLearn:
@@ -53,9 +51,9 @@ class QLearn:
                 + self.gamma * maxqnew
                 - self.getQValues(state1[0], state1[1], action1)
             )
-            self.q[(state1[0], state1[1], action1)] = (
-                self.getQValues(state1[0], state1[1], action1) + q_update
-            )
+        self.q[(state1[0], state1[1], action1)] = (
+            self.getQValues(state1[0], state1[1], action1) + q_update
+        )
 
     def reset(self):
         self.state = self.np_random.uniform(low=-0.05, high=0.05, size=(4,))

@@ -6,21 +6,18 @@ https://github.com/vmayoral/basic_reinforcement_learning
 https://gist.github.com/wingedsheep/4199594b02138dd427c22a540d6d6b8d
 """
 
-import gym
-from gym import wrappers
-import gym_gazebo
-import time
-from distutils.dir_util import copy_tree
-import os
 import json
+import os
 import random
+
+import gym
 import numpy as np
-from keras.models import Sequential, load_model
 from keras import optimizers
-from keras.layers.core import Dense, Dropout, Activation
-from keras.layers.normalization import BatchNormalization
 from keras.layers.advanced_activations import LeakyReLU
+from keras.layers.core import Dense, Dropout, Activation
+from keras.models import Sequential, load_model
 from keras.regularizers import l2
+
 import memory
 
 

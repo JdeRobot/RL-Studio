@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 import argparse
-import gym
 
+import gym
 
 parser = argparse.ArgumentParser(
     description="Renders a Gym environment for quick inspection."

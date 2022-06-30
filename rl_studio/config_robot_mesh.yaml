@@ -91,6 +91,10 @@ environments:
   #   estimated_steps: 4000
   #   sensor: camera
 
+inference:
+  qlearn_mesh:
+    inference_file: /home/rubenlucas93/qvalues.pkl
+    actions_file: /home/rubenlucas93/actions_set.pkl
 
 algorithm:
     qlearn_mesh:

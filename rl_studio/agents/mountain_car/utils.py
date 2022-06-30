@@ -1,5 +1,6 @@
-import pickle
 import datetime
+import pickle
+
 from rl_studio.agents.mountain_car import settings
 
 
@@ -64,6 +65,11 @@ def save_times(checkpoints):
     )
     pickle.dump(checkpoints, file_dump)
 
+def save_actions(actions, start_time):
+    file_dump = open(
+        "./logs/qlearn_models/actions_set_"+start_time, "wb"
+    )
+    pickle.dump(actions, file_dump)
 
 def render(env, episode):
     render_skip = 0

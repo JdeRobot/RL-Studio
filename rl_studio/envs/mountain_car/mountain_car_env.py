@@ -2,17 +2,12 @@ import time
 
 import numpy as np
 import rospy
-
-# from sensor_msgs.msg import Image
-# import gazebo_msgs.msg
-# from gazebo_msgs.msg import geometry_msgs
 from gazebo_msgs.srv import GetModelState, ApplyJointEffort
 from geometry_msgs.msg import Twist
 from gym import spaces
 from gym.utils import seeding
 from std_srvs.srv import Empty
 
-# from agents.robot.settings import telemetry, x_row, center_image, width, height, telemetry_mask, max_distance
 from .. import gazebo_envs
 
 
@@ -59,10 +54,6 @@ class MountainCarEnv(gazebo_envs.GazeboEnv):
         state = []
         self._gazebo_unpause()
 
-        # vel_cmd = Twist()
-        # vel_cmd.linear.x = self.actions[action]
-        # vel_cmd.angular.z = 0
-        # self.vel_pub.publish(vel_cmd)
 
         try:
             effort = self.actions[action]
@@ -86,15 +77,9 @@ class MountainCarEnv(gazebo_envs.GazeboEnv):
         object_coordinates = self.model_coordinates("my_robot", "")
         x_position = object_coordinates.pose.position.x
         y_position = object_coordinates.pose.position.y
-        z_position = object_coordinates.pose.position.z
-        x_orientation = object_coordinates.pose.orientation.x
-        y_orientation = object_coordinates.pose.orientation.y
-        z_orientation = object_coordinates.pose.orientation.z
-        w_orientation = object_coordinates.pose.orientation.w
-        x_linear_vel = object_coordinates.twist.linear.x
-        y_linear_vel = object_coordinates.twist.linear.y
 
-        # y, x, ori = self.get_position()
+        x_linear_vel = object_coordinates.twist.linear.x
+
 
         print("pos x -> " + str(x_position))
         print("pos y -> " + str(y_position))
@@ -118,15 +103,11 @@ class MountainCarEnv(gazebo_envs.GazeboEnv):
             lap_completed = True
             print("Car has reached the goal")
             reward = 1
-        # elif z_position>=3:
-        #     reward=(z_position)**2
-        # if z_orientation<-0.15 or z_orientation>0.15:
-        #     reward=reward*1.5
+
         else:
             reward = 0
 
-        # if z_orientation<-0.3 or z_orientation>0.3:
-        #     done=True
+
         if y_position < -3.56 or y_position > -0.43:
             done = True
 
@@ -142,13 +123,8 @@ class MountainCarEnv(gazebo_envs.GazeboEnv):
         object_coordinates = self.model_coordinates("my_robot", "")
         x_position = object_coordinates.pose.position.x
         y_position = object_coordinates.pose.position.y
-        z_position = object_coordinates.pose.position.z
-        x_orientation = object_coordinates.pose.orientation.x
-        y_orientation = object_coordinates.pose.orientation.y
-        z_orientation = object_coordinates.pose.orientation.z
-        w_orientation = object_coordinates.pose.orientation.w
+
         x_linear_vel = object_coordinates.twist.linear.x
-        y_linear_vel = object_coordinates.twist.linear.y
 
         print("pos x -> " + str(x_position))
         print("pos y -> " + str(y_position))
@@ -164,36 +140,8 @@ class MountainCarEnv(gazebo_envs.GazeboEnv):
 
         done = False
 
-        # self._gazebo_pause()
 
         return state
-
-    # def inference(self, action):
-    #     self._gazebo_unpause()
-    #
-    #     vel_cmd = Twist()
-    #     vel_cmd.linear.x = ACTIONS_SET[action][0]
-    #     vel_cmd.angular.z = ACTIONS_SET[action][1]
-    #     self.vel_pub.publish(vel_cmd)
-    #
-    #     image_data = rospy.wait_for_message('/robotROS/cameraL/image_raw', Image, timeout=1)
-    #     cv_image = CvBridge().imgmsg_to_cv2(image_data, "bgr8")
-    #     robot_image_camera = self.image_msg_to_image(image_data, cv_image)
-    #
-    #     self._gazebo_pause()
-    #
-    #     points = self.processed_image(robot_image_camera.data)
-    #     state = self.calculate_observation(points)
-    #
-    #     center = float(center_image - points[0]) / (float(width) // 2)
-    #
-    #     done = False
-    #     center = abs(center)
-    #
-    #     if center > 0.9:
-    #         done = True
-    #
-    #     return state, done
 
     def finish_line(self):
         x, y = self.get_position()
@@ -202,7 +150,7 @@ class MountainCarEnv(gazebo_envs.GazeboEnv):
         dist = (self.start_pose - current_point) ** 2
         dist = np.sum(dist, axis=0)
         dist = np.sqrt(dist)
-        # print(dist)
+
         if dist < max_distance:
             return True
         return False
