@@ -122,7 +122,7 @@ class RobotMeshTrainer:
                     state = next_state
                 else:
                     self.last_time_steps = np.append(self.last_time_steps, [int(step + 1)])
-                    self.stats[int(self.episode)] = step
+                    self.stats[int(episode)] = step
                     self.states_reward[int(episode)] = self.cumulated_reward
                     print(
                         f"EP: {episode + 1} - epsilon: {round(self.qlearn.epsilon, 2)} - Reward: {self.cumulated_reward}"
