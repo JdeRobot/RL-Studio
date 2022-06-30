@@ -5,6 +5,34 @@ from rl_studio.agents.robot_mesh import settings
 
 #TODO Since these utils are algorithm specific, those should stay in the algorithm folder somehow tied to its algorithm class
 
+import matplotlib.pyplot as plt
+import pandas as pd
+
+from rl_studio.agents.mountain_car import settings
+
+
+#TODO Since these utils are algorithm specific, those should stay in the algorithm folder somehow tied to its algorithm class
+
+
+def update_line(axes, runs_rewards):
+    plot_rewards_per_run(axes, runs_rewards)
+    plt.draw()
+    plt.pause(0.01)
+
+def get_stats_figure(runs_rewards):
+    fig, axes = plt.subplots()
+    fig.set_size_inches(12, 4)
+    plot_rewards_per_run(axes, runs_rewards)
+    plt.ion()
+    plt.show()
+    return fig, axes
+
+def plot_rewards_per_run(axes, runs_rewards):
+    rewards_graph=pd.DataFrame(runs_rewards)
+    ax=rewards_graph.plot(ax=axes, title="steps per run");
+    ax.set_xlabel("runs")
+    ax.set_ylabel("steps")
+    ax.legend().set_visible(False)
 
 def load_model(params, qlearn, file_name):
 

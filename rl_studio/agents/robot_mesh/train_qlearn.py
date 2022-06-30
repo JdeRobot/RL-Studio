@@ -1,4 +1,5 @@
 import datetime
+import multiprocessing
 import time
 
 import gym
@@ -6,7 +7,9 @@ import gym
 import numpy as np
 from functools import reduce
 
+import rl_studio.agents.robot_mesh.utils as utils
 from rl_studio.agents.f1.settings import QLearnConfig
+from rl_studio.algorithms.qlearn import QLearn
 from rl_studio.visual.ascii.images import JDEROBOT_LOGO
 from rl_studio.visual.ascii.text import JDEROBOT, QLEARN_CAMERA, LETS_GO
 
@@ -80,9 +83,7 @@ class RobotMeshTrainer:
         self.env._flush(force=True)
         return nextState, done
 
-
-    def main(self):
-
+    def simulation(self, queue):
         self.print_init_info()
 
         if self.config.load_model:
@@ -96,8 +97,12 @@ class RobotMeshTrainer:
         initial_epsilon = self.qlearn.epsilon
 
         telemetry_start_time = time.time()
-        self.start_time = datetime.datetime.now()
-        self.start_time_format = self.start_time.strftime("%Y%m%d_%H%M")
+        start_time = datetime.datetime.now()
+        start_time_format = start_time.strftime("%Y%m%d_%H%M")
+
+        if self.config.save_model:
+            print(f"\nSaving actions . . .\n")
+            utils.save_actions(self.actions, start_time_format)
 
         print(LETS_GO)
         for episode in range(self.total_episodes):
@@ -112,18 +117,19 @@ class RobotMeshTrainer:
                 if not done:
                     state = next_state
                 else:
-                    self.last_time_steps = np.append(self.last_time_steps, [int(self.step + 1)])
-                    self.stats[int(self.episode)] = self.step
-                    self.states_reward[int(self.episode)] = self.cumulated_reward
+                    self.last_time_steps = np.append(self.last_time_steps, [int(step + 1)])
+                    self.stats[int(self.episode)] = step
+                    self.states_reward[int(episode)] = self.cumulated_reward
                     print(
-                        f"EP: {self.episode + 1} - epsilon: {round(self.qlearn.epsilon, 2)} - Reward: {self.cumulated_reward}"
-                        f"- Time: {self.start_time_format} - Steps: {self.step}"
+                        f"EP: {episode + 1} - epsilon: {round(self.qlearn.epsilon, 2)} - Reward: {self.cumulated_reward}"
+                        f"- Time: {start_time_format} - Steps: {step}"
                     )
+                    queue.put(step)
                     break
 
             if episode % 250 == 0 and self.config.save_model and episode > 1:
                 print(f"\nSaving model . . .\n")
-                utils.save_model(self.qlearn, self.start_time_format, self.stats, self.states_counter, self.states_reward)
+                utils.save_model(self.qlearn, start_time_format, self.stats, self.states_counter, self.states_reward)
 
         print(
             "Total EP: {} - epsilon: {} - ep. discount: {} - Highest Reward: {}".format(
@@ -133,3 +139,35 @@ class RobotMeshTrainer:
 
 
         self.env.close()
+
+    def main(self):
+
+        # Create a queue to share data between process
+        queue = multiprocessing.Queue()
+
+        # Create and start the simulation process
+        simulate = multiprocessing.Process(None, self.simulation, args=(queue,))
+        simulate.start()
+
+        rewards = []
+        while queue.empty():
+            time.sleep(5)
+        # Call a function to update the plot when there is new data
+        result = queue.get(block=True, timeout=None)
+        rewards.append(result)
+        figure, axes = utils.get_stats_figure(rewards)
+
+        while True:
+            while queue.empty():
+                time.sleep(5)
+            # Call a function to update the plot when there is new data
+            result = queue.get(block=True, timeout=None)
+            if result != None:
+                print(
+                    "PLOT: Received reward to paint!!! -> REWARD PAINTED = "
+                    + str(result)
+                )
+                rewards.append(result)
+                axes.cla()
+                utils.update_line(axes, rewards)
+
