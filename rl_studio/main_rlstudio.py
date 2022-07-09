@@ -35,6 +35,13 @@ def get_inference(config_file: dict, input_inference: str) -> dict:
     }
 
 
+def get_settings(config_file: dict) -> dict:
+    return {
+        "name": "settings",
+        "params": config_file["settings"],
+    }
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument(
@@ -53,7 +60,7 @@ def main():
         # print(f"INPUT CONFIGURATION FILE:\n{yaml.dump(config_file, indent=4)}")
 
         inference_params = {
-            "settings": config_file["settings"],
+            "settings": get_settings(config_file),
             "algorithm": get_algorithm(config_file, args.algorithm),
             "inference": get_inference(config_file, args.algorithm),
             "environment": get_environment(config_file, args.environment),
@@ -78,7 +85,7 @@ def main():
         # print(f"INPUT CONFIGURATION FILE:\n{yaml.dump(config_file, indent=4)}")
 
         trainer_params = {
-            "settings": config_file["settings"],
+            "settings": get_settings(config_file),
             "algorithm": get_algorithm(config_file, args.algorithm),
             "environment": get_environment(config_file, args.environment),
             "agent": get_agent(config_file, args.agent),

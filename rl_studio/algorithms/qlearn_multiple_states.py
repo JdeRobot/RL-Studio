@@ -13,7 +13,7 @@ class QLearn:
         self.actions = actions
 
     def getQValues(self, state, action):
-        return self.q.get(state + (action,), 0.0)
+        return self.q.get(tuple(state) + (action,), 0.0)
 
     def selectAction(self, state, return_q=False):
 
@@ -41,7 +41,7 @@ class QLearn:
         maxqnew = max([self.getQValues(state2, a) for a in self.actions])
 
         if done == True:
-            self.q[(state1 + (action1,))] = reward
+            self.q[(tuple(state1) + (action1,))] = reward
             q_update = self.alpha * (
                 reward - self.getQValues(state1, action1)
             )
@@ -51,7 +51,7 @@ class QLearn:
                 + self.gamma * maxqnew
                 - self.getQValues(state1, action1)
             )
-        self.q[(state1 + (action1,))] = (
+        self.q[(tuple(state1) + (action1,))] = (
             self.getQValues(state1, action1) + q_update
         )
 

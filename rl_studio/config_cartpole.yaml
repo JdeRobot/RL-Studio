@@ -26,11 +26,11 @@ agent:
 
 environments:
   simple:
-    env_name: my-cartpole
+    env_name: myCartpole-v0
     environment_folder: cartpole
-    runs: 1000000
-    update_every: 1000
-    show_every: 3000
+    runs: 50
+    update_every: 1
+    show_every: 2
 
 inference:
   qlearn:
@@ -39,9 +39,9 @@ inference:
 
 algorithm:
     qlearn:
-      alpha: 0.15
+      alpha: 0.7
       epsilon: 0.99
-      gamma: 0.8
+      gamma: 0.9
       epsilon_discount: 0.9999999
 
     dqn:

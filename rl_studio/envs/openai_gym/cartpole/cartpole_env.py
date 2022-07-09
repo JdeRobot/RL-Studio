@@ -4,16 +4,16 @@ Copied from http://incompleteideas.net/sutton/book/code/pole.c
 permalink: https://perma.cc/C9ZM-652R
 """
 import math
-from typing import Optional, Union
-
-import numpy as np
+from typing import Optional
 
 import gym
+import numpy as np
 from gym import logger, spaces
 from gym.error import DependencyNotInstalled
+from gym.utils import seeding
 
 
-class CartPoleEnv(gym.Env[np.ndarray, Union[int, np.ndarray]]):
+class CartPoleEnv(gym.Env):
     """
     ### Description
 
@@ -119,6 +119,13 @@ class CartPoleEnv(gym.Env[np.ndarray, Union[int, np.ndarray]]):
 
         self.steps_beyond_done = None
 
+        self.seed()
+
+
+    def seed(self, seed=None):
+        self.np_random, seed = seeding.np_random(seed)
+        return [seed]
+
     def step(self, action):
         err_msg = f"{action!r} ({type(action)}) invalid"
         assert self.action_space.contains(action), err_msg
@@ -160,7 +167,7 @@ class CartPoleEnv(gym.Env[np.ndarray, Union[int, np.ndarray]]):
 
         if not done:
             if self.x_threshold_center > x > -self.x_threshold_center:
-                reward = 1.0
+                reward = 1 - (abs(x) + abs(theta))
             else:
                 reward = 0
         elif self.steps_beyond_done is None:
@@ -187,7 +194,6 @@ class CartPoleEnv(gym.Env[np.ndarray, Union[int, np.ndarray]]):
         return_info: bool = False,
         options: Optional[dict] = None,
     ):
-        super().reset(seed=seed)
         self.state = self.np_random.uniform(low=-0.05, high=0.05, size=(4,))
         self.steps_beyond_done = None
         if not return_info:

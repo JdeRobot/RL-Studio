@@ -9,8 +9,6 @@ from rl_studio.algorithms.qlearn_multiple_states import QLearn
 from rl_studio.visual.ascii.images import JDEROBOT_LOGO
 from rl_studio.visual.ascii.text import JDEROBOT, QLEARN_CAMERA, LETS_GO
 
-from rl_studio.envs.cartpole.cartpole_env import CartPoleEnv
-
 class CartpoleTrainer:
     def __init__(self, params):
         # TODO: Create a pydantic metaclass to simplify the way we extract the params
@@ -121,6 +119,7 @@ class CartpoleTrainer:
                 self.metrics['avg'].append(averageCnt)
                 self.metrics['min'].append(min(latestRuns))
                 self.metrics['max'].append(max(latestRuns))
+
                 time_spent = datetime.datetime.now() - self.now
                 self.now = datetime.datetime.now()
                 print("Run:", run, "Average:", averageCnt, "Min:", min(latestRuns), "Max:", max(latestRuns), "epsilon",

@@ -14,13 +14,12 @@ register(
     entry_point="rl_studio.envs.gazebo.robot_mesh:RobotMeshEnv",
     # More arguments here
 )
-#
-# register(
-#     id="my-cartpole",
-#     entry_point="rl_studio.envs.cartpole.cartpole_env:CartPoleEnv",
-#     max_episode_steps=1000,
-#     reward_threshold=1000,
-# )
+
+register(
+    id="myCartpole-v0",
+    entry_point="rl_studio.envs.openai_gym.cartpole.cartpole_env:CartPoleEnv",
+    max_episode_steps=10000,
+)
 
 
 # MountainCar envs
