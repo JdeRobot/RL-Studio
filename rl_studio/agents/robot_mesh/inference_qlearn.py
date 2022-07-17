@@ -2,11 +2,14 @@ import datetime
 
 import gym
 import numpy as np
+import time
 
+import multiprocessing
 from rl_studio.agents.robot_mesh.settings import QLearnConfig
 from rl_studio.inference_rlstudio import InferencerWrapper
 from rl_studio.visual.ascii.images import JDEROBOT_LOGO
 from rl_studio.visual.ascii.text import JDEROBOT, QLEARN_CAMERA, LETS_GO
+import rl_studio.agents.robot_mesh.utils as utils
 
 
 class RobotMeshInferencer:
@@ -66,7 +69,7 @@ class RobotMeshInferencer:
         return nextState, done
 
 
-    def main(self):
+    def simulation(self, queue):
 
         self.print_init_info()
 
@@ -87,12 +90,13 @@ class RobotMeshInferencer:
                     state = next_state
                 else:
                     self.last_time_steps = np.append(self.last_time_steps, [int(step + 1)])
-                    self.stats[int(self.episode)] = step
+                    self.stats[int(episode)] = step
                     self.states_reward[int(episode)] = self.cumulated_reward
                     print(
-                        f"EP: {self.episode + 1}  - Reward: {self.cumulated_reward}"
+                        f"EP: {episode + 1}  - Reward: {self.cumulated_reward}"
                         f"- Time: {start_time_format} - Steps: {step}"
                     )
+                    queue.put(step)
                     break
 
         print(
@@ -103,3 +107,35 @@ class RobotMeshInferencer:
 
 
         self.env.close()
+
+    def main(self):
+
+        # Create a queue to share data between process
+        queue = multiprocessing.Queue()
+
+        # Create and start the simulation process
+        simulate = multiprocessing.Process(None, self.simulation, args=(queue,))
+        simulate.start()
+
+        rewards = []
+        while queue.empty():
+            time.sleep(5)
+        # Call a function to update the plot when there is new data
+        result = queue.get(block=True, timeout=None)
+        rewards.append(result)
+        figure, axes = utils.get_stats_figure(rewards)
+
+        while True:
+            while queue.empty():
+                time.sleep(5)
+            # Call a function to update the plot when there is new data
+            result = queue.get(block=True, timeout=None)
+            if result != None:
+                print(
+                    "PLOT: Received reward to paint!!! -> REWARD PAINTED = "
+                    + str(result)
+                )
+                rewards.append(result)
+                axes.cla()
+                utils.update_line(axes, rewards)
+
