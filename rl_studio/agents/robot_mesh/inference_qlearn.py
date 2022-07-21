@@ -6,7 +6,7 @@ import time
 
 import multiprocessing
 from rl_studio.agents.robot_mesh.settings import QLearnConfig
-from rl_studio.inference_rlstudio import InferencerWrapper
+from rl_studio.wrappers.inference_rlstudio import InferencerWrapper
 from rl_studio.visual.ascii.images import JDEROBOT_LOGO
 from rl_studio.visual.ascii.text import JDEROBOT, QLEARN_CAMERA, LETS_GO
 import rl_studio.agents.robot_mesh.utils as utils
