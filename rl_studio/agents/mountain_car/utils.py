@@ -79,6 +79,12 @@ def save_model(qlearn, current_time, states, states_counter, states_rewards):
     file_dump = open(f"./logs/qlearn_models/4_{current_time}{steps}", "wb")
     pickle.dump(states, file_dump)
 
+def save_actions(actions, start_time):
+    file_dump = open(
+        "./logs/qlearn_models/actions_set_"+start_time, "wb"
+    )
+    pickle.dump(actions, file_dump)
+
 
 def save_times(checkpoints):
     file_name = "actions_"

@@ -6,6 +6,7 @@ class TrainerFactory:
     def __new__(cls, config):
 
         agent = config.agent["name"]
+        algorithm = config.algorithm["name"]
 
         if agent == AgentsType.F1.value:
             from rl_studio.agents.f1.train_qlearn import F1Trainer
@@ -33,7 +34,10 @@ class TrainerFactory:
             return MountainCarTrainer(config)
 
         elif agent == AgentsType.CARTPOLE.value:
-            from rl_studio.agents.cartpole.train_qlearn import CartpoleTrainer
+            if algorithm == "dqn":
+                from rl_studio.agents.cartpole.train_dqn import CartpoleTrainer
+            else:
+                from rl_studio.agents.cartpole.train_qlearn import CartpoleTrainer
 
             return CartpoleTrainer(config)
 
@@ -61,6 +65,8 @@ class InferenceExecutorFactory:
         #     from rl_studio.agents.turtlebot.turtlebot_Inferencer import TurtlebotInferencer
         #
         #     return TurtlebotInferencer(config)
+        #
+        #
         #
         elif agent == AgentsType.CARTPOLE.value:
             from rl_studio.agents.cartpole.inference_qlearn import CartpoleInferencer

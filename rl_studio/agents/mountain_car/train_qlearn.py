@@ -39,7 +39,7 @@ class MountainCarTrainer:
         self.env.done = True
 
         self.total_episodes = 20000
-        self.epsilon_discount = 0.999  # Default 0.9986
+        self.epsilon_discount = params.algorithm["params"]["epsilon_discount"] # Default 0.9986
         self.cumulated_reward = 0
 
         self.qlearn = QLearn(
@@ -106,7 +106,6 @@ class MountainCarTrainer:
         for episode in range(self.total_episodes):
 
             done = False
-            cumulated_reward = 0
             print("resetting")
             state = self.env.reset()
 
@@ -121,12 +120,12 @@ class MountainCarTrainer:
                 else:
                     self.last_time_steps = np.append(self.last_time_steps, [int(step + 1)])
                     self.stats[int(episode)] = step
-                    self.states_reward[int(episode)] = cumulated_reward
+                    self.states_reward[int(episode)] = self.cumulated_reward
                     print(
                         "---------------------------------------------------------------------------------------------"
                     )
                     print(
-                        f"EP: {episode + 1} - epsilon: {round(self.qlearn.epsilon, 2)} - Reward: {cumulated_reward}"
+                        f"EP: {episode + 1} - epsilon: {round(self.qlearn.epsilon, 2)} - Reward: {self.cumulated_reward}"
                         f"- Time: {start_time_format} - Steps: {step}"
                     )
 
