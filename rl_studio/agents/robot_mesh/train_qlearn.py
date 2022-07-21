@@ -1,4 +1,5 @@
 import datetime
+import multiprocessing
 import time
 
 import gym
@@ -6,13 +7,14 @@ import gym
 import numpy as np
 from functools import reduce
 
+import rl_studio.agents.robot_mesh.utils as utils
 from rl_studio.agents.f1.settings import QLearnConfig
+from rl_studio.algorithms.qlearn import QLearn
 from rl_studio.visual.ascii.images import JDEROBOT_LOGO
 from rl_studio.visual.ascii.text import JDEROBOT, QLEARN_CAMERA, LETS_GO
 
 from rl_studio.algorithms.qlearn import QLearn
 import rl_studio.agents.robot_mesh.utils as utils
-
 
 
 class RobotMeshTrainer:
@@ -21,11 +23,7 @@ class RobotMeshTrainer:
         # environment params
         self.params = params
         self.environment_params = params.environment["params"]
-        self.env_name = params.environment["params"]["env_name"]
-        env_params = params.environment["params"]
-        actions = params.environment["actions"]
-        env_params["actions"] = actions
-        self.env = gym.make(self.env_name, **env_params)
+
         # algorithm params
         self.alpha = params.algorithm["params"]["alpha"]
         self.epsilon = params.algorithm["params"]["epsilon"]
@@ -37,15 +35,6 @@ class RobotMeshTrainer:
         self.last_time_steps = np.ndarray(0)
 
         self.outdir = "./logs/robot_mesh_experiments/"
-        self.env = gym.wrappers.Monitor(self.env, self.outdir, force=True)
-        self.actions = range(self.env.action_space.n)
-
-        self.total_episodes = 20000
-        self.epsilon_discount = 0.999  # Default 0.9986
-
-        self.qlearn = QLearn(
-            actions=self.actions, alpha=self.alpha, gamma=self.gamma, epsilon=self.epsilon
-        )
 
     def print_init_info(self):
         print(JDEROBOT)
@@ -53,6 +42,23 @@ class RobotMeshTrainer:
         print(QLEARN_CAMERA)
         print(f"\t- Start hour: {datetime.datetime.now()}\n")
         print(f"\t- Environment params:\n{self.environment_params}")
+
+    def init_environment(self):
+        self.env_name = self.params.environment["params"]["env_name"]
+        env_params = self.params.environment["params"]
+        actions = self.params.environment["actions"]
+        env_params["actions"] = actions
+        self.env = gym.make(self.env_name, **env_params)
+        self.env = gym.wrappers.Monitor(self.env, self.outdir, force=True)
+        self.actions = range(self.env.action_space.n)
+
+        self.cumulated_reward = 0
+        self.total_episodes = 20000
+        self.epsilon_discount = 0.999  # Default 0.9986
+
+        self.qlearn = QLearn(
+            actions=self.actions, alpha=self.alpha, gamma=self.gamma, epsilon=self.epsilon
+        )
 
     def evaluate_and_learn_from_step(self, state):
         if self.qlearn.epsilon > 0.05:
@@ -66,9 +72,8 @@ class RobotMeshTrainer:
         nextState, reward, done, lap_completed = self.env.step(action)
         self.cumulated_reward += reward
 
-        if  self.highest_reward <  self.cumulated_reward:
-            self.highest_reward =  self.cumulated_reward
-
+        if self.highest_reward < self.cumulated_reward:
+            self.highest_reward = self.cumulated_reward
 
         try:
             self.states_counter[nextState] += 1
@@ -80,10 +85,10 @@ class RobotMeshTrainer:
         self.env._flush(force=True)
         return nextState, done
 
-
-    def main(self):
-
+    def simulation(self, queue):
         self.print_init_info()
+
+        self.init_environment()
 
         if self.config.load_model:
             file_name = "1_20210701_0848_act_set_simple_epsilon_0.19_QTABLE.pkl"
@@ -117,12 +122,13 @@ class RobotMeshTrainer:
                     state = next_state
                 else:
                     self.last_time_steps = np.append(self.last_time_steps, [int(step + 1)])
-                    self.stats[int(self.episode)] = step
+                    self.stats[int(episode)] = step
                     self.states_reward[int(episode)] = self.cumulated_reward
                     print(
                         f"EP: {episode + 1} - epsilon: {round(self.qlearn.epsilon, 2)} - Reward: {self.cumulated_reward}"
                         f"- Time: {start_time_format} - Steps: {step}"
                     )
+                    queue.put(step)
                     break
 
             if episode % 250 == 0 and self.config.save_model and episode > 1:
@@ -135,5 +141,36 @@ class RobotMeshTrainer:
             )
         )
 
-
         self.env.close()
+
+    def main(self):
+
+        # Create a queue to share data between process
+        queue = multiprocessing.Queue()
+
+        # Create and start the simulation process
+        simulate = multiprocessing.Process(None, self.simulation, args=(queue,))
+        simulate.start()
+
+        rewards = []
+        while queue.empty():
+            time.sleep(5)
+
+        # Call a function to update the plot when there is new data
+        result = queue.get(block=True, timeout=None)
+        rewards.append(result)
+        figure, axes = utils.get_stats_figure(rewards)
+
+        while True:
+            while queue.empty():
+                time.sleep(5)
+            # Call a function to update the plot when there is new data
+            result = queue.get(block=True, timeout=None)
+            if result != None:
+                print(
+                    "PLOT: Received reward to paint!!! -> REWARD PAINTED = "
+                    + str(result)
+                )
+                rewards.append(result)
+                axes.cla()
+                utils.update_line(axes, rewards)
