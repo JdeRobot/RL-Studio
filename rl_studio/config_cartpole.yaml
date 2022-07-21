@@ -5,17 +5,10 @@ settings:
   debug_level: DEBUG
   telemetry: False
 
+# TODO make this section optional
 actions:
-    actions_number: 4
-    actions_set: simple
     available_actions:
-      # [lineal, angular] TODO To be removed
       simple:
-        0: [ 0, 0, -1, 0 ]
-        1: [ 0, 0, 0.7, 0.7]
-        2: [ 0, 0, 0, -1]
-        3: [0, 0, -0.7, 0.7]
-
 
 # TODO To be removed
 agent:
@@ -28,21 +21,21 @@ environments:
   simple:
     env_name: myCartpole-v0
     environment_folder: cartpole
-    runs: 50
-    update_every: 1
-    show_every: 2
+    runs: 2000000
+    update_every: 200000
+    show_every: 50000
 
 inference:
   qlearn:
-    inference_file: /home/ruben/Desktop/my-RL-Studio/rl_studio/logs/qlearn_models/1_20220603_1950_act_set_simple_epsilon_0.01_QTABLE.pkl
-    actions_file: /home/ruben/Desktop/my-RL-Studio/rl_studio/logs/qlearn_models/actions_set_20220603_1959
+    inference_file: /home/ruben/Desktop/my-RL-Studio/rl_studio/logs/qlearn_models/1_20220718_0010_act_set_simple_epsilon_0.01_QTABLE.pkl
+    actions_file: /home/ruben/Desktop/my-RL-Studio/rl_studio/logs/qlearn_models/actions_set_20220718_0010
 
 algorithm:
     qlearn:
-      alpha: 0.7
+      alpha: 0.85
       epsilon: 0.99
-      gamma: 0.9
-      epsilon_discount: 0.9999999
+      gamma: 0.95
+      epsilon_discount: 0.99999998
 
     dqn:
 

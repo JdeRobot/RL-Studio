@@ -166,10 +166,7 @@ class CartPoleEnv(gym.Env):
         )
 
         if not done:
-            if self.x_threshold_center > x > -self.x_threshold_center:
-                reward = 1 - (abs(x) + abs(theta))
-            else:
-                reward = 0
+                reward = 1
         elif self.steps_beyond_done is None:
             # Pole just fell!
             self.steps_beyond_done = 0
