@@ -18,7 +18,13 @@ register(
 register(
     id="myCartpole-v0",
     entry_point="rl_studio.envs.openai_gym.cartpole.cartpole_env:CartPoleEnv",
-    max_episode_steps=10000,
+    max_episode_steps=100000,
+)
+
+register(
+    id="myCartpole-v0",
+    entry_point="rl_studio.envs.openai_gym.cartpole.cartpole_env:CartPoleEnv",
+    max_episode_steps=100000,
 )
 
 
