@@ -8,7 +8,7 @@ from gym import spaces
 from gym.utils import seeding
 from std_srvs.srv import Empty
 
-from .. import gazebo_envs
+from rl_studio.envs.gazebo import gazebo_envs
 
 
 class MountainCarEnv(gazebo_envs.GazeboEnv):
@@ -80,12 +80,8 @@ class MountainCarEnv(gazebo_envs.GazeboEnv):
 
         x_linear_vel = object_coordinates.twist.linear.x
 
-
-        print("pos x -> " + str(x_position))
-        print("pos y -> " + str(y_position))
-
-        pos_x = round(x_position * 2)
-        vel = round(x_linear_vel * 2)
+        pos_x = round(x_position * 3)
+        vel = round(x_linear_vel * 3)
 
         # assign state
         state.append(pos_x)
@@ -142,15 +138,3 @@ class MountainCarEnv(gazebo_envs.GazeboEnv):
 
 
         return state
-
-    def finish_line(self):
-        x, y = self.get_position()
-        current_point = np.array([x, y])
-
-        dist = (self.start_pose - current_point) ** 2
-        dist = np.sum(dist, axis=0)
-        dist = np.sqrt(dist)
-
-        if dist < max_distance:
-            return True
-        return False

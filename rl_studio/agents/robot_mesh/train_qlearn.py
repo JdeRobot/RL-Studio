@@ -1,5 +1,4 @@
 import datetime
-import multiprocessing
 import time
 
 import gym
@@ -7,14 +6,13 @@ import gym
 import numpy as np
 from functools import reduce
 
-import rl_studio.agents.robot_mesh.utils as utils
 from rl_studio.agents.f1.settings import QLearnConfig
-from rl_studio.algorithms.qlearn import QLearn
 from rl_studio.visual.ascii.images import JDEROBOT_LOGO
 from rl_studio.visual.ascii.text import JDEROBOT, QLEARN_CAMERA, LETS_GO
 
 from rl_studio.algorithms.qlearn import QLearn
 import rl_studio.agents.robot_mesh.utils as utils
+
 
 
 class RobotMeshTrainer:
@@ -28,7 +26,7 @@ class RobotMeshTrainer:
         self.alpha = params.algorithm["params"]["alpha"]
         self.epsilon = params.algorithm["params"]["epsilon"]
         self.gamma = params.algorithm["params"]["gamma"]
-        self.config = QLearnConfig()
+        self.config = params.settings["params"]
         self.stats = {}  # epoch: steps
         self.states_counter = {}
         self.states_reward = {}
@@ -75,6 +73,7 @@ class RobotMeshTrainer:
         if self.highest_reward < self.cumulated_reward:
             self.highest_reward = self.cumulated_reward
 
+
         try:
             self.states_counter[nextState] += 1
         except KeyError:
@@ -88,23 +87,13 @@ class RobotMeshTrainer:
     def simulation(self, queue):
         self.print_init_info()
 
-        self.init_environment()
-
-        if self.config.load_model:
-            file_name = "1_20210701_0848_act_set_simple_epsilon_0.19_QTABLE.pkl"
-            utils.load_model(self.params, self.qlearn, file_name)
-            qvalues = np.array(list(self.qlearn.q.values()), dtype=np.float64)
-            print(qvalues)
-            self.highest_reward = max(qvalues)
-        else:
-            self.highest_reward = 0
         initial_epsilon = self.qlearn.epsilon
 
         telemetry_start_time = time.time()
         start_time = datetime.datetime.now()
         start_time_format = start_time.strftime("%Y%m%d_%H%M")
 
-        if self.config.save_model:
+        if self.config["save_model"]:
             print(f"\nSaving actions . . .\n")
             utils.save_actions(self.actions, start_time_format)
 

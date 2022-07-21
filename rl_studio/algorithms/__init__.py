@@ -22,12 +22,15 @@ class InferencerFactory:
 
             return brain
 
-        # elif algorithm == AlgorithmsType.QLEARN_TWO_STATES.value:
-        #     from rl_studio.algorithms.qlearn_two_states import QLearn
-        #
-        #     return QLearn(config)
-        #
-        #
+        elif algorithm == AlgorithmsType.QLEARN_MULTIPLE_STATES.value:
+            from rl_studio.algorithms.qlearn_multiple_states import QLearn
+
+            brain = QLearn(config)
+            brain.load_model(inference_file_name, actions_file_name)
+
+            return brain
+
+
         # elif algorithm == AlgorithmsType.DQN.value:
         #     from rl_studio.algorithms.dqn import DeepQ
         #

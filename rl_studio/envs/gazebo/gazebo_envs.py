@@ -47,7 +47,6 @@ class GazeboEnv(gym.Env):
             fullpath = str(
                 Path(
                     Path(__file__).resolve().parents[2]
-                    / "rl_studio"
                     / "CustomRobots"
                     / config.get("environment_folder")
                     / "launch"
