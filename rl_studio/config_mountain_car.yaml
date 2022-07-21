@@ -12,8 +12,8 @@ actions:
       # [lineal, angular]
       simple:
         0: [ 0, 0, 0, 0]
-        1: [ 0, 0, -0.9, -0.9]
-        2: [ 0.9, 0.9, 0, 0]
+        1: [ 0, 0, -0.8, -0.8]
+        2: [ 0.8, 0.8, 0, 0]
 
 agent:
   mountain_car:
@@ -58,10 +58,9 @@ environments:
 
 algorithm:
     qlearn_mountain:
-      alpha: 0.9
+      alpha: 0.2
       epsilon: 0.95
       gamma: 0.9
-      epsilon_discount: 0.99995
 
     dqn:
 
