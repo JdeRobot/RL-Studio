@@ -4,9 +4,7 @@ import time
 import gym
 
 import numpy as np
-from functools import reduce
 
-from rl_studio.agents.f1.settings import QLearnConfig
 from rl_studio.visual.ascii.images import JDEROBOT_LOGO
 from rl_studio.visual.ascii.text import JDEROBOT, QLEARN_CAMERA, LETS_GO
 

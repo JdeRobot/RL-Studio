@@ -7,7 +7,6 @@ import gym
 import numpy as np
 
 import rl_studio.agents.mountain_car.utils as utils
-from rl_studio.agents.f1.settings import QLearnConfig
 from rl_studio.algorithms.qlearn_multiple_states import QLearn
 from rl_studio.visual.ascii.images import JDEROBOT_LOGO
 from rl_studio.visual.ascii.text import JDEROBOT, QLEARN_CAMERA, LETS_GO
@@ -32,7 +31,6 @@ class MountainCarTrainer:
         self.stats= {}
         self.last_time_steps = np.ndarray(0)
 
-        self.config = QLearnConfig()
         self.outdir = "./logs/robot_mesh_experiments/"
         self.env = gym.wrappers.Monitor(self.env, self.outdir, force=True)
         self.actions = range(self.env.action_space.n)
@@ -83,21 +81,14 @@ class MountainCarTrainer:
 
         self.print_init_info()
 
+        self.highest_reward = 0
 
-        if self.config.load_model:
-            file_name = "1_20210701_0848_act_set_simple_epsilon_0.19_QTABLE.pkl"
-            utils.load_model(self.params, self.qlearn, file_name)
-            qvalues = np.array(list(self.qlearn.q.values()), dtype=np.float64)
-            print(qvalues)
-            self.highest_reward = max(qvalues)
-        else:
-            self.highest_reward = 0
         initial_epsilon = self.qlearn.epsilon
 
         start_time = datetime.datetime.now()
         start_time_format = start_time.strftime("%Y%m%d_%H%M")
 
-        if self.config.save_model:
+        if self.config["save_model"]:
             print(f"\nSaving actions . . .\n")
             utils.save_actions(self.actions, start_time_format)
 

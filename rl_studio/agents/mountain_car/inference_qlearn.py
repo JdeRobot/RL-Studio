@@ -6,7 +6,6 @@ from functools import reduce
 import gym
 import numpy as np
 
-from rl_studio.agents.f1.settings import QLearnConfig
 from rl_studio.wrappers.inference_rlstudio import InferencerWrapper
 from rl_studio.visual.ascii.images import JDEROBOT_LOGO
 from rl_studio.visual.ascii.text import JDEROBOT, QLEARN_CAMERA, LETS_GO
@@ -29,7 +28,6 @@ class MountainCarTrainer:
         self.states_reward = {}
         self.last_time_steps = np.ndarray(0)
 
-        self.config = QLearnConfig()
         self.outdir = "./logs/robot_mesh_experiments/"
         self.env = gym.wrappers.Monitor(self.env, self.outdir, force=True)
         self.env.done = True
