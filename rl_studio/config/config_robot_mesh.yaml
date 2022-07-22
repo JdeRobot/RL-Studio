@@ -1,0 +1,107 @@
+settings:
+  output_dir: "./logs/"
+  save_model: True
+  save_positions: True
+  debug_level: DEBUG
+  telemetry: False
+
+actions:
+    actions_number: 4
+    actions_set: simple
+    available_actions:
+      # [lineal, angular]
+      simple:
+        0: [ 0, 0, -1, 0 ]
+        1: [ 0, 0, 0.7, 0.7]
+        2: [ 0, 0, 0, -1]
+        3: [0, 0, -0.7, 0.7]
+
+      complex:
+        0: [ 0, 0, -1, 0 ]
+        1: [ 0, 0, 0.7, 0.7 ]
+        2: [ 0, 0, 0, -1 ]
+        3: [ 0, 0, -0.7, 0.7 ]
+
+agent:
+  robot_mesh:
+    camera_params:
+      witdh: 640
+      height: 480
+  manual_robot:
+    camera_params:
+      witdh: 640
+      height: 480
+
+environments:
+  simple:
+    env_name: RobotMeshEnv-v0
+    circuit_name: simple
+    training_type: qlearn_camera
+    launchfile: my_simple_world.launch
+    environment_folder: robot_mesh
+    robot_name: my_robot
+    start_pose: 1, 2
+    alternate_pose: True
+    estimated_steps: 4000
+    sensor: camera
+    circuit_positions_set: #  x, y, z, roll, pith, ???. yaw
+      - [ 0, 53.462, -41.988, 0.004, 0, 0, 1.57, -1.57 ]
+      - [ 1, 53.462, -8.734, 0.004, 0, 0, 1.57, -1.57 ]
+      - [ 2, 39.712, -30.741, 0.004, 0, 0, 1.56, 1.56 ]
+      - [ 3, -6.861, -36.481, 0.004, 0, 0.01, -0.858, 0.613 ]
+      - [ 4, 20.043, 37.130, 0.003, 0, 0.103, -1.4383, -1.4383 ]
+    actions_force: 18
+    boot_on_crash: False
+    goal_x: -6.5
+    goal_y: 14
+    pos_x: 6.4
+    pos_y: -5
+    pos_z: 0.3
+  complex:
+    env_name: RobotMeshEnv-v0
+    circuit_name: complex
+    training_type: qlearn_camera
+    launchfile: my_complex_world.launch
+    environment_folder: robot_mesh
+    robot_name: my_bigger_robot
+    start_pose: 0
+    alternate_pose: True
+    estimated_steps: 4000
+    sensor: camera
+    circuit_positions_set: #  x, y, z, roll, pith, ???. yaw
+      - [ 0, 53.462, -41.988, 0.004, 0, 0, 1.57, -1.57]
+      - [ 1, 53.462, -8.734, 0.004, 0, 0, 1.57, -1.57 ]
+      - [ 2, 39.712, -30.741, 0.004, 0, 0, 1.56, 1.56 ]
+      - [ 3, -6.861, -36.481, 0.004, 0, 0.01, -0.858, 0.613 ]
+      - [ 4, 20.043, 37.130, 0.003, 0, 0.103, -1.4383, -1.4383 ]
+    actions_force: 24
+    boot_on_crash: False
+    goal_x: -100
+    goal_y: 14
+    pos_x: 17
+    pos_y: -13
+    pos_z: 0.3
+  # manual:
+  #   env_name: F1Env-v0
+  #   circuit_name: manual
+  #   training_type: qlearn_camera
+  #   launch: simple_circuit.launch
+  #   start_pose: 0
+  #   alternate_pose: False
+  #   estimated_steps: 4000
+  #   sensor: camera
+
+inference:
+  qlearn_mesh:
+    inference_file: /home/rubenlucas93/qvalues.pkl
+    actions_file: /home/rubenlucas93/actions_set.pkl
+
+algorithm:
+    qlearn_mesh:
+      alpha: 0.2
+      epsilon: 0.95
+      gamma: 0.9
+
+    dqn:
+
+    sarsa:
