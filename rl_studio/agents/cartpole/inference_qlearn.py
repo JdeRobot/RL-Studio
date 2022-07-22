@@ -4,7 +4,6 @@ import matplotlib.pyplot as plt
 from rl_studio.agents.cartpole import utils
 import datetime
 
-from rl_studio.agents.cartpole.settings import QLearnConfig
 from rl_studio.visual.ascii.images import JDEROBOT_LOGO
 from rl_studio.visual.ascii.text import JDEROBOT, QLEARN_CAMERA, LETS_GO
 from rl_studio.wrappers.inference_rlstudio import InferencerWrapper
@@ -32,7 +31,6 @@ class CartpoleInferencer:
         self.states_reward = {}
         self.last_time_steps = np.ndarray(0)
 
-        self.config = QLearnConfig()
         self.outdir = "./logs/robot_mesh_experiments/"
         # self.env = gym.wrappers.Monitor(self.env, self.outdir, force=True)
         self.actions = range(self.env.action_space.n)

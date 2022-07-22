@@ -11,7 +11,7 @@ from rl_studio.agents.f1 import utils
 from rl_studio.algorithms.qlearn import QLearn
 from rl_studio.visual.ascii.images import JDEROBOT_LOGO
 from rl_studio.visual.ascii.text import JDEROBOT, QLEARN_CAMERA, LETS_GO
-from settings import QLearnConfig
+from rl_studio.agents.f1.settings import QLearnConfig
 
 
 class F1Trainer:
@@ -65,13 +65,7 @@ class F1Trainer:
         # TODO: Call the algorithm factory passing "qlearn" as parameter.
         qlearn = QLearn(actions=self.actions, alpha=self.alpha, gamma=0.9, epsilon=0.99)
 
-        if config.load_model:
-            # TODO: Folder to models. Maybe from environment variable?
-            file_name = ""
-            utils.load_model(self.params, qlearn, file_name)
-            highest_reward = max(qlearn.q.values(), key=stats.get)
-        else:
-            highest_reward = 0
+        highest_reward = 0
         initial_epsilon = qlearn.epsilon
 
         telemetry_start_time = time.time()

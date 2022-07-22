@@ -5,7 +5,6 @@ import numpy as np
 import time
 
 import multiprocessing
-from rl_studio.agents.robot_mesh.settings import QLearnConfig
 from rl_studio.wrappers.inference_rlstudio import InferencerWrapper
 from rl_studio.visual.ascii.images import JDEROBOT_LOGO
 from rl_studio.visual.ascii.text import JDEROBOT, QLEARN_CAMERA, LETS_GO
@@ -24,7 +23,6 @@ class RobotMeshInferencer:
         env_params["actions"] = actions
         self.env = gym.make(self.env_name, **env_params)
         # algorithm param
-        self.config = QLearnConfig()
         self.stats = {}  # epoch: steps
         self.states_counter = {}
         self.states_reward = {}
