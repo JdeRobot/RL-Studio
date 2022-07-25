@@ -121,7 +121,6 @@ class CartPoleEnv(gym.Env):
 
         self.seed()
 
-
     def seed(self, seed=None):
         self.np_random, seed = seeding.np_random(seed)
         return [seed]
@@ -138,10 +137,10 @@ class CartPoleEnv(gym.Env):
         # For the interested reader:
         # https://coneural.org/florian/papers/05_cart_pole.pdf
         temp = (
-            force + self.polemass_length * theta_dot**2 * sintheta
-        ) / self.total_mass
+                       force + self.polemass_length * theta_dot ** 2 * sintheta
+               ) / self.total_mass
         thetaacc = (self.gravity * sintheta - costheta * temp) / (
-            self.length * (4.0 / 3.0 - self.masspole * costheta**2 / self.total_mass)
+                self.length * (4.0 / 3.0 - self.masspole * costheta ** 2 / self.total_mass)
         )
         xacc = temp - self.polemass_length * thetaacc * costheta / self.total_mass
 
@@ -166,10 +165,7 @@ class CartPoleEnv(gym.Env):
         )
 
         if not done:
-            if self.x_threshold_center > x > -self.x_threshold_center:
-                reward = 1 - (abs(x) + abs(theta))
-            else:
-                reward = 0
+            reward = 1.0
         elif self.steps_beyond_done is None:
             # Pole just fell!
             self.steps_beyond_done = 0
@@ -188,11 +184,11 @@ class CartPoleEnv(gym.Env):
         return np.array(self.state, dtype=np.float32), reward, done, {}
 
     def reset(
-        self,
-        *,
-        seed: Optional[int] = None,
-        return_info: bool = False,
-        options: Optional[dict] = None,
+            self,
+            *,
+            seed: Optional[int] = None,
+            return_info: bool = False,
+            options: Optional[dict] = None,
     ):
         self.state = self.np_random.uniform(low=-0.05, high=0.05, size=(4,))
         self.steps_beyond_done = None
