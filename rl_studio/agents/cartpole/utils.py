@@ -1,7 +1,5 @@
 import numpy as np
 import pickle
-import datetime
-from rl_studio.agents.robot_mesh import settings
 
 # How much new info will override old info. 0 means nothing is learned, 1 means only most recent is considered, old knowledge is discarded
 LEARNING_RATE = 0.1
@@ -15,26 +13,6 @@ epsilon_decay_value = epsilon / (END_EPSILON_DECAYING - START_EPSILON_DECAYING)
 
 
 
-def load_model(params, qlearn, file_name):
-
-    qlearn_file = open("./logs/qlearn_models/" + file_name)
-    model = pickle.load(qlearn_file)
-
-    qlearn.q = model
-    qlearn.alpha = params.algorithm["params"]["alpha"]
-    qlearn.gamma = params.algorithm["params"]["epsilon"]
-    qlearn.epsilon = params.algorithm["params"]["gamma"]
-
-    # highest_reward = settings.algorithm_params["highest_reward"]
-
-    print(f"\n\nMODEL LOADED. Number of (action, state): {len(model)}")
-    print(f"    - Loading:    {file_name}")
-    print(f"    - Model size: {len(qlearn.q)}")
-    print(f"    - Action set: {settings.actions_set}")
-    print(f"    - Epsilon:    {qlearn.epsilon}")
-    print(f"    - Start:      {datetime.datetime.now()}")
-
-
 def save_model(qlearn, current_time, states, states_counter, states_rewards):
     # Tabular RL: Tabular Q-learning basically stores the policy (Q-values) of  the agent into a matrix of shape
     # (S x A), where s are all states, a are all the possible actions. After the environment is solved, just save this
@@ -42,8 +20,8 @@ def save_model(qlearn, current_time, states, states_counter, states_rewards):
 
     #TODO The paths are not relative to the agents folder
     # Q TABLE
-    base_file_name = "_act_set_{}_epsilon_{}".format(
-        settings.qlearn.actions_set, round(qlearn.epsilon, 2)
+    base_file_name = "_epsilon_{}".format(
+        round(qlearn.epsilon, 3)
     )
     file_dump = open(
         "./logs/qlearn_models/1_" + current_time + base_file_name + "_QTABLE.pkl", "wb"
@@ -66,13 +44,6 @@ def save_model(qlearn, current_time, states, states_counter, states_rewards):
     file_dump = open("./logs/qlearn_models/4_" + current_time + steps, "wb")
     pickle.dump(states, file_dump)
 
-
-def save_times(checkpoints):
-    file_name = "actions_"
-    file_dump = open(
-        "./logs/" + file_name + settings.qlearn.actions_set + "_checkpoints.pkl", "wb"
-    )
-    pickle.dump(checkpoints, file_dump)
 
 def save_actions(actions, start_time):
     file_dump = open(
