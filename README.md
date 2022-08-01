@@ -64,14 +64,12 @@ pip install -r requirements.txt
 
 The commits follow the [gitmoji](https://gitmoji.dev/) convention and the code is formatted with [Black](https://black.readthedocs.io/en/stable/).
 
-````
-
 ### Install rl-studio
 
 ```bash
 cd ~/PATH/TO/RL-Studio/rl-studio
 pip install -e .
-````
+```
 
 ## Set environments
 
