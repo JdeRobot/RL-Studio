@@ -1,24 +1,20 @@
 import datetime
 import pickle
 
-from rl_studio.agents.robot_mesh import settings
-
-
-#TODO Since these utils are algorithm specific, those should stay in the algorithm folder somehow tied to its algorithm class
+# TODO Since these utils are algorithm specific, those should stay in the algorithm folder somehow tied to its algorithm class
 
 import matplotlib.pyplot as plt
 import pandas as pd
 
-from rl_studio.agents.mountain_car import settings
 
-
-#TODO Since these utils are algorithm specific, those should stay in the algorithm folder somehow tied to its algorithm class
+# TODO Since these utils are algorithm specific, those should stay in the algorithm folder somehow tied to its algorithm class
 
 
 def update_line(axes, runs_rewards):
     plot_rewards_per_run(axes, runs_rewards)
     plt.draw()
     plt.pause(0.01)
+
 
 def get_stats_figure(runs_rewards):
     fig, axes = plt.subplots()
@@ -28,31 +24,13 @@ def get_stats_figure(runs_rewards):
     plt.show()
     return fig, axes
 
+
 def plot_rewards_per_run(axes, runs_rewards):
-    rewards_graph=pd.DataFrame(runs_rewards)
-    ax=rewards_graph.plot(ax=axes, title="steps per run");
+    rewards_graph = pd.DataFrame(runs_rewards)
+    ax = rewards_graph.plot(ax=axes, title="steps per run");
     ax.set_xlabel("runs")
     ax.set_ylabel("steps")
     ax.legend().set_visible(False)
-
-def load_model(params, qlearn, file_name):
-
-    qlearn_file = open("./logs/qlearn_models/" + file_name)
-    model = pickle.load(qlearn_file)
-
-    qlearn.q = model
-    qlearn.alpha = params.algorithm["params"]["alpha"]
-    qlearn.gamma = params.algorithm["params"]["epsilon"]
-    qlearn.epsilon = params.algorithm["params"]["gamma"]
-
-    # highest_reward = settings.algorithm_params["highest_reward"]
-
-    print(f"\n\nMODEL LOADED. Number of (action, state): {len(model)}")
-    print(f"    - Loading:    {file_name}")
-    print(f"    - Model size: {len(qlearn.q)}")
-    print(f"    - Action set: {settings.actions_set}")
-    print(f"    - Epsilon:    {qlearn.epsilon}")
-    print(f"    - Start:      {datetime.datetime.now()}")
 
 
 def save_model(qlearn, current_time, states, states_counter, states_rewards):
@@ -60,10 +38,10 @@ def save_model(qlearn, current_time, states, states_counter, states_rewards):
     # (S x A), where s are all states, a are all the possible actions. After the environment is solved, just save this
     # matrix as a csv file. I have a quick implementation of this on my GitHub under Reinforcement Learning.
 
-    #TODO The paths are not relative to the agents folder
+    # TODO The paths are not relative to the agents folder
     # Q TABLE
-    base_file_name = "_act_set_{}_epsilon_{}".format(
-        settings.qlearn.actions_set, round(qlearn.epsilon, 2)
+    base_file_name = "_epsilon_{}".format(
+        round(qlearn.epsilon, 3)
     )
     file_dump = open(
         "./logs/qlearn_models/1_" + current_time + base_file_name + "_QTABLE.pkl", "wb"
@@ -87,18 +65,12 @@ def save_model(qlearn, current_time, states, states_counter, states_rewards):
     pickle.dump(states, file_dump)
 
 
-def save_times(checkpoints):
-    file_name = "actions_"
-    file_dump = open(
-        "./logs/" + file_name + settings.qlearn.actions_set + "_checkpoints.pkl", "wb"
-    )
-    pickle.dump(checkpoints, file_dump)
-
 def save_actions(actions, start_time):
     file_dump = open(
         "./logs/qlearn_models/actions_set_" + start_time, "wb"
     )
     pickle.dump(actions, file_dump)
+
 
 def render(env, episode):
     render_skip = 0
@@ -108,9 +80,9 @@ def render(env, episode):
     if (episode % render_interval == 0) and (episode != 0) and (episode > render_skip):
         env.render()
     elif (
-        ((episode - render_episodes) % render_interval == 0)
-        and (episode != 0)
-        and (episode > render_skip)
-        and (render_episodes < episode)
+            ((episode - render_episodes) % render_interval == 0)
+            and (episode != 0)
+            and (episode > render_skip)
+            and (render_episodes < episode)
     ):
         env.render(close=True)
