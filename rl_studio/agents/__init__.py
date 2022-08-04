@@ -1,4 +1,5 @@
 from rl_studio.agents.agents_type import AgentsType
+from rl_studio.algorithms.algorithms_type import AlgorithmsType
 from rl_studio.agents.exceptions import NoValidTrainingType
 
 
@@ -8,10 +9,19 @@ class TrainerFactory:
         agent = config.agent["name"]
         algorithm = config.algorithm["name"]
 
+        # F1
         if agent == AgentsType.F1.value:
-            from rl_studio.agents.f1.train_qlearn import F1Trainer
+            # Q-learn
+            if algorithm == AlgorithmsType.QLEARN.value:
+                from rl_studio.agents.f1.train_qlearn import F1Trainer
 
-            return F1Trainer(config)
+                return F1Trainer(config)
+
+            # DDPG
+            elif algorithm == AlgorithmsType.DDPG.value:
+                from rl_studio.agents.f1.train_ddpg import F1TrainerDDPG
+
+                return F1TrainerDDPG(config)
 
         elif agent == AgentsType.TURTLEBOT.value:
             from rl_studio.agents.turtlebot.turtlebot_trainer import TurtlebotTrainer
@@ -50,7 +60,6 @@ class InferenceExecutorFactory:
 
         agent = config.agent["name"]
 
-
         if agent == AgentsType.ROBOT_MESH.value:
             from rl_studio.agents.robot_mesh.inference_qlearn import RobotMeshInferencer
 
@@ -74,7 +83,9 @@ class InferenceExecutorFactory:
             return CartpoleInferencer(config)
 
         elif agent == AgentsType.MOUNTAIN_CAR.value:
-            from rl_studio.agents.mountain_car.inference_qlearn import MountainCarInferencer
+            from rl_studio.agents.mountain_car.inference_qlearn import (
+                MountainCarInferencer,
+            )
 
             return MountainCarInferencer(config)
 
