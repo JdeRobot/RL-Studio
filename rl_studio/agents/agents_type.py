@@ -8,4 +8,3 @@ class AgentsType(Enum):
     MOUNTAIN_CAR = "mountain_car"
     MANUAL_ROBOT = "manual_robot"
     CARTPOLE = "cartpole"
-

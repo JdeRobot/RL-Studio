@@ -1,6 +1,5 @@
 import argparse
 import json
-
 import yaml
 
 from rl_studio.agents import TrainerFactory, InferenceExecutorFactory
@@ -18,7 +17,11 @@ def get_environment(config_file: dict, input_env: str) -> dict:
     return {
         "name": input_env,
         "params": config_file["environments"][input_env],
-        "actions": config_file["actions"]["available_actions"][input_env],
+        "actions": config_file["actions"]["available_actions"][
+            config_file["actions"]["actions_set"]
+        ],
+        "actions_set": config_file["actions"]["actions_set"],
+        "actions_number": config_file["actions"]["actions_number"],
     }
 
 
@@ -27,6 +30,7 @@ def get_agent(config_file: dict, input_agent: str) -> dict:
         "name": input_agent,
         "params": config_file["agent"][input_agent],
     }
+
 
 def get_inference(config_file: dict, input_inference: str) -> dict:
     return {
@@ -56,7 +60,7 @@ def main():
 
     if args.mode == "inference":
 
-        config_file = yaml.load(args.file)
+        config_file = yaml.load(args.file, Loader=yaml.FullLoader)
         # print(f"INPUT CONFIGURATION FILE:\n{yaml.dump(config_file, indent=4)}")
 
         inference_params = {
@@ -78,10 +82,9 @@ def main():
         inferenceExecutor = InferenceExecutorFactory(params)
         inferenceExecutor.main()
 
-
     else:
 
-        config_file = yaml.load(args.file)
+        config_file = yaml.load(args.file, Loader=yaml.FullLoader)
         # print(f"INPUT CONFIGURATION FILE:\n{yaml.dump(config_file, indent=4)}")
 
         trainer_params = {

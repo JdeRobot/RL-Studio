@@ -6,7 +6,13 @@
 
 ## Usage
 
-To run RL-Studio just typing:
+To run RL-Studio, first go to dir
+
+```bash
+cd ~/PATH/TO/RL-Studio/rl-studio
+```
+
+and then just typing:
 
 ```bash
 python main_rlstudio.py -n [algorithm] -a [agent] -e [environment] -f config/config.yaml

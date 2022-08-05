@@ -6,3 +6,4 @@ class EnvironmentType(Enum):
     qlearn_env_laser = "qlearn_laser"
     dqn_env = "dqn"
     manual_env = "manual"
+    ddpg_env = "ddpg"

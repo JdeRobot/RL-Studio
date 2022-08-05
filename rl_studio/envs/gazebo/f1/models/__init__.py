@@ -22,12 +22,16 @@ class F1Env:
             return F1CameraEnv(**config)
 
         elif training_type == EnvironmentType.qlearn_env_laser.value:
-            from rl_studio.envs.gazebo.f1.models.f1_env_qlearn_laser import F1QlearnLaserEnv
+            from rl_studio.envs.gazebo.f1.models.f1_env_qlearn_laser import (
+                F1QlearnLaserEnv,
+            )
 
             return F1QlearnLaserEnv(**config)
 
         elif training_type == EnvironmentType.dqn_env.value:
-            from rl_studio.envs.gazebo.f1.models.f1_env_dqn_camera import GazeboF1CameraEnvDQN
+            from rl_studio.envs.gazebo.f1.models.f1_env_dqn_camera import (
+                GazeboF1CameraEnvDQN,
+            )
 
             return GazeboF1CameraEnvDQN(**config)
 
@@ -37,6 +41,12 @@ class F1Env:
             )
 
             return GazeboF1ManualCameraEnv(**config)
+
+        # F1 DDPG
+        elif training_type == EnvironmentType.ddpg_env.value:
+            from rl_studio.envs.gazebo.f1.models.f1_env_ddpg import F1DDPGCameraEnv
+
+            return F1DDPGCameraEnv(**config)
 
         else:
             raise NoValidEnvironmentType(training_type)
