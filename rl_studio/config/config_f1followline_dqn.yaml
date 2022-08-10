@@ -55,7 +55,7 @@ agent:
       height: 480
       center_image: 320
       raw_image: False
-      image_resizing: 100
+      image_resizing: 100 # let fix it in 100
       new_image_size: 32
       num_regions: 16
     states:
@@ -99,7 +99,7 @@ agent:
 #####################################################################################
 
 actions:
-    actions_number: 2
+    actions_number: 3
     actions_set: simple #simple
     available_actions:
       simple:

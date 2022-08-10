@@ -100,7 +100,7 @@ agent:
 
 actions:
     actions_number: 2
-    actions_set: simple #simple
+    actions_set: continuous #simple
     available_actions:
       simple:
         0: [ 3, 0 ]
@@ -145,7 +145,7 @@ environments:
   simple:
     env_name: F1Env-v0
     circuit_name: simple
-    training_type: dqn #qlearn_camera, ddpg, dqn
+    training_type: ddpg #qlearn_camera
     launchfile: simple_circuit.launch
     environment_folder: f1
     robot_name: f1_renault

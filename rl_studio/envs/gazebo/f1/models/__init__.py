@@ -28,12 +28,13 @@ class F1Env:
 
             return F1QlearnLaserEnv(**config)
 
+        # F1 DQN
         elif training_type == EnvironmentType.dqn_env.value:
             from rl_studio.envs.gazebo.f1.models.f1_env_dqn_camera import (
-                GazeboF1CameraEnvDQN,
+                DQNF1FollowLineEnvGazebo,
             )
 
-            return GazeboF1CameraEnvDQN(**config)
+            return DQNF1FollowLineEnvGazebo(**config)
 
         elif training_type == EnvironmentType.manual_env.value:
             from rl_studio.envs.gazebo.f1.models.f1_env_manual_pilot import (
