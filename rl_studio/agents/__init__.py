@@ -23,6 +23,12 @@ class TrainerFactory:
 
                 return F1TrainerDDPG(config)
 
+            # DQN
+            elif algorithm == AlgorithmsType.DQN.value:
+                from rl_studio.agents.f1.train_dqn import DQNF1FollowLineTrainer
+
+                return DQNF1FollowLineTrainer(config)
+
         elif agent == AgentsType.TURTLEBOT.value:
             from rl_studio.agents.turtlebot.turtlebot_trainer import TurtlebotTrainer
 
