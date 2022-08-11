@@ -21,9 +21,8 @@ environments:
   simple:
     env_name: myCartpole-v0
     environment_folder: cartpole
-    runs: 2000000
-    update_every: 200000
-    show_every: 50000
+    runs: 10000
+    update_every: 1000
 
 inference:
   qlearn:
@@ -38,5 +37,7 @@ algorithm:
       epsilon_discount: 0.99999998
 
     dqn:
+      gamma: 0.95
+      epsilon_discount: 0.99998
 
     sarsa:

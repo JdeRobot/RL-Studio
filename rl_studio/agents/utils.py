@@ -15,8 +15,8 @@ def load_model(qlearn, file_name):
     model = pickle.load(qlearn_file)
 
     qlearn.q = model
-    qlearn.alpha = settings.algorithm_params["alpha"]
-    qlearn.gamma = settings.algorithm_params["gamma"]
+    qlearn.ALPHA = settings.algorithm_params["alpha"]
+    qlearn.GAMMA = settings.algorithm_params["gamma"]
     qlearn.epsilon = settings.algorithm_params["epsilon"]
 
     print(f"\n\nMODEL LOADED. Number of (action, state): {len(model)}")

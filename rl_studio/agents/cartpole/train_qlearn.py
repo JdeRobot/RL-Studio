@@ -18,9 +18,9 @@ class CartpoleTrainer:
         self.env_name = params.environment["params"]["env_name"]
         env_params = params.environment["params"]
         self.env = gym.make(self.env_name)
-        self.RUNS = self.environment_params["runs"]  # Number of iterations run TODO set this from config.yml
-        self.SHOW_EVERY = self.environment_params["show_every"]  # How oftern the current solution is rendered TODO set this from config.yml
-        self.UPDATE_EVERY = self.environment_params["update_every"]  # How oftern the current progress is recorded TODO set this from config.yml
+        self.RUNS = self.environment_params["runs"]  # Number of iterations run
+        self.SHOW_EVERY = self.environment_params["show_every"]  # How oftern the current solution is rendered
+        self.UPDATE_EVERY = self.environment_params["update_every"]  # How oftern the current progress is recorded
 
         self.bins, self.obsSpaceSize, self.qTable = utils.create_bins_and_q_table(self.env)
 
@@ -35,7 +35,6 @@ class CartpoleTrainer:
         self.last_time_steps = np.ndarray(0)
 
         self.outdir = "./logs/robot_mesh_experiments/"
-        # self.env = gym.wrappers.Monitor(self.env, self.outdir, force=True)
         self.actions = range(self.env.action_space.n)
         self.env.done = True
 
