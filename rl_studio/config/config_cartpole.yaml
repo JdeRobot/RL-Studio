@@ -19,9 +19,9 @@ agent:
 
 environments:
   simple:
-    env_name: myCartpole-v0
+    env_name: CartPole-v0
     environment_folder: cartpole
-    runs: 10000
+    runs: 20000
     update_every: 1000
 
 inference:
@@ -38,6 +38,6 @@ algorithm:
 
     dqn:
       gamma: 0.95
-      epsilon_discount: 0.99998
+      epsilon_discount: 0.9998
 
     sarsa:

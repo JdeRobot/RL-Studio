@@ -22,14 +22,12 @@ class CartpoleTrainer:
         self.env_name = params.environment["params"]["env_name"]
         self.config = params.settings["params"]
 
-        self.env = gym.make(self.env_name)
+        self.env = gym.make(self.env_name, max_episode_steps=1000)
         self.RUNS = self.environment_params["runs"]
         self.UPDATE_EVERY = self.environment_params["update_every"]  # How oftern the current progress is recorded
 
-        self.bins, self.obsSpaceSize, self.qTable = utils.create_bins_and_q_table(self.env)
         self.actions = self.env.action_space.n
 
-        self.metrics = {'ep': [], 'avg': [], 'min': [], 'max': []}  # metrics recorded for graph
         self.losses_list, self.reward_list, self.episode_len_list, self.epsilon_list = [], [], [], []  # metrics recorded for graph
         self.epsilon = 1
         self.EPSILON_DISCOUNT = params.algorithm["params"]["epsilon_discount"]
@@ -54,7 +52,7 @@ class CartpoleTrainer:
                 self.deepq.collect_experience([state, A.item(), reward, next_state])
                 state = next_state
                 index += 1
-                if index > (self.exp_replay_size - self.NUMBER_OF_EXPLORATION_STEPS):
+                if index > self.exp_replay_size:
                     break
 
     def print_init_info(self):
@@ -64,18 +62,18 @@ class CartpoleTrainer:
         print(f"\t- self.environment params:\n{self.environment_params}")
 
     def evaluate_and_collect(self, state):
-
-        A = self.deepq.get_action(state, self.env.action_space.n,  self.epsilon)
+        A = self.deepq.get_action(state, self.env.action_space.n, self.epsilon)
         next_state, reward, done, _ = self.env.step(A.item())
         self.deepq.collect_experience([state, A.item(), reward, next_state])
 
         return next_state, reward, done
 
-    def train_in_batches(self, trainings, batch_size, losses):
+    def train_in_batches(self, trainings, batch_size):
+        losses = 0
         for j in range(trainings):
             loss = self.deepq.train(batch_size=batch_size)
             losses += loss
-            return losses
+        return losses
 
     def gather_statistics(self, losses, ep_len, episode_rew):
         self.losses_list.append(losses / ep_len)
@@ -92,7 +90,7 @@ class CartpoleTrainer:
                 rew += reward
                 time.sleep(0.01)
                 self.env.render()
-            print("episode : {}, reward : {}".format(i, rew))
+            print("demonstration episode : {}, reward : {}".format(i, rew))
 
     def main(self):
 
@@ -107,22 +105,23 @@ class CartpoleTrainer:
 
         print(LETS_GO)
 
-        epoch_start_time = datetime.datetime.now()
+        number_of_steps = 128
         total_reward_in_epoch = 0
         for run in tqdm(range(self.RUNS)):
-            state, done, losses, ep_len, episode_rew, index = self.env.reset(), False, 0, 0, 0, 0
+            state, done, losses, ep_len, episode_rew = self.env.reset(), False, 0, 0, 0
             while not done:
                 ep_len += 1
-                index += 1
+                number_of_steps += 1
 
-                next_state, reward, done = self.evaluate_and_collect(state);
+                next_state, reward, done = self.evaluate_and_collect(state)
                 state = next_state
                 episode_rew += reward
                 total_reward_in_epoch += reward
 
-                if index > self.NUMBER_OF_EXPLORATION_STEPS:
-                    index = 0
-                    losses = self.train_in_batches(4, 16, losses);
+                if number_of_steps > self.NUMBER_OF_EXPLORATION_STEPS:
+                    number_of_steps = 0
+                    losses += self.train_in_batches(4, 16)
+
             if self.epsilon > 0.05:
                 self.epsilon *= self.EPSILON_DISCOUNT
 
