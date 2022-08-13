@@ -118,7 +118,7 @@ class RobotMeshTrainer:
                     queue.put(step)
                     break
 
-            if episode % 250 == 0 and self.config.save_model and episode > 1:
+            if episode % 250 == 0 and self.config["save_model"] and episode > 1:
                 print(f"\nSaving model . . .\n")
                 utils.save_model(self.qlearn, start_time_format, self.stats, self.states_counter, self.states_reward)
 

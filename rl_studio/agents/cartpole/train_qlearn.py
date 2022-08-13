@@ -34,6 +34,7 @@ class CartpoleTrainer:
         self.states_reward = {}
         self.last_time_steps = np.ndarray(0)
 
+        self.config = params.settings["params"]
         self.outdir = "./logs/robot_mesh_experiments/"
         self.actions = range(self.env.action_space.n)
         self.env.done = True
@@ -115,8 +116,7 @@ class CartpoleTrainer:
                 print("Run:", run, "Average:", averageCnt, "Min:", min(latestRuns), "Max:", max(latestRuns), "epsilon",
                       self.qlearn.epsilon, "time spent", time_spent)
 
-
-        if  self.config.save_model:
+        if  self.config.["save_model"]:
             print(f"\nSaving model . . .\n")
             utils.save_model(self.qlearn, start_time_format, self.metrics, self.states_counter,
                              self.states_reward)

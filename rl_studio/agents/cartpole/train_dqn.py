@@ -22,7 +22,7 @@ class CartpoleTrainer:
         self.env_name = params.environment["params"]["env_name"]
         self.config = params.settings["params"]
 
-        self.env = gym.make(self.env_name, max_episode_steps=1000)
+        self.env = gym.make(self.env_name)
         self.RUNS = self.environment_params["runs"]
         self.UPDATE_EVERY = self.environment_params["update_every"]  # How oftern the current progress is recorded
 
@@ -37,8 +37,8 @@ class CartpoleTrainer:
         input_dim = self.env.observation_space.shape[0]
         output_dim = self.env.action_space.n
         self.exp_replay_size = 256
-        self.deepq = DQN_Agent(seed=1423, layer_sizes=[input_dim, 64, output_dim], lr=1e-3, sync_freq=5,
-                               exp_replay_size=self.exp_replay_size, gamma=self.GAMMA)
+        self.deepq = DQN_Agent(layer_sizes=[input_dim, 64, output_dim], lr=1e-3, sync_freq=5,
+                               exp_replay_size=self.exp_replay_size, seed=1423, gamma=self.GAMMA)
         self.initialize_experience_replay();
 
     def initialize_experience_replay(self):
@@ -90,7 +90,7 @@ class CartpoleTrainer:
                 rew += reward
                 time.sleep(0.01)
                 self.env.render()
-            print("demonstration episode : {}, reward : {}".format(i, rew))
+            print("\ndemonstration episode : {}, reward : {}".format(i, rew))
 
     def main(self):
 
@@ -98,11 +98,6 @@ class CartpoleTrainer:
 
         epoch_start_time = datetime.datetime.now()
         start_time_format = epoch_start_time.strftime("%Y%m%d_%H%M")
-
-        if self.config["save_model"]:
-            print(f"\nSaving actions . . .\n")
-            utils.save_actions(self.actions, start_time_format)
-
         print(LETS_GO)
 
         number_of_steps = 128
@@ -134,6 +129,10 @@ class CartpoleTrainer:
                 print("\nRun:", run, "Average:", total_reward_in_epoch / self.UPDATE_EVERY, "epsilon", self.epsilon,
                       "time spent", time_spent)
                 total_reward_in_epoch = 0
+
+        if self.config["save_model"]:
+            print(f"\nSaving model . . .\n")
+            utils.save_dqn_model(self.deepq, start_time_format)
 
         self.final_demonstration()
 

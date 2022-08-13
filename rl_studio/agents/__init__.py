@@ -50,7 +50,7 @@ class TrainerFactory:
             return MountainCarTrainer(config)
 
         elif agent == AgentsType.CARTPOLE.value:
-            if algorithm == "dqn":
+            if algorithm == AlgorithmsType.DQN.value:
                 from rl_studio.agents.cartpole.train_dqn import CartpoleTrainer
             else:
                 from rl_studio.agents.cartpole.train_qlearn import CartpoleTrainer
@@ -65,6 +65,7 @@ class InferenceExecutorFactory:
     def __new__(cls, config):
 
         agent = config.agent["name"]
+        algorithm = config.algorithm["name"]
 
         if agent == AgentsType.ROBOT_MESH.value:
             from rl_studio.agents.robot_mesh.inference_qlearn import RobotMeshInferencer
@@ -84,14 +85,15 @@ class InferenceExecutorFactory:
         #
         #
         elif agent == AgentsType.CARTPOLE.value:
-            from rl_studio.agents.cartpole.inference_qlearn import CartpoleInferencer
+            if algorithm == AlgorithmsType.DQN.value:
+                from rl_studio.agents.cartpole.inference_dqn import CartpoleInferencer
+            else:
+                from rl_studio.agents.cartpole.inference_qlearn import CartpoleInferencer
 
             return CartpoleInferencer(config)
 
         elif agent == AgentsType.MOUNTAIN_CAR.value:
-            from rl_studio.agents.mountain_car.inference_qlearn import (
-                MountainCarInferencer,
-            )
+            from rl_studio.agents.mountain_car.inference_qlearn import MountainCarInferencer
 
             return MountainCarInferencer(config)
 

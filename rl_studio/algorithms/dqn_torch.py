@@ -3,11 +3,13 @@ from collections import deque
 import torch
 from torch import nn
 import random
+import pickle
 
 
 class DQN_Agent:
 
-    def __init__(self, seed, layer_sizes, lr, sync_freq, exp_replay_size, gamma):
+    def __init__(self,  layer_sizes,  lr=1e-3, sync_freq=5, exp_replay_size=256, seed=1423, gamma=0):
+
         torch.manual_seed(seed)
         self.q_net = self.build_nn(layer_sizes)
         self.target_net = copy.deepcopy(self.q_net)
@@ -51,7 +53,7 @@ class DQN_Agent:
         return
 
     def sample_from_experience(self, sample_size):
-        if (len(self.experience_replay) < sample_size):
+        if len(self.experience_replay) < sample_size:
             sample_size = len(self.experience_replay)
         sample = random.sample(self.experience_replay, sample_size)
         s = torch.tensor([exp[0] for exp in sample]).float()
@@ -62,7 +64,7 @@ class DQN_Agent:
 
     def train(self, batch_size):
         s, a, rn, sn = self.sample_from_experience(sample_size=batch_size)
-        if (self.network_sync_counter == self.network_sync_freq):
+        if self.network_sync_counter == self.network_sync_freq:
             self.target_net.load_state_dict(self.q_net.state_dict())
             self.network_sync_counter = 0
 
@@ -81,3 +83,17 @@ class DQN_Agent:
 
         self.network_sync_counter += 1
         return loss.item()
+
+    def inference(self, state):
+        return self.get_action(state, None, epsilon=0)
+
+    def load_model(self, weights_file_path):
+
+        qnet_weights = open(weights_file_path, "rb")
+
+        self.q_net = pickle.load(qnet_weights)
+        self.target_net.load_state_dict(self.q_net.state_dict())
+
+        print(f"\n\nMODEL LOADED.")
+        print(f"    - Loading:    {weights_file_path}")
+        print(f"    - Model size: {len(self.q_net)}")
