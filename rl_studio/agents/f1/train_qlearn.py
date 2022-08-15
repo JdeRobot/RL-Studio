@@ -8,18 +8,17 @@ import numpy as np
 
 from rl_studio.agents import liveplot
 from rl_studio.agents.f1 import utils
+from rl_studio.agents.f1.settings import QLearnConfig
 from rl_studio.algorithms.qlearn import QLearn
 from rl_studio.visual.ascii.images import JDEROBOT_LOGO
 from rl_studio.visual.ascii.text import JDEROBOT, QLEARN_CAMERA, LETS_GO
-from rl_studio.agents.f1.settings import QLearnConfig
 
 
 class F1Trainer:
-
     def __init__(self, params):
         # TODO: Create a pydantic metaclass to simplify the way we extract the params
         # environment params
-        self.params=params
+        self.params = params
         self.environment_params = params.environment["params"]
         self.env_name = params.environment["params"]["env_name"]
         env_params = params.environment["params"]
@@ -71,7 +70,6 @@ class F1Trainer:
         telemetry_start_time = time.time()
         start_time = datetime.datetime.now()
         start_time_format = start_time.strftime("%Y%m%d_%H%M")
-
 
         if config.save_model:
             print(f"\nSaving actions . . .\n")

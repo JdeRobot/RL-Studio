@@ -2,18 +2,15 @@ import datetime
 import time
 
 import gym
-
 import numpy as np
 
+import rl_studio.agents.robot_mesh.utils as utils
+from rl_studio.algorithms.qlearn import QLearn
 from rl_studio.visual.ascii.images import JDEROBOT_LOGO
 from rl_studio.visual.ascii.text import JDEROBOT, QLEARN_CAMERA, LETS_GO
 
-from rl_studio.algorithms.qlearn import QLearn
-import rl_studio.agents.robot_mesh.utils as utils
 
-
-
-class RobotMeshTrainer:
+class QLearnRobotMeshTrainer:
     def __init__(self, params):
         # TODO: Create a pydantic metaclass to simplify the way we extract the params
         # environment params
@@ -53,7 +50,10 @@ class RobotMeshTrainer:
         self.epsilon_discount = 0.999  # Default 0.9986
 
         self.qlearn = QLearn(
-            actions=self.actions, alpha=self.alpha, gamma=self.gamma, epsilon=self.epsilon
+            actions=self.actions,
+            alpha=self.alpha,
+            gamma=self.gamma,
+            epsilon=self.epsilon,
         )
 
     def evaluate_and_learn_from_step(self, state):
@@ -70,7 +70,6 @@ class RobotMeshTrainer:
 
         if self.highest_reward < self.cumulated_reward:
             self.highest_reward = self.cumulated_reward
-
 
         try:
             self.states_counter[nextState] += 1
@@ -103,12 +102,14 @@ class RobotMeshTrainer:
 
             for step in range(50000):
 
-                next_state, done = self.evaluate_and_learn_from_step(state);
+                next_state, done = self.evaluate_and_learn_from_step(state)
 
                 if not done:
                     state = next_state
                 else:
-                    self.last_time_steps = np.append(self.last_time_steps, [int(step + 1)])
+                    self.last_time_steps = np.append(
+                        self.last_time_steps, [int(step + 1)]
+                    )
                     self.stats[int(episode)] = step
                     self.states_reward[int(episode)] = self.cumulated_reward
                     print(
@@ -120,11 +121,20 @@ class RobotMeshTrainer:
 
             if episode % 250 == 0 and self.config["save_model"] and episode > 1:
                 print(f"\nSaving model . . .\n")
-                utils.save_model(self.qlearn, start_time_format, self.stats, self.states_counter, self.states_reward)
+                utils.save_model(
+                    self.qlearn,
+                    start_time_format,
+                    self.stats,
+                    self.states_counter,
+                    self.states_reward,
+                )
 
         print(
             "Total EP: {} - epsilon: {} - ep. discount: {} - Highest Reward: {}".format(
-                self.total_episodes, initial_epsilon, self.epsilon_discount, self.highest_reward
+                self.total_episodes,
+                initial_epsilon,
+                self.epsilon_discount,
+                self.highest_reward,
             )
         )
 

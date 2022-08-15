@@ -6,13 +6,13 @@ from functools import reduce
 import gym
 import numpy as np
 
-from rl_studio.wrappers.inference_rlstudio import InferencerWrapper
 from rl_studio.visual.ascii.images import JDEROBOT_LOGO
 from rl_studio.visual.ascii.text import JDEROBOT, QLEARN_CAMERA, LETS_GO
+from rl_studio.wrappers.inference_rlstudio import InferencerWrapper
 from . import utils as specific_utils
 
 
-class MountainCarTrainer:
+class QLearnMountainCarTrainer:
     def __init__(self, params):
         # TODO: Create a pydantic metaclass to simplify the way we extract the params
         # environment params
@@ -38,7 +38,6 @@ class MountainCarTrainer:
 
         self.inferencer = InferencerWrapper("qlearn", inference_file, actions_file)
 
-
     def print_init_info(self):
         print(JDEROBOT)
         print(JDEROBOT_LOGO)
@@ -48,7 +47,6 @@ class MountainCarTrainer:
 
     def evaluate(self, state):
         action = self.inferencer.inference(state)
-
 
         print("Selected Action!! " + str(action))
         # Execute the action and get feedback
@@ -87,8 +85,7 @@ class MountainCarTrainer:
 
             for step in range(50000):
 
-
-                next_state, done = self.evaluate(state);
+                next_state, done = self.evaluate(state)
 
                 if not done:
                     state = next_state
@@ -108,7 +105,6 @@ class MountainCarTrainer:
                     queue.put(self.n_steps)
 
                     break
-
 
         print(
             "Total EP: {} - Highest Reward: {}".format(

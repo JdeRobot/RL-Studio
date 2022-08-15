@@ -42,14 +42,10 @@ class QLearn:
 
         if done == True:
             self.q[(tuple(state1) + (action1,))] = reward
-            q_update = self.alpha * (
-                reward - self.getQValues(state1, action1)
-            )
+            q_update = self.alpha * (reward - self.getQValues(state1, action1))
         else:
             q_update = self.alpha * (
-                reward
-                + self.gamma * maxqnew
-                - self.getQValues(state1, action1)
+                reward + self.gamma * maxqnew - self.getQValues(state1, action1)
             )
         self.q[(tuple(state1) + (action1,))] = (
             self.getQValues(state1, action1) + q_update
@@ -77,7 +73,6 @@ class QLearn:
             return action, q
         return action
 
-
     def load_model(self, file_path, actions_path):
 
         qlearn_file = open(file_path, "rb")
@@ -90,4 +85,3 @@ class QLearn:
         print(f"\n\nMODEL LOADED.")
         print(f"    - Loading:    {file_path}")
         print(f"    - Model size: {len(self.q)}")
-

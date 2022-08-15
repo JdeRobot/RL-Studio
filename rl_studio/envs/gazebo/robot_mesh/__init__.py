@@ -16,7 +16,10 @@ class RobotMeshEnv:
 
         training_type = config.get("training_type")
         print(config.get("launchfile"))
-        if training_type == TrainingType.qlearn_env_camera.value or training_type == TrainingType.manual_env.value:
+        if (
+            training_type == TrainingType.qlearn_env_camera.value
+            or training_type == TrainingType.manual_env.value
+        ):
             from .robot_mesh_position_env import RobotMeshEnv
 
             return RobotMeshEnv(**config)

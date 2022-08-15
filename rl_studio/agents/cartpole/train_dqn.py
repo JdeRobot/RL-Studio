@@ -2,17 +2,16 @@ import datetime
 import time
 
 import gym
+import matplotlib.pyplot as plt
+from tqdm import tqdm
 
 from rl_studio.agents.cartpole import utils
 from rl_studio.algorithms.dqn_torch import DQN_Agent
 from rl_studio.visual.ascii.images import JDEROBOT_LOGO
 from rl_studio.visual.ascii.text import JDEROBOT, LETS_GO
-from tqdm import tqdm
-import matplotlib.pyplot as plt
 
 
-class CartpoleTrainer:
-
+class DQNCartpoleTrainer:
     def __init__(self, params):
 
         self.now = datetime.datetime.now()
@@ -24,11 +23,19 @@ class CartpoleTrainer:
 
         self.env = gym.make(self.env_name)
         self.RUNS = self.environment_params["runs"]
-        self.UPDATE_EVERY = self.environment_params["update_every"]  # How oftern the current progress is recorded
+        self.UPDATE_EVERY = self.environment_params[
+            "update_every"
+        ]  # How often the current progress is recorded
 
         self.actions = self.env.action_space.n
 
-        self.losses_list, self.reward_list, self.episode_len_list, self.epsilon_list = [], [], [], []  # metrics recorded for graph
+        self.losses_list, self.reward_list, self.episode_len_list, self.epsilon_list = (
+            [],
+            [],
+            [],
+            [],
+        )  # metrics
+        # recorded for graph
         self.epsilon = 1
         self.EPSILON_DISCOUNT = params.algorithm["params"]["epsilon_discount"]
         self.GAMMA = params.algorithm["params"]["gamma"]
@@ -37,9 +44,15 @@ class CartpoleTrainer:
         input_dim = self.env.observation_space.shape[0]
         output_dim = self.env.action_space.n
         self.exp_replay_size = 256
-        self.deepq = DQN_Agent(layer_sizes=[input_dim, 64, output_dim], lr=1e-3, sync_freq=5,
-                               exp_replay_size=self.exp_replay_size, seed=1423, gamma=self.GAMMA)
-        self.initialize_experience_replay();
+        self.deepq = DQN_Agent(
+            layer_sizes=[input_dim, 64, output_dim],
+            lr=1e-3,
+            sync_freq=5,
+            exp_replay_size=self.exp_replay_size,
+            seed=1423,
+            gamma=self.GAMMA,
+        )
+        self.initialize_experience_replay()
 
     def initialize_experience_replay(self):
         index = 0
@@ -126,8 +139,16 @@ class CartpoleTrainer:
             if run % self.UPDATE_EVERY == 0:
                 time_spent = datetime.datetime.now() - epoch_start_time
                 epoch_start_time = datetime.datetime.now()
-                print("\nRun:", run, "Average:", total_reward_in_epoch / self.UPDATE_EVERY, "epsilon", self.epsilon,
-                      "time spent", time_spent)
+                print(
+                    "\nRun:",
+                    run,
+                    "Average:",
+                    total_reward_in_epoch / self.UPDATE_EVERY,
+                    "epsilon",
+                    self.epsilon,
+                    "time spent",
+                    time_spent,
+                )
                 total_reward_in_epoch = 0
 
         if self.config["save_model"]:
@@ -137,5 +158,5 @@ class CartpoleTrainer:
         self.final_demonstration()
 
         plt.plot(self.reward_list)
-        plt.legend('reward per episode')
+        plt.legend("reward per episode")
         plt.show()

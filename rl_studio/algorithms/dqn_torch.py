@@ -1,14 +1,16 @@
 import copy
+import pickle
+import random
 from collections import deque
+
 import torch
 from torch import nn
-import random
-import pickle
 
 
 class DQN_Agent:
-
-    def __init__(self,  layer_sizes,  lr=1e-3, sync_freq=5, exp_replay_size=256, seed=1423, gamma=0):
+    def __init__(
+        self, layer_sizes, lr=1e-3, sync_freq=5, exp_replay_size=256, seed=1423, gamma=0
+    ):
 
         torch.manual_seed(seed)
         self.q_net = self.build_nn(layer_sizes)
@@ -39,7 +41,14 @@ class DQN_Agent:
         with torch.no_grad():
             Qp = self.q_net(torch.from_numpy(state).float().cuda())
         Q, A = torch.max(Qp, axis=0)
-        A = A if torch.rand(1, ).item() > epsilon else torch.randint(0, action_space_len, (1,))
+        A = (
+            A
+            if torch.rand(
+                1,
+            ).item()
+            > epsilon
+            else torch.randint(0, action_space_len, (1,))
+        )
         return A
 
     def get_q_next(self, state):

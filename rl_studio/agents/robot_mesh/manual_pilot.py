@@ -2,8 +2,10 @@ import datetime
 import sys as system
 import time
 
+import gym
 
-class RobotMeshTrainer:
+
+class ManualRobotMeshTrainer:
     def __init__(self, params):
         # TODO: Create a pydantic metaclass to simplify the way we extract the params
         # environment params
@@ -18,12 +20,16 @@ class RobotMeshTrainer:
         self.epsilon = params.algorithm["params"]["epsilon"]
         self.gamma = params.algorithm["params"]["gamma"]
 
-
     def execute_action(self, env):
         for step in range(50000):
 
             input_order = input("provide action (0-up, 1-right, 2-down, 3-left): ")
-            if input_order == "0" or input_order == "1" or input_order == "2" or input_order == "3":
+            if (
+                input_order == "0"
+                or input_order == "1"
+                or input_order == "2"
+                or input_order == "3"
+            ):
                 action = int(input_order)
                 print("Selected Action!! " + str(action))
                 # Execute the action and get feedback

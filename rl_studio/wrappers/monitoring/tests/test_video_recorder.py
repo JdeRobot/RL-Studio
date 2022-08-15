@@ -1,8 +1,4 @@
-import json
 import os
-import shutil
-import tempfile
-import numpy as np
 
 import gym
 from gym.wrappers.monitoring.video_recorder import VideoRecorder

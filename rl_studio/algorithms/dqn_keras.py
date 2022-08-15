@@ -1,13 +1,12 @@
-import random
-import memory
-import time
 import os
+import random
+import time
+from collections import deque
 
 import numpy as np
-from collections import deque
 import tensorflow as tf
 from tensorflow.keras import Input, Model, layers
-from tensorflow.keras.models import Sequential, load_model
+from tensorflow.keras.callbacks import TensorBoard
 from tensorflow.keras.layers import (
     Dense,
     Dropout,
@@ -19,8 +18,10 @@ from tensorflow.keras.layers import (
     ZeroPadding2D,
     Rescaling,
 )
+from tensorflow.keras.models import Sequential, load_model
 from tensorflow.keras.optimizers import Adam, RMSprop
-from tensorflow.keras.callbacks import TensorBoard
+
+import memory
 
 
 class DeepQ:

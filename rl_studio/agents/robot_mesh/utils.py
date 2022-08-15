@@ -1,10 +1,10 @@
-import datetime
 import pickle
-
-# TODO Since these utils are algorithm specific, those should stay in the algorithm folder somehow tied to its algorithm class
 
 import matplotlib.pyplot as plt
 import pandas as pd
+
+
+# TODO Since these utils are algorithm specific, those should stay in the algorithm folder somehow tied to its algorithm class
 
 
 # TODO Since these utils are algorithm specific, those should stay in the algorithm folder somehow tied to its algorithm class
@@ -27,7 +27,7 @@ def get_stats_figure(runs_rewards):
 
 def plot_rewards_per_run(axes, runs_rewards):
     rewards_graph = pd.DataFrame(runs_rewards)
-    ax = rewards_graph.plot(ax=axes, title="steps per run");
+    ax = rewards_graph.plot(ax=axes, title="steps per run")
     ax.set_xlabel("runs")
     ax.set_ylabel("steps")
     ax.legend().set_visible(False)
@@ -40,9 +40,7 @@ def save_model(qlearn, current_time, states, states_counter, states_rewards):
 
     # TODO The paths are not relative to the agents folder
     # Q TABLE
-    base_file_name = "_epsilon_{}".format(
-        round(qlearn.epsilon, 3)
-    )
+    base_file_name = "_epsilon_{}".format(round(qlearn.epsilon, 3))
     file_dump = open(
         "./logs/qlearn_models/1_" + current_time + base_file_name + "_QTABLE.pkl", "wb"
     )
@@ -66,9 +64,7 @@ def save_model(qlearn, current_time, states, states_counter, states_rewards):
 
 
 def save_actions(actions, start_time):
-    file_dump = open(
-        "./logs/qlearn_models/actions_set_" + start_time, "wb"
-    )
+    file_dump = open("./logs/qlearn_models/actions_set_" + start_time, "wb")
     pickle.dump(actions, file_dump)
 
 
@@ -80,9 +76,9 @@ def render(env, episode):
     if (episode % render_interval == 0) and (episode != 0) and (episode > render_skip):
         env.render()
     elif (
-            ((episode - render_episodes) % render_interval == 0)
-            and (episode != 0)
-            and (episode > render_skip)
-            and (render_episodes < episode)
+        ((episode - render_episodes) % render_interval == 0)
+        and (episode != 0)
+        and (episode > render_skip)
+        and (render_episodes < episode)
     ):
         env.render(close=True)

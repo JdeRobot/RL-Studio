@@ -54,7 +54,6 @@ class MountainCarEnv(gazebo_envs.GazeboEnv):
         state = []
         self._gazebo_unpause()
 
-
         try:
             effort = self.actions[action]
             start_time = rospy.Duration.from_sec(0)
@@ -103,7 +102,6 @@ class MountainCarEnv(gazebo_envs.GazeboEnv):
         else:
             reward = 0
 
-
         if y_position < -3.56 or y_position > -0.43:
             done = True
 
@@ -114,7 +112,6 @@ class MountainCarEnv(gazebo_envs.GazeboEnv):
         self._gazebo_set_new_pose_robot()
 
         self._gazebo_unpause()
-
 
         object_coordinates = self.model_coordinates("my_robot", "")
         x_position = object_coordinates.pose.position.x
@@ -135,6 +132,5 @@ class MountainCarEnv(gazebo_envs.GazeboEnv):
         state.append(3)
 
         done = False
-
 
         return state

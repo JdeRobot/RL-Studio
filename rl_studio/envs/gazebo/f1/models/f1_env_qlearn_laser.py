@@ -1,21 +1,18 @@
-import rospy
-import time
 import random
+import time
+
 import numpy as np
-
-from gym import spaces
-from gym.utils import seeding
-
-from gym_gazebo.envs import gazebo_env
+import rospy
 from gazebo_msgs.msg import ModelState
 from gazebo_msgs.srv import SetModelState
-
 from geometry_msgs.msg import Twist
-from std_srvs.srv import Empty
-from sensor_msgs.msg import LaserScan
-
+from gym import spaces
+from gym.utils import seeding
 from gym_gazebo.agents.f1.settings import actions
 from gym_gazebo.agents.f1.settings import envs_params
+from gym_gazebo.envs import gazebo_env
+from sensor_msgs.msg import LaserScan
+from std_srvs.srv import Empty
 
 
 class F1QlearnLaserEnv(gazebo_env.GazeboEnv):

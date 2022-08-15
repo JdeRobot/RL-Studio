@@ -2,18 +2,14 @@ import datetime
 import time
 
 import gym
-
-from rl_studio.agents.cartpole import utils
-from rl_studio.algorithms.dqn_torch import DQN_Agent
 from rl_studio.inference_rlstudio import InferencerWrapper
+from tqdm import tqdm
+
 from rl_studio.visual.ascii.images import JDEROBOT_LOGO
 from rl_studio.visual.ascii.text import JDEROBOT, LETS_GO
-from tqdm import tqdm
-import matplotlib.pyplot as plt
 
 
-class CartpoleInferencer:
-
+class DQNCartpoleInferencer:
     def __init__(self, params):
 
         self.now = datetime.datetime.now()
@@ -25,15 +21,22 @@ class CartpoleInferencer:
 
         self.env = gym.make(self.env_name)
         self.RUNS = self.environment_params["runs"]
-        self.UPDATE_EVERY = self.environment_params["update_every"]  # How oftern the current progress is recorded
+        self.UPDATE_EVERY = self.environment_params[
+            "update_every"
+        ]  # How oftern the current progress is recorded
 
         self.actions = self.env.action_space.n
 
-        self.losses_list, self.reward_list, self.episode_len_list, self.epsilon_list = [], [], [], []  # metrics recorded for graph
+        self.losses_list, self.reward_list, self.episode_len_list, self.epsilon_list = (
+            [],
+            [],
+            [],
+            [],
+        )  # metrics recorded for graph
         self.epsilon = 0
 
         inference_file = params.inference["params"]["inference_file"]
-        #TODO the first parameter (algorithm) should come from configuration
+        # TODO the first parameter (algorithm) should come from configuration
         self.inferencer = InferencerWrapper("dqn", inference_file, env=self.env)
 
     def print_init_info(self):
@@ -64,5 +67,12 @@ class CartpoleInferencer:
             if run % self.UPDATE_EVERY == 0:
                 time_spent = datetime.datetime.now() - epoch_start_time
                 epoch_start_time = datetime.datetime.now()
-                print("\nRun:", run, "Average:", total_reward_in_epoch / self.UPDATE_EVERY, "time spent", time_spent)
+                print(
+                    "\nRun:",
+                    run,
+                    "Average:",
+                    total_reward_in_epoch / self.UPDATE_EVERY,
+                    "time spent",
+                    time_spent,
+                )
                 total_reward_in_epoch = 0

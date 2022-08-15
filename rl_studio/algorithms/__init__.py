@@ -15,6 +15,7 @@ class InferencerFactory:
 
         if algorithm == AlgorithmsType.QLEARN.value:
             from rl_studio.algorithms.qlearn import QLearn
+
             actions_file_name = config.actions_file
 
             brain = QLearn(config)
@@ -24,6 +25,7 @@ class InferencerFactory:
 
         elif algorithm == AlgorithmsType.QLEARN_MULTIPLE_STATES.value:
             from rl_studio.algorithms.qlearn_multiple_states import QLearn
+
             actions_file_name = config.actions_file
 
             brain = QLearn(config)

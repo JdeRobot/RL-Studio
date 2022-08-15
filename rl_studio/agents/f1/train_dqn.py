@@ -1,26 +1,25 @@
-from tqdm import tqdm
-import random
 import json
 import os
+import random
 import time
-from distutils.dir_util import copy_tree
 from datetime import datetime, timedelta
+from distutils.dir_util import copy_tree
 
 import gym
 import matplotlib.pyplot as plt
 import numpy as np
-from keras import backend as K
 import tensorflow as tf
-
-from rl_studio.algorithms.dqn import DeepQ, ModifiedTensorBoard, DQNF1FollowLine
-from visual.ascii.images import JDEROBOT_LOGO
-from visual.ascii.text import JDEROBOT, LETS_GO
 from agents.utils import (
     print_messages,
     render_params,
     save_agent_physics,
     save_stats_episodes,
 )
+from keras import backend as K
+from rl_studio.algorithms.dqn import DeepQ, ModifiedTensorBoard, DQNF1FollowLine
+from tqdm import tqdm
+from visual.ascii.images import JDEROBOT_LOGO
+from visual.ascii.text import JDEROBOT, LETS_GO
 
 
 class DQNF1FollowLineTrainer:
