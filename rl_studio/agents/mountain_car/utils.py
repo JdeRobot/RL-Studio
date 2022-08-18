@@ -1,16 +1,17 @@
-import datetime
 import pickle
+
 import matplotlib.pyplot as plt
 import pandas as pd
 
 
-#TODO Since these utils are algorithm specific, those should stay in the algorithm folder somehow tied to its algorithm class
+# TODO Since these utils are algorithm specific, those should stay in the algorithm folder somehow tied to its algorithm class
 
 
 def update_line(axes, runs_rewards):
     plot_rewards_per_run(axes, runs_rewards)
     plt.draw()
     plt.pause(0.01)
+
 
 def get_stats_figure(runs_rewards):
     fig, axes = plt.subplots()
@@ -20,12 +21,14 @@ def get_stats_figure(runs_rewards):
     plt.show()
     return fig, axes
 
+
 def plot_rewards_per_run(axes, runs_rewards):
-    rewards_graph=pd.DataFrame(runs_rewards)
-    ax=rewards_graph.plot(ax=axes, title="steps per run");
+    rewards_graph = pd.DataFrame(runs_rewards)
+    ax = rewards_graph.plot(ax=axes, title="steps per run")
     ax.set_xlabel("runs")
     ax.set_ylabel("steps")
     ax.legend().set_visible(False)
+
 
 def save_model(qlearn, current_time, states, states_counter, states_rewards):
     # Tabular RL: Tabular Q-learning basically stores the policy (Q-values) of  the agent into a matrix of shape
@@ -33,9 +36,7 @@ def save_model(qlearn, current_time, states, states_counter, states_rewards):
     # matrix as a csv file. I have a quick implementation of this on my GitHub under Reinforcement Learning.
 
     # Q TABLE
-    base_file_name = "_epsilon_{}".format(
-        round(qlearn.epsilon, 3)
-    )
+    base_file_name = "_epsilon_{}".format(round(qlearn.epsilon, 3))
     file_dump = open(
         f"./logs/qlearn_models/1_{current_time}{base_file_name}_QTABLE.pkl", "wb"
     )
@@ -57,12 +58,10 @@ def save_model(qlearn, current_time, states, states_counter, states_rewards):
     file_dump = open(f"./logs/qlearn_models/4_{current_time}{steps}", "wb")
     pickle.dump(states, file_dump)
 
-def save_actions(actions, start_time):
-    file_dump = open(
-        "./logs/qlearn_models/actions_set_"+start_time, "wb"
-    )
-    pickle.dump(actions, file_dump)
 
+def save_actions(actions, start_time):
+    file_dump = open("./logs/qlearn_models/actions_set_" + start_time, "wb")
+    pickle.dump(actions, file_dump)
 
 
 def render(env, episode):

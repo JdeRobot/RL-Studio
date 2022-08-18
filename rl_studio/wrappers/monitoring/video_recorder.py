@@ -1,13 +1,15 @@
+import distutils.spawn
+import distutils.version
 import json
 import os
+import os.path
 import subprocess
 import tempfile
-import os.path
-import distutils.spawn, distutils.version
+
 import numpy as np
-from six import StringIO
 import six
 from gym import error, logger
+from six import StringIO
 
 
 def touch(path):

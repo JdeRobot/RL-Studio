@@ -1,6 +1,6 @@
 from rl_studio.agents.agents_type import AgentsType
-from rl_studio.algorithms.algorithms_type import AlgorithmsType
 from rl_studio.agents.exceptions import NoValidTrainingType
+from rl_studio.algorithms.algorithms_type import AlgorithmsType
 
 
 class TrainerFactory:
@@ -35,25 +35,37 @@ class TrainerFactory:
             return TurtlebotTrainer(config)
 
         elif agent == AgentsType.ROBOT_MESH.value:
-            from rl_studio.agents.robot_mesh.train_qlearn import RobotMeshTrainer
-
-            return RobotMeshTrainer(config)
-
-        elif agent == AgentsType.MANUAL_ROBOT.value:
-            from rl_studio.agents.robot_mesh.manual_pilot import RobotMeshTrainer
+            if algorithm == AlgorithmsType.QLEARN.value:
+                from rl_studio.agents.robot_mesh.train_qlearn import (
+                    QLearnRobotMeshTrainer as RobotMeshTrainer,
+                )
+            elif algorithm == AlgorithmsType.MANUAL.value:
+                from rl_studio.agents.robot_mesh.manual_pilot import (
+                    ManualRobotMeshTrainer as RobotMeshTrainer,
+                )
 
             return RobotMeshTrainer(config)
 
         elif agent == AgentsType.MOUNTAIN_CAR.value:
-            from rl_studio.agents.mountain_car.train_qlearn import MountainCarTrainer
+            if algorithm == AlgorithmsType.QLEARN.value:
+                from rl_studio.agents.mountain_car.train_qlearn import (
+                    QLearnMountainCarTrainer as MountainCarTrainer,
+                )
+            elif algorithm == AlgorithmsType.MANUAL.value:
+                from rl_studio.agents.mountain_car.manual_pilot import (
+                    ManualMountainCarTrainerr as MountainCarTrainer,
+                )
 
             return MountainCarTrainer(config)
-
         elif agent == AgentsType.CARTPOLE.value:
             if algorithm == AlgorithmsType.DQN.value:
-                from rl_studio.agents.cartpole.train_dqn import CartpoleTrainer
+                from rl_studio.agents.cartpole.train_dqn import (
+                    DQNCartpoleTrainer as CartpoleTrainer,
+                )
             else:
-                from rl_studio.agents.cartpole.train_qlearn import CartpoleTrainer
+                from rl_studio.agents.cartpole.train_qlearn import (
+                    QLearnCartpoleTrainer as CartpoleTrainer,
+                )
 
             return CartpoleTrainer(config)
 
@@ -68,9 +80,11 @@ class InferenceExecutorFactory:
         algorithm = config.algorithm["name"]
 
         if agent == AgentsType.ROBOT_MESH.value:
-            from rl_studio.agents.robot_mesh.inference_qlearn import RobotMeshInferencer
+            from rl_studio.agents.robot_mesh.inference_qlearn import (
+                QLearnRobotMeshInferencer,
+            )
 
-            return RobotMeshInferencer(config)
+            return QLearnRobotMeshInferencer(config)
 
         elif agent == AgentsType.F1.value:
             from rl_studio.agents.f1.inference_qlearn import F1Inferencer
@@ -86,14 +100,20 @@ class InferenceExecutorFactory:
         #
         elif agent == AgentsType.CARTPOLE.value:
             if algorithm == AlgorithmsType.DQN.value:
-                from rl_studio.agents.cartpole.inference_dqn import CartpoleInferencer
+                from rl_studio.agents.cartpole.inference_dqn import (
+                    DQNCartpoleInferencer,
+                )
             else:
-                from rl_studio.agents.cartpole.inference_qlearn import CartpoleInferencer
+                from rl_studio.agents.cartpole.inference_qlearn import (
+                    QLearnCartpoleInferencer,
+                )
 
-            return CartpoleInferencer(config)
+            return QLearnCartpoleInferencer(config)
 
         elif agent == AgentsType.MOUNTAIN_CAR.value:
-            from rl_studio.agents.mountain_car.inference_qlearn import MountainCarInferencer
+            from rl_studio.agents.mountain_car.inference_qlearn import (
+                MountainCarInferencer,
+            )
 
             return MountainCarInferencer(config)
 

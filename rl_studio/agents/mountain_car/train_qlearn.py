@@ -11,7 +11,8 @@ from rl_studio.algorithms.qlearn_multiple_states import QLearn
 from rl_studio.visual.ascii.images import JDEROBOT_LOGO
 from rl_studio.visual.ascii.text import JDEROBOT, QLEARN_CAMERA, LETS_GO
 
-class MountainCarTrainer:
+
+class QLearnMountainCarTrainer:
     def __init__(self, params):
         # TODO: Create a pydantic metaclass to simplify the way we extract the params
         # environment params
@@ -28,7 +29,7 @@ class MountainCarTrainer:
         self.gamma = params.algorithm["params"]["gamma"]
         self.states_counter = {}
         self.states_reward = {}
-        self.stats= {}
+        self.stats = {}
         self.last_time_steps = np.ndarray(0)
 
         self.outdir = "./logs/robot_mesh_experiments/"
@@ -41,7 +42,10 @@ class MountainCarTrainer:
         self.cumulated_reward = 0
 
         self.qlearn = QLearn(
-            actions=self.actions, alpha=self.alpha, gamma=self.gamma, epsilon=self.epsilon
+            actions=self.actions,
+            alpha=self.alpha,
+            gamma=self.gamma,
+            epsilon=self.epsilon,
         )
 
     def print_init_info(self):
@@ -101,16 +105,16 @@ class MountainCarTrainer:
             print("resetting")
             state = self.env.reset()
 
-
             for step in range(50000):
 
-
-                next_state, done = self.evaluate_and_learn_from_step(state, step);
+                next_state, done = self.evaluate_and_learn_from_step(state, step)
 
                 if not done:
                     state = next_state
                 else:
-                    self.last_time_steps = np.append(self.last_time_steps, [int(step + 1)])
+                    self.last_time_steps = np.append(
+                        self.last_time_steps, [int(step + 1)]
+                    )
                     self.stats[int(episode)] = step
                     self.states_reward[int(episode)] = cumulated_reward
                     print(
@@ -127,13 +131,20 @@ class MountainCarTrainer:
 
                 if episode % 250 == 0 and self.config.save_model and episode > 1:
                     print(f"\nSaving model . . .\n")
-                    utils.save_model(self.qlearn, start_time_format, self.stats, self.states_counter, self.states_reward)
-
-
+                    utils.save_model(
+                        self.qlearn,
+                        start_time_format,
+                        self.stats,
+                        self.states_counter,
+                        self.states_reward,
+                    )
 
         print(
             "Total EP: {} - epsilon: {} - ep. discount: {} - Highest Reward: {}".format(
-                self.total_episodes, initial_epsilon, self.epsilon_discount, self.highest_reward
+                self.total_episodes,
+                initial_epsilon,
+                self.epsilon_discount,
+                self.highest_reward,
             )
         )
 

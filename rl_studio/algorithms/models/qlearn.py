@@ -5,4 +5,3 @@ class QlearnValidator(BaseModel):
     alpha: float
     epsilon: float
     gamma: float
-

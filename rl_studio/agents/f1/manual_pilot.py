@@ -54,7 +54,6 @@ if __name__ == "__main__":
             env.close()
             exit(0)
 
-
         env.execute()
 
         if episode % 500 == 0:

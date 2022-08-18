@@ -9,17 +9,16 @@ import numpy as np
 from rl_studio.agents import liveplot
 from rl_studio.agents.f1 import utils
 from rl_studio.agents.f1.settings import QLearnConfig
-from rl_studio.wrappers.inference_rlstudio import InferencerWrapper
 from rl_studio.visual.ascii.images import JDEROBOT_LOGO
 from rl_studio.visual.ascii.text import JDEROBOT, QLEARN_CAMERA, LETS_GO
+from rl_studio.wrappers.inference_rlstudio import InferencerWrapper
 
 
 class F1Inferencer:
-
     def __init__(self, params):
         # TODO: Create a pydantic metaclass to simplifyactions thactionse way we extract the params
         # environment params
-        self.params=params
+        self.params = params
         self.environment_params = params.environment["params"]
         self.env_name = params.environment["params"]["env_name"]
         env_params = params.environment["params"]
@@ -65,7 +64,9 @@ class F1Inferencer:
         epsilon_discount = 0.9986  # Default 0.9986
 
         # TODO: Call the algorithm factory passing "qlearn" as parameter.
-        self.inferencer = InferencerWrapper("qlearn", self.inference_file, self.actions_file)
+        self.inferencer = InferencerWrapper(
+            "qlearn", self.inference_file, self.actions_file
+        )
 
         highest_reward = 0
 
@@ -174,7 +175,6 @@ class F1Inferencer:
                 # plotter.plot(env)
                 plotter.plot_steps_vs_epoch(stats)
                 # plotter.full_plot(env, stats, 2)  # optional parameter = mode (0, 1, 2)
-
 
             m, s = divmod(int(time.time() - telemetry_start_time), 60)
             h, m = divmod(m, 60)

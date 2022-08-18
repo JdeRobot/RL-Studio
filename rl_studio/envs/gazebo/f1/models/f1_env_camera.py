@@ -1,5 +1,6 @@
-import cv2
 from typing import Tuple
+
+import cv2
 import numpy as np
 import rospy
 from cv_bridge import CvBridge

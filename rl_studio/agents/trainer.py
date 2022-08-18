@@ -9,6 +9,7 @@ class TrainerValidator(BaseModel):
     environment: dict
     algorithm: dict
 
+
 class InferenceExecutorValidator(BaseModel):
     settings: dict
     agent: dict

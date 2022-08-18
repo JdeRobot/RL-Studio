@@ -1,23 +1,22 @@
-import time
-import random
 import os
-from tqdm import tqdm
+import random
+import time
 from datetime import datetime, timedelta
 
-import numpy as np
 import gym
+import numpy as np
 import tensorflow as tf
-
-from algorithms.ddpg import ModifiedTensorBoard, OUActionNoise, Buffer, DDPGAgent
-from envs.gazebo.gazebo_envs import *
-from visual.ascii.images import JDEROBOT_LOGO
-from visual.ascii.text import JDEROBOT, LETS_GO
 from agents.utils import (
     print_messages,
     render_params,
     save_agent_physics,
     save_stats_episodes,
 )
+from algorithms.ddpg import ModifiedTensorBoard, OUActionNoise, Buffer, DDPGAgent
+from envs.gazebo.gazebo_envs import *
+from tqdm import tqdm
+from visual.ascii.images import JDEROBOT_LOGO
+from visual.ascii.text import JDEROBOT, LETS_GO
 
 
 class F1TrainerDDPG:

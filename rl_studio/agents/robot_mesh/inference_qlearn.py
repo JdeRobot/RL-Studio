@@ -1,17 +1,17 @@
 import datetime
+import multiprocessing
+import time
 
 import gym
 import numpy as np
-import time
 
-import multiprocessing
-from rl_studio.wrappers.inference_rlstudio import InferencerWrapper
+import rl_studio.agents.robot_mesh.utils as utils
 from rl_studio.visual.ascii.images import JDEROBOT_LOGO
 from rl_studio.visual.ascii.text import JDEROBOT, QLEARN_CAMERA, LETS_GO
-import rl_studio.agents.robot_mesh.utils as utils
+from rl_studio.wrappers.inference_rlstudio import InferencerWrapper
 
 
-class RobotMeshInferencer:
+class QLearnRobotMeshInferencer:
     def __init__(self, params):
         # TODO: Create a pydantic metaclass to simplify the way we extract the params
         # environment params
@@ -54,9 +54,8 @@ class RobotMeshInferencer:
         nextState, reward, done, lap_completed = self.env.step(action)
         self.cumulated_reward += reward
 
-        if  self.highest_reward <  self.cumulated_reward:
-            self.highest_reward =  self.cumulated_reward
-
+        if self.highest_reward < self.cumulated_reward:
+            self.highest_reward = self.cumulated_reward
 
         try:
             self.states_counter[nextState] += 1
@@ -65,7 +64,6 @@ class RobotMeshInferencer:
 
         self.env._flush(force=True)
         return nextState, done
-
 
     def simulation(self, queue):
 
@@ -82,12 +80,14 @@ class RobotMeshInferencer:
 
             for step in range(50000):
 
-                next_state, done = self.evaluate(state);
+                next_state, done = self.evaluate(state)
 
                 if not done:
                     state = next_state
                 else:
-                    self.last_time_steps = np.append(self.last_time_steps, [int(step + 1)])
+                    self.last_time_steps = np.append(
+                        self.last_time_steps, [int(step + 1)]
+                    )
                     self.stats[int(episode)] = step
                     self.states_reward[int(episode)] = self.cumulated_reward
                     print(
@@ -102,7 +102,6 @@ class RobotMeshInferencer:
                 self.total_episodes, self.highest_reward
             )
         )
-
 
         self.env.close()
 
@@ -136,4 +135,3 @@ class RobotMeshInferencer:
                 rewards.append(result)
                 axes.cla()
                 utils.update_line(axes, rewards)
-

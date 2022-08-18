@@ -2,18 +2,16 @@ import math
 
 import cv2
 import numpy as np
-from sklearn.utils import shuffle
-from sklearn.cluster import KMeans
-from PIL import Image as im
 import rospy
+from PIL import Image as im
 from cv_bridge import CvBridge
 from geometry_msgs.msg import Twist
 from sensor_msgs.msg import Image
+from sklearn.cluster import KMeans
+from sklearn.utils import shuffle
 
-from agents.utils import print_messages
 from rl_studio.envs.gazebo.f1.image_f1 import ImageF1
 from rl_studio.envs.gazebo.f1.models.f1_env import F1Env
-from rl_studio.envs.gazebo.gazebo_utils import set_new_pose
 
 
 class F1DDPGCameraEnv(F1Env):

@@ -62,8 +62,6 @@ class RobotMeshEnv(gazebo_envs.GazeboEnv):
         print("pos x prev -> " + str(x_prev))
         print("pos y prev -> " + str(y_prev))
 
-
-
         object_coordinates = self.model_coordinates(self.robot_name, "")
         x_position = object_coordinates.pose.position.x
         y_position = object_coordinates.pose.position.y

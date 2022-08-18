@@ -1,9 +1,9 @@
 import time
+
 import numpy as np
 import tensorflow as tf
-from tensorflow import keras
 from tensorflow.keras import Input, Model, layers
-from tensorflow.keras.models import Sequential
+from tensorflow.keras.callbacks import TensorBoard
 from tensorflow.keras.layers import (
     Dense,
     Dropout,
@@ -11,12 +11,8 @@ from tensorflow.keras.layers import (
     MaxPooling2D,
     Activation,
     Flatten,
-    BatchNormalization,
-    Lambda,
     Rescaling,
 )
-from tensorflow.keras.optimizers import Adam
-from tensorflow.keras.callbacks import TensorBoard
 
 
 # Own Tensorboard class

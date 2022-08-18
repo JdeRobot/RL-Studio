@@ -1,12 +1,10 @@
+import math
 import random
 import time
-import math
 
 import cv2
 import numpy as np
 import rospy
-from sklearn.utils import shuffle
-from sklearn.cluster import KMeans
 from PIL import Image as im
 from cv_bridge import CvBridge, CvBridgeError
 from gazebo_msgs.msg import ModelState
@@ -14,6 +12,8 @@ from gazebo_msgs.srv import SetModelState
 from geometry_msgs.msg import Twist
 from gym.utils import seeding
 from sensor_msgs.msg import Image
+from sklearn.cluster import KMeans
+from sklearn.utils import shuffle
 from std_srvs.srv import Empty
 
 from rl_studio.agents.f1.settings import qlearn
