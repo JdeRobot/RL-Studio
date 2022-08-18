@@ -13,8 +13,8 @@ def load_model(params, qlearn, file_name):
     model = pickle.load(qlearn_file)
 
     qlearn.q = model
-    qlearn.alpha = params.algorithm["params"]["alpha"]
-    qlearn.gamma = params.algorithm["params"]["epsilon"]
+    qlearn.ALPHA = params.algorithm["params"]["alpha"]
+    qlearn.GAMMA = params.algorithm["params"]["epsilon"]
     qlearn.epsilon = params.algorithm["params"]["gamma"]
 
     # highest_reward = settings.algorithm_params["highest_reward"]

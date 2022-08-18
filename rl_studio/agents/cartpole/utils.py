@@ -1,5 +1,7 @@
 import numpy as np
 import pickle
+import datetime
+from rl_studio.agents.robot_mesh import settings
 
 # How much new info will override old info. 0 means nothing is learned, 1 means only most recent is considered, old knowledge is discarded
 LEARNING_RATE = 0.1
@@ -43,6 +45,24 @@ def save_model(qlearn, current_time, states, states_counter, states_rewards):
     steps = base_file_name + "_STATES_STEPS.pkl"
     file_dump = open("./logs/qlearn_models/4_" + current_time + steps, "wb")
     pickle.dump(states, file_dump)
+
+
+def save_dqn_model(dqn, current_time):
+    base_file_name = "_act_set_{}_epsilon_{}".format(
+        settings.qlearn.actions_set, round(epsilon, 2)
+    )
+    file_dump = open(
+        "./logs/dqn_models/1_" + current_time + base_file_name + "_DQN_WEIGHTS.pkl", "wb"
+    )
+    pickle.dump(dqn.q_net, file_dump)
+
+
+def save_times(checkpoints):
+    file_name = "actions_"
+    file_dump = open(
+        "./logs/" + file_name + settings.qlearn.actions_set + "_checkpoints.pkl", "wb"
+    )
+    pickle.dump(checkpoints, file_dump)
 
 
 def save_actions(actions, start_time):

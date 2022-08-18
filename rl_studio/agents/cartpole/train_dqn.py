@@ -1,12 +1,14 @@
 import datetime
+import time
 
 import gym
-import numpy as np
 
 from rl_studio.agents.cartpole import utils
-from rl_studio.algorithms.dqn_simple import DeepQ
+from rl_studio.algorithms.dqn_torch import DQN_Agent
 from rl_studio.visual.ascii.images import JDEROBOT_LOGO
 from rl_studio.visual.ascii.text import JDEROBOT, LETS_GO
+from tqdm import tqdm
+import matplotlib.pyplot as plt
 
 
 class CartpoleTrainer:
@@ -14,92 +16,126 @@ class CartpoleTrainer:
     def __init__(self, params):
 
         self.now = datetime.datetime.now()
-        # environment params
+        # self.environment params
         self.params = params
         self.environment_params = params.environment["params"]
         self.env_name = params.environment["params"]["env_name"]
         self.config = params.settings["params"]
 
         self.env = gym.make(self.env_name)
-        self.RUNS = self.environment_params["runs"]  # Number of iterations run TODO set this from config.yml
-        self.SHOW_EVERY = self.environment_params[
-            "show_every"]  # How oftern the current solution is rendered TODO set this from config.yml
-        self.UPDATE_EVERY = self.environment_params[
-            "update_every"]  # How oftern the current progress is recorded TODO set this from config.yml
-        self.bins, self.obsSpaceSize, self.qTable = utils.create_bins_and_q_table(self.env)
+        self.RUNS = self.environment_params["runs"]
+        self.UPDATE_EVERY = self.environment_params["update_every"]  # How oftern the current progress is recorded
+
         self.actions = self.env.action_space.n
 
-        self.previousCnt = []  # array of all scores over runs
-        self.metrics = {'ep': [], 'avg': [], 'min': [], 'max': []}  # metrics recorded for graph
-        self.states_counter = {}
-        self.states_reward = {}
-        self.last_time_steps = np.ndarray(0)
+        self.losses_list, self.reward_list, self.episode_len_list, self.epsilon_list = [], [], [], []  # metrics recorded for graph
+        self.epsilon = 1
+        self.EPSILON_DISCOUNT = params.algorithm["params"]["epsilon_discount"]
+        self.GAMMA = params.algorithm["params"]["gamma"]
+        self.NUMBER_OF_EXPLORATION_STEPS = 128
 
-        self.deepq = DeepQ(
-            self.actions, self.env.observation_space.shape[0]
-        )
+        input_dim = self.env.observation_space.shape[0]
+        output_dim = self.env.action_space.n
+        self.exp_replay_size = 256
+        self.deepq = DQN_Agent(layer_sizes=[input_dim, 64, output_dim], lr=1e-3, sync_freq=5,
+                               exp_replay_size=self.exp_replay_size, seed=1423, gamma=self.GAMMA)
+        self.initialize_experience_replay();
+
+    def initialize_experience_replay(self):
+        index = 0
+        for i in range(self.exp_replay_size):
+            state = self.env.reset()
+            done = False
+            while not done:
+                A = self.deepq.get_action(state, self.env.action_space.n, epsilon=1)
+                next_state, reward, done, _ = self.env.step(A.item())
+                self.deepq.collect_experience([state, A.item(), reward, next_state])
+                state = next_state
+                index += 1
+                if index > self.exp_replay_size:
+                    break
 
     def print_init_info(self):
         print(JDEROBOT)
         print(JDEROBOT_LOGO)
         print(f"\t- Start hour: {datetime.datetime.now()}\n")
-        print(f"\t- Environment params:\n{self.environment_params}")
+        print(f"\t- self.environment params:\n{self.environment_params}")
 
-    def evaluate_and_learn_from_step(self, state):
+    def evaluate_and_collect(self, state):
+        A = self.deepq.get_action(state, self.env.action_space.n, self.epsilon)
+        next_state, reward, done, _ = self.env.step(A.item())
+        self.deepq.collect_experience([state, A.item(), reward, next_state])
 
-        action = self.deepq.act(state)
-        state_next, reward, terminal, info = self.env.step(action)
-        reward = reward if not terminal else -reward
-        state_next = np.reshape(state_next, [1, self.env.observation_space.shape[0]])
-        self.deepq.remember(state, action, reward, state_next, terminal)
-        self.deepq.experience_replay()
+        return next_state, reward, done
 
-        return state_next, terminal
+    def train_in_batches(self, trainings, batch_size):
+        losses = 0
+        for j in range(trainings):
+            loss = self.deepq.train(batch_size=batch_size)
+            losses += loss
+        return losses
+
+    def gather_statistics(self, losses, ep_len, episode_rew):
+        self.losses_list.append(losses / ep_len)
+        self.reward_list.append(episode_rew)
+        self.episode_len_list.append(ep_len)
+        self.epsilon_list.append(self.epsilon)
+
+    def final_demonstration(self):
+        for i in tqdm(range(2)):
+            obs, done, rew = self.env.reset(), False, 0
+            while not done:
+                A = self.deepq.get_action(obs, self.env.action_space.n, epsilon=0)
+                obs, reward, done, info = self.env.step(A.item())
+                rew += reward
+                time.sleep(0.01)
+                self.env.render()
+            print("\ndemonstration episode : {}, reward : {}".format(i, rew))
 
     def main(self):
 
         self.print_init_info()
 
-        start_time = datetime.datetime.now()
-        start_time_format = start_time.strftime("%Y%m%d_%H%M")
-
-        if self.config["save_model"]:
-            print(f"\nSaving actions . . .\n")
-            utils.save_actions(self.actions, start_time_format)
-
+        epoch_start_time = datetime.datetime.now()
+        start_time_format = epoch_start_time.strftime("%Y%m%d_%H%M")
         print(LETS_GO)
 
-
-        for run in range(self.RUNS):
-            state = utils.get_discrete_state(self.env.reset(), self.bins, self.obsSpaceSize)
-            state = np.reshape(state, [1, self.env.observation_space.shape[0]])
-            done = False  # has the enviroment finished?
-            cnt = 0  # how may movements cart has made
-
+        number_of_steps = 128
+        total_reward_in_epoch = 0
+        for run in tqdm(range(self.RUNS)):
+            state, done, losses, ep_len, episode_rew = self.env.reset(), False, 0, 0, 0
             while not done:
-                cnt += 1
+                ep_len += 1
+                number_of_steps += 1
 
-                if run % self.SHOW_EVERY == 0:
-                    self.env.render()  # if running RL comment this oustatst
+                next_state, reward, done = self.evaluate_and_collect(state)
+                state = next_state
+                episode_rew += reward
+                total_reward_in_epoch += reward
 
-                next_state, done = self.evaluate_and_learn_from_step(state);
+                if number_of_steps > self.NUMBER_OF_EXPLORATION_STEPS:
+                    number_of_steps = 0
+                    losses += self.train_in_batches(4, 16)
 
-                if not done:
-                    state = next_state
-                    state = np.reshape(state, [1, self.env.observation_space.shape[0]])
+            if self.epsilon > 0.05:
+                self.epsilon *= self.EPSILON_DISCOUNT
 
-            self.previousCnt.append(cnt)
+            self.gather_statistics(losses, ep_len, episode_rew)
 
-            # Add new metrics for graph
+            # monitor progress
             if run % self.UPDATE_EVERY == 0:
-                latestRuns = self.previousCnt[-self.UPDATE_EVERY:]
-                averageCnt = sum(latestRuns) / len(latestRuns)
-                self.metrics['ep'].append(run)
-                self.metrics['avg'].append(averageCnt)
-                self.metrics['min'].append(min(latestRuns))
-                self.metrics['max'].append(max(latestRuns))
+                time_spent = datetime.datetime.now() - epoch_start_time
+                epoch_start_time = datetime.datetime.now()
+                print("\nRun:", run, "Average:", total_reward_in_epoch / self.UPDATE_EVERY, "epsilon", self.epsilon,
+                      "time spent", time_spent)
+                total_reward_in_epoch = 0
 
-                time_spent = datetime.datetime.now() - self.now
-                self.now = datetime.datetime.now()
-                print("Run:", run, "Average:", averageCnt, "Min:", min(latestRuns), "Max:", max(latestRuns), "epsilon",
-                      self.deepq.exploration_rate, "time spent", time_spent)
+        if self.config["save_model"]:
+            print(f"\nSaving model . . .\n")
+            utils.save_dqn_model(self.deepq, start_time_format)
+
+        self.final_demonstration()
+
+        plt.plot(self.reward_list)
+        plt.legend('reward per episode')
+        plt.show()
