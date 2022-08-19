@@ -264,12 +264,10 @@ environments:
     estimated_steps: 4000
     sensor: camera
   autoparking:
-    env_name: AutoparkingEnv-v0
+    env_name: ParkingCarEnv-v0
     circuit_name: autoparking
     training_type: qlearn #qlearn, dqn, qlearn, manual, ddpg
-    launchfile: autoparking.launch
-    environment_folder: autoparking
-    robot_name: f1_renault
+    launch: autoparking.launch
     start_pose: 0
     alternate_pose: False
     estimated_steps: 50
@@ -284,6 +282,7 @@ environments:
       6: [8.43921, -2.90071, 0.025338, 0, 8.1e-05, 0.010356, 1.55485]
     parking_spot_position_x: 2
     parking_spot_position_y: 4.30
+
 
 #####################################################################################
 # inference: loading training files
