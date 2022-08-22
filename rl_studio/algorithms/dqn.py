@@ -21,7 +21,7 @@ from tensorflow.keras.layers import (
 from tensorflow.keras.models import Sequential, load_model
 from tensorflow.keras.optimizers import Adam, RMSprop
 
-import memory
+import rl_studio.algorithms.memory as memory
 
 
 class DeepQ:
@@ -443,7 +443,7 @@ class DQNF1FollowLine:
     def update_replay_memory(self, transition):
         self.replay_memory.append(transition)
 
-    def get_qs(self, state, training_type):
+    def get_qs(self, state, training_type="image"):
         if training_type == "image":
             return self.model.predict(np.array(state).reshape(-1, *state.shape) / 255)[
                 0
