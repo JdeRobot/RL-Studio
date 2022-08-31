@@ -153,3 +153,50 @@ def save_stats_episodes(environment, outdir, aggr_ep_rewards, current_time):
     df = pd.DataFrame(aggr_ep_rewards)
     df.to_csv(file_csv, mode="a", index=False, header=None)
     df.to_excel(file_excel)
+
+
+def save_model_qlearn(
+    environment,
+    outdir,
+    qlearn,
+    current_time,
+    steps_epochs,
+    states_counter,
+    states_rewards,
+    episode,
+    step,
+    epsilon,
+):
+    # Tabular RL: Tabular Q-learning basically stores the policy (Q-values) of  the agent into a matrix of shape
+    # (S x A), where s are all states, a are all the possible actions. After the environment is solved, just save this
+    # matrix as a csv file. I have a quick implementation of this on my GitHub under Reinforcement Learning.
+
+    outdir_models = f"{outdir}_models"
+    os.makedirs(f"{outdir_models}", exist_ok=True)
+
+    # Q TABLE
+    # base_file_name = "_actions_set:_{}_epsilon:_{}".format(settings.actions_set, round(qlearn.epsilon, 2))
+    base_file_name = f"_Circuit-{environment['circuit_name']}_States-{environment['state_space']}_Actions-{environment['action_space']}_epsilon-{round(epsilon,3)}_epoch-{episode}_step-{step}_reward-{states_rewards}"
+    file_dump = open(
+        f"{outdir_models}/1_" + current_time + base_file_name + "_QTABLE.pkl", "wb"
+    )
+    pickle.dump(qlearn.q, file_dump)
+
+    # STATES COUNTER
+    states_counter_file_name = base_file_name + "_STATES_COUNTER.pkl"
+    file_dump = open(
+        f"{outdir_models}/2_" + current_time + states_counter_file_name, "wb"
+    )
+    pickle.dump(states_counter, file_dump)
+
+    # STATES CUMULATED REWARD
+    states_cum_reward_file_name = base_file_name + "_STATES_CUM_REWARD.pkl"
+    file_dump = open(
+        f"{outdir_models}/3_" + current_time + states_cum_reward_file_name, "wb"
+    )
+    pickle.dump(states_rewards, file_dump)
+
+    # STATES
+    steps = base_file_name + "_STATES_STEPS.pkl"
+    file_dump = open(f"{outdir_models}/4_" + current_time + steps, "wb")
+    pickle.dump(steps_epochs, file_dump)

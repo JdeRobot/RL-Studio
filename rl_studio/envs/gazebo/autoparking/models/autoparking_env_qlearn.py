@@ -594,9 +594,9 @@ class QlearnAutoparkingEnvGazebo(AutoparkingEnv):
         ]
         return clean_beans
 
-    def regions_mins_laser_beans(self, data, new_ranges):
-        """gets the min value of each segment wich comes from new_ranges
-        default: segment = 3
+    def get_min_laser_range_in_segment(self, data, segments):
+        """gets the min value of each segment.
+        The segments are defined in segments argument
         """
         clean_data = self.clean_laser_beans(data)
         # print_messages(
@@ -606,16 +606,16 @@ class QlearnAutoparkingEnvGazebo(AutoparkingEnv):
         discrete_states = [
             min(
                 clean_data[
-                    int(i * (len(clean_data) / new_ranges)) : int(
-                        (i + 1) * (len(clean_data) / new_ranges) - 1
+                    int(i * (len(clean_data) / segments)) : int(
+                        (i + 1) * (len(clean_data) / segments) - 1
                     )
                 ]
             )
-            for i in range(new_ranges)
+            for i in range(segments)
         ]
         return discrete_states
 
-    def max_laser_range_ahead(self, data):
+    def get_max_laser_range_ahead(self, data):
         """gets range value in front of the car.
         If Inf or nan = range.max
         """
@@ -690,7 +690,7 @@ class QlearnAutoparkingEnvGazebo(AutoparkingEnv):
         ]
         return states_discretized
 
-    def euclidean_distance2parking(p1, p2):
+    def euclidean_distance2parking(self, p1, p2):
         """
         calculates distance between parking spot (fixed) amd ego vehicle
         """
@@ -698,13 +698,13 @@ class QlearnAutoparkingEnvGazebo(AutoparkingEnv):
         x2, y2 = p2
         return math.hypot(x2 - x1, y2 - y1)
 
-    def euclidean_distance2parking_faster(p1, p2):
+    def euclidean_distance2parking_faster(self, p1, p2):
         """
         list comprehension - calculates distance between parking spot (fixed) amd ego vehicle
         """
         return math.sqrt(sum((x2 - x1) ** 2 for x1, x2 in zip(p1, p2)))
 
-    def manhattan_distance(a, b):
+    def manhattan_distance(self, a, b):
         """
         calculates manhattan distance between parking spot and ego vehicle
         """
@@ -723,34 +723,38 @@ class QlearnAutoparkingEnvGazebo(AutoparkingEnv):
     def reset_laser(self):
         # self._gazebo_set_new_pose()
         self._gazebo_reset()
-        self._gazebo_set_new_pose()
-        # self._gazebo_set_random_new_pose()
+        if self.alternate_pose:
+            self._gazebo_set_random_pose_autoparking()
+        else:
+            self._gazebo_set_fix_pose_autoparking()
 
         self._gazebo_unpause()
         # read laser sensor data
         laser_data = self.get_laser_info()
         self._gazebo_pause()
         # print(laser_data)
-        ## calculate min in every region
-        state = self.regions_mins_laser_beans(laser_data, 5)
+        ## calculate min in every region. Number of Regions in laser range
+        states = self.get_min_laser_range_in_segment(laser_data, 5)
         # print(state)
         ## discretizing states= [0,1,2]
-        states_discretized = self.states_discretized(state)
+        states_discretized = self.states_discretized(states)
 
         ## State only distance ahead [1]
         ## calculate max distance in front of ego vehicle
-        max_range_ahead = self.max_laser_range_ahead(laser_data)
+        max_range_ahead = self.get_max_laser_range_ahead(laser_data)
         ## distance ahead discretized
         state = self.states_discretized([max_range_ahead])
 
         print_messages(
             "en reset_laser()",
-            state=state,
+            states=states,
             states_discretized=states_discretized,
             # len_data_ranges=len(laser_data.ranges),
             max_range_ahead=max_range_ahead,
+            state=state,
             # distance_ahead=distance_ahead,
             # laser_data=laser_data,
+            # pos_number=pos_number,
         )
         return state
 
@@ -798,13 +802,14 @@ class QlearnAutoparkingEnvGazebo(AutoparkingEnv):
         ## publishing to Topic
         self.vel_pub.publish(vel_cmd)
 
+        ## Distance to parking spot Goal
         ## getting agent position
-        x_agent, y_agent = self.get_position()
-        # print_messages(
-        #    "step()",
-        #    x_agent=x_agent,
-        #    y_agent=y_agent,
-        # )
+        x_agent, y_agent = self._gazebo_get_agent_position()
+        ## Distance
+        euclidean_distance = self.euclidean_distance2parking_faster(
+            [x_agent, y_agent],
+            [self.parking_spot_position_x, self.parking_spot_position_y],
+        )
 
         ## Calculating STATE
         ## read laser sensor data
@@ -820,7 +825,7 @@ class QlearnAutoparkingEnvGazebo(AutoparkingEnv):
         ## discretizing states= [0,1,2]
         # states_discretized = self.states_discretized(state)
         ## calculate max distance in front of ego vehicle
-        max_range_ahead = self.max_laser_range_ahead(laser_data)
+        max_range_ahead = self.get_max_laser_range_ahead(laser_data)
         ## distance ahead discretized
         state = self.states_discretized([max_range_ahead])
 
@@ -833,6 +838,7 @@ class QlearnAutoparkingEnvGazebo(AutoparkingEnv):
 
         print_messages(
             "en step_laser()",
+            euclidean_distance=euclidean_distance,
             state=state,
             v=vel_cmd.linear.x,
             x_agent=x_agent,

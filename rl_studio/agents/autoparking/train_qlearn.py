@@ -1,13 +1,7 @@
 from datetime import datetime, timedelta
 import os
-import random
-import time
 
-from collections import deque
-import cv2
 import gym
-import numpy as np
-import pandas as pd
 from tqdm import tqdm
 
 from agents.utils import (
@@ -15,9 +9,10 @@ from agents.utils import (
     render_params,
     save_agent_physics,
     save_stats_episodes,
+    save_model_qlearn,
 )
-from visual.ascii.images import JDEROBOT_LOGO
-from visual.ascii.text import JDEROBOT, QLEARN_CAMERA, LETS_GO
+
+from visual.ascii.text import LETS_GO
 from algorithms.qlearn import QLearn
 
 
@@ -70,6 +65,7 @@ class QlearnAutoparkingTrainer:
         # algorithm params
         self.alpha = params.algorithm["params"]["alpha"]
         self.epsilon = params.algorithm["params"]["epsilon"]
+        self.epsilon_min = params.algorithm["params"]["epsilon_min"]
         self.gamma = params.algorithm["params"]["gamma"]
 
         # States
@@ -99,19 +95,24 @@ class QlearnAutoparkingTrainer:
         ]
         # Env
         self.environment["env"] = params.environment["params"]["env_name"]
+        self.environment["circuit_name"] = params.environment["params"]["circuit_name"]
         self.environment["training_type"] = params.environment["params"][
             "training_type"
         ]
-        self.environment["circuit_name"] = params.environment["params"]["circuit_name"]
         self.environment["launchfile"] = params.environment["params"]["launchfile"]
         self.environment["environment_folder"] = params.environment["params"][
             "environment_folder"
         ]
-        self.environment["gazebo_start_pose"] = [
-            params.environment["params"]["circuit_positions_set"][1]
+        self.environment["robot_name"] = params.environment["params"]["robot_name"]
+        self.environment["estimated_steps"] = params.environment["params"][
+            "estimated_steps"
         ]
         self.environment["alternate_pose"] = params.environment["params"][
             "alternate_pose"
+        ]
+        self.environment["sensor"] = params.environment["params"]["sensor"]
+        self.environment["gazebo_start_pose"] = [
+            params.environment["params"]["circuit_positions_set"][0]
         ]
         self.environment["gazebo_random_start_pose"] = params.environment["params"][
             "circuit_positions_set"
@@ -122,10 +123,6 @@ class QlearnAutoparkingTrainer:
         self.environment["parking_spot_position_y"] = params.environment["params"][
             "parking_spot_position_y"
         ]
-        self.environment["estimated_steps"] = params.environment["params"][
-            "estimated_steps"
-        ]
-        self.environment["sensor"] = params.environment["params"]["sensor"]
         self.environment["telemetry_mask"] = params.settings["params"]["telemetry_mask"]
 
         # Environment Image
@@ -182,13 +179,9 @@ class QlearnAutoparkingTrainer:
         self.env = gym.make(self.env_name, **self.environment)
 
     def main(self):
-
         os.makedirs(f"{self.outdir}", exist_ok=True)
-
         start_time = datetime.now()
         start_time_format = start_time.strftime("%Y%m%d_%H%M")
-
-        # actions = range(len(config['actions'][config['action_space']]))
 
         qlearn = QLearn(
             actions=range(self.actions_size),
@@ -220,11 +213,6 @@ class QlearnAutoparkingTrainer:
             observation = self.env.reset()
             state = "".join(map(str, observation))
 
-            if self.epsilon > self.epsilon_min:
-                # self.epsilon *= self.epsilon_discount
-                self.epsilon -= epsilon_decay
-                self.epsilon = qlearn.updateEpsilon(max(self.epsilon_min, self.epsilon))
-
             # ------- WHILE
             while not done:
 
@@ -234,15 +222,15 @@ class QlearnAutoparkingTrainer:
                 action = qlearn.selectAction(state)
 
                 # Execute the action and get feedback
-                observation, reward, done, info = self.env.step(action)
+                observation, reward, done, _ = self.env.step(action)
                 cumulated_reward += reward
-                nextState = "".join(map(str, observation))
+                next_state = "".join(map(str, observation))
 
                 # qlearning
-                qlearn.learn(state, action, reward, nextState)
+                qlearn.learn(state, action, reward, next_state)
 
                 ## important!!!
-                state = nextState
+                state = next_state
 
                 # render params
                 render_params(
@@ -257,25 +245,11 @@ class QlearnAutoparkingTrainer:
                     done=done,
                 )
 
-                # print_messages(
-                #    "train_qlearn()",
-                #    episode=episode,
-                #    step=step,
-                #    epsilon=self.epsilon,
-                #    action=action,
-                # v=action[0],
-                # w=action[1],
-                #    observation=observation,
-                #    reward=reward,
-                #    done=done,
-                #    cumulated_reward=cumulated_reward,
-                # nextState=nextState,
-                # )
                 # -------------------------------------- stats
                 try:
-                    self.states_counter[nextState] += 1
+                    self.states_counter[next_state] += 1
                 except KeyError:
-                    self.states_counter[nextState] = 1
+                    self.states_counter[next_state] = 1
 
                 self.steps_in_every_epoch[int(episode)] = step
                 self.states_reward[int(episode)] = cumulated_reward
@@ -298,7 +272,7 @@ class QlearnAutoparkingTrainer:
                     )
                     if self.min_reward < cumulated_reward:
                         self.min_reward = cumulated_reward
-                        save_model(
+                        save_model_qlearn(
                             self.environment,
                             self.outdir,
                             qlearn,
@@ -310,50 +284,6 @@ class QlearnAutoparkingTrainer:
                             step,
                             self.epsilon,
                         )
-
-                        # save_agent_physics(
-                        #    self.environment,
-                        #    self.outdir,
-                        #    self.actions_rewards,
-                        #    start_time,
-                        # )
-
-            # Time over!!
-            # if (
-            #    datetime.now() - timedelta(seconds=self.training_time) > start_time
-            #    and self.min_reward < cumulated_reward
-            # ):
-            #    print_messages(
-            #        "Time over!!",
-            #        epoch_time=datetime.now() - start_time_epoch,
-            #        training_time=datetime.now() - start_time,
-            #        episode=episode,
-            #        episode_reward=cumulated_reward,
-            #        steps=step,
-            #        estimated_steps=self.estimated_steps,
-            #        start_time=start_time,
-            #        step_time=datetime.now() - timedelta(seconds=self.training_time),
-            #    )
-            #    save_model(
-            #        self.environment,
-            #        self.outdir,
-            #        qlearn,
-            #        start_time_format,
-            #        self.steps_in_every_epoch,
-            #        self.states_counter,
-            #        cumulated_reward,
-            #        episode,
-            #        step,
-            #        self.epsilon,
-            #    )
-
-            #    save_agent_physics(
-            #        self.environment,
-            #        self.outdir,
-            #        self.actions_rewards,
-            #        start_time,
-            #    )
-            #    break
 
             # save best values every save_episode times
             self.ep_rewards.append(cumulated_reward)
@@ -389,5 +319,11 @@ class QlearnAutoparkingTrainer:
                     "Saving batch",
                     max_reward=int(max_reward),
                 )
+
+            # updating epsilon for exploration
+            if self.epsilon > self.epsilon_min:
+                # self.epsilon *= self.epsilon_discount
+                self.epsilon -= epsilon_decay
+                self.epsilon = qlearn.updateEpsilon(max(self.epsilon_min, self.epsilon))
 
         self.env.close()
