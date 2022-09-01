@@ -437,7 +437,7 @@ class DQNF1FollowLine:
 
         x = Dense(self.ACTION_SIZE, activation="tanh", kernel_initializer=last_init)(x)
         # x = Activation("tanh", name=action_name)(x)
-        model = Model(inputs=inputs, outputs=x, name="hola")
+        model = Model(inputs=inputs, outputs=x, name="conv2D")
         return model
 
     def update_replay_memory(self, transition):

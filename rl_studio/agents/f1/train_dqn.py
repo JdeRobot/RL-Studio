@@ -16,7 +16,7 @@ from agents.utils import (
     save_stats_episodes,
 )
 from keras import backend as K
-from rl_studio.algorithms.dqn import DeepQ, ModifiedTensorBoard, DQNF1FollowLine
+from rl_studio.algorithms.dqn_keras import DeepQ, ModifiedTensorBoard, DQNF1FollowLine
 from tqdm import tqdm
 from visual.ascii.images import JDEROBOT_LOGO
 from visual.ascii.text import JDEROBOT, LETS_GO
