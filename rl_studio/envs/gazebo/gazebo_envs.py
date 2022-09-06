@@ -1,15 +1,19 @@
+from pathlib import Path
 import os
 import random
 import signal
 import subprocess
 import sys
-from pathlib import Path
 
-import gym
-import rospy
 from gazebo_msgs.msg import ModelState
 from gazebo_msgs.srv import SetModelState
+import gym
+import numpy as np
 from rosgraph_msgs.msg import Clock
+import rospy
+from tf.transformations import quaternion_from_euler
+
+from agents.utils import print_messages
 
 
 class GazeboEnv(gym.Env):
@@ -20,15 +24,15 @@ class GazeboEnv(gym.Env):
     metadata = {"render.models": ["human"]}
 
     def __init__(self, config):
-        print(config.get("launchfile"))
+        # print(config.get("launchfile"))
         self.last_clock_msg = Clock()
         self.port = "11311"  # str(random_number) #os.environ["ROS_PORT_SIM"]
         self.port_gazebo = "11345"  # str(random_number+1) #os.environ["ROS_PORT_SIM"]
 
         self.robot_name = config.get("robot_name")
 
-        print(f"\nROS_MASTER_URI = http://localhost:{self.port}\n")
-        print(f"GAZEBO_MASTER_URI = http://localhost:{self.port_gazebo}\n")
+        # print(f"\nROS_MASTER_URI = http://localhost:{self.port}\n")
+        # print(f"GAZEBO_MASTER_URI = http://localhost:{self.port_gazebo}\n")
 
         ros_path = os.path.dirname(subprocess.check_output(["which", "roscore"]))
 
@@ -52,7 +56,7 @@ class GazeboEnv(gym.Env):
                     / config.get("launchfile")
                 )
             )
-            print(f"-----> {fullpath}")
+            # print(f"-----> {fullpath}")
         if not os.path.exists(fullpath):
             raise IOError(f"File {fullpath} does not exist")
 
@@ -65,7 +69,7 @@ class GazeboEnv(gym.Env):
                 fullpath,
             ]
         )
-        print("Gazebo launched!")
+        # print("Gazebo launched!")
 
         self.gzclient_pid = 0
 
@@ -111,11 +115,17 @@ class GazeboEnv(gym.Env):
         # Implemented in subclass
         raise NotImplementedError
 
-    def get_position(self):
+    def _gazebo_get_agent_position(self):
+
         object_coordinates = self.model_coordinates(self.robot_name, "")
         x_position = round(object_coordinates.pose.position.x, 2)
         y_position = round(object_coordinates.pose.position.y, 2)
 
+        print_messages(
+            "en _gazebo_get_agent_position()",
+            robot_name=self.robot_name,
+            object_coordinates=object_coordinates,
+        )
         return x_position, y_position
 
     def _gazebo_reset(self):
@@ -188,6 +198,107 @@ class GazeboEnv(gym.Env):
         state.pose.orientation.y = 0
         state.pose.orientation.z = 0
         state.pose.orientation.w = 0
+
+        rospy.wait_for_service("/gazebo/set_model_state")
+        try:
+            set_state = rospy.ServiceProxy("/gazebo/set_model_state", SetModelState)
+            set_state(state)
+        except rospy.ServiceException as e:
+            print(f"Service call failed: {e}")
+        return pos_number
+
+    def _gazebo_set_fix_pose_autoparking(self):
+        """
+        https://stackoverflow.com/questions/60840019/practical-understanding-of-quaternions-in-ros-moveit
+        """
+        pos_number = self.start_pose
+        # pos_number = self.start_random_pose[posit][0]
+        # pos_number = self.gazebo_random_start_pose[posit][0]
+
+        state = ModelState()
+        # state.model_name = "f1_renault"
+        state.model_name = self.model_state_name
+
+        # Pose Position
+        state.pose.position.x = self.start_pose[0][0]
+        state.pose.position.y = self.start_pose[0][1]
+        state.pose.position.z = self.start_pose[0][2]
+
+        # Pose orientation
+        quaternion = quaternion_from_euler(
+            self.start_pose[0][3], self.start_pose[0][4], self.start_pose[0][5]
+        )
+
+        state.pose.orientation.x = quaternion[0]
+        state.pose.orientation.y = quaternion[1]
+        state.pose.orientation.z = quaternion[2]
+        state.pose.orientation.w = quaternion[3]
+
+        print_messages(
+            "en _gazebo_set_fix_pose_autoparking()",
+            start_pose=self.start_pose,
+            start_pose0=self.start_pose[0][0],
+            start_pose1=self.start_pose[0][1],
+            start_pose2=self.start_pose[0][2],
+            start_pose3=self.start_pose[0][3],
+            start_pose4=self.start_pose[0][4],
+            start_pose5=self.start_pose[0][5],
+            state_pose_orientation=state.pose.orientation,
+            # start_pose6=self.start_pose[0][6],
+            # circuit_positions_set=self.circuit_positions_set,
+            start_random_pose=self.start_random_pose,
+            # gazebo_random_start_pose=self.gazebo_random_start_pose,
+            model_state_name=self.model_state_name,
+        )
+
+        rospy.wait_for_service("/gazebo/set_model_state")
+        try:
+            set_state = rospy.ServiceProxy("/gazebo/set_model_state", SetModelState)
+            set_state(state)
+        except rospy.ServiceException as e:
+            print(f"Service call failed: {e}")
+        return pos_number
+
+    def _gazebo_set_random_pose_autoparking(self):
+        """
+        (pos_number, pose_x, pose_y, pose_z, or_x, or_y, or_z, or_z)
+        """
+        random_init = np.random.randint(0, high=len(self.start_random_pose))
+        # pos_number = self.start_random_pose[posit][0]
+        pos_number = self.start_random_pose[random_init][0]
+
+        state = ModelState()
+        state.model_name = self.model_state_name
+        # Pose Position
+        state.pose.position.x = self.start_random_pose[random_init][0]
+        state.pose.position.y = self.start_random_pose[random_init][1]
+        state.pose.position.z = self.start_random_pose[random_init][2]
+        # Pose orientation
+        quaternion = quaternion_from_euler(
+            self.start_random_pose[random_init][3],
+            self.start_random_pose[random_init][4],
+            self.start_random_pose[random_init][5],
+        )
+        state.pose.orientation.x = quaternion[0]
+        state.pose.orientation.y = quaternion[1]
+        state.pose.orientation.z = quaternion[2]
+        state.pose.orientation.w = quaternion[3]
+
+        print_messages(
+            "en _gazebo_set_random_pose_autoparking()",
+            random_init=random_init,
+            start_random_pose=self.start_random_pose,
+            start_pose=self.start_pose,
+            start_random_pose0=self.start_random_pose[random_init][0],
+            start_random_pose1=self.start_random_pose[random_init][1],
+            start_random_pose2=self.start_random_pose[random_init][2],
+            start_random_pose3=self.start_random_pose[random_init][3],
+            start_random_pose4=self.start_random_pose[random_init][4],
+            start_random_pose5=self.start_random_pose[random_init][5],
+            state_pose_position=state.pose.position,
+            state_pose_orientation=state.pose.orientation,
+            model_state_name=self.model_state_name,
+        )
 
         rospy.wait_for_service("/gazebo/set_model_state")
         try:

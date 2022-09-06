@@ -93,3 +93,7 @@ class QLearn:
         print(f"\n\nMODEL LOADED.")
         print(f"    - Loading:    {file_path}")
         print(f"    - Model size: {len(self.q)}")
+
+    def updateEpsilon(self, epsilon):
+        self.epsilon = epsilon
+        return self.epsilon

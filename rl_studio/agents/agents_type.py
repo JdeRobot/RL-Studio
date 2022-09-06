@@ -7,3 +7,4 @@ class AgentsType(Enum):
     ROBOT_MESH = "robot_mesh"
     MOUNTAIN_CAR = "mountain_car"
     CARTPOLE = "cartpole"
+    AUTOPARKING = "autoparking"

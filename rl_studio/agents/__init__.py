@@ -69,6 +69,22 @@ class TrainerFactory:
 
             return CartpoleTrainer(config)
 
+        # AutoParking
+        elif agent == AgentsType.AUTOPARKING.value:
+            # DDPG
+            if algorithm == AlgorithmsType.DDPG.value:
+                from rl_studio.agents.autoparking.train_ddpg import (
+                    DDPGAutoparkingTrainer,
+                )
+
+                return DDPGAutoparkingTrainer(config)
+
+            elif algorithm == AlgorithmsType.QLEARN.value:
+                from rl_studio.agents.autoparking.train_qlearn import (
+                    QlearnAutoparkingTrainer,
+                )
+
+                return QlearnAutoparkingTrainer(config)
         else:
             raise NoValidTrainingType(agent)
 

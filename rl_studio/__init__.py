@@ -28,3 +28,9 @@ register(
     entry_point="rl_studio.envs.gazebo.mountain_car:MountainCarEnv",
     # More arguments here
 )
+
+# AutoParking envs
+register(
+    id="AutoparkingEnv-v0",
+    entry_point="rl_studio.envs.gazebo.autoparking.models:AutoparkingEnv",
+)
