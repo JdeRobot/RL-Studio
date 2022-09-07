@@ -21,7 +21,7 @@ from tensorflow.keras.layers import (
 from tensorflow.keras.models import Sequential, load_model
 from tensorflow.keras.optimizers import Adam, RMSprop
 
-import memory
+import rl_studio.algorithms.memory as memory
 
 
 class DeepQ:
