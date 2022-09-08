@@ -20,12 +20,19 @@ class DQNCartpoleTrainer:
         self.environment_params = params.environment["params"]
         self.env_name = params.environment["params"]["env_name"]
         self.config = params.settings["params"]
+        random_start_level = self.config["random_start_level"]
 
-        self.env = gym.make(self.env_name)
+        self.env = gym.make(self.env_name, new_step_api=True, random_start_level=random_start_level)
         self.RUNS = self.environment_params["runs"]
+        self.SHOW_EVERY = self.environment_params[
+            "show_every"
+        ]
         self.UPDATE_EVERY = self.environment_params[
             "update_every"
         ]  # How often the current progress is recorded
+        self.OBJECTIVE_REWARD=self.environment_params[
+            "objective_reward"
+        ]
 
         self.actions = self.env.action_space.n
 
@@ -43,7 +50,7 @@ class DQNCartpoleTrainer:
 
         input_dim = self.env.observation_space.shape[0]
         output_dim = self.env.action_space.n
-        self.exp_replay_size = 256
+        self.exp_replay_size = params.algorithm["params"]["batch_size"]
         self.deepq = DQN_Agent(
             layer_sizes=[input_dim, 64, output_dim],
             lr=1e-3,
@@ -61,7 +68,7 @@ class DQNCartpoleTrainer:
             done = False
             while not done:
                 A = self.deepq.get_action(state, self.env.action_space.n, epsilon=1)
-                next_state, reward, done, _ = self.env.step(A.item())
+                next_state, reward, done, _, _ = self.env.step(A.item())
                 self.deepq.collect_experience([state, A.item(), reward, next_state])
                 state = next_state
                 index += 1
@@ -76,7 +83,7 @@ class DQNCartpoleTrainer:
 
     def evaluate_and_collect(self, state):
         A = self.deepq.get_action(state, self.env.action_space.n, self.epsilon)
-        next_state, reward, done, _ = self.env.step(A.item())
+        next_state, reward, done, _, _ = self.env.step(A.item())
         self.deepq.collect_experience([state, A.item(), reward, next_state])
 
         return next_state, reward, done
@@ -99,7 +106,7 @@ class DQNCartpoleTrainer:
             obs, done, rew = self.env.reset(), False, 0
             while not done:
                 A = self.deepq.get_action(obs, self.env.action_space.n, epsilon=0)
-                obs, reward, done, info = self.env.step(A.item())
+                obs, reward, done, _, info = self.env.step(A.item())
                 rew += reward
                 time.sleep(0.01)
                 self.env.render()
@@ -125,6 +132,8 @@ class DQNCartpoleTrainer:
                 state = next_state
                 episode_rew += reward
                 total_reward_in_epoch += reward
+                if run % self.SHOW_EVERY == 0:
+                    self.env.render()
 
                 if number_of_steps > self.NUMBER_OF_EXPLORATION_STEPS:
                     number_of_steps = 0
@@ -150,6 +159,10 @@ class DQNCartpoleTrainer:
                     time_spent,
                 )
                 total_reward_in_epoch = 0
+                if (total_reward_in_epoch / self.UPDATE_EVERY) > self.OBJECTIVE_REWARD:
+                    print("Training objective reached!!")
+                    break
+
 
         if self.config["save_model"]:
             print(f"\nSaving model . . .\n")

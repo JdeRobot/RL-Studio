@@ -4,6 +4,8 @@ settings:
   save_positions: True
   debug_level: DEBUG
   telemetry: False
+#  random_start_level: 0.05
+  random_start_level: 0.2
 
 # TODO make this section optional
 actions:
@@ -21,8 +23,11 @@ environments:
   simple:
     env_name: myCartpole-v0
     environment_folder: cartpole
-    runs: 30000
-    update_every: 5000
+#    runs: 10000
+    runs: 25000
+    update_every: 1000
+    show_every: 2000
+    objective_reward: 400
 
 inference:
   qlearn:
@@ -40,6 +45,8 @@ algorithm:
 
     dqn:
       gamma: 0.95
-      epsilon_discount: 0.9999
+#      epsilon_discount: 0.9998
+      epsilon_discount: 0.9995
+      batch_size: 256
 
     sarsa:
