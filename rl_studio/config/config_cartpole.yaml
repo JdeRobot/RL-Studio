@@ -46,7 +46,7 @@ algorithm:
     dqn:
       gamma: 0.95
 #      epsilon_discount: 0.9998
-      epsilon_discount: 0.9995
+      epsilon_discount: 0.9999
       batch_size: 256
 
     sarsa:
