@@ -357,48 +357,7 @@ virtualenv==20.4.7; python_full_version >= "3.6.1" \
     --hash=sha256:2b0126166ea7c9c3661f5b8e06773d28f83322de7a3ff7d06f0aed18c9de6a76 \
     --hash=sha256:14fdf849f80dbb29a4eb6caa9875d476ee2a5cf76a5f5415fa2f1606010ab467
 
-numpy~=1.23.1
-rospy~=1.15.14
-opencv-python~=4.2.0.32
-gym~=0.25.1
-pydantic~=1.9.1
-matplotlib~=3.5.2
-scipy~=1.6.1
-six~=1.16.0
-genpy~=0.6.15
-genmsg~=0.5.16
-PyYAML~=3.12
-nose~=1.3.7
-xacro~=1.14.13
-setuptools~=62.6.0
-rospkg~=1.2.8
-catkin~=0.8.10
-empy~=3.3.2
-docutils~=0.17.1
-genlisp~=0.4.18
-netifaces~=0.10.9
-rostest~=1.15.14
-tf~=1.13.2
-roslib~=1.15.8
-rosservice~=1.15.14
-rosunit~=1.15.8
-rosbag~=1.15.14
-rosgraph~=1.15.14
-sympy~=1.10.1
-rosparam~=1.15.14
-roslaunch~=1.15.14
-roslz4~=1.15.14
-rosmsg~=1.15.14
-rostopic~=1.15.14
-rosmaster~=1.15.14
-rosclean~=1.15.8
-defusedxml~=0.6.0
-python-dateutil~=2.8.1
-rosnode~=1.15.14
-roswtf~=1.15.14
-pygame~=2.1.2
+tqdm==4.64.0 --hash=sha256:74a2cdefe14d11442cedf3ba4e21a3b84ff9a2dbdc6cfae2c34addb2a14a5ea6
 
-keras~=2.9.0
-tqdm~=4.64.0
-tensorflow-gpu~=2.9.1
-torch~=1.13.0.dev20220810+cu113
+--extra-index-url https://download.pytorch.org/whl/cu113
+torch==1.12.1+cu113 --hash=sha256:4adf483ac2d047534a7d023f0022bd8694d87627068ad6dddf186cb3273bbfa2

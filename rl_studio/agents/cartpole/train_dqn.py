@@ -20,13 +20,26 @@ class DQNCartpoleTrainer:
         self.environment_params = params.environment["params"]
         self.env_name = params.environment["params"]["env_name"]
         self.config = params.settings["params"]
+        random_start_level = self.config["random_start_level"]
 
-        self.env = gym.make(self.env_name)
+        # Unfortunately, max_steps is not working with new_step_api=True and it is not giving any benefit.
+        # self.env = gym.make(self.env_name, new_step_api=True, random_start_level=random_start_level)
+        self.env = gym.make(self.env_name, random_start_level=random_start_level)
+
         self.RUNS = self.environment_params["runs"]
+        self.EXPERIMENTATION_RUNS = self.environment_params["full_experimentation_runs"]
+        self.SHOW_EVERY = self.environment_params[
+            "show_every"
+        ]
         self.UPDATE_EVERY = self.environment_params[
             "update_every"
         ]  # How often the current progress is recorded
-
+        self.OBJECTIVE_REWARD = self.environment_params[
+            "objective_reward"
+        ]
+        self.BLOCKED_EXPERIENCE_BATCH = self.environment_params[
+            "block_experience_batch"
+        ]
         self.actions = self.env.action_space.n
 
         self.losses_list, self.reward_list, self.episode_len_list, self.epsilon_list = (
@@ -43,7 +56,7 @@ class DQNCartpoleTrainer:
 
         input_dim = self.env.observation_space.shape[0]
         output_dim = self.env.action_space.n
-        self.exp_replay_size = 256
+        self.exp_replay_size = params.algorithm["params"]["batch_size"]
         self.deepq = DQN_Agent(
             layer_sizes=[input_dim, 64, output_dim],
             lr=1e-3,
@@ -51,7 +64,9 @@ class DQNCartpoleTrainer:
             exp_replay_size=self.exp_replay_size,
             seed=1423,
             gamma=self.GAMMA,
+            block_batch=self.BLOCKED_EXPERIENCE_BATCH
         )
+        self.max_avg=0
         self.initialize_experience_replay()
 
     def initialize_experience_replay(self):
@@ -125,12 +140,14 @@ class DQNCartpoleTrainer:
                 state = next_state
                 episode_rew += reward
                 total_reward_in_epoch += reward
+                if run % self.SHOW_EVERY == 0:
+                    self.env.render()
 
                 if number_of_steps > self.NUMBER_OF_EXPLORATION_STEPS:
                     number_of_steps = 0
                     losses += self.train_in_batches(4, 16)
 
-            if self.epsilon > 0.05:
+            if run > self.EXPERIMENTATION_RUNS and self.epsilon > 0.05:
                 self.epsilon *= self.EPSILON_DISCOUNT
 
             self.gather_statistics(losses, ep_len, episode_rew)
@@ -149,11 +166,14 @@ class DQNCartpoleTrainer:
                     "time spent",
                     time_spent,
                 )
+                if self.config["save_model"] and total_reward_in_epoch / self.UPDATE_EVERY>self.max_avg:
+                    self.max_avg =  total_reward_in_epoch / self.UPDATE_EVERY
+                    print(f"\nSaving model . . .\n")
+                    utils.save_dqn_model(self.deepq, start_time_format,  total_reward_in_epoch / self.UPDATE_EVERY)
+                if (total_reward_in_epoch / self.UPDATE_EVERY) > self.OBJECTIVE_REWARD:
+                    print("Training objective reached!!")
+                    break
                 total_reward_in_epoch = 0
-
-        if self.config["save_model"]:
-            print(f"\nSaving model . . .\n")
-            utils.save_dqn_model(self.deepq, start_time_format)
 
         self.final_demonstration()
 

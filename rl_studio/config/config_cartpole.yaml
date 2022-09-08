@@ -4,6 +4,8 @@ settings:
   save_positions: True
   debug_level: DEBUG
   telemetry: False
+#  random_start_level: 0.05
+  random_start_level: 0.45
 
 # TODO make this section optional
 actions:
@@ -21,15 +23,21 @@ environments:
   simple:
     env_name: myCartpole-v0
     environment_folder: cartpole
-    runs: 30000
-    update_every: 5000
+#    runs: 20000
+    runs: 20000
+    full_experimentation_runs: 0
+    update_every: 1000
+    show_every: 4000
+    objective_reward: 400
+#    block_experience_batch: False
+    block_experience_batch: False
 
 inference:
   qlearn:
     inference_file: /home/ruben/Desktop/my-RL-Studio/rl_studio/logs/qlearn_models/1_20220718_0010_act_set_simple_epsilon_0.01_QTABLE.pkl
     actions_file: /home/ruben/Desktop/my-RL-Studio/rl_studio/logs/qlearn_models/actions_set_20220718_0010
   dqn:
-    inference_file: /home/ruben/Escritorio/my-Rl-Studio/rl_studio/logs/dqn_models/1_20220813_1305_act_set_simple_epsilon_1_QTABLE.pkl
+    inference_file: /home/ruben/Desktop/my-RL-Studio/rl_studio/logs/dqn_models/1_20220914_2137_epsilon_1_DQN_WEIGHTS_avg_444.835.pkl
 
 algorithm:
     qlearn:
@@ -39,7 +47,11 @@ algorithm:
       epsilon_discount: 0.99999998
 
     dqn:
+#      gamma: 0.95
       gamma: 0.95
-      epsilon_discount: 0.9999
+      epsilon_discount: 0.9998
+#      epsilon_discount: 0.9998
+#      batch_size: 256
+      batch_size: 256
 
     sarsa:

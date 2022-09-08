@@ -43,10 +43,10 @@ def save_model(qlearn, current_time, states, states_counter, states_rewards):
     pickle.dump(states, file_dump)
 
 
-def save_dqn_model(dqn, current_time):
+def save_dqn_model(dqn, current_time, average):
     base_file_name = "_epsilon_{}".format(round(epsilon, 2))
     file_dump = open(
-        "./logs/dqn_models/1_" + current_time + base_file_name + "_DQN_WEIGHTS.pkl",
+        "./logs/dqn_models/1_" + current_time + base_file_name + "_DQN_WEIGHTS_avg_" + str(average) + ".pkl",
         "wb",
     )
     pickle.dump(dqn.q_net, file_dump)
