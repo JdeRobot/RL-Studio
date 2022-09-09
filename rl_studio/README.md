@@ -12,27 +12,22 @@ To run RL-Studio, first go to dir
 cd ~/PATH/TO/RL-Studio/rl-studio
 ```
 
-and then just typing:
+and then just type (depending on how the dependencies are managed):
 
 ```bash
-python main_rlstudio.py -n [algorithm] -a [agent] -e [environment] -f config/config.yaml
-```
-
-or 
-
-```bash
-poetry run python main_rlstudio.py -n [algorithm] -a [agent] -e [environment] -f config/config.yaml
+poetry run python main_rlstudio.py -n [algorithm] -a [agent] -e [environment] -f config/config.yaml # if using Poetry for dependencies
+python main_rlstudio.py -n [algorithm] -a [agent] -e [environment] -f config/config.yaml # if using PIP for dependencies
 ```
 
 if using poetry.
 
 The config.yaml contains all project hyperparams and configuration needed to execute correctly.
 
-For example, if you want to train a F1 agent in Circuit Simple with Q-learning algorithm, just typing:
+For example, if you want to train a F1 agent in Circuit Simple with Q-learning algorithm, just type:
 
 ```bash
-python main_rlstudio.py -n qlearn -a f1 -e simple -f config/config.yaml # PIP dependencies
-poetry run python main_rlstudio.py -n qlearn -a f1 -e simple -f config/config.yaml # Poetry
+poetry run python main_rlstudio.py -n qlearn -a f1 -e simple -f config/config.yaml # if using Poetry for dependencies
+python main_rlstudio.py -n qlearn -a f1 -e simple -f config/config.yaml # if using PIP for dependencies
 ```
 
 Or an inference making use of the script that uses a library created for that purpose
