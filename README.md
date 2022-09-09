@@ -54,7 +54,7 @@ pip install -r requirements.txt
 
 The commits follow the [gitmoji](https://gitmoji.dev/) convention and the code is formatted with [Black](https://black.readthedocs.io/en/stable/).
 
-#### Install rl-studio
+#### Install rl-studio as package
 
 ```bash
 cd ~/PATH/TO/RL-Studio/rl-studio
@@ -63,7 +63,7 @@ pip install -e .
 
 ## Set environments
 
-### Set Noetic and Formula1 agent configuration
+### Set Noetic and Formula 1 agent configuration
 
 ```bash
 cd ~/PATH/TO/RL-Studio/rl-studio/installation
