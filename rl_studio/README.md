@@ -33,7 +33,8 @@ python main_rlstudio.py -n qlearn -a f1 -e simple -f config/config.yaml # if usi
 Or an inference making use of the script that uses a library created for that purpose
 
 ```bash
-python main_rlstudio.py -n qlearn -a f1 -e simple -f config/config.yaml -m inference
+poetry run python main_rlstudio.py -n qlearn -a f1 -e simple -f config/config.yaml -m inference # if using Poetry for dependencies
+python main_rlstudio.py -n qlearn -a f1 -e simple -f config/config.yaml -m inference # if using PIP for dependencies
 ```
 
 > :warning: If you want to use inferencing in a program language other than python, you will
