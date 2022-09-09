@@ -18,12 +18,21 @@ and then just typing:
 python main_rlstudio.py -n [algorithm] -a [agent] -e [environment] -f config/config.yaml
 ```
 
-where config.yaml contains all project hyperparams and configuration needed to execute correctly.
+or 
+
+```bash
+poetry run python main_rlstudio.py -n [algorithm] -a [agent] -e [environment] -f config/config.yaml
+```
+
+if using poetry.
+
+The config.yaml contains all project hyperparams and configuration needed to execute correctly.
 
 For example, if you want to train a F1 agent in Circuit Simple with Q-learning algorithm, just typing:
 
 ```bash
-python main_rlstudio.py -n qlearn -a f1 -e simple -f config/config.yaml
+python main_rlstudio.py -n qlearn -a f1 -e simple -f config/config.yaml # PIP dependencies
+poetry run python main_rlstudio.py -n qlearn -a f1 -e simple -f config/config.yaml # Poetry
 ```
 
 Or an inference making use of the script that uses a library created for that purpose
@@ -37,3 +46,5 @@ python main_rlstudio.py -n qlearn -a f1 -e simple -f config/config.yaml -m infer
 > outputs in the desired way. Note that inference_rlstudio.py is just the library used to inference
 
 Open the `config.yaml` file and set the params you need.
+
+
