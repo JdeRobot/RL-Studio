@@ -4,8 +4,7 @@ settings:
   save_positions: True
   debug_level: DEBUG
   telemetry: False
-#  random_start_level: 0.05
-  random_start_level: 0.45
+
 
 # TODO make this section optional
 actions:
@@ -31,6 +30,9 @@ environments:
     objective_reward: 400
 #    block_experience_batch: False
     block_experience_batch: False
+  #  random_start_level: 0.05
+    random_start_level: 0.45
+    random_perturbations_level: 0.1
 
 inference:
   qlearn:

@@ -1,5 +1,6 @@
 import datetime
 import time
+import random
 
 import gym
 from rl_studio.wrappers.inference_rlstudio import InferencerWrapper
@@ -18,13 +19,14 @@ class DQNCartpoleInferencer:
         self.environment_params = params.environment["params"]
         self.env_name = params.environment["params"]["env_name"]
         self.config = params.settings["params"]
-        random_start_level = self.config["random_start_level"]
+        random_start_level = self.environment_params["random_start_level"]
 
         self.env = gym.make(self.env_name, random_start_level=random_start_level)
         self.RUNS = self.environment_params["runs"]
         self.UPDATE_EVERY = self.environment_params[
             "update_every"
         ]  # How oftern the current progress is recorded
+        self.RANDOM_PERTURBATIONS_LEVEL = self.environment_params.get("random_perturbations_level", 0)
 
         self.actions = self.env.action_space.n
 
@@ -62,6 +64,8 @@ class DQNCartpoleInferencer:
                 rew += reward
                 total_reward_in_epoch += reward
                 time.sleep(0.01)
+                if random.uniform(0, 1) < self.RANDOM_PERTURBATIONS_LEVEL:
+                    self.env.step(random.randrange(self.env.action_space.n))
                 self.env.render()
 
             # monitor progress
