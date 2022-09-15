@@ -181,7 +181,7 @@ environments:
   simple:
     env_name: F1Env-v0
     circuit_name: simple
-    training_type: dqn #qlearn_camera, ddpg, dqn
+    training_type: qlearn_camera #qlearn_camera, ddpg, dqn
     launchfile: simple_circuit.launch
     environment_folder: f1
     robot_name: f1_renault
