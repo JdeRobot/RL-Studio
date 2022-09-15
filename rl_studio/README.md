@@ -19,8 +19,6 @@ poetry run python main_rlstudio.py -n [algorithm] -a [agent] -e [environment] -f
 python main_rlstudio.py -n [algorithm] -a [agent] -e [environment] -f config/config.yaml # if using PIP for dependencies
 ```
 
-if using poetry.
-
 The config.yaml contains all project hyperparams and configuration needed to execute correctly.
 
 For example, if you want to train a F1 agent in Circuit Simple with Q-learning algorithm, just type:
