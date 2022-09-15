@@ -9,7 +9,7 @@
 To run RL-Studio, first go to dir
 
 ```bash
-cd ~/PATH/TO/RL-Studio/rl-studio
+cd ~/PATH/TO/RL-Studio/rl_studio
 ```
 
 and then just type (depending on how the dependencies are managed):

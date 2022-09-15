@@ -54,10 +54,10 @@ pip install -r requirements.txt
 
 The commits follow the [gitmoji](https://gitmoji.dev/) convention and the code is formatted with [Black](https://black.readthedocs.io/en/stable/).
 
-#### Install rl-studio as package
+#### Install rl_studio as package
 
 ```bash
-cd ~/PATH/TO/RL-Studio/rl-studio
+cd ~/PATH/TO/RL-Studio/rl_studio
 pip install -e .
 ```
 
@@ -66,7 +66,7 @@ pip install -e .
 ### Set Noetic and Formula 1 agent configuration
 
 ```bash
-cd ~/PATH/TO/RL-Studio/rl-studio/installation
+cd ~/PATH/TO/RL-Studio/rl_studio/installation
 bash setup_noetic.bash
 ```
 
@@ -103,7 +103,7 @@ export GAZEBO_RESOURCE_PATH=$GAZEBO_RESOURCE_PATH:$HOME/PATH/TO/RL-Studio/rl_stu
 To set Formula 1 environment running the following script (the same folder that before):
 
 ```
-cd ~/PATH/TO/RL-Studio/rl-studio/installation
+cd ~/PATH/TO/RL-Studio/rl_studio/installation
 ./formula1_setup.bash
 ```
 
