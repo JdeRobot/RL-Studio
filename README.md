@@ -12,24 +12,11 @@
 
 RL-Studio is a platform for training reinforcement learning algorithms for robots with different environments and algorithms. You can create your agent, environment and algorithm and compare it with others.
 
-## Install
+## Installation
 
-### ROS
+### Install ROS
 
 RL-Studio works with ROS Noetic. You can [install ROS Noetic in the official documentation](http://wiki.ros.org/noetic/Installation/Ubuntu) and installing ROS Noetic Full Desktop.
-
-It is recommended to install next libraries:
-
-```bash
-sudo apt-get install \
-    python-pip python3-vcstool python3-pyqt4 \
-    pyqt5-dev-tools \
-    libbluetooth-dev libspnav-dev \
-    pyqt4-dev-tools libcwiid-dev \
-    cmake gcc g++ qt4-qmake libqt4-dev \
-    libusb-dev libftdi-dev \
-    python3-defusedxml python3-vcstool
-```
 
 ### Clone the RL-studio repository
 
@@ -43,10 +30,11 @@ or
 git clone https://github.com/JdeRobot/RL-Studio.git
 ```
 
-### Install Poetry (optional):
+### Install dependencies with Poetry (recommended):
 
 ```bash
-curl -sSL https://raw.githubusercontent.com/python-poetry/poetry/master/get-poetry.py | python3 -
+curl -sSL https://install.python-poetry.org | python3 -
+export PATH="/root/.local/bin:$PATH"
 ```
 
 Install dependencies:
@@ -54,6 +42,8 @@ Install dependencies:
 ```bash
 poetry install
 ```
+
+### Install dependencies using pip (not recommended):
 
 _Note: In case you don't want to use Poetry as a dependency manager, you can install it with pip as follows (previously it is highly recommended to create a virtual environment):_
 
@@ -64,19 +54,19 @@ pip install -r requirements.txt
 
 The commits follow the [gitmoji](https://gitmoji.dev/) convention and the code is formatted with [Black](https://black.readthedocs.io/en/stable/).
 
-### Install rl-studio
+#### Install rl_studio as package
 
 ```bash
-cd ~/PATH/TO/RL-Studio/rl-studio
+cd ~/PATH/TO/RL-Studio/rl_studio
 pip install -e .
 ```
 
 ## Set environments
 
-### Set Noetic and Formula1 agent configuration
+### Set Noetic and Formula 1 agent configuration
 
 ```bash
-cd ~/PATH/TO/RL-Studio/rl-studio/installation
+cd ~/PATH/TO/RL-Studio/rl_studio/installation
 bash setup_noetic.bash
 ```
 
@@ -113,7 +103,7 @@ export GAZEBO_RESOURCE_PATH=$GAZEBO_RESOURCE_PATH:$HOME/PATH/TO/RL-Studio/rl_stu
 To set Formula 1 environment running the following script (the same folder that before):
 
 ```
-cd ~/PATH/TO/RL-Studio/rl-studio/installation
+cd ~/PATH/TO/RL-Studio/rl_studio/installation
 ./formula1_setup.bash
 ```
 
