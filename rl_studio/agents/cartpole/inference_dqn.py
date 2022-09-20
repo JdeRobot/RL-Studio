@@ -2,7 +2,7 @@ import datetime
 import time
 
 import gym
-from rl_studio.inference_rlstudio import InferencerWrapper
+from rl_studio.wrappers.inference_rlstudio import InferencerWrapper
 from tqdm import tqdm
 
 from rl_studio.visual.ascii.images import JDEROBOT_LOGO
@@ -18,8 +18,9 @@ class DQNCartpoleInferencer:
         self.environment_params = params.environment["params"]
         self.env_name = params.environment["params"]["env_name"]
         self.config = params.settings["params"]
+        random_start_level = self.config["random_start_level"]
 
-        self.env = gym.make(self.env_name)
+        self.env = gym.make(self.env_name, random_start_level=random_start_level)
         self.RUNS = self.environment_params["runs"]
         self.UPDATE_EVERY = self.environment_params[
             "update_every"
