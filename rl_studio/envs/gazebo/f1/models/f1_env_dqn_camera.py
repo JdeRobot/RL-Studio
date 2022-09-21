@@ -938,10 +938,10 @@ class DQNF1FollowLineEnvGazebo(F1Env):
         # If image as observation
         if self.state_space == "image":
             # state = np.array(cv_image)
-            # state = np.array(
-            #    self.image_preprocessing_black_white_32x32(f1_image_camera.data)
-            # )
-            state = np.array(self.image_original_resizing_32x32(f1_image_camera.data))
+            state = np.array(
+                self.image_preprocessing_black_white_32x32(f1_image_camera.data)
+            )
+            # state = np.array(self.image_original_resizing_32x32(f1_image_camera.data))
 
             state_size = state.shape
         # ...or simplified perception as state
@@ -1010,7 +1010,10 @@ class DQNF1FollowLineEnvGazebo(F1Env):
 
         ########## State
         if self.state_space == "image":
-            state = np.array(cv_image)
+            # state = np.array(cv_image)
+            state = np.array(
+                self.image_preprocessing_black_white_32x32(f1_image_camera.data)
+            )
         else:
             state = self.calculate_observation(points)
 
