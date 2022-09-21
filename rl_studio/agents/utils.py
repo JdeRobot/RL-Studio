@@ -128,7 +128,7 @@ def render_params(**kwargs):
     cv2.waitKey(100)
 
 
-def save_agent_physics(environment, outdir, physics, current_time):
+def save_agent_npy(environment, outdir, physics, current_time):
     """ """
 
     outdir_episode = f"{outdir}_stats"

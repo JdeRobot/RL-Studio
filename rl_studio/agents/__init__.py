@@ -13,9 +13,12 @@ class TrainerFactory:
         if agent == AgentsType.F1.value:
             # Q-learn
             if algorithm == AlgorithmsType.QLEARN.value:
-                from rl_studio.agents.f1.train_qlearn import F1Trainer
+                from rl_studio.agents.f1.train_qlearn import (
+                    F1Trainer,
+                    QlearnF1FollowLaneTrainer,
+                )
 
-                return F1Trainer(config)
+                return QlearnF1FollowLaneTrainer(config)
 
             # DDPG
             elif algorithm == AlgorithmsType.DDPG.value:

@@ -26,6 +26,10 @@ class F1Env(gazebo_envs.GazeboEnv):
         self.start_pose = np.array(config.get("start_pose"))
         self._seed()
 
+        self.start_pose = np.array(config.get("gazebo_start_pose"))
+        self.start_random_pose = config.get("gazebo_random_start_pose")
+        self.model_state_name = config.get("model_state_name")
+
     def render(self, mode="human"):
         pass
 

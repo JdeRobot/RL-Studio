@@ -308,6 +308,101 @@ class GazeboEnv(gym.Env):
             print(f"Service call failed: {e}")
         return pos_number
 
+    def _gazebo_set_fix_pose_f1_follow_right_lane(self):
+        pos_number = self.start_pose
+        state = ModelState()
+        state.model_name = self.model_state_name
+        # Pose Position
+        state.pose.position.x = self.start_pose[0][0]
+        state.pose.position.y = self.start_pose[0][1]
+        state.pose.position.z = self.start_pose[0][2]
+
+        # Pose orientation
+        state.pose.orientation.x = self.start_pose[0][3]
+        state.pose.orientation.y = self.start_pose[0][4]
+        state.pose.orientation.z = self.start_pose[0][5]
+        state.pose.orientation.w = self.start_pose[0][6]
+
+        # print_messages(
+        #    "en _gazebo_set_fix_pose_f1_follow_right_lane()",
+        #    start_pose=self.start_pose,
+        #    start_pose0=self.start_pose[0][0],
+        #    start_pose1=self.start_pose[0][1],
+        #    start_pose2=self.start_pose[0][2],
+        #    start_pose3=self.start_pose[0][3],
+        #    start_pose4=self.start_pose[0][4],
+        #    start_pose5=self.start_pose[0][5],
+        #    start_pose6=self.start_pose[0][6],
+        #    state_pose_orientation=state.pose.orientation,
+        #    # start_pose6=self.start_pose[0][6],
+        #    # circuit_positions_set=self.circuit_positions_set,
+        #    start_random_pose=self.start_random_pose,
+        #    # gazebo_random_start_pose=self.gazebo_random_start_pose,
+        #    model_state_name=self.model_state_name,
+        # )
+
+        rospy.wait_for_service("/gazebo/set_model_state")
+        try:
+            set_state = rospy.ServiceProxy("/gazebo/set_model_state", SetModelState)
+            set_state(state)
+        except rospy.ServiceException as e:
+            print(f"Service call failed: {e}")
+        return pos_number
+
+    def _gazebo_set_random_pose_f1_follow_rigth_lane(self):
+        """
+        (pos_number, pose_x, pose_y, pose_z, or_x, or_y, or_z, or_z)
+        """
+        random_init = np.random.randint(0, high=len(self.start_random_pose))
+        # pos_number = self.start_random_pose[posit][0]
+        pos_number = self.start_random_pose[random_init][0]
+
+        state = ModelState()
+        state.model_name = self.model_state_name
+        # Pose Position
+        state.pose.position.x = self.start_random_pose[random_init][0]
+        state.pose.position.y = self.start_random_pose[random_init][1]
+        state.pose.position.z = self.start_random_pose[random_init][2]
+        # Pose orientation
+        state.pose.orientation.x = self.start_random_pose[random_init][3]
+        state.pose.orientation.y = self.start_random_pose[random_init][4]
+        state.pose.orientation.z = self.start_random_pose[random_init][5]
+        state.pose.orientation.w = self.start_random_pose[random_init][6]
+
+        # quaternion = quaternion_from_euler(
+        #    self.start_random_pose[random_init][3],
+        #    self.start_random_pose[random_init][4],
+        #    self.start_random_pose[random_init][5],
+        # )
+        # state.pose.orientation.x = quaternion[0]
+        # state.pose.orientation.y = quaternion[1]
+        # state.pose.orientation.z = quaternion[2]
+        # state.pose.orientation.w = quaternion[3]
+
+        # print_messages(
+        #    "en _gazebo_set_random_pose_f1_follow_rigth_lane()",
+        #    random_init=random_init,
+        #    start_random_pose=self.start_random_pose,
+        #    start_pose=self.start_pose,
+        #    start_random_pose0=self.start_random_pose[random_init][0],
+        #    start_random_pose1=self.start_random_pose[random_init][1],
+        #    start_random_pose2=self.start_random_pose[random_init][2],
+        #    start_random_pose3=self.start_random_pose[random_init][3],
+        #    start_random_pose4=self.start_random_pose[random_init][4],
+        #    start_random_pose5=self.start_random_pose[random_init][5],
+        #    state_pose_position=state.pose.position,
+        #    state_pose_orientation=state.pose.orientation,
+        #    model_state_name=self.model_state_name,
+        # )
+
+        rospy.wait_for_service("/gazebo/set_model_state")
+        try:
+            set_state = rospy.ServiceProxy("/gazebo/set_model_state", SetModelState)
+            set_state(state)
+        except rospy.ServiceException as e:
+            print(f"Service call failed: {e}")
+        return pos_number
+
     def _render(self, mode="human", close=False):
 
         if close:
