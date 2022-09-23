@@ -364,31 +364,36 @@ class GazeboEnv(gym.Env):
         state.pose.position.y = self.start_random_pose[random_init][1]
         state.pose.position.z = self.start_random_pose[random_init][2]
         # Pose orientation
-        quaternion = quaternion_from_euler(
-            self.start_random_pose[random_init][3],
-            self.start_random_pose[random_init][4],
-            self.start_random_pose[random_init][5],
-        )
-        state.pose.orientation.x = quaternion[0]
-        state.pose.orientation.y = quaternion[1]
-        state.pose.orientation.z = quaternion[2]
-        state.pose.orientation.w = quaternion[3]
+        state.pose.orientation.x = self.start_random_pose[random_init][3]
+        state.pose.orientation.y = self.start_random_pose[random_init][4]
+        state.pose.orientation.z = self.start_random_pose[random_init][5]
+        state.pose.orientation.w = self.start_random_pose[random_init][6]
 
-        print_messages(
-            "en _gazebo_set_random_pose_f1_follow_rigth_lane()",
-            random_init=random_init,
-            start_random_pose=self.start_random_pose,
-            start_pose=self.start_pose,
-            start_random_pose0=self.start_random_pose[random_init][0],
-            start_random_pose1=self.start_random_pose[random_init][1],
-            start_random_pose2=self.start_random_pose[random_init][2],
-            start_random_pose3=self.start_random_pose[random_init][3],
-            start_random_pose4=self.start_random_pose[random_init][4],
-            start_random_pose5=self.start_random_pose[random_init][5],
-            state_pose_position=state.pose.position,
-            state_pose_orientation=state.pose.orientation,
-            model_state_name=self.model_state_name,
-        )
+        # quaternion = quaternion_from_euler(
+        #    self.start_random_pose[random_init][3],
+        #    self.start_random_pose[random_init][4],
+        #    self.start_random_pose[random_init][5],
+        # )
+        # state.pose.orientation.x = quaternion[0]
+        # state.pose.orientation.y = quaternion[1]
+        # state.pose.orientation.z = quaternion[2]
+        # state.pose.orientation.w = quaternion[3]
+
+        # print_messages(
+        #    "en _gazebo_set_random_pose_f1_follow_rigth_lane()",
+        #    random_init=random_init,
+        #    start_random_pose=self.start_random_pose,
+        #    start_pose=self.start_pose,
+        #    start_random_pose0=self.start_random_pose[random_init][0],
+        #    start_random_pose1=self.start_random_pose[random_init][1],
+        #    start_random_pose2=self.start_random_pose[random_init][2],
+        #    start_random_pose3=self.start_random_pose[random_init][3],
+        #    start_random_pose4=self.start_random_pose[random_init][4],
+        #    start_random_pose5=self.start_random_pose[random_init][5],
+        #    state_pose_position=state.pose.position,
+        #    state_pose_orientation=state.pose.orientation,
+        #    model_state_name=self.model_state_name,
+        # )
 
         rospy.wait_for_service("/gazebo/set_model_state")
         try:
