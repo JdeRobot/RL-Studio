@@ -160,9 +160,9 @@ def plot_fails_success_comparisson(unsuccessful_episodes_count, success_rewards,
     ax17.plot(range(RUNS - unsuccessful_episodes_count), success_rewards)
     ax17.set(title="CUMULATED REWARD PER STEP:  init pos random level = " + str(RANDOM_START_LEVEL)
                    + ", perturbation level = " + str(RANDOM_PERTURBATIONS_LEVEL) + " and intensity = " +
-                   str(PERTURBATIONS_INTENSITY), ylabel="FAILURES")
+                   str(PERTURBATIONS_INTENSITY), ylabel="SUCCESS")
     ax18.plot(range(unsuccessful_episodes_count), unsuccess_rewards)
-    ax18.set(ylabel="SUCCESS")
+    ax18.set(ylabel="FAILURES")
 
 
 def show_monitoring():
