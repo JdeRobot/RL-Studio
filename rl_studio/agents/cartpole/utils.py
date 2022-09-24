@@ -47,14 +47,14 @@ def save_model(qlearn, current_time, states, states_counter, states_rewards):
 def save_dqn_model(dqn, current_time, average):
     base_file_name = "_epsilon_{}".format(round(epsilon, 2))
     file_dump = open(
-        "./checkpoints/dqn_models/1_" + current_time + base_file_name + "_DQN_WEIGHTS_avg_" + str(average) + ".pkl",
+        "./checkpoints/cartpole/dqn_models/1_" + current_time + base_file_name + "_DQN_WEIGHTS_avg_" + str(average) + ".pkl",
         "wb",
     )
     pickle.dump(dqn.q_net, file_dump)
 
 
-def save_actions(actions, start_time):
-    file_dump = open("./checkpoints/qlearn_models/actions_set_" + start_time, "wb")
+def save_actions_qlearn(actions, start_time):
+    file_dump = open("./checkpoints/cartpole/qlearn_models/actions_set_" + start_time, "wb")
     pickle.dump(actions, file_dump)
 
 

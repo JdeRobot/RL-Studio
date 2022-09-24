@@ -2,9 +2,8 @@ settings:
   output_dir: "./logs/"
   save_model: True
   save_positions: True
-  debug_level: DEBUG
   telemetry: False
-
+  logging_level: info
 
 # TODO make this section optional
 actions:

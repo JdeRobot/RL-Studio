@@ -4,6 +4,8 @@ import random
 
 import gym
 
+import logging
+
 from rl_studio.agents.cartpole.utils import plot_random_perturbations_monitoring, plot_random_start_level_monitoring, \
     show_monitoring
 from rl_studio.wrappers.inference_rlstudio import InferencerWrapper
@@ -23,6 +25,15 @@ class DQNCartpoleInferencer:
         self.env_name = params.environment["params"]["env_name"]
         self.config = params.settings["params"]
         self.RANDOM_START_LEVEL = self.environment_params["random_start_level"]
+
+        if self.config["logging_level"] == "debug":
+            self.LOGGING_LEVEL = logging.DEBUG
+        elif self.config["logging_level"] == "error":
+            self.LOGGING_LEVEL = logging.ERROR
+        elif self.config["logging_level"] == "critical":
+            self.LOGGING_LEVEL = logging.CRITICAL
+        else:
+            self.LOGGING_LEVEL = logging.INFO
 
         self.env = gym.make(self.env_name, random_start_level=self.RANDOM_START_LEVEL)
         self.RUNS = self.environment_params["runs"]
@@ -50,16 +61,23 @@ class DQNCartpoleInferencer:
         self.inferencer = InferencerWrapper("dqn", inference_file, env=self.env)
 
     def print_init_info(self):
-        print(JDEROBOT)
-        print(JDEROBOT_LOGO)
-        print(f"\t- Start hour: {datetime.datetime.now()}\n")
-        print(f"\t- self.environment params:\n{self.environment_params}")
+        logging.info(JDEROBOT)
+        logging.info(JDEROBOT_LOGO)
+        logging.info(f"\t- Start hour: {datetime.datetime.now()}\n")
+        logging.info(f"\t- self.environment params:\n{self.environment_params}")
 
     def main(self):
+        epoch_start_time = datetime.datetime.now()
 
+        logs_dir = 'logs/cartpole/dqn/inference/'
+        logs_file_name = 'logs_file_' + str(self.RANDOM_START_LEVEL) + '_' + str(
+            self.RANDOM_PERTURBATIONS_LEVEL) + '_' + str(epoch_start_time) \
+                         + str(self.PERTURBATIONS_INTENSITY) + '.log'
+        logging.basicConfig(filename=logs_dir + logs_file_name, filemode='a',
+                            level=self.LOGGING_LEVEL,
+                            format='%(name)s - %(levelname)s - %(message)s')
         self.print_init_info()
 
-        epoch_start_time = datetime.datetime.now()
         unsuccessful_episodes_count = 0
         unsuccessful_initial_states = []
         successful_initial_states = []
@@ -71,7 +89,7 @@ class DQNCartpoleInferencer:
         unsuccess_max_perturbations_in_twenty_run = []
         last_ten_steps = []
 
-        print(LETS_GO)
+        logging.info(LETS_GO)
         total_reward_in_epoch = 0
         for run in tqdm(range(self.RUNS)):
             max_perturbations_in_twenty = 0
@@ -90,6 +108,7 @@ class DQNCartpoleInferencer:
                 if random.uniform(0, 1) < self.RANDOM_PERTURBATIONS_LEVEL:
                     perturbation_action = random.randrange(self.env.action_space.n)
                     self.env.step(self.PERTURBATIONS_INTENSITY * perturbation_action)
+                    logging.info("perturbated in step {} with action {}".format(rew, perturbation_action))
 
                     if rew > 20:
                         last_ten_steps.append(1)
@@ -112,14 +131,9 @@ class DQNCartpoleInferencer:
             if run % self.UPDATE_EVERY == 0:
                 time_spent = datetime.datetime.now() - epoch_start_time
                 epoch_start_time = datetime.datetime.now()
-                print(
-                    "\nRun:",
-                    run,
-                    "Average:",
-                    total_reward_in_epoch / self.UPDATE_EVERY,
-                    "time spent",
-                    time_spent,
-                )
+                logging.info(
+                    'Run: {0} Average: {1} time spent {2}'.format(run, total_reward_in_epoch / self.UPDATE_EVERY,
+                                                                    str(time_spent)))
                 total_reward_in_epoch = 0
 
             if rew < 500:

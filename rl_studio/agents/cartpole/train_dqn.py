@@ -6,6 +6,8 @@ import gym
 import matplotlib.pyplot as plt
 from tqdm import tqdm
 
+import logging
+
 from rl_studio.agents.cartpole import utils
 from rl_studio.algorithms.dqn_torch import DQN_Agent
 from rl_studio.visual.ascii.images import JDEROBOT_LOGO
@@ -21,6 +23,16 @@ class DQNCartpoleTrainer:
         self.environment_params = params.environment["params"]
         self.env_name = params.environment["params"]["env_name"]
         self.config = params.settings["params"]
+
+        if self.config["logging_level"] == "debug":
+            self.LOGGING_LEVEL = logging.DEBUG
+        elif self.config["logging_level"] == "error":
+            self.LOGGING_LEVEL = logging.ERROR
+        elif self.config["logging_level"] == "critical":
+            self.LOGGING_LEVEL = logging.CRITICAL
+        else:
+            self.LOGGING_LEVEL = logging.INFO
+
         random_start_level = self.environment_params["random_start_level"]
 
         # Unfortunately, max_steps is not working with new_step_api=True and it is not giving any benefit.
@@ -88,10 +100,10 @@ class DQNCartpoleTrainer:
                     break
 
     def print_init_info(self):
-        print(JDEROBOT)
-        print(JDEROBOT_LOGO)
-        print(f"\t- Start hour: {datetime.datetime.now()}\n")
-        print(f"\t- self.environment params:\n{self.environment_params}")
+        logging.info(JDEROBOT)
+        logging.info(JDEROBOT_LOGO)
+        logging.info(f"\t- Start hour: {datetime.datetime.now()}\n")
+        logging.info(f"\t- self.environment params:\n{self.environment_params}")
 
     def evaluate_and_collect(self, state):
         A = self.deepq.get_action(state, self.env.action_space.n, self.epsilon)
@@ -122,15 +134,23 @@ class DQNCartpoleTrainer:
                 rew += reward
                 time.sleep(0.01)
                 self.env.render()
-            print("\ndemonstration episode : {}, reward : {}".format(i, rew))
+            logging.info("\ndemonstration episode : {}, reward : {}".format(i, rew))
 
     def main(self):
+        epoch_start_time = datetime.datetime.now()
 
+        logs_dir = 'logs/cartpole/dqn/training/'
+        logs_file_name = 'logs_file_' + str(self.RANDOM_START_LEVEL) + '_' + str(
+            self.RANDOM_PERTURBATIONS_LEVEL) + '_' + str(epoch_start_time) \
+                         + str(self.PERTURBATIONS_INTENSITY) + '.log'
+        logging.basicConfig(filename=logs_dir + logs_file_name, filemode='a',
+                            level=self.LOGGING_LEVEL,
+                            format='%(name)s - %(levelname)s - %(message)s')
         self.print_init_info()
 
         epoch_start_time = datetime.datetime.now()
         start_time_format = epoch_start_time.strftime("%Y%m%d_%H%M")
-        print(LETS_GO)
+        logging.info(LETS_GO)
 
         number_of_steps = 128
         total_reward_in_epoch = 0
@@ -145,7 +165,10 @@ class DQNCartpoleTrainer:
                 episode_rew += reward
                 total_reward_in_epoch += reward
                 if random.uniform(0, 1) < self.RANDOM_PERTURBATIONS_LEVEL:
-                    self.env.step(random.randrange(self.PERTURBATIONS_INTENSITY * self.env.action_space.n))
+                    perturbation_action = random.randrange(self.env.action_space.n)
+                    self.env.step(self.PERTURBATIONS_INTENSITY * perturbation_action)
+                    logging.debug("perturbated in step {} with action {}".format(episode_rew, perturbation_action))
+
                 if run % self.SHOW_EVERY == 0:
                     self.env.render()
                 if number_of_steps > self.NUMBER_OF_EXPLORATION_STEPS:
@@ -161,22 +184,15 @@ class DQNCartpoleTrainer:
             if run % self.UPDATE_EVERY == 0:
                 time_spent = datetime.datetime.now() - epoch_start_time
                 epoch_start_time = datetime.datetime.now()
-                print(
-                    "\nRun:",
-                    run,
-                    "Average:",
-                    total_reward_in_epoch / self.UPDATE_EVERY,
-                    "epsilon",
-                    self.epsilon,
-                    "time spent",
-                    time_spent,
-                )
+                logging.info(
+                    'Run: {0} Average: {1} time spent {2}'.format(run, total_reward_in_epoch / self.UPDATE_EVERY,
+                                                                  str(time_spent)))
                 if self.config["save_model"] and total_reward_in_epoch / self.UPDATE_EVERY > self.max_avg:
                     self.max_avg = total_reward_in_epoch / self.UPDATE_EVERY
-                    print(f"\nSaving model . . .\n")
+                    logging.info(f"Saving model . . .")
                     utils.save_dqn_model(self.deepq, start_time_format, total_reward_in_epoch / self.UPDATE_EVERY)
                 if (total_reward_in_epoch / self.UPDATE_EVERY) > self.OBJECTIVE_REWARD:
-                    print("Training objective reached!!")
+                    logging.info("Training objective reached!!")
                     break
                 total_reward_in_epoch = 0
 
