@@ -31,15 +31,16 @@ environments:
 #    block_experience_batch: False
     block_experience_batch: False
   #  random_start_level: 0.05
-    random_start_level: 0.45
-    random_perturbations_level: 0.1
+    random_start_level: 0.45 # Number between 0 and 1 that indicates the difficulty of the start position
+    random_perturbations_level: 0 # Number between 0 and 1 that indicates the frequency of the random perturbations
+    perturbations_intensity: 1 # Number between 0 and 1 that indicates the intensity of the random perturbations
 
 inference:
   qlearn:
-    inference_file: /home/ruben/Desktop/my-RL-Studio/rl_studio/logs/qlearn_models/1_20220718_0010_act_set_simple_epsilon_0.01_QTABLE.pkl
-    actions_file: /home/ruben/Desktop/my-RL-Studio/rl_studio/logs/qlearn_models/actions_set_20220718_0010
+    inference_file: /home/ruben/Desktop/my-RL-Studio/rl_studio/checkpoints/qlearn_models/1_20220718_0010_act_set_simple_epsilon_0.01_QTABLE.pkl
+    actions_file: /home/ruben/Desktop/my-RL-Studio/rl_studio/checkpoints/qlearn_models/actions_set_20220718_0010
   dqn:
-    inference_file: /home/ruben/Desktop/my-RL-Studio/rl_studio/logs/dqn_models/1_20220914_2137_epsilon_1_DQN_WEIGHTS_avg_444.835.pkl
+    inference_file: /home/ruben/Desktop/my-RL-Studio/rl_studio/checkpoints/dqn_models/1_20220914_2137_epsilon_1_DQN_WEIGHTS_avg_444.835.pkl
 
 algorithm:
     qlearn:

@@ -42,6 +42,7 @@ class DQNCartpoleTrainer:
             "block_experience_batch"
         ]
         self.RANDOM_PERTURBATIONS_LEVEL = self.environment_params.get("random_perturbations_level", 0)
+        self.PERTURBATIONS_INTENSITY = self.environment_params.get("perturbations_intensity", 0)
 
         self.actions = self.env.action_space.n
 
@@ -144,7 +145,7 @@ class DQNCartpoleTrainer:
                 episode_rew += reward
                 total_reward_in_epoch += reward
                 if random.uniform(0, 1) < self.RANDOM_PERTURBATIONS_LEVEL:
-                    self.env.step(random.randrange(self.env.action_space.n))
+                    self.env.step(random.randrange(self.PERTURBATIONS_INTENSITY * self.env.action_space.n))
                 if run % self.SHOW_EVERY == 0:
                     self.env.render()
                 if number_of_steps > self.NUMBER_OF_EXPLORATION_STEPS:
