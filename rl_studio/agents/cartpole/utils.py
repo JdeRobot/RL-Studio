@@ -153,10 +153,14 @@ def plot_random_perturbations_monitoring(unsuccessful_episodes_count, success_pe
     ax16.plot(range(unsuccessful_episodes_count), unsuccess_rewards)
     ax16.set(ylabel="Rewards")
 
+def plot_fails_success_comparisson(unsuccessful_episodes_count, success_rewards, unsuccess_rewards,
+                                       RUNS, RANDOM_START_LEVEL, RANDOM_PERTURBATIONS_LEVEL, PERTURBATIONS_INTENSITY):
+
     figure5, (ax17, ax18) = plt.subplots(2)
     ax17.plot(range(RUNS - unsuccessful_episodes_count), success_rewards)
-    ax17.set(title="CUMULATED REWARD PER STEP:  perturbation level = " + str(RANDOM_PERTURBATIONS_LEVEL)
-                   + " and intensity = " + str(PERTURBATIONS_INTENSITY), ylabel="FAILURES")
+    ax17.set(title="CUMULATED REWARD PER STEP:  init pos random level = " + str(RANDOM_START_LEVEL)
+                   + ", perturbation level = " + str(RANDOM_PERTURBATIONS_LEVEL) + " and intensity = " +
+                   str(PERTURBATIONS_INTENSITY), ylabel="FAILURES")
     ax18.plot(range(unsuccessful_episodes_count), unsuccess_rewards)
     ax18.set(ylabel="SUCCESS")
 

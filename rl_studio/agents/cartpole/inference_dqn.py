@@ -7,7 +7,7 @@ import gym
 import logging
 
 from rl_studio.agents.cartpole.utils import plot_random_perturbations_monitoring, plot_random_start_level_monitoring, \
-    show_monitoring
+    show_monitoring, plot_fails_success_comparisson
 from rl_studio.wrappers.inference_rlstudio import InferencerWrapper
 from tqdm import tqdm
 
@@ -107,7 +107,8 @@ class DQNCartpoleInferencer:
 
                 if random.uniform(0, 1) < self.RANDOM_PERTURBATIONS_LEVEL:
                     perturbation_action = random.randrange(self.env.action_space.n)
-                    self.env.step(self.PERTURBATIONS_INTENSITY * perturbation_action)
+                    for perturbation in range(self.PERTURBATIONS_INTENSITY):
+                        self.env.step(perturbation_action)
                     logging.info("perturbated in step {} with action {}".format(rew, perturbation_action))
 
                     if rew > 20:
@@ -128,12 +129,14 @@ class DQNCartpoleInferencer:
                     self.env.render()
 
             # monitor progress
-            if run % self.UPDATE_EVERY == 0:
+            if (run+1) % self.UPDATE_EVERY == 0:
                 time_spent = datetime.datetime.now() - epoch_start_time
                 epoch_start_time = datetime.datetime.now()
-                logging.info(
-                    'Run: {0} Average: {1} time spent {2}'.format(run, total_reward_in_epoch / self.UPDATE_EVERY,
-                                                                    str(time_spent)))
+                updates_message = 'Run: {0} Average: {1} time spent {2}'.format(run,
+                                                                                total_reward_in_epoch / self.UPDATE_EVERY,
+                                                                                str(time_spent))
+                logging.info(updates_message)
+                print(updates_message)
                 total_reward_in_epoch = 0
 
             if rew < 500:
@@ -162,5 +165,8 @@ class DQNCartpoleInferencer:
                                                  self.RUNS, self.RANDOM_PERTURBATIONS_LEVEL,
                                                  self.PERTURBATIONS_INTENSITY)
 
-        if self.RANDOM_START_LEVEL > 0 or self.RANDOM_PERTURBATIONS_LEVEL:
-            show_monitoring()
+        plot_fails_success_comparisson(unsuccessful_episodes_count, success_rewards, unsuccess_rewards,
+                                                 self.RUNS, self.RANDOM_START_LEVEL, self.RANDOM_PERTURBATIONS_LEVEL,
+                                                 self.PERTURBATIONS_INTENSITY);
+
+        show_monitoring()

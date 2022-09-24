@@ -166,7 +166,8 @@ class DQNCartpoleTrainer:
                 total_reward_in_epoch += reward
                 if random.uniform(0, 1) < self.RANDOM_PERTURBATIONS_LEVEL:
                     perturbation_action = random.randrange(self.env.action_space.n)
-                    self.env.step(self.PERTURBATIONS_INTENSITY * perturbation_action)
+                    for perturbation in range(self.PERTURBATIONS_INTENSITY):
+                        self.env.step(perturbation_action)
                     logging.debug("perturbated in step {} with action {}".format(episode_rew, perturbation_action))
 
                 if run % self.SHOW_EVERY == 0:
@@ -181,12 +182,13 @@ class DQNCartpoleTrainer:
             self.gather_statistics(losses, ep_len, episode_rew)
 
             # monitor progress
-            if run % self.UPDATE_EVERY == 0:
+            if (run+1) % self.UPDATE_EVERY == 0:
                 time_spent = datetime.datetime.now() - epoch_start_time
                 epoch_start_time = datetime.datetime.now()
-                logging.info(
-                    'Run: {0} Average: {1} time spent {2}'.format(run, total_reward_in_epoch / self.UPDATE_EVERY,
-                                                                  str(time_spent)))
+                updates_message = 'Run: {0} Average: {1} time spent {2}'.format(run, total_reward_in_epoch / self.UPDATE_EVERY,
+                                                              str(time_spent))
+                logging.info(updates_message)
+                print(updates_message)
                 if self.config["save_model"] and total_reward_in_epoch / self.UPDATE_EVERY > self.max_avg:
                     self.max_avg = total_reward_in_epoch / self.UPDATE_EVERY
                     logging.info(f"Saving model . . .")
