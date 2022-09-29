@@ -49,7 +49,6 @@ class QLearnCartpoleTrainer:
         self.last_time_steps = np.ndarray(0)
 
         self.config = params.settings["params"]
-        self.outdir = "./logs/robot_mesh_experiments/"
         self.actions = range(self.env.action_space.n)
         self.env.done = True
 

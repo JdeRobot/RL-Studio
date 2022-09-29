@@ -1,5 +1,6 @@
 import datetime
 import time
+import random
 
 import gym
 import matplotlib.pyplot as plt
@@ -20,7 +21,7 @@ class DQNCartpoleTrainer:
         self.environment_params = params.environment["params"]
         self.env_name = params.environment["params"]["env_name"]
         self.config = params.settings["params"]
-        random_start_level = self.config["random_start_level"]
+        random_start_level = self.environment_params["random_start_level"]
 
         # Unfortunately, max_steps is not working with new_step_api=True and it is not giving any benefit.
         # self.env = gym.make(self.env_name, new_step_api=True, random_start_level=random_start_level)
@@ -40,6 +41,9 @@ class DQNCartpoleTrainer:
         self.BLOCKED_EXPERIENCE_BATCH = self.environment_params[
             "block_experience_batch"
         ]
+        self.RANDOM_PERTURBATIONS_LEVEL = self.environment_params.get("random_perturbations_level", 0)
+        self.PERTURBATIONS_INTENSITY = self.environment_params.get("perturbations_intensity", 0)
+
         self.actions = self.env.action_space.n
 
         self.losses_list, self.reward_list, self.episode_len_list, self.epsilon_list = (
@@ -66,7 +70,7 @@ class DQNCartpoleTrainer:
             gamma=self.GAMMA,
             block_batch=self.BLOCKED_EXPERIENCE_BATCH
         )
-        self.max_avg=0
+        self.max_avg = 0
         self.initialize_experience_replay()
 
     def initialize_experience_replay(self):
@@ -140,9 +144,10 @@ class DQNCartpoleTrainer:
                 state = next_state
                 episode_rew += reward
                 total_reward_in_epoch += reward
+                if random.uniform(0, 1) < self.RANDOM_PERTURBATIONS_LEVEL:
+                    self.env.step(random.randrange(self.PERTURBATIONS_INTENSITY * self.env.action_space.n))
                 if run % self.SHOW_EVERY == 0:
                     self.env.render()
-
                 if number_of_steps > self.NUMBER_OF_EXPLORATION_STEPS:
                     number_of_steps = 0
                     losses += self.train_in_batches(4, 16)
@@ -166,10 +171,10 @@ class DQNCartpoleTrainer:
                     "time spent",
                     time_spent,
                 )
-                if self.config["save_model"] and total_reward_in_epoch / self.UPDATE_EVERY>self.max_avg:
-                    self.max_avg =  total_reward_in_epoch / self.UPDATE_EVERY
+                if self.config["save_model"] and total_reward_in_epoch / self.UPDATE_EVERY > self.max_avg:
+                    self.max_avg = total_reward_in_epoch / self.UPDATE_EVERY
                     print(f"\nSaving model . . .\n")
-                    utils.save_dqn_model(self.deepq, start_time_format,  total_reward_in_epoch / self.UPDATE_EVERY)
+                    utils.save_dqn_model(self.deepq, start_time_format, total_reward_in_epoch / self.UPDATE_EVERY)
                 if (total_reward_in_epoch / self.UPDATE_EVERY) > self.OBJECTIVE_REWARD:
                     print("Training objective reached!!")
                     break
