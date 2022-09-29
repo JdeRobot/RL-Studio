@@ -88,16 +88,15 @@ class F1CameraEnv(F1Env):
                 (self.config.height, self.config.width), dtype=np.uint8
             )
             for idx, point in enumerate(centrals):
-                # mask_points[x_row[idx], centrals[idx]] = 255
                 cv2.line(
-                    mask_points,
+                    img_proc,
                     (int(point), int(self.config.x_row[idx])),
                     (int(point), int(self.config.x_row[idx])),
                     (255, 255, 255),
                     thickness=3,
                 )
 
-            cv2.imshow("MASK", mask_points[240:])
+            cv2.imshow("MASK + POINT", img_proc)
             cv2.waitKey(3)
 
         return centrals
