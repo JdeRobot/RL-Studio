@@ -16,7 +16,6 @@ settings:
   output_dir: "./logs/"
   save_model: True
   save_positions: True
-  debug_level: DEBUG
   telemetry: False
   telemetry_mask: False
   plotter_graphic: False

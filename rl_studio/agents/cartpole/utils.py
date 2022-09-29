@@ -47,14 +47,14 @@ def save_model(qlearn, current_time, states, states_counter, states_rewards):
 def save_dqn_model(dqn, current_time, average):
     base_file_name = "_epsilon_{}".format(round(epsilon, 2))
     file_dump = open(
-        "./checkpoints/dqn_models/1_" + current_time + base_file_name + "_DQN_WEIGHTS_avg_" + str(average) + ".pkl",
+        "./checkpoints/cartpole/dqn_models/1_" + current_time + base_file_name + "_DQN_WEIGHTS_avg_" + str(average) + ".pkl",
         "wb",
     )
     pickle.dump(dqn.q_net, file_dump)
 
 
-def save_actions(actions, start_time):
-    file_dump = open("./checkpoints/qlearn_models/actions_set_" + start_time, "wb")
+def save_actions_qlearn(actions, start_time):
+    file_dump = open("./checkpoints/cartpole/qlearn_models/actions_set_" + start_time, "wb")
     pickle.dump(actions, file_dump)
 
 
@@ -153,12 +153,16 @@ def plot_random_perturbations_monitoring(unsuccessful_episodes_count, success_pe
     ax16.plot(range(unsuccessful_episodes_count), unsuccess_rewards)
     ax16.set(ylabel="Rewards")
 
+def plot_fails_success_comparisson(unsuccessful_episodes_count, success_rewards, unsuccess_rewards,
+                                       RUNS, RANDOM_START_LEVEL, RANDOM_PERTURBATIONS_LEVEL, PERTURBATIONS_INTENSITY):
+
     figure5, (ax17, ax18) = plt.subplots(2)
     ax17.plot(range(RUNS - unsuccessful_episodes_count), success_rewards)
-    ax17.set(title="CUMULATED REWARD PER STEP:  perturbation level = " + str(RANDOM_PERTURBATIONS_LEVEL)
-                   + " and intensity = " + str(PERTURBATIONS_INTENSITY), ylabel="FAILURES")
+    ax17.set(title="CUMULATED REWARD PER STEP:  init pos random level = " + str(RANDOM_START_LEVEL)
+                   + ", perturbation level = " + str(RANDOM_PERTURBATIONS_LEVEL) + " and intensity = " +
+                   str(PERTURBATIONS_INTENSITY), ylabel="SUCCESS")
     ax18.plot(range(unsuccessful_episodes_count), unsuccess_rewards)
-    ax18.set(ylabel="SUCCESS")
+    ax18.set(ylabel="FAILURES")
 
 
 def show_monitoring():
