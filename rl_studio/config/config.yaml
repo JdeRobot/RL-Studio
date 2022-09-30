@@ -59,7 +59,7 @@ agent:
       new_image_size: 32
       num_regions: 16
     states:
-      state_space: image #sp1
+      state_space: sp1 #sp1
       image:
         0: [3]
       sp1: 
@@ -130,8 +130,8 @@ agent:
 #####################################################################################
 
 actions:
-    actions_number: 5
-    actions_set: autoparking_simple #simple
+    actions_number: 3
+    actions_set: simple #simple
     available_actions:
       simple:
         0: [ 3, 0 ]
@@ -181,13 +181,13 @@ environments:
   simple:
     env_name: F1Env-v0
     circuit_name: simple
-    training_type: dqn #qlearn_camera, ddpg, dqn
+    training_type: qlearn_camera #qlearn_camera, ddpg, dqn
     launchfile: simple_circuit.launch
     environment_folder: f1
     robot_name: f1_renault
     start_pose: 0 # 0, 1, 2, 3, 4
     alternate_pose: False
-    estimated_steps: 4000
+    estimated_steps: 15_000
     sensor: camera
     circuit_positions_set:
       0: [53.462, -41.988, 0.004, 0, 0, 1.57, -1.57]

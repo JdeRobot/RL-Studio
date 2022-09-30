@@ -350,13 +350,13 @@ class DDPGAgent:
         sampled_actions = tf.squeeze(self.actor_model(state))
         # Adding noise to action
         sampled_actions = sampled_actions.numpy()
-        print(f"sampled_actions:{sampled_actions}")
+        # print(f"sampled_actions:{sampled_actions}")
         sampled_actions = np.argmax(sampled_actions)
-        print(f"sampled_actions:{sampled_actions}")
+        # print(f"sampled_actions:{sampled_actions}")
         # We make sure action is within bounds
         # legal_action = np.clip(sampled_actions, self.LOWER_BOUND, self.UPPER_BOUND)
         legal_action = sampled_actions
-        print(f"np.squeeze(legal_action):{np.squeeze(legal_action)}")
+        # print(f"np.squeeze(legal_action):{np.squeeze(legal_action)}")
         return np.squeeze(legal_action)
 
     def get_actor_model_simplified_perception_discrete_actions_nan(self):
