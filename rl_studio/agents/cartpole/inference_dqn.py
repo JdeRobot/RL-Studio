@@ -108,7 +108,7 @@ class DQNCartpoleInferencer:
                 if random.uniform(0, 1) < self.RANDOM_PERTURBATIONS_LEVEL:
                     perturbation_action = random.randrange(self.env.action_space.n)
                     for perturbation in range(self.PERTURBATIONS_INTENSITY):
-                        self.env.step(perturbation_action)
+                        self.env.perturbate(perturbation_action)
                     logging.info("perturbated in step {} with action {}".format(rew, perturbation_action))
 
                     if rew > 20:

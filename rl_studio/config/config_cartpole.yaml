@@ -22,24 +22,24 @@ environments:
     env_name: myCartpole-v0
     environment_folder: cartpole
 #    runs: 20000
-    runs: 300
+    runs: 50
     full_experimentation_runs: 0
-    update_every: 300
-    show_every: 4000
-    objective_reward: 400
+    update_every: 1
+    show_every: 1
+    objective_reward: 470
 #    block_experience_batch: False
     block_experience_batch: False
   #  random_start_level: 0.05
     random_start_level: 0.1 # Number between 0 and 1 that indicates the difficulty of the start position
-    random_perturbations_level: 0 # Number between 0 and 1 that indicates the frequency of the random perturbations
-    perturbations_intensity: 1 # Number between 0 and 1 that indicates the intensity of the random perturbations
+    random_perturbations_level: 0.1 # Number between 0 and 1 that indicates the frequency of the random perturbations
+    perturbations_intensity: 1 # Integer that indicates the intensity of the random perturbations
 
 inference:
   qlearn:
     inference_file: /home/ruben/Desktop/my-RL-Studio/rl_studio/checkpoints/qlearn_models/1_20220718_0010_act_set_simple_epsilon_0.01_QTABLE.pkl
     actions_file: /home/ruben/Desktop/my-RL-Studio/rl_studio/checkpoints/qlearn_models/actions_set_20220718_0010
   dqn:
-    inference_file: /home/ruben/Desktop/my-RL-Studio/rl_studio/checkpoints/dqn_models/1_20220914_2137_epsilon_1_DQN_WEIGHTS_avg_444.835.pkl
+    inference_file: /home/ruben/Desktop/my-RL-Studio/rl_studio/checkpoints/cartpole/dqn_models/1_20220914_2153_epsilon_1_DQN_WEIGHTS_avg_455.995.pkl
 
 algorithm:
     qlearn:
