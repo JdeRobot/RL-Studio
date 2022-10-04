@@ -148,12 +148,9 @@ class QLearnCartpoleTrainer:
 
         if self.config["save_model"]:
             print(f"\nSaving model . . .\n")
-            utils.save_model(
+            utils.save_model_qlearn(
                 self.qlearn,
-                start_time_format,
-                self.metrics,
-                self.states_counter,
-                self.states_reward,
+                start_time_format
             )
         self.env.close()
 

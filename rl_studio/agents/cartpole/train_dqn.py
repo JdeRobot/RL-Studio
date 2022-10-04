@@ -55,6 +55,7 @@ class DQNCartpoleTrainer:
         ]
         self.RANDOM_PERTURBATIONS_LEVEL = self.environment_params.get("random_perturbations_level", 0)
         self.PERTURBATIONS_INTENSITY = self.environment_params.get("perturbations_intensity", 0)
+        self.RANDOM_START_LEVEL = self.environment_params["random_start_level"]
 
         self.actions = self.env.action_space.n
 
@@ -167,7 +168,7 @@ class DQNCartpoleTrainer:
                 if random.uniform(0, 1) < self.RANDOM_PERTURBATIONS_LEVEL:
                     perturbation_action = random.randrange(self.env.action_space.n)
                     for perturbation in range(self.PERTURBATIONS_INTENSITY):
-                        self.env.step(perturbation_action)
+                        self.env.perturbate(perturbation_action)
                     logging.debug("perturbated in step {} with action {}".format(episode_rew, perturbation_action))
 
                 if run % self.SHOW_EVERY == 0:
@@ -185,8 +186,8 @@ class DQNCartpoleTrainer:
             if (run+1) % self.UPDATE_EVERY == 0:
                 time_spent = datetime.datetime.now() - epoch_start_time
                 epoch_start_time = datetime.datetime.now()
-                updates_message = 'Run: {0} Average: {1} time spent {2}'.format(run, total_reward_in_epoch / self.UPDATE_EVERY,
-                                                              str(time_spent))
+                updates_message = 'Run: {0} Average: {1} epsilon {2} time spent {3}'.format(run, total_reward_in_epoch / self.UPDATE_EVERY,
+                                                                                     self.epsilon, str(time_spent))
                 logging.info(updates_message)
                 print(updates_message)
                 if self.config["save_model"] and total_reward_in_epoch / self.UPDATE_EVERY > self.max_avg:

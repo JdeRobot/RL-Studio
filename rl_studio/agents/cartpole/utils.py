@@ -14,7 +14,7 @@ END_EPSILON_DECAYING = 10000 // 2
 epsilon_decay_value = epsilon / (END_EPSILON_DECAYING - START_EPSILON_DECAYING)
 
 
-def save_model(qlearn, current_time, states, states_counter, states_rewards):
+def save_model_qlearn(qlearn, current_time):
     # Tabular RL: Tabular Q-learning basically stores the policy (Q-values) of  the agent into a matrix of shape
     # (S x A), where s are all states, a are all the possible actions. After the environment is solved, just save this
     # matrix as a csv file. I have a quick implementation of this on my GitHub under Reinforcement Learning.
@@ -23,31 +23,15 @@ def save_model(qlearn, current_time, states, states_counter, states_rewards):
     # Q TABLE
     base_file_name = "_epsilon_{}".format(round(qlearn.epsilon, 3))
     file_dump = open(
-        "./logs/qlearn_models/1_" + current_time + base_file_name + "_QTABLE.pkl", "wb"
+        "./checkpoints/cartpole/qlearn_models/" + current_time + base_file_name + "_QTABLE.pkl_avg_.pkl",
+        "wb"
     )
     pickle.dump(qlearn.q, file_dump)
-    # STATES COUNTER
-    states_counter_file_name = base_file_name + "_STATES_COUNTER.pkl"
-    file_dump = open(
-        "./logs/qlearn_models/2_" + current_time + states_counter_file_name, "wb"
-    )
-    pickle.dump(states_counter, file_dump)
-    # STATES CUMULATED REWARD
-    states_cum_reward_file_name = base_file_name + "_STATES_CUM_REWARD.pkl"
-    file_dump = open(
-        "./logs/qlearn_models/3_" + current_time + states_cum_reward_file_name, "wb"
-    )
-    pickle.dump(states_rewards, file_dump)
-    # STATES
-    steps = base_file_name + "_STATES_STEPS.pkl"
-    file_dump = open("./logs/qlearn_models/4_" + current_time + steps, "wb")
-    pickle.dump(states, file_dump)
-
 
 def save_dqn_model(dqn, current_time, average):
     base_file_name = "_epsilon_{}".format(round(epsilon, 2))
     file_dump = open(
-        "./checkpoints/cartpole/dqn_models/1_" + current_time + base_file_name + "_DQN_WEIGHTS_avg_" + str(average) + ".pkl",
+        "./checkpoints/cartpole/dqn_models/" + current_time + base_file_name + "_DQN_WEIGHTS_avg_" + str(average) + ".pkl",
         "wb",
     )
     pickle.dump(dqn.q_net, file_dump)
