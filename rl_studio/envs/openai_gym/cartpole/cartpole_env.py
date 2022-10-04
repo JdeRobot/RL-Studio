@@ -6,6 +6,7 @@ permalink: https://perma.cc/C9ZM-652R
 import math
 from typing import Optional, Union
 
+# Note that this environment needs gym==0.25.0 to work
 import gym
 import numpy as np
 from gym import logger, spaces

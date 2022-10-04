@@ -9,9 +9,11 @@ from torch import nn
 
 class DQN_Agent:
     def __init__(
-        self, layer_sizes, lr=1e-3, sync_freq=5, exp_replay_size=256, seed=1423, gamma=0
+            self, layer_sizes, lr=1e-3, sync_freq=5, exp_replay_size=256, seed=1423, gamma=0, block_batch=False
     ):
 
+        self.exp_replay_size = exp_replay_size
+        self.block_batch = block_batch
         torch.manual_seed(seed)
         self.q_net = self.build_nn(layer_sizes)
         self.target_net = copy.deepcopy(self.q_net)
@@ -23,7 +25,11 @@ class DQN_Agent:
         self.network_sync_freq = sync_freq
         self.network_sync_counter = 0
         self.gamma = torch.tensor(gamma).float().cuda()
-        self.experience_replay = deque(maxlen=exp_replay_size)
+        if block_batch:
+            self.blocked_batch = deque(maxlen=int(exp_replay_size / 4))
+            self.experience_replay = deque(maxlen=int(3 * exp_replay_size / 4))
+        else:
+            self.experience_replay = deque(maxlen=exp_replay_size)
         return
 
     def build_nn(self, layer_sizes):
@@ -41,14 +47,8 @@ class DQN_Agent:
         with torch.no_grad():
             Qp = self.q_net(torch.from_numpy(state).float().cuda())
         Q, A = torch.max(Qp, axis=0)
-        A = (
-            A
-            if torch.rand(
-                1,
-            ).item()
-            > epsilon
-            else torch.randint(0, action_space_len, (1,))
-        )
+        A = (A if torch.rand(1,).item() >= epsilon
+            else torch.randint(0, action_space_len, (1,)))
         return A
 
     def get_q_next(self, state):
@@ -58,13 +58,21 @@ class DQN_Agent:
         return q
 
     def collect_experience(self, experience):
-        self.experience_replay.append(experience)
+        if self.block_batch and len(self.blocked_batch) < self.exp_replay_size / 4:
+            self.blocked_batch.append(experience)
+        else:
+            self.experience_replay.append(experience)
         return
 
     def sample_from_experience(self, sample_size):
-        if len(self.experience_replay) < sample_size:
-            sample_size = len(self.experience_replay)
-        sample = random.sample(self.experience_replay, sample_size)
+        if self.block_batch and random.uniform(0, 1) >= 0.25:
+            batch = self.blocked_batch
+        else:
+            batch = self.experience_replay
+
+        if len(batch) < sample_size:
+            sample_size = len(batch)
+        sample = random.sample(batch, sample_size)
         s = torch.tensor([exp[0] for exp in sample]).float()
         a = torch.tensor([exp[1] for exp in sample]).float()
         rn = torch.tensor([exp[2] for exp in sample]).float()

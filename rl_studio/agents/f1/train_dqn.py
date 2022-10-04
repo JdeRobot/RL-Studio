@@ -1,25 +1,26 @@
+from datetime import datetime, timedelta
+from distutils.dir_util import copy_tree
 import json
 import os
 import random
 import time
-from datetime import datetime, timedelta
-from distutils.dir_util import copy_tree
 
 import gym
+from keras import backend as K
 import matplotlib.pyplot as plt
 import numpy as np
 import tensorflow as tf
-from agents.utils import (
+from tqdm import tqdm
+
+from rl_studio.agents.utils import (
     print_messages,
     render_params,
     save_agent_physics,
     save_stats_episodes,
 )
-from keras import backend as K
-from rl_studio.algorithms.dqn import DeepQ, ModifiedTensorBoard, DQNF1FollowLine
-from tqdm import tqdm
-from visual.ascii.images import JDEROBOT_LOGO
-from visual.ascii.text import JDEROBOT, LETS_GO
+from rl_studio.algorithms.dqn_keras import DeepQ, ModifiedTensorBoard, DQNF1FollowLine
+from rl_studio.visual.ascii.images import JDEROBOT_LOGO
+from rl_studio.visual.ascii.text import JDEROBOT, LETS_GO
 
 
 class DQNF1FollowLineTrainer:
@@ -99,28 +100,28 @@ class DQNF1FollowLineTrainer:
         ]
         # Env
         self.environment["env"] = params.environment["params"]["env_name"]
+        self.environment["circuit_name"] = params.environment["params"]["circuit_name"]
         self.environment["training_type"] = params.environment["params"][
             "training_type"
         ]
-        self.environment["circuit_name"] = params.environment["params"]["circuit_name"]
         self.environment["launchfile"] = params.environment["params"]["launchfile"]
         self.environment["environment_folder"] = params.environment["params"][
             "environment_folder"
         ]
-        self.environment["gazebo_start_pose"] = [
-            params.environment["params"]["circuit_positions_set"][1][0],
-            params.environment["params"]["circuit_positions_set"][1][1],
+        self.environment["estimated_steps"] = params.environment["params"][
+            "estimated_steps"
         ]
         self.environment["alternate_pose"] = params.environment["params"][
             "alternate_pose"
         ]
+        self.environment["sensor"] = params.environment["params"]["sensor"]
+        self.environment["gazebo_start_pose"] = [
+            params.environment["params"]["circuit_positions_set"][0]
+        ]
+
         self.environment["gazebo_random_start_pose"] = params.environment["params"][
             "circuit_positions_set"
         ]
-        self.environment["estimated_steps"] = params.environment["params"][
-            "estimated_steps"
-        ]
-        self.environment["sensor"] = params.environment["params"]["sensor"]
         self.environment["telemetry_mask"] = params.settings["params"]["telemetry_mask"]
 
         # Image
@@ -169,12 +170,12 @@ class DQNF1FollowLineTrainer:
         self.environment["min_reward"] = params.agent["params"]["rewards"][
             self.reward_function
         ]["min_reward"]
-        self.environment["beta_1"] = params.agent["params"]["rewards"][
-            "linear_follow_line"
-        ]["beta_1"]
-        self.environment["beta_0"] = params.agent["params"]["rewards"][
-            "linear_follow_line"
-        ]["beta_0"]
+        # self.environment["beta_1"] = params.agent["params"]["rewards"][
+        #    "linear_follow_line"
+        # ]["beta_1"]
+        # self.environment["beta_0"] = params.agent["params"]["rewards"][
+        #    "linear_follow_line"
+        # ]["beta_0"]
 
         # Algorithm
         self.environment["replay_memory_size"] = params.algorithm["params"][
@@ -285,10 +286,10 @@ class DQNF1FollowLineTrainer:
 
                 # render params
                 render_params(
-                    action=action,
-                    reward_in_step=reward,
                     episode=episode,
                     step=step,
+                    action=action,
+                    reward_in_step=reward,
                 )
 
                 # Showing stats in terminal for monitoring. Showing every 'save_every_step' value

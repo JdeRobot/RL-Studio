@@ -1,10 +1,12 @@
 import datetime
 import time
+import cv2
 from functools import reduce
 from pprint import pprint
 
 import gym
 import numpy as np
+import matplotlib.pyplot as plt
 
 from rl_studio.agents import liveplot
 from rl_studio.agents.f1 import utils
@@ -149,6 +151,16 @@ class F1Trainer:
                     last_time_steps = np.append(last_time_steps, [int(step + 1)])
                     stats[int(episode)] = step
                     states_reward[int(episode)] = cumulated_reward
+
+                    # if config.plotter_graphic:
+                    # plotter.plot(env)
+
+                    plt.plot(list(states_reward.values()))
+                    plt.savefig('rewards_per_episode_plot.png')
+                    rewards_per_episode_plot = cv2.imread('rewards_per_episode_plot.png')
+                    cv2.imshow("REWARDS - EPISODES ", rewards_per_episode_plot)
+                    cv2.waitKey(3)
+
                     print(
                         f"EP: {episode + 1} - epsilon: {round(qlearn.epsilon, 2)} - Reward: {cumulated_reward}"
                         f" - Time: {start_time_format} - Steps: {step}"
@@ -180,7 +192,7 @@ class F1Trainer:
                     )
                     print(
                         f"\t- epsilon: {round(qlearn.epsilon, 2)}\n\t- cum reward: {cumulated_reward}\n\t- dict_size: "
-                        f"{len(qlearn.q)}\n\t- time: {datetime.datetime.now()-start_time}\n\t- steps: {step}\n"
+                        f"{len(qlearn.q)}\n\t- time: {datetime.datetime.now() - start_time}\n\t- steps: {step}\n"
                     )
                     counter = 0
 

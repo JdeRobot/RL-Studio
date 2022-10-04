@@ -49,7 +49,6 @@ class QLearnCartpoleTrainer:
         self.last_time_steps = np.ndarray(0)
 
         self.config = params.settings["params"]
-        self.outdir = "./logs/robot_mesh_experiments/"
         self.actions = range(self.env.action_space.n)
         self.env.done = True
 
@@ -97,7 +96,7 @@ class QLearnCartpoleTrainer:
 
         if self.config["save_model"]:
             print(f"\nSaving actions . . .\n")
-            utils.save_actions(self.actions, start_time_format)
+            utils.save_actions_qlearn(self.actions, start_time_format)
 
         print(LETS_GO)
 
