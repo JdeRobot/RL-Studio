@@ -44,7 +44,7 @@ class F1TrainerDDPG:
         self.model_state_name = params.settings["params"]["model_state_name"]
 
         # environment params
-        self.outdir = f"{params.settings['params']['output_dir']}{params.algorithm['name']}_{params.agent['name']}_{params.environment['params']['sensor']}"
+        self.outdir = f"{params.settings['params']['output_dir']}{params.algorithm['name']}_{params.agent['name']}_{params.settings['params']['task']}_{params.environment['params']['sensor']}"
         self.ep_rewards = []
         self.actions_rewards = {
             "episode": [],
@@ -77,7 +77,7 @@ class F1TrainerDDPG:
         self.save_episodes = params.settings["params"]["save_episodes"]
         self.save_every_step = params.settings["params"]["save_every_step"]
         self.estimated_steps = params.environment["params"]["estimated_steps"]
-
+        self.training_type = params.environment["params"]["training_type"]
         # algorithm params
         self.tau = params.algorithm["params"]["tau"]
         self.gamma = params.algorithm["params"]["gamma"]
@@ -309,14 +309,15 @@ class F1TrainerDDPG:
 
                 # render params
                 render_params(
-                    # v=action[0][0],
-                    # w=action[0][1],
+                    training_type=self.training_type,
+                    v=action[0][0],
+                    w=action[0][1],
                     # Discrete Actions
                     episode=episode,
                     step=step,
                     state=state,
-                    v=self.actions[action][0],
-                    w=self.actions[action][1],
+                    # v=self.actions[action][0], # this case for discrete
+                    # w=self.actions[action][1], # this case for discrete
                     # self.env.image_center,
                     # self.actions_rewards,
                     reward_in_step=reward,
@@ -402,7 +403,7 @@ class F1TrainerDDPG:
             # )
             if (
                 cumulated_reward - self.environment["rewards"]["penal"]
-            ) >= current_max_reward:
+            ) >= current_max_reward and episode > 1:
                 print_messages(
                     "Saving best lap",
                     best_episode_until_now=best_epoch,

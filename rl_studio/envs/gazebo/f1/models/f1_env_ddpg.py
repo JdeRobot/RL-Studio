@@ -756,6 +756,10 @@ class DDPGF1FollowLaneEnvGazebo(F1Env):
             center = (index_real_right - index_real_left) // 2
             center_lane = center + index_real_left
 
+            # avoid finish line or other blank marks on the road
+            if center_lane == 0:
+                center_lane = 320
+
             return center_lane
 
         except ValueError:

@@ -423,11 +423,12 @@ class DDPGAgent:
         noise = noise_object()
         # Adding noise to action
         sampled_actions = sampled_actions.numpy() + noise
+        # we can discretized the actions values with round(,0)
         legal_action_v = round(
-            np.clip(sampled_actions[0], self.V_LOWER_BOUND, self.V_UPPER_BOUND), 0
+            np.clip(sampled_actions[0], self.V_LOWER_BOUND, self.V_UPPER_BOUND), 1
         )
         legal_action_w = round(
-            np.clip(sampled_actions[1], self.W_RIGHT_BOUND, self.W_LEFT_BOUND), 0
+            np.clip(sampled_actions[1], self.W_RIGHT_BOUND, self.W_LEFT_BOUND), 1
         )
         legal_action = np.array([legal_action_v, legal_action_w])
 
@@ -568,8 +569,8 @@ class DDPGAgent:
     def build_branch(self, inputs, action_name):
         last_init = tf.random_uniform_initializer(minval=-0.01, maxval=0.01)
         # inputs = layers.Input(shape=(self.OBSERVATION_SPACE_VALUES))
-        x = Dense(16, activation="relu")(inputs)
-        x = Dense(16, activation="relu")(x)
+        x = Dense(128, activation="relu")(inputs)  # 8, 16, 32 neurons
+        x = Dense(128, activation="relu")(x)  # 8, 16, 32 neurons
 
         x = Dense(1, activation="tanh", kernel_initializer=last_init)(x)
         x = Activation("tanh", name=action_name)(x)
