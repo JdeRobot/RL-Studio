@@ -5,6 +5,7 @@ import random
 import gym
 import matplotlib.pyplot as plt
 from tqdm import tqdm
+import numpy as np
 
 import logging
 
@@ -152,7 +153,7 @@ class DQNCartpoleTrainer:
         epoch_start_time = datetime.datetime.now()
         start_time_format = epoch_start_time.strftime("%Y%m%d_%H%M")
         logging.info(LETS_GO)
-
+        perturbated_before = -1;
         number_of_steps = 128
         total_reward_in_epoch = 0
         for run in tqdm(range(self.RUNS)):
@@ -160,8 +161,9 @@ class DQNCartpoleTrainer:
             while not done:
                 ep_len += 1
                 number_of_steps += 1
-
+                np.append(state, perturbated_before);
                 next_state, reward, done = self.evaluate_and_collect(state)
+                perturbated_before = -1
                 state = next_state
                 episode_rew += reward
                 total_reward_in_epoch += reward
@@ -169,6 +171,7 @@ class DQNCartpoleTrainer:
                     perturbation_action = random.randrange(self.env.action_space.n)
                     for perturbation in range(self.PERTURBATIONS_INTENSITY):
                         self.env.perturbate(perturbation_action)
+                        perturbated_before = perturbation_action
                     logging.debug("perturbated in step {} with action {}".format(episode_rew, perturbation_action))
 
                 if run % self.SHOW_EVERY == 0:
