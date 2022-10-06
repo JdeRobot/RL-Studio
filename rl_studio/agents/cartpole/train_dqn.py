@@ -5,6 +5,7 @@ import random
 import gym
 import matplotlib.pyplot as plt
 from tqdm import tqdm
+import numpy as np
 
 import logging
 
@@ -55,6 +56,7 @@ class DQNCartpoleTrainer:
         ]
         self.RANDOM_PERTURBATIONS_LEVEL = self.environment_params.get("random_perturbations_level", 0)
         self.PERTURBATIONS_INTENSITY = self.environment_params.get("perturbations_intensity", 0)
+        self.RANDOM_START_LEVEL = self.environment_params["random_start_level"]
 
         self.actions = self.env.action_space.n
 
@@ -151,7 +153,7 @@ class DQNCartpoleTrainer:
         epoch_start_time = datetime.datetime.now()
         start_time_format = epoch_start_time.strftime("%Y%m%d_%H%M")
         logging.info(LETS_GO)
-
+        perturbated_before = -1;
         number_of_steps = 128
         total_reward_in_epoch = 0
         for run in tqdm(range(self.RUNS)):
@@ -159,15 +161,17 @@ class DQNCartpoleTrainer:
             while not done:
                 ep_len += 1
                 number_of_steps += 1
-
+                np.append(state, perturbated_before);
                 next_state, reward, done = self.evaluate_and_collect(state)
+                perturbated_before = -1
                 state = next_state
                 episode_rew += reward
                 total_reward_in_epoch += reward
                 if random.uniform(0, 1) < self.RANDOM_PERTURBATIONS_LEVEL:
                     perturbation_action = random.randrange(self.env.action_space.n)
                     for perturbation in range(self.PERTURBATIONS_INTENSITY):
-                        self.env.step(perturbation_action)
+                        self.env.perturbate(perturbation_action)
+                        perturbated_before = perturbation_action
                     logging.debug("perturbated in step {} with action {}".format(episode_rew, perturbation_action))
 
                 if run % self.SHOW_EVERY == 0:
@@ -185,8 +189,8 @@ class DQNCartpoleTrainer:
             if (run+1) % self.UPDATE_EVERY == 0:
                 time_spent = datetime.datetime.now() - epoch_start_time
                 epoch_start_time = datetime.datetime.now()
-                updates_message = 'Run: {0} Average: {1} time spent {2}'.format(run, total_reward_in_epoch / self.UPDATE_EVERY,
-                                                              str(time_spent))
+                updates_message = 'Run: {0} Average: {1} epsilon {2} time spent {3}'.format(run, total_reward_in_epoch / self.UPDATE_EVERY,
+                                                                                     self.epsilon, str(time_spent))
                 logging.info(updates_message)
                 print(updates_message)
                 if self.config["save_model"] and total_reward_in_epoch / self.UPDATE_EVERY > self.max_avg:
