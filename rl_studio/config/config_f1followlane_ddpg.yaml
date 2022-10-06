@@ -13,6 +13,7 @@
 #####################################################################################
 
 settings:
+  task: follow_lane
   output_dir: "./logs/"
   save_model: True
   save_positions: True
@@ -60,9 +61,9 @@ agent:
       num_regions: 16
       lower_limit: 220
     states:
-      state_space: sp1 #sp1
+      state_space: image #sp1
       image:
-        0: [50] #[60, 120, 180]
+        0: [50] #[50, 60, 120, 180]
       sp1: 
         0: [50] #[20, 50, 80, 120, 180, 200]
       sp3:
@@ -131,7 +132,7 @@ actions:
         0: [ 0, 0 ]
       continuous:
         v_min: 2
-        v_max: 3
+        v_max: 2
         w_right: -1
         w_left: 1
 
@@ -280,7 +281,7 @@ algorithm:
       gamma: 0.9
       tau: 0.005
       std_dev: 0.2
-      model_name: DDPG_Actor_conv2d32x64_Critic_conv2d32x64
+      model_name: DDPG_Actor_conv2d64x128_Critic_conv2d32x64_actionsCont_stateImg
       replay_memory_size: 50_000
       memory_fraction: 0.20
       critic_lr: 0.002

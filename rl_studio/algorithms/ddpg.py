@@ -450,21 +450,23 @@ class DDPGAgent:
         return model
 
     def build_branch_images(self, inputs, action_name):
+        neuron1 = 64  # 32
+        neuron2 = 128  # 64
         last_init = tf.random_uniform_initializer(minval=-0.01, maxval=0.01)
         x = Rescaling(1.0 / 255)(inputs)
-        x = Conv2D(32, (3, 3), padding="same")(x)
+        x = Conv2D(neuron1, (3, 3), padding="same")(x)
         # x = Conv2D(32, (3, 3), padding="same")(inputs)
         x = Activation("relu")(x)
         x = MaxPooling2D(pool_size=(3, 3))(x)
         x = Dropout(0.25)(x)
 
-        x = Conv2D(64, (3, 3), padding="same")(x)
+        x = Conv2D(neuron2, (3, 3), padding="same")(x)
         x = Activation("relu")(x)
         x = MaxPooling2D(pool_size=(2, 2))(x)
         x = Dropout(0.25)(x)
 
         x = Flatten()(x)
-        x = Dense(64)(x)
+        x = Dense(neuron2)(x)
 
         x = Dense(1, activation="tanh", kernel_initializer=last_init)(x)
         x = Activation("tanh", name=action_name)(x)
@@ -486,7 +488,8 @@ class DDPGAgent:
         state_out = Dropout(0.25)(state_out)
         state_out = Flatten()(state_out)
         """
-
+        neuron1 = 64  # 32
+        neuron2 = 128  # 64
         # Next NN is the same as actor net
         state_out = Rescaling(1.0 / 255)(state_input)
         state_out = Conv2D(32, (3, 3), padding="same")(state_out)

@@ -700,7 +700,12 @@ class DDPGF1FollowLaneEnvGazebo(F1Env):
         image_middle_line = self.height // 2
         img_sliced = img[image_middle_line:]
         img_gray = cv2.cvtColor(img_sliced, cv2.COLOR_BGR2GRAY)
-        _, mask = cv2.threshold(img_gray, 110, 255, cv2.THRESH_BINARY)
+        # _, mask = cv2.threshold(img_gray, 110, 255, cv2.THRESH_BINARY)
+
+        img_gray = cv2.GaussianBlur(img_gray, (7, 7), 0)
+        _, mask = cv2.threshold(img_gray, 0, 255, cv2.THRESH_BINARY | cv2.THRESH_OTSU)
+        # _, mask = cv2.threshold(img_gray, 0, 255, cv2.THRESH_BINARY_INV | cv2.THRESH_OTSU)
+
         mask_black_white_32x32 = cv2.resize(mask, (32, 32), cv2.INTER_AREA)
         mask_black_white_32x32 = np.expand_dims(mask_black_white_32x32, axis=2)
 
