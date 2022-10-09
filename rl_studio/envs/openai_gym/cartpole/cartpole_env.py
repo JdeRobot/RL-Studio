@@ -14,7 +14,6 @@ from gym.envs.classic_control import utils
 from gym.error import DependencyNotInstalled
 from gym.utils.renderer import Renderer
 
-
 class CartPoleEnv(gym.Env[np.ndarray, Union[int, np.ndarray]]):
     """
     ### Description
@@ -87,7 +86,7 @@ class CartPoleEnv(gym.Env[np.ndarray, Union[int, np.ndarray]]):
         "render_fps": 50,
     }
 
-    def __init__(self, random_start_level, render_mode: Optional[str] = None):
+    def __init__(self, random_start_level, initial_pole_angle = None, render_mode: Optional[str] = None):
         self.random_start_level = random_start_level
 
         self.gravity = 9.8
@@ -102,6 +101,7 @@ class CartPoleEnv(gym.Env[np.ndarray, Union[int, np.ndarray]]):
         # Angle at which to fail the episode
         self.theta_threshold_radians = 12 * 2 * math.pi / 360
         self.x_threshold = 2.4
+        self.init_pole_angle = initial_pole_angle
 
         # Angle limit set to 2 * theta_threshold_radians so failing observation
         # is still within bounds.
@@ -244,6 +244,9 @@ class CartPoleEnv(gym.Env[np.ndarray, Union[int, np.ndarray]]):
             options, -self.random_start_level, self.random_start_level  # default low
         )  # default high
         self.state = self.np_random.uniform(low=low, high=high, size=(4,))
+        if self.init_pole_angle != None:
+            self.state[2] = self.init_pole_angle
+
         self.steps_beyond_terminated = None
         self.renderer.reset()
         self.renderer.render_step()

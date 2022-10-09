@@ -2,6 +2,7 @@ import pickle
 
 import numpy as np
 import matplotlib.pyplot as plt
+from markdownTable import markdownTable
 
 # How much new info will override old info. 0 means nothing is learned, 1 means only most recent is considered, old knowledge is discarded
 LEARNING_RATE = 0.1
@@ -28,14 +29,31 @@ def save_model_qlearn(qlearn, current_time):
     )
     pickle.dump(qlearn.q, file_dump)
 
-def save_dqn_model(dqn, current_time, average):
+def params_to_markdown_list(dictionary):
+    md_list = []
+    for item in dictionary["params"]:
+        md_list.append({ "parameter": item, "value": dictionary["params"][item] })
+    return md_list
+def save_dqn_model(dqn, current_time, average, params):
     base_file_name = "_epsilon_{}".format(round(epsilon, 2))
     file_dump = open(
         "./checkpoints/cartpole/dqn_models/" + current_time + base_file_name + "_DQN_WEIGHTS_avg_" + str(average) + ".pkl",
         "wb",
     )
     pickle.dump(dqn.q_net, file_dump)
-
+    file_dump.close()
+    # And save metadata config too
+    metadata = open("./checkpoints/cartpole/dqn_models/" + current_time + "_metadata.md",
+        "a")
+    metadata.write("AGENT PARAMETERS\n")
+    metadata.write(markdownTable(params_to_markdown_list(params.agent)).setParams(row_sep = 'always').getMarkdown())
+    metadata.write("\n```\n\nSETTINGS PARAMETERS\n")
+    metadata.write(markdownTable(params_to_markdown_list(params.settings)).setParams(row_sep = 'always').getMarkdown())
+    metadata.write("\n```\n\nENVIRONMENT PARAMETERS\n")
+    metadata.write(markdownTable(params_to_markdown_list(params.environment)).setParams(row_sep = 'always').getMarkdown())
+    metadata.write("\n```\n\nALGORITHM PARAMETERS\n")
+    metadata.write(markdownTable(params_to_markdown_list(params.algorithm)).setParams(row_sep = 'always').getMarkdown())
+    metadata.close()
 
 def save_actions_qlearn(actions, start_time):
     file_dump = open("./checkpoints/cartpole/qlearn_models/actions_set_" + start_time, "wb")
@@ -83,9 +101,9 @@ def extract(lst, pos):
     return [item[pos] for item in lst]
 
 
-def plot_random_start_level_monitoring(unsuccessful_episodes_count, unsuccessful_initial_states,
-                                    unsuccess_rewards, success_rewards, successful_initial_states,
-                                    RUNS, random_start_level):
+def plot_detail_random_start_level_monitoring(unsuccessful_episodes_count, unsuccessful_initial_states,
+                                              unsuccess_rewards, success_rewards, successful_initial_states,
+                                              RUNS, random_start_level):
     figure, (ax1, ax2, ax3, ax4, ax5) = plt.subplots(5)
     ax1.plot(range(unsuccessful_episodes_count), extract(unsuccessful_initial_states, 0))
     ax1.set(title="FAILURES: initial states with random level = " + str(random_start_level),
@@ -113,11 +131,11 @@ def plot_random_start_level_monitoring(unsuccessful_episodes_count, unsuccessful
     ax10.set(ylabel="Rewards")
 
 
-def plot_random_perturbations_monitoring(unsuccessful_episodes_count, success_perturbations_in_twenty,
-                                       success_max_perturbations_in_twenty_run, success_rewards,
-                                       unsuccess_perturbations_in_twenty,
-                                       unsuccess_max_perturbations_in_twenty_run, unsuccess_rewards,
-                                       RUNS, RANDOM_PERTURBATIONS_LEVEL, PERTURBATIONS_INTENSITY):
+def plot_detail_random_perturbations_monitoring(unsuccessful_episodes_count, success_perturbations_in_twenty,
+                                                success_max_perturbations_in_twenty_run, success_rewards,
+                                                unsuccess_perturbations_in_twenty,
+                                                unsuccess_max_perturbations_in_twenty_run, unsuccess_rewards,
+                                                RUNS, RANDOM_PERTURBATIONS_LEVEL, PERTURBATIONS_INTENSITY):
     figure3, (ax11, ax12, ax13) = plt.subplots(3)
     ax11.plot(range(RUNS - unsuccessful_episodes_count), success_perturbations_in_twenty)
     ax11.set(title="SUCCESS: perturbation level "
@@ -137,16 +155,23 @@ def plot_random_perturbations_monitoring(unsuccessful_episodes_count, success_pe
     ax16.plot(range(unsuccessful_episodes_count), unsuccess_rewards)
     ax16.set(ylabel="Rewards")
 
-def plot_fails_success_comparisson(unsuccessful_episodes_count, success_rewards, unsuccess_rewards,
-                                       RUNS, RANDOM_START_LEVEL, RANDOM_PERTURBATIONS_LEVEL, PERTURBATIONS_INTENSITY):
+def store_and_show_fails_success_comparisson(file_path, RUNS, max_episode_steps, rewards, RANDOM_START_LEVEL, RANDOM_PERTURBATIONS_LEVEL,
+    PERTURBATIONS_INTENSITY, INITIAL_POLE_ANGLE):
 
-    figure5, (ax17, ax18) = plt.subplots(2)
-    ax17.plot(range(RUNS - unsuccessful_episodes_count), success_rewards)
-    ax17.set(title="CUMULATED REWARD PER STEP:  init pos random level = " + str(RANDOM_START_LEVEL)
-                   + ", perturbation level = " + str(RANDOM_PERTURBATIONS_LEVEL) + " and intensity = " +
-                   str(PERTURBATIONS_INTENSITY), ylabel="SUCCESS")
-    ax18.plot(range(unsuccessful_episodes_count), unsuccess_rewards)
-    ax18.set(ylabel="FAILURES")
+    file_dump = open(file_path, "wb")
+    pickle.dump(rewards, file_dump)
+
+    rewards = np.asarray(rewards)
+
+    fig, ax = plt.subplots()
+
+    my_color = np.where(rewards == max_episode_steps, 'green', 'red')
+    plt.scatter(range(RUNS), rewards, color=my_color, marker='x')
+    ax.set(title="initial random level = " + str(RANDOM_START_LEVEL) + ', initial pole angle = ' + str(INITIAL_POLE_ANGLE) +
+                   ', perturbation frequency = '  + str(RANDOM_PERTURBATIONS_LEVEL) + ', perturbation intensity = ' +
+                   str(PERTURBATIONS_INTENSITY), ylabel="cumulate reward", xlabel="episode")
+    ax.plot(range(RUNS), rewards)
+    plt.show()
 
 
 def show_monitoring():
