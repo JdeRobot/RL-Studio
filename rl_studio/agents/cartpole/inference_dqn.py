@@ -5,6 +5,7 @@ import random
 import gym
 
 import logging
+import numpy as np
 
 from rl_studio.agents.cartpole.utils import store_and_show_fails_success_comparisson
 from rl_studio.wrappers.inference_rlstudio import InferencerWrapper
@@ -23,6 +24,7 @@ class DQNCartpoleInferencer:
         self.environment_params = params.environment["params"]
         self.env_name = params.environment["params"]["env_name"]
         self.config = params.settings["params"]
+        self.agent_config = params.agent["params"]
 
         if self.config["logging_level"] == "debug":
             self.LOGGING_LEVEL = logging.DEBUG
@@ -40,7 +42,11 @@ class DQNCartpoleInferencer:
 
         # Unfortunately, max_steps is not working with new_step_api=True and it is not giving any benefit.
         # self.env = gym.make(self.env_name, new_step_api=True, random_start_level=random_start_level)
-        self.env = gym.make(self.env_name, random_start_level=self.RANDOM_START_LEVEL, initial_pole_angle=self.INITIAL_POLE_ANGLE)
+        non_recoverable_angle = self.environment_params[
+            "non_recoverable_angle"
+        ]
+        self.env = gym.make(self.env_name, random_start_level=self.RANDOM_START_LEVEL, initial_pole_angle=self.INITIAL_POLE_ANGLE,
+                            non_recoverable_angle=non_recoverable_angle)
 
         self.RUNS = self.environment_params["runs"]
         self.SHOW_EVERY = self.environment_params[
@@ -93,16 +99,18 @@ class DQNCartpoleInferencer:
         for run in tqdm(range(self.RUNS)):
             obs, done, rew = self.env.reset(), False, 0
             while not done:
-                A = self.inferencer.inference(obs)
-                obs, reward, done, info = self.env.step(A.item())
-                rew += reward
-                total_reward_in_epoch += reward
-                time.sleep(0.01)
-
                 if random.uniform(0, 1) < self.RANDOM_PERTURBATIONS_LEVEL:
                     perturbation_action = random.randrange(self.env.action_space.n)
-                    self.env.perturbate(perturbation_action, self.PERTURBATIONS_INTENSITY)
+                    obs, done, _, _ = self.env.perturbate(perturbation_action, self.PERTURBATIONS_INTENSITY)
                     logging.info("perturbated in step {} with action {}".format(rew, perturbation_action))
+
+                A = self.inferencer.inference(obs)
+                obs, reward, done, info = self.env.step(A.item())
+
+                rew += reward
+                total_reward_in_epoch += reward
+
+
 
                 if run % self.SHOW_EVERY == 0:
                     self.env.render()

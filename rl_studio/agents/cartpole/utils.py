@@ -165,7 +165,7 @@ def store_and_show_fails_success_comparisson(file_path, RUNS, max_episode_steps,
 
     fig, ax = plt.subplots()
 
-    my_color = np.where(rewards == max_episode_steps, 'green', 'red')
+    my_color = np.where(rewards >= max_episode_steps, 'green', 'red')
     plt.scatter(range(RUNS), rewards, color=my_color, marker='x')
     ax.set(title="initial random level = " + str(RANDOM_START_LEVEL) + ', initial pole angle = ' + str(INITIAL_POLE_ANGLE) +
                    ', perturbation frequency = '  + str(RANDOM_PERTURBATIONS_LEVEL) + ', perturbation intensity = ' +
