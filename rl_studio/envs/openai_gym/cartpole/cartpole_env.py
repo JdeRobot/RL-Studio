@@ -14,6 +14,7 @@ from gym.envs.classic_control import utils
 from gym.error import DependencyNotInstalled
 from gym.utils.renderer import Renderer
 
+
 class CartPoleEnv(gym.Env[np.ndarray, Union[int, np.ndarray]]):
     """
     ### Description
@@ -86,7 +87,7 @@ class CartPoleEnv(gym.Env[np.ndarray, Union[int, np.ndarray]]):
         "render_fps": 50,
     }
 
-    def __init__(self, random_start_level, initial_pole_angle = None, render_mode: Optional[str] = None):
+    def __init__(self, random_start_level, initial_pole_angle=None, render_mode: Optional[str] = None):
         self.random_start_level = random_start_level
 
         self.gravity = 9.8
@@ -130,12 +131,12 @@ class CartPoleEnv(gym.Env[np.ndarray, Union[int, np.ndarray]]):
 
         self.steps_beyond_terminated = None
 
-    def perturbate(self, action):
+    def perturbate(self, action, intensity):
         err_msg = f"{action!r} ({type(action)}) invalid"
         assert self.action_space.contains(action), err_msg
         assert self.state is not None, "Call reset before using step method."
         x, x_dot, theta, theta_dot = self.state
-        force = self.force_mag if action == 1 else -self.force_mag
+        force = self.force_mag * intensity if action == 1 else -self.force_mag * self.force_mag * intensity
         costheta = math.cos(theta)
         sintheta = math.sin(theta)
 
@@ -171,6 +172,7 @@ class CartPoleEnv(gym.Env[np.ndarray, Union[int, np.ndarray]]):
 
         self.renderer.render_step()
         return np.array(self.state, dtype=np.float32), terminated, False, {}
+
     def step(self, action):
         err_msg = f"{action!r} ({type(action)}) invalid"
         assert self.action_space.contains(action), err_msg
@@ -183,10 +185,10 @@ class CartPoleEnv(gym.Env[np.ndarray, Union[int, np.ndarray]]):
         # For the interested reader:
         # https://coneural.org/florian/papers/05_cart_pole.pdf
         temp = (
-            force + self.polemass_length * theta_dot**2 * sintheta
-        ) / self.total_mass
+                       force + self.polemass_length * theta_dot ** 2 * sintheta
+               ) / self.total_mass
         thetaacc = (self.gravity * sintheta - costheta * temp) / (
-            self.length * (4.0 / 3.0 - self.masspole * costheta**2 / self.total_mass)
+                self.length * (4.0 / 3.0 - self.masspole * costheta ** 2 / self.total_mass)
         )
         xacc = temp - self.polemass_length * thetaacc * costheta / self.total_mass
 
@@ -231,11 +233,11 @@ class CartPoleEnv(gym.Env[np.ndarray, Union[int, np.ndarray]]):
         return np.array(self.state, dtype=np.float32), reward, terminated, False, {}
 
     def reset(
-        self,
-        *,
-        seed: Optional[int] = None,
-        return_info: bool = False,
-        options: Optional[dict] = None,
+            self,
+            *,
+            seed: Optional[int] = None,
+            return_info: bool = False,
+            options: Optional[dict] = None,
     ):
         super().reset(seed=seed)
         # Note that if you use custom reset bounds, it may lead to out-of-bound
