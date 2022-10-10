@@ -87,7 +87,8 @@ class CartPoleEnv(gym.Env[np.ndarray, Union[int, np.ndarray]]):
         "render_fps": 50,
     }
 
-    def __init__(self, random_start_level, initial_pole_angle=None, render_mode: Optional[str] = None):
+    def __init__(self, random_start_level, initial_pole_angle=None, render_mode: Optional[str] = None,
+                 non_recoverable_angle=0.3):
         self.random_start_level = random_start_level
 
         self.gravity = 9.8
@@ -100,7 +101,7 @@ class CartPoleEnv(gym.Env[np.ndarray, Union[int, np.ndarray]]):
         self.tau = 0.02  # seconds between state updates
         self.kinematics_integrator = "euler"
         # Angle at which to fail the episode
-        self.theta_threshold_radians = 12 * 2 * math.pi / 360
+        self.theta_threshold_radians = non_recoverable_angle * 50 * 2 * math.pi / 360
         self.x_threshold = 2.4
         self.init_pole_angle = initial_pole_angle
 
