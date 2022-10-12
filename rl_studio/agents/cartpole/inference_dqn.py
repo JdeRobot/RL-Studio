@@ -99,18 +99,16 @@ class DQNCartpoleInferencer:
         for run in tqdm(range(self.RUNS)):
             obs, done, rew = self.env.reset(), False, 0
             while not done:
-                if random.uniform(0, 1) < self.RANDOM_PERTURBATIONS_LEVEL:
-                    perturbation_action = random.randrange(self.env.action_space.n)
-                    obs, done, _, _ = self.env.perturbate(perturbation_action, self.PERTURBATIONS_INTENSITY)
-                    logging.info("perturbated in step {} with action {}".format(rew, perturbation_action))
-
                 A = self.inferencer.inference(obs)
                 obs, reward, done, info = self.env.step(A.item())
 
                 rew += reward
                 total_reward_in_epoch += reward
 
-
+                if random.uniform(0, 1) < self.RANDOM_PERTURBATIONS_LEVEL:
+                    perturbation_action = random.randrange(self.env.action_space.n)
+                    obs, done, _, _ = self.env.perturbate(perturbation_action, self.PERTURBATIONS_INTENSITY)
+                    logging.info("perturbated in step {} with action {}".format(rew, perturbation_action))
 
                 if run % self.SHOW_EVERY == 0:
                     self.env.render()

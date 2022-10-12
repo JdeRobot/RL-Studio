@@ -167,16 +167,14 @@ class DQNCartpoleTrainer:
             while not done:
                 ep_len += 1
                 number_of_steps += 1
-                if random.uniform(0, 1) < self.RANDOM_PERTURBATIONS_LEVEL:
-                    perturbation_action = random.randrange(self.env.action_space.n)
-                    state, done, _, _ = self.env.perturbate(perturbation_action, self.PERTURBATIONS_INTENSITY)
-                    logging.debug("perturbated in step {} with action {}".format(episode_rew, perturbation_action))
-
                 next_state, reward, done = self.evaluate_and_collect(state)
                 state = next_state
                 episode_rew += reward
                 total_reward_in_epoch += reward
-
+                if random.uniform(0, 1) < self.RANDOM_PERTURBATIONS_LEVEL:
+                    perturbation_action = random.randrange(self.env.action_space.n)
+                    state, done, _, _ = self.env.perturbate(perturbation_action, self.PERTURBATIONS_INTENSITY)
+                    logging.debug("perturbated in step {} with action {}".format(episode_rew, perturbation_action))
 
                 if run % self.SHOW_EVERY == 0:
                     self.env.render()
