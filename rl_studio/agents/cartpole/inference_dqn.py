@@ -39,9 +39,6 @@ class DQNCartpoleInferencer:
         self.PERTURBATIONS_INTENSITY = self.environment_params.get("perturbations_intensity", 0)
         self.RANDOM_START_LEVEL = self.environment_params.get("random_start_level", 0)
         self.INITIAL_POLE_ANGLE = self.environment_params.get("initial_pole_angle", None)
-        self.PERTURBATIONS_SENSOR = self.agent_config[
-            "perturbations_sensor"
-        ]
 
         # Unfortunately, max_steps is not working with new_step_api=True and it is not giving any benefit.
         # self.env = gym.make(self.env_name, new_step_api=True, random_start_level=random_start_level)
@@ -96,7 +93,6 @@ class DQNCartpoleInferencer:
 
         unsuccessful_episodes_count = 0
         episodes_rewards = []
-        perturbated_before = -1
 
         logging.info(LETS_GO)
         total_reward_in_epoch = 0
@@ -104,20 +100,14 @@ class DQNCartpoleInferencer:
             obs, done, rew = self.env.reset(), False, 0
             while not done:
                 A = self.inferencer.inference(obs)
-                if self.PERTURBATIONS_SENSOR:
-                    np.append(obs, perturbated_before)
-                    perturbated_before = -1
                 obs, reward, done, info = self.env.step(A.item())
 
                 rew += reward
                 total_reward_in_epoch += reward
-                time.sleep(0.01)
 
                 if random.uniform(0, 1) < self.RANDOM_PERTURBATIONS_LEVEL:
                     perturbation_action = random.randrange(self.env.action_space.n)
-                    self.env.perturbate(perturbation_action, self.PERTURBATIONS_INTENSITY)
-                    if self.PERTURBATIONS_SENSOR:
-                        perturbated_before = perturbation_action
+                    obs, done, _, _ = self.env.perturbate(perturbation_action, self.PERTURBATIONS_INTENSITY)
                     logging.info("perturbated in step {} with action {}".format(rew, perturbation_action))
 
                 if run % self.SHOW_EVERY == 0:

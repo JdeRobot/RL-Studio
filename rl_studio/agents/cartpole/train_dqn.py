@@ -82,7 +82,7 @@ class DQNCartpoleTrainer:
         output_dim = self.env.action_space.n
         self.exp_replay_size = params.algorithm["params"]["batch_size"]
         self.deepq = DQN_Agent(
-            layer_sizes=[input_dim, 80, output_dim],
+            layer_sizes=[input_dim, 64, output_dim],
             lr=1e-3,
             sync_freq=5,
             exp_replay_size=self.exp_replay_size,
@@ -173,7 +173,7 @@ class DQNCartpoleTrainer:
                 total_reward_in_epoch += reward
                 if random.uniform(0, 1) < self.RANDOM_PERTURBATIONS_LEVEL:
                     perturbation_action = random.randrange(self.env.action_space.n)
-                    self.env.perturbate(perturbation_action, self.PERTURBATIONS_INTENSITY)
+                    state, done, _, _ = self.env.perturbate(perturbation_action, self.PERTURBATIONS_INTENSITY)
                     logging.debug("perturbated in step {} with action {}".format(episode_rew, perturbation_action))
 
                 if run % self.SHOW_EVERY == 0:
