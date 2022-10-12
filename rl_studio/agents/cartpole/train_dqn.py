@@ -24,6 +24,7 @@ class DQNCartpoleTrainer:
         self.environment_params = params.environment["params"]
         self.env_name = params.environment["params"]["env_name"]
         self.config = params.settings["params"]
+        self.agent_config = params.agent["params"]
 
         if self.config["logging_level"] == "debug":
             self.LOGGING_LEVEL = logging.DEBUG
@@ -34,11 +35,19 @@ class DQNCartpoleTrainer:
         else:
             self.LOGGING_LEVEL = logging.INFO
 
-        random_start_level = self.environment_params["random_start_level"]
+        self.RANDOM_PERTURBATIONS_LEVEL = self.environment_params.get("random_perturbations_level", 0)
+        self.PERTURBATIONS_INTENSITY = self.environment_params.get("perturbations_intensity", 0)
+        self.RANDOM_START_LEVEL = self.environment_params.get("random_start_level", 0)
+        self.INITIAL_POLE_ANGLE = self.environment_params.get("initial_pole_angle", None)
 
+
+        non_recoverable_angle = self.environment_params[
+            "non_recoverable_angle"
+        ]
         # Unfortunately, max_steps is not working with new_step_api=True and it is not giving any benefit.
         # self.env = gym.make(self.env_name, new_step_api=True, random_start_level=random_start_level)
-        self.env = gym.make(self.env_name, random_start_level=random_start_level)
+        self.env = gym.make(self.env_name, random_start_level=self.RANDOM_START_LEVEL, initial_pole_angle=self.INITIAL_POLE_ANGLE,
+                            non_recoverable_angle=non_recoverable_angle)
 
         self.RUNS = self.environment_params["runs"]
         self.EXPERIMENTATION_RUNS = self.environment_params["full_experimentation_runs"]
@@ -54,9 +63,6 @@ class DQNCartpoleTrainer:
         self.BLOCKED_EXPERIENCE_BATCH = self.environment_params[
             "block_experience_batch"
         ]
-        self.RANDOM_PERTURBATIONS_LEVEL = self.environment_params.get("random_perturbations_level", 0)
-        self.PERTURBATIONS_INTENSITY = self.environment_params.get("perturbations_intensity", 0)
-        self.RANDOM_START_LEVEL = self.environment_params["random_start_level"]
 
         self.actions = self.env.action_space.n
 
@@ -127,16 +133,17 @@ class DQNCartpoleTrainer:
         self.episode_len_list.append(ep_len)
         self.epsilon_list.append(self.epsilon)
 
-    def final_demonstration(self):
-        for i in tqdm(range(2)):
-            obs, done, rew = self.env.reset(), False, 0
-            while not done:
-                A = self.deepq.get_action(obs, self.env.action_space.n, epsilon=0)
-                obs, reward, done, info = self.env.step(A.item())
-                rew += reward
-                time.sleep(0.01)
-                self.env.render()
-            logging.info("\ndemonstration episode : {}, reward : {}".format(i, rew))
+    # def final_demonstration(self):
+    #     for i in tqdm(range(2)):
+    #         obs, done, rew = self.env.reset(), False, 0
+    #         while not done:
+    #             obs = np.append(obs, -1)
+    #             A = self.deepq.get_action(obs, self.env.action_space.n, epsilon=0)
+    #             obs, reward, done, info = self.env.step(A.item())
+    #             rew += reward
+    #             time.sleep(0.01)
+    #             self.env.render()
+    #         logging.info("\ndemonstration episode : {}, reward : {}".format(i, rew))
 
     def main(self):
         epoch_start_time = datetime.datetime.now()
@@ -153,7 +160,6 @@ class DQNCartpoleTrainer:
         epoch_start_time = datetime.datetime.now()
         start_time_format = epoch_start_time.strftime("%Y%m%d_%H%M")
         logging.info(LETS_GO)
-        perturbated_before = -1;
         number_of_steps = 128
         total_reward_in_epoch = 0
         for run in tqdm(range(self.RUNS)):
@@ -161,17 +167,13 @@ class DQNCartpoleTrainer:
             while not done:
                 ep_len += 1
                 number_of_steps += 1
-                np.append(state, perturbated_before);
                 next_state, reward, done = self.evaluate_and_collect(state)
-                perturbated_before = -1
                 state = next_state
                 episode_rew += reward
                 total_reward_in_epoch += reward
                 if random.uniform(0, 1) < self.RANDOM_PERTURBATIONS_LEVEL:
                     perturbation_action = random.randrange(self.env.action_space.n)
-                    for perturbation in range(self.PERTURBATIONS_INTENSITY):
-                        self.env.perturbate(perturbation_action)
-                        perturbated_before = perturbation_action
+                    state, done, _, _ = self.env.perturbate(perturbation_action, self.PERTURBATIONS_INTENSITY)
                     logging.debug("perturbated in step {} with action {}".format(episode_rew, perturbation_action))
 
                 if run % self.SHOW_EVERY == 0:
@@ -196,13 +198,13 @@ class DQNCartpoleTrainer:
                 if self.config["save_model"] and total_reward_in_epoch / self.UPDATE_EVERY > self.max_avg:
                     self.max_avg = total_reward_in_epoch / self.UPDATE_EVERY
                     logging.info(f"Saving model . . .")
-                    utils.save_dqn_model(self.deepq, start_time_format, total_reward_in_epoch / self.UPDATE_EVERY)
+                    utils.save_dqn_model(self.deepq, start_time_format, total_reward_in_epoch / self.UPDATE_EVERY, self.params)
                 if (total_reward_in_epoch / self.UPDATE_EVERY) > self.OBJECTIVE_REWARD:
                     logging.info("Training objective reached!!")
                     break
                 total_reward_in_epoch = 0
 
-        self.final_demonstration()
+        # self.final_demonstration()
 
         plt.plot(self.reward_list)
         plt.legend("reward per episode")
