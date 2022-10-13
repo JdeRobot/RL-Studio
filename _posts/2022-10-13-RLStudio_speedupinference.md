@@ -30,8 +30,8 @@ OpenVINO™ is an open-source toolkit for optimizing and deploying AI inference.
 - Reduce resource demands and efficiently deploy on a range of Intel® platforms from edge to cloud
 
 Check more info about the project in the following links:
-- https://github.com/openvinotoolkit/openvino
-- https://docs.openvino.ai/nightly/openvino_docs_MO_DG_Deep_Learning_Model_Optimizer_DevGuide.html
+- [https://github.com/openvinotoolkit/openvino](https://github.com/openvinotoolkit/openvino)
+- [https://docs.openvino.ai/nightly/openvino_docs_MO_DG_Deep_Learning_Model_Optimizer_DevGuide.html](https://docs.openvino.ai/nightly/openvino_docs_MO_DG_Deep_Learning_Model_Optimizer_DevGuide.html)
 
 AWS deepracer uses OpenVINO: http://wiki.ros.org/aws_deepracer
 
