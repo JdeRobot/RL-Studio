@@ -154,11 +154,22 @@ class F1Trainer:
 
                     # if config.plotter_graphic:
                     # plotter.plot(env)
-
-                    plt.plot(list(states_reward.values()))
+                    plt.figure()
+                    plt.title('STEPS - EPISODES')
+                    plt.plot(list(stats.values()), color="blue")
+                    plt.gca().set_ylim(bottom=-1)
+                    plt.savefig('steps_per_episode_plot.png')
+                    steps_per_episode_plot = cv2.imread('steps_per_episode_plot.png')
+                    cv2.imshow("STEPS - EPISODES", steps_per_episode_plot)
+                    cv2.waitKey(3)
+                    
+                    plt.figure()
+                    plt.title('REWARDS - EPISODES')
+                    plt.plot(list(states_reward.values()), color="red")
+                    plt.gca().set_ylim(bottom=-110)
                     plt.savefig('rewards_per_episode_plot.png')
                     rewards_per_episode_plot = cv2.imread('rewards_per_episode_plot.png')
-                    cv2.imshow("REWARDS - EPISODES ", rewards_per_episode_plot)
+                    cv2.imshow("REWARDS - EPISODES", rewards_per_episode_plot)
                     cv2.waitKey(3)
 
                     print(
@@ -171,6 +182,7 @@ class F1Trainer:
                     lap_completed = True
                     if config.plotter_graphic:
                         plotter.plot_steps_vs_epoch(stats, save=True)
+                    print(f"\nSaving actions . . .\n")
                     utils.save_model(
                         qlearn, start_time_format, stats, states_counter, states_reward
                     )
@@ -183,6 +195,7 @@ class F1Trainer:
                     if config.plotter_graphic:
                         plotter.plot_steps_vs_epoch(stats, save=True)
                     qlearn.epsilon *= epsilon_discount
+                    print(f"\nSaving actions . . .\n")
                     utils.save_model(
                         qlearn,
                         start_time_format,
@@ -197,6 +210,7 @@ class F1Trainer:
                     counter = 0
 
                 if datetime.datetime.now() - datetime.timedelta(hours=2) > start_time:
+                    print(f"\nSaving actions . . .\n")
                     print(config.eop)
                     utils.save_model(
                         qlearn, start_time_format, stats, states_counter, states_reward
@@ -216,7 +230,7 @@ class F1Trainer:
                 # plotter.full_plot(env, stats, 2)  # optional parameter = mode (0, 1, 2)
 
             if episode % 250 == 0 and config.save_model and episode > 1:
-                print(f"\nSaving model . . .\n")
+                print(f"\nSaving model 5 . . .\n")
                 utils.save_model(
                     qlearn, start_time_format, stats, states_counter, states_reward
                 )
