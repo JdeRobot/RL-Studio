@@ -54,4 +54,4 @@ model.compile(loss='mse', optimizer=Adam(lr=0.001))
 
 Using OpenVINO optimizer and engine we can reduce the inference time to 0.25 ms! Theorically we could run that model at 4000 iter/sec. Of course, we have more actors and components in our system (image processing, control systems, ...). Anyways in the following video you can check how the control system can iterate at 90 FPS in a simple follow line model based on reinforcement learning. Awesome!
 
-<iframe width="560" height="315" src="https://www.youtube.com/watch?v=RfWqEcayTJA" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+<iframe width="560" height="315" src="https://www.youtube.com/embed/RfWqEcayTJA" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
