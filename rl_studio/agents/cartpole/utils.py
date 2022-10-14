@@ -169,7 +169,7 @@ def store_and_show_fails_success_comparisson(file_path, RUNS, max_episode_steps,
     plt.scatter(range(RUNS), rewards, color=my_color, marker='x')
     ax.set(title="initial random level = " + str(RANDOM_START_LEVEL) + ', initial pole angle = ' + str(INITIAL_POLE_ANGLE) +
                    ', perturbation frequency = '  + str(RANDOM_PERTURBATIONS_LEVEL) + ', perturbation intensity = ' +
-                   str(PERTURBATIONS_INTENSITY), ylabel="cumulate reward", xlabel="episode")
+                   str(PERTURBATIONS_INTENSITY), ylabel="cumulated reward", xlabel="episode")
     ax.plot(range(RUNS), rewards)
     plt.show()
 

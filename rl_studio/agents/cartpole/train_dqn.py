@@ -36,7 +36,7 @@ class DQNCartpoleTrainer:
             self.LOGGING_LEVEL = logging.INFO
 
         self.RANDOM_PERTURBATIONS_LEVEL = self.environment_params.get("random_perturbations_level", 0)
-        self.PERTURBATIONS_INTENSITY = self.environment_params.get("perturbations_intensity", 0)
+        self.PERTURBATIONS_INTENSITY_STD = self.environment_params.get("perturbations_intensity_std", 0)
         self.RANDOM_START_LEVEL = self.environment_params.get("random_start_level", 0)
         self.INITIAL_POLE_ANGLE = self.environment_params.get("initial_pole_angle", None)
 
@@ -151,7 +151,7 @@ class DQNCartpoleTrainer:
         logs_dir = 'logs/cartpole/dqn/training/'
         logs_file_name = 'logs_file_' + str(self.RANDOM_START_LEVEL) + '_' + str(
             self.RANDOM_PERTURBATIONS_LEVEL) + '_' + str(epoch_start_time) \
-                         + str(self.PERTURBATIONS_INTENSITY) + '.log'
+                         + str(self.PERTURBATIONS_INTENSITY_STD) + '.log'
         logging.basicConfig(filename=logs_dir + logs_file_name, filemode='a',
                             level=self.LOGGING_LEVEL,
                             format='%(name)s - %(levelname)s - %(message)s')
@@ -173,7 +173,7 @@ class DQNCartpoleTrainer:
                 total_reward_in_epoch += reward
                 if random.uniform(0, 1) < self.RANDOM_PERTURBATIONS_LEVEL:
                     perturbation_action = random.randrange(self.env.action_space.n)
-                    state, done, _, _ = self.env.perturbate(perturbation_action, self.PERTURBATIONS_INTENSITY)
+                    state, done, _, _ = self.env.perturbate(perturbation_action, self.PERTURBATIONS_INTENSITY_STD)
                     logging.debug("perturbated in step {} with action {}".format(episode_rew, perturbation_action))
 
                 if run % self.SHOW_EVERY == 0:

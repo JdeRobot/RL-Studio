@@ -32,7 +32,7 @@ environments:
   #  random_start_level: 0.05
     random_start_level: 0 # Number between 0 and 1 that indicates the difficulty of the start position
     random_perturbations_level: 0.1 # Number between 0 and 1 that indicates the frequency of the random perturbations
-    perturbations_intensity: 1 # Number between 0 and 1 that indicates the intensity of the random perturbations
+    perturbations_intensity_std: 0.1 # Number between 0 and 1 that indicates the standard deviation of perturbations intensity
 #    initial_pole_angle: 0
     non_recoverable_angle: 0.3
 

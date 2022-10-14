@@ -132,12 +132,13 @@ class CartPoleEnv(gym.Env[np.ndarray, Union[int, np.ndarray]]):
 
         self.steps_beyond_terminated = None
 
-    def perturbate(self, action, intensity):
+    def perturbate(self, action, intensity_deviation):
         err_msg = f"{action!r} ({type(action)}) invalid"
         assert self.action_space.contains(action), err_msg
         assert self.state is not None, "Call reset before using step method."
         x, x_dot, theta, theta_dot = self.state
-        force = self.force_mag * intensity if action == 1 else -self.force_mag * self.force_mag * intensity
+        force = self.force_mag if action == 1 else -self.force_mag
+        force += np.random.normal(loc=0.0, scale=intensity_deviation, size=None)
         costheta = math.cos(theta)
         sintheta = math.sin(theta)
 
