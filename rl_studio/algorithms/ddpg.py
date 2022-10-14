@@ -13,6 +13,8 @@ from tensorflow.keras.layers import (
     Flatten,
     Rescaling,
 )
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.optimizers import Adam
 
 
 # Own Tensorboard class
@@ -266,10 +268,11 @@ class DDPGAgent:
             )
 
         # Continuous Actions
-        self.V_UPPER_BOUND = config["actions"]["v_max"]
-        self.V_LOWER_BOUND = config["actions"]["v_min"]
-        self.W_RIGHT_BOUND = config["actions"]["w_right"]
-        self.W_LEFT_BOUND = config["actions"]["w_left"]
+        if config["action_space"] == "continuous":
+            self.V_UPPER_BOUND = config["actions"]["v_max"]
+            self.V_LOWER_BOUND = config["actions"]["v_min"]
+            self.W_RIGHT_BOUND = config["actions"]["w_right"]
+            self.W_LEFT_BOUND = config["actions"]["w_left"]
 
         # NN settings
         self.MODEL_NAME = config["model_name"]
@@ -347,14 +350,16 @@ class DDPGAgent:
         sampled_actions = tf.squeeze(self.actor_model(state))
         # Adding noise to action
         sampled_actions = sampled_actions.numpy()
+        # print(f"sampled_actions:{sampled_actions}")
         sampled_actions = np.argmax(sampled_actions)
+        # print(f"sampled_actions:{sampled_actions}")
         # We make sure action is within bounds
         # legal_action = np.clip(sampled_actions, self.LOWER_BOUND, self.UPPER_BOUND)
         legal_action = sampled_actions
-
+        # print(f"np.squeeze(legal_action):{np.squeeze(legal_action)}")
         return np.squeeze(legal_action)
 
-    def get_actor_model_simplified_perception_discrete_actions(self):
+    def get_actor_model_simplified_perception_discrete_actions_nan(self):
         """
         simple model with 2 layers. Using for Simplified Perception
         """
@@ -368,6 +373,23 @@ class DDPGAgent:
         out = layers.Dense(neurons2, activation="relu")(out)
         outputs = layers.Dense(self.ACTION_SPACE_SIZE, activation="linear")(out)
         model = tf.keras.Model(inputs, outputs)
+        return model
+
+    def get_actor_model_simplified_perception_discrete_actions(self):
+        """
+        simple model with 2 layers. Using for Simplified Perception
+        """
+        neurons1 = 16  # 32, 64, 256, 400...
+        neurons2 = 16  # 32, 64, 256, 300...
+        # loss = "mse"
+        # optimizing = 0.005
+
+        inputs = layers.Input(shape=(self.OBSERVATION_SPACE_VALUES))
+        out = layers.Dense(neurons1, activation="relu")(inputs)
+        out = layers.Dense(neurons2, activation="relu")(out)
+        outputs = layers.Dense(self.ACTION_SPACE_SIZE, activation="tanh")(out)
+        model = tf.keras.Model(inputs, outputs)
+        model.compile(loss="mse", optimizer=Adam(0.005))
         return model
 
     def get_critic_model_simplified_perception_discrete_actions(self):
@@ -401,6 +423,7 @@ class DDPGAgent:
         noise = noise_object()
         # Adding noise to action
         sampled_actions = sampled_actions.numpy() + noise
+        # we can discretized the actions values with round(,0)
         legal_action_v = round(
             np.clip(sampled_actions[0], self.V_LOWER_BOUND, self.V_UPPER_BOUND), 1
         )
@@ -546,8 +569,8 @@ class DDPGAgent:
     def build_branch(self, inputs, action_name):
         last_init = tf.random_uniform_initializer(minval=-0.01, maxval=0.01)
         # inputs = layers.Input(shape=(self.OBSERVATION_SPACE_VALUES))
-        x = Dense(16, activation="relu")(inputs)
-        x = Dense(16, activation="relu")(x)
+        x = Dense(128, activation="relu")(inputs)  # 8, 16, 32 neurons
+        x = Dense(128, activation="relu")(x)  # 8, 16, 32 neurons
 
         x = Dense(1, activation="tanh", kernel_initializer=last_init)(x)
         x = Activation("tanh", name=action_name)(x)
