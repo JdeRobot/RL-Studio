@@ -29,31 +29,36 @@ def save_model_qlearn(qlearn, current_time):
     )
     pickle.dump(qlearn.q, file_dump)
 
+
 def params_to_markdown_list(dictionary):
     md_list = []
     for item in dictionary["params"]:
-        md_list.append({ "parameter": item, "value": dictionary["params"][item] })
+        md_list.append({"parameter": item, "value": dictionary["params"][item]})
     return md_list
+
+
 def save_dqn_model(dqn, current_time, average, params):
     base_file_name = "_epsilon_{}".format(round(epsilon, 2))
     file_dump = open(
-        "./checkpoints/cartpole/dqn_models/" + current_time + base_file_name + "_DQN_WEIGHTS_avg_" + str(average) + ".pkl",
+        "./checkpoints/cartpole/dqn_models/" + current_time + base_file_name + "_DQN_WEIGHTS_avg_" + str(
+            average) + ".pkl",
         "wb",
     )
     pickle.dump(dqn.q_net, file_dump)
     file_dump.close()
     # And save metadata config too
     metadata = open("./checkpoints/cartpole/dqn_models/" + current_time + "_metadata.md",
-        "a")
+                    "a")
     metadata.write("AGENT PARAMETERS\n")
-    metadata.write(markdownTable(params_to_markdown_list(params.agent)).setParams(row_sep = 'always').getMarkdown())
+    metadata.write(markdownTable(params_to_markdown_list(params.agent)).setParams(row_sep='always').getMarkdown())
     metadata.write("\n```\n\nSETTINGS PARAMETERS\n")
-    metadata.write(markdownTable(params_to_markdown_list(params.settings)).setParams(row_sep = 'always').getMarkdown())
+    metadata.write(markdownTable(params_to_markdown_list(params.settings)).setParams(row_sep='always').getMarkdown())
     metadata.write("\n```\n\nENVIRONMENT PARAMETERS\n")
-    metadata.write(markdownTable(params_to_markdown_list(params.environment)).setParams(row_sep = 'always').getMarkdown())
+    metadata.write(markdownTable(params_to_markdown_list(params.environment)).setParams(row_sep='always').getMarkdown())
     metadata.write("\n```\n\nALGORITHM PARAMETERS\n")
-    metadata.write(markdownTable(params_to_markdown_list(params.algorithm)).setParams(row_sep = 'always').getMarkdown())
+    metadata.write(markdownTable(params_to_markdown_list(params.algorithm)).setParams(row_sep='always').getMarkdown())
     metadata.close()
+
 
 def save_actions_qlearn(actions, start_time):
     file_dump = open("./checkpoints/cartpole/qlearn_models/actions_set_" + start_time, "wb")
@@ -155,11 +160,16 @@ def plot_detail_random_perturbations_monitoring(unsuccessful_episodes_count, suc
     ax16.plot(range(unsuccessful_episodes_count), unsuccess_rewards)
     ax16.set(ylabel="Rewards")
 
-def store_and_show_fails_success_comparisson(file_path, RUNS, max_episode_steps, rewards, RANDOM_START_LEVEL, RANDOM_PERTURBATIONS_LEVEL,
-    PERTURBATIONS_INTENSITY, INITIAL_POLE_ANGLE):
 
+def store_rewards(rewards, file_path):
     file_dump = open(file_path, "wb")
     pickle.dump(rewards, file_dump)
+
+
+def show_fails_success_comparisson(RUNS, max_episode_steps, rewards, RANDOM_START_LEVEL, RANDOM_PERTURBATIONS_LEVEL,
+                                   PERTURBATIONS_INTENSITY, INITIAL_POLE_ANGLE):
+    if INITIAL_POLE_ANGLE == None:
+        INITIAL_POLE_ANGLE = 0;
 
     rewards = np.asarray(rewards)
 
@@ -167,9 +177,10 @@ def store_and_show_fails_success_comparisson(file_path, RUNS, max_episode_steps,
 
     my_color = np.where(rewards == max_episode_steps, 'green', 'red')
     plt.scatter(range(RUNS), rewards, color=my_color, marker='x')
-    ax.set(title="initial random level = " + str(RANDOM_START_LEVEL) + ', initial pole angle = ' + str(INITIAL_POLE_ANGLE) +
-                   ', perturbation frequency = '  + str(RANDOM_PERTURBATIONS_LEVEL) + ', perturbation intensity = ' +
-                   str(PERTURBATIONS_INTENSITY), ylabel="cumulate reward", xlabel="episode")
+    ax.set(title="initial random level = " + str(RANDOM_START_LEVEL) + ', initial pole angle = ' + str(
+        INITIAL_POLE_ANGLE) +
+                 ', perturbation frequency = ' + str(RANDOM_PERTURBATIONS_LEVEL) + ', perturbation intensity std = ' +
+                 str(PERTURBATIONS_INTENSITY), ylabel="cumulated reward", xlabel="episode")
     ax.plot(range(RUNS), rewards)
     plt.show()
 
