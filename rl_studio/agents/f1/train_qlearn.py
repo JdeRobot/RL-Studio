@@ -230,7 +230,7 @@ class F1Trainer:
                 # plotter.full_plot(env, stats, 2)  # optional parameter = mode (0, 1, 2)
 
             if episode % 250 == 0 and config.save_model and episode > 1:
-                print(f"\nSaving model 5 . . .\n")
+                print(f"\nSaving model . . .\n")
                 utils.save_model(
                     qlearn, start_time_format, stats, states_counter, states_reward
                 )
