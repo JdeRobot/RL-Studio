@@ -25,7 +25,6 @@ class F1CameraEnv(F1Env):
         # len(self.actions)
         # )  # actions  # spaces.Discrete(3)  # F,L,R
         self.config = QLearnConfig()
-        self.previous_image = np.array([0,0,0])
 
     def render(self, mode="human"):
         pass
@@ -138,7 +137,7 @@ class F1CameraEnv(F1Env):
             f1_image_camera = self.image.getImage()
         
         end = time.time()
-        print(end - start)
+        #print(end - start)
         
         self._gazebo_pause()
         points = self.processed_image(f1_image_camera.data)
