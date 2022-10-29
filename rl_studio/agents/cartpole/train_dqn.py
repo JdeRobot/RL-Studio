@@ -13,6 +13,7 @@ from rl_studio.agents.cartpole import utils
 from rl_studio.algorithms.dqn_torch import DQN_Agent
 from rl_studio.visual.ascii.images import JDEROBOT_LOGO
 from rl_studio.visual.ascii.text import JDEROBOT, LETS_GO
+from rl_studio.agents.cartpole.utils import store_rewards, show_fails_success_comparisson
 
 
 class DQNCartpoleTrainer:
@@ -205,7 +206,9 @@ class DQNCartpoleTrainer:
                 total_reward_in_epoch = 0
 
         # self.final_demonstration()
-
+        base_file_name = f'_rewards_rsl-{self.RANDOM_START_LEVEL}_rpl-{self.RANDOM_PERTURBATIONS_LEVEL}_pi-{self.PERTURBATIONS_INTENSITY_STD}'
+        file_path = f'./logs/cartpole/dqn/training/{datetime.datetime.now()}_{base_file_name}.pkl'
+        store_rewards(self.reward_list, file_path)
         plt.plot(self.reward_list)
         plt.legend("reward per episode")
         plt.show()

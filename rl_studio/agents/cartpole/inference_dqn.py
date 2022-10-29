@@ -131,7 +131,7 @@ class DQNCartpoleInferencer:
 
         logging.info(f'unsuccessful episodes => {unsuccessful_episodes_count}')
         base_file_name = f'_rewards_rsl-{self.RANDOM_START_LEVEL}_rpl-{self.RANDOM_PERTURBATIONS_LEVEL}_pi-{self.PERTURBATIONS_INTENSITY_STD}'
-        file_path = f'./logs/cartpole/{datetime.datetime.now()}_{base_file_name}.pkl'
+        file_path = f'./logs/cartpole/dqn/inference/{datetime.datetime.now()}_{base_file_name}.pkl'
         store_rewards(episodes_rewards, file_path)
         show_fails_success_comparisson(self.RUNS, self.OBJECTIVE, episodes_rewards,
                                                  self.RANDOM_START_LEVEL, self.RANDOM_PERTURBATIONS_LEVEL,

@@ -8,6 +8,7 @@ from rl_studio.agents.cartpole import utils
 from rl_studio.algorithms.qlearn_multiple_states import QLearn
 from rl_studio.visual.ascii.images import JDEROBOT_LOGO
 from rl_studio.visual.ascii.text import JDEROBOT, QLEARN_CAMERA, LETS_GO
+from rl_studio.agents.cartpole.utils import store_rewards, show_fails_success_comparisson
 
 
 class QLearnCartpoleTrainer:
@@ -153,6 +154,10 @@ class QLearnCartpoleTrainer:
                 start_time_format
             )
         self.env.close()
+
+        base_file_name = f'_rewards_'
+        file_path = f'./logs/cartpole/qlearning/training/{datetime.datetime.now()}_{base_file_name}.pkl'
+        store_rewards(self.metrics["avg"], file_path)
 
         # Plot graph
         plt.plot(self.metrics["ep"], self.metrics["avg"], label="average rewards")
