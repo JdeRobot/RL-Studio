@@ -1,0 +1,49 @@
+settings:
+  output_dir: "./logs/"
+  save_model: True
+  save_positions: True
+  telemetry: False
+  logging_level: info
+
+# TODO make this section optional
+actions:
+    available_actions:
+      simple:
+
+agent:
+  cartpole:
+    # TODO To be removed
+    camera_params:
+      witdh: 640
+      height: 480
+
+environments:
+  simple:
+    env_name: myCartpole-v0
+    environment_folder: cartpole
+#    runs: 20000
+    runs: 20000
+    full_experimentation_runs: 0
+    update_every: 1000
+    show_every: 10000
+    objective_reward: 500
+#    block_experience_batch: False
+    block_experience_batch: False
+  #  random_start_level: 0.05
+    random_start_level: 0 # Number between 0 and 1 that indicates the difficulty of the start position
+    random_perturbations_level: 0 # Number between 0 and 1 that indicates the frequency of the random perturbations
+    perturbations_intensity_std: 0 # Number between 0 and 1 that indicates the standard deviation of perturbations intensity
+    initial_pole_angle: 0
+    non_recoverable_angle: 0.7
+
+inference:
+  qlearn:
+    inference_file: /home/ruben/Desktop/my-RL-Studio/rl_studio/checkPpoints/qlearn_models/1_20220718_0010_act_set_simple_epsilon_0.01_QTABLE.pkl
+    actions_file: /home/ruben/Desktop/my-RL-Studio/rl_studio/checkpoints/qlearn_models/actions_set_20220718_0010
+
+algorithm:
+    qlearn:
+      alpha: 0.85
+      epsilon: 0.99
+      gamma: 0.95
+      epsilon_discount: 0.99999998

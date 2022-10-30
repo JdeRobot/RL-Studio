@@ -4,19 +4,20 @@ import random
 
 import gym
 import matplotlib.pyplot as plt
+from torch.utils import tensorboard
 from tqdm import tqdm
 import numpy as np
 
 import logging
 
 from rl_studio.agents.cartpole import utils
-from rl_studio.algorithms.dqn_torch import DQN_Agent
+from rl_studio.algorithms.ppo import Actor, Critic, Mish, t
 from rl_studio.visual.ascii.images import JDEROBOT_LOGO
 from rl_studio.visual.ascii.text import JDEROBOT, LETS_GO
 from rl_studio.agents.cartpole.utils import store_rewards, show_fails_success_comparisson
 
 
-class DQNCartpoleTrainer:
+class PPOCartpoleTrainer:
     def __init__(self, params):
 
         self.now = datetime.datetime.now()
@@ -51,7 +52,6 @@ class DQNCartpoleTrainer:
                             non_recoverable_angle=non_recoverable_angle)
 
         self.RUNS = self.environment_params["runs"]
-        self.EXPERIMENTATION_RUNS = self.environment_params["full_experimentation_runs"]
         self.SHOW_EVERY = self.environment_params[
             "show_every"
         ]
@@ -74,7 +74,7 @@ class DQNCartpoleTrainer:
             [],
         )  # metrics
         # recorded for graph
-        self.epsilon = 1
+        self.epsilon = 0.2
         self.EPSILON_DISCOUNT = params.algorithm["params"]["epsilon_discount"]
         self.GAMMA = params.algorithm["params"]["gamma"]
         self.NUMBER_OF_EXPLORATION_STEPS = 128
@@ -82,44 +82,19 @@ class DQNCartpoleTrainer:
         input_dim = self.env.observation_space.shape[0]
         output_dim = self.env.action_space.n
         self.exp_replay_size = params.algorithm["params"]["batch_size"]
-        self.deepq = DQN_Agent(
-            layer_sizes=[input_dim, 64, output_dim],
-            lr=1e-3,
-            sync_freq=5,
-            exp_replay_size=self.exp_replay_size,
-            seed=1423,
-            gamma=self.GAMMA,
-            block_batch=self.BLOCKED_EXPERIENCE_BATCH
-        )
-        self.max_avg = 0
-        self.initialize_experience_replay()
 
-    def initialize_experience_replay(self):
-        index = 0
-        for i in range(self.exp_replay_size):
-            state = self.env.reset()
-            done = False
-            while not done:
-                A = self.deepq.get_action(state, self.env.action_space.n, epsilon=1)
-                next_state, reward, done, _ = self.env.step(A.item())
-                self.deepq.collect_experience([state, A.item(), reward, next_state])
-                state = next_state
-                index += 1
-                if index > self.exp_replay_size:
-                    break
+        self.actor = Actor(input_dim, self.actions, activation=Mish)
+        self.critic = Critic(input_dim, activation=Mish)
+
+        self.max_grad_norm = 0.5
+
+        self.max_avg = 0
 
     def print_init_info(self):
         logging.info(JDEROBOT)
         logging.info(JDEROBOT_LOGO)
         logging.info(f"\t- Start hour: {datetime.datetime.now()}\n")
         logging.info(f"\t- self.environment params:\n{self.environment_params}")
-
-    def evaluate_and_collect(self, state):
-        A = self.deepq.get_action(state, self.env.action_space.n, self.epsilon)
-        next_state, reward, done, _ = self.env.step(A.item())
-        self.deepq.collect_experience([state, A.item(), reward, next_state])
-
-        return next_state, reward, done
 
     def train_in_batches(self, trainings, batch_size):
         losses = 0
@@ -160,32 +135,49 @@ class DQNCartpoleTrainer:
 
         start_time_format = epoch_start_time.strftime("%Y%m%d_%H%M")
         logging.info(LETS_GO)
-        number_of_steps = 128
         total_reward_in_epoch = 0
+        episode_rewards = []
+        global_steps = 0
+        w = tensorboard.SummaryWriter()
+
         for run in tqdm(range(self.RUNS)):
-            state, done, losses, ep_len, episode_rew = self.env.reset(), False, 0, 0, 0
+
+            state, done, prev_prob_act, ep_len, episode_rew = self.env.reset(), False, None, 0, 0
             while not done:
                 ep_len += 1
-                number_of_steps += 1
+                global_steps += 1
                 if random.uniform(0, 1) < self.RANDOM_PERTURBATIONS_LEVEL:
                     perturbation_action = random.randrange(self.env.action_space.n)
                     state, done, _, _ = self.env.perturbate(perturbation_action, self.PERTURBATIONS_INTENSITY_STD)
                     logging.debug("perturbated in step {} with action {}".format(episode_rew, perturbation_action))
-                next_state, reward, done = self.evaluate_and_collect(state)
-                state = next_state
+
+                dist = self.actor.forward(t(state))
+                action = dist.sample()
+                prob_act = dist.log_prob(action)
+
+                next_state, reward, done, info = self.env.step(action.detach().data.numpy())
+                advantage = reward + (1 - done) * self.GAMMA * self.critic(t(next_state)) - self.critic(t(state))
+
+                w.add_scalar("loss/advantage", advantage, global_step=global_steps)
+                w.add_scalar("actions/action_0_prob", dist.probs[0], global_step=global_steps)
+                w.add_scalar("actions/action_1_prob", dist.probs[1], global_step=global_steps)
+
                 episode_rew += reward
                 total_reward_in_epoch += reward
+                state = next_state
+
+                if prev_prob_act:
+                    actor_loss = self.actor.train(prev_prob_act, prob_act, advantage, global_steps);
+                    critic_loss = self.critic.train(advantage, global_steps)
+                    prev_prob_act = prob_act
+
+                # w.add_scalar("reward/episode_reward", episode_rew, global_step=i)
+                episode_rewards.append(episode_rew)
 
                 if run % self.SHOW_EVERY == 0:
                     self.env.render()
-                if number_of_steps > self.NUMBER_OF_EXPLORATION_STEPS:
-                    number_of_steps = 0
-                    losses += self.train_in_batches(4, 16)
 
-            if run > self.EXPERIMENTATION_RUNS and self.epsilon > 0.05:
-                self.epsilon *= self.EPSILON_DISCOUNT
-
-            self.gather_statistics(losses, ep_len, episode_rew)
+            # self.gather_statistics(losses, ep_len, episode_rew)
 
             # monitor progress
             if (run+1) % self.UPDATE_EVERY == 0:
@@ -211,3 +203,5 @@ class DQNCartpoleTrainer:
         plt.plot(self.reward_list)
         plt.legend("reward per episode")
         plt.show()
+
+

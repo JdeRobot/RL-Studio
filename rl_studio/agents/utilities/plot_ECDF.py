@@ -21,25 +21,25 @@ if __name__ == "__main__":
 
 
     rewards_file = open(
-        "/home/ruben/Desktop/my-RL-Studio/rl_studio/logs/cartpole/old_datasets/training_with_frequencies/2022-10-20 23:05:26.343167__rewards_rsl-0_rpl-0.2_pi-10.pkl", "rb")
+        "/rl_studio/logs/cartpole/old_datasets/dqn_analysis/training_with_frequencies/2022-10-20 23:05:26.343167__rewards_rsl-0_rpl-0.2_pi-10.pkl", "rb")
     rewards = pickle.load(rewards_file)
     rewards = np.asarray(rewards)
     plot_ecdf(rewards, 'blue', 'trained with frequency = 0')
 
     rewards_file = open(
-        "/home/ruben/Desktop/my-RL-Studio/rl_studio/logs/cartpole/old_datasets/training_with_frequencies/2022-10-20 23:00:41.230018__rewards_rsl-0_rpl-0.2_pi-10.pkl", "rb")
+        "/rl_studio/logs/cartpole/old_datasets/dqn_analysis/training_with_frequencies/2022-10-20 23:00:41.230018__rewards_rsl-0_rpl-0.2_pi-10.pkl", "rb")
     rewards = pickle.load(rewards_file)
     rewards = np.asarray(rewards)
     plot_ecdf(rewards, 'green', 'trained with frequency = 0.1')
 
     rewards_file = open(
-        "/home/ruben/Desktop/my-RL-Studio/rl_studio/logs/cartpole/old_datasets/training_with_frequencies/2022-10-20 23:00:04.352224__rewards_rsl-0_rpl-0.2_pi-10.pkl", "rb")
+        "/rl_studio/logs/cartpole/old_datasets/dqn_analysis/training_with_frequencies/2022-10-20 23:00:04.352224__rewards_rsl-0_rpl-0.2_pi-10.pkl", "rb")
     rewards = pickle.load(rewards_file)
     rewards = np.asarray(rewards)
     plot_ecdf(rewards, 'orange', 'trained with frequency = 0.2')
 
     rewards_file = open(
-        "/home/ruben/Desktop/my-RL-Studio/rl_studio/logs/cartpole/old_datasets/training_with_frequencies/2022-10-20 22:59:30.164014__rewards_rsl-0_rpl-0.2_pi-10.pkl", "rb")
+        "/rl_studio/logs/cartpole/old_datasets/dqn_analysis/training_with_frequencies/2022-10-20 22:59:30.164014__rewards_rsl-0_rpl-0.2_pi-10.pkl", "rb")
     rewards = pickle.load(rewards_file)
     rewards = np.asarray(rewards)
     plot_ecdf(rewards, 'black', 'trained with frequency = 0.3')
