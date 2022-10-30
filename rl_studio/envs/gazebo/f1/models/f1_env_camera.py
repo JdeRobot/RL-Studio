@@ -3,21 +3,23 @@ from typing import Tuple
 import cv2
 import numpy as np
 import rospy
+import time
+
 from cv_bridge import CvBridge
 from geometry_msgs.msg import Twist
 from gym import spaces
 from sensor_msgs.msg import Image
 
 from rl_studio.agents.f1.settings import QLearnConfig
-from rl_studio.envs.gazebo.f1.image_f1 import ImageF1
 from rl_studio.envs.gazebo.f1.models.f1_env import F1Env
 from rl_studio.envs.gazebo.gazebo_utils import set_new_pose
+from rl_studio.envs.gazebo.f1.image_f1 import ListenerCamera
 
 
 class F1CameraEnv(F1Env):
     def __init__(self, **config):
         F1Env.__init__(self, **config)
-        self.image = ImageF1()
+        self.image = ListenerCamera("/F1ROS/cameraL/image_raw")
         self.actions = config.get("actions")
         self.action_space = spaces.Discrete(3)
         # len(self.actions)
@@ -66,7 +68,6 @@ class F1CameraEnv(F1Env):
         :parameters: input image 640x480
         :return: x, y, z: 3 coordinates
         """
-
         img_sliced = img[240:]
         img_proc = cv2.cvtColor(img_sliced, cv2.COLOR_BGR2HSV)
         line_pre_proc = cv2.inRange(
@@ -97,7 +98,7 @@ class F1CameraEnv(F1Env):
                 )
 
             cv2.imshow("MASK + POINT", img_proc)
-            cv2.waitKey(3)
+            cv2.waitKey(1)
 
         return centrals
 
@@ -114,31 +115,33 @@ class F1CameraEnv(F1Env):
     def step(self, action) -> Tuple:
 
         self._gazebo_unpause()
-
+        
         vel_cmd = Twist()
         vel_cmd.linear.x = self.actions[action][0]
         vel_cmd.angular.z = self.actions[action][1]
         self.vel_pub.publish(vel_cmd)
-
+        
         # Get camera info
-        image_data = None
         f1_image_camera = None
-        while image_data is None:
-            image_data = rospy.wait_for_message(
-                "/F1ROS/cameraL/image_raw", Image, timeout=5
-            )
-            # Transform the image data from ROS to CVMat
-            cv_image = CvBridge().imgmsg_to_cv2(image_data, "bgr8")
-            f1_image_camera = self.image_msg_to_image(image_data, cv_image)
-        # image_data = rospy.wait_for_message('/F1ROS/cameraL/image_raw', Image, timeout=1)
-        # cv_image = CvBridge().imgmsg_to_cv2(image_data, "bgr8")
-        # f1_image_camera = self.image_msg_to_image(image_data, cv_image)
+        start = time.time()
 
+        f1_image_camera = self.image.getImage()
+        self.previous_image = f1_image_camera.data
+        
+        while np.array_equal(self.previous_image, f1_image_camera.data):
+            if (time.time() - start) > 0.1:
+                vel_cmd = Twist()
+                vel_cmd.linear.x = 0
+                vel_cmd.angular.z = 0
+                self.vel_pub.publish(vel_cmd)
+            f1_image_camera = self.image.getImage()
+        
+        end = time.time()
+        #print(end - start)
+        
         self._gazebo_pause()
-
         points = self.processed_image(f1_image_camera.data)
         state = self.calculate_observation(points)
-
         center = float(self.config.center_image - points[0]) / (
             float(self.config.width) // 2
         )
@@ -157,11 +160,7 @@ class F1CameraEnv(F1Env):
                 reward = 1
         else:
             reward = -100
-
-        if self.config.telemetry:
-            print(f"center: {center} - actions: {action} - reward: {reward}")
-            # self.show_telemetry(f1_image_camera.data, points, action, reward)
-
+        
         return state, reward, done, {}
 
     def reset(self):
