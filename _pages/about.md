@@ -26,6 +26,13 @@ to the already presented papers.
 * Video: [https://www.youtube.com/watch?v=u9ZCxxD-UUw&ab_channel=DianChen](https://www.youtube.com/watch?v=u9ZCxxD-UUw&ab_channel=DianChen)
 * Slides: [Link](https://drive.google.com/file/d/1M1rcez5KZTa69k5HVmCsOG9ezesQD-d-/view?usp=sharing)
 
+### End-to-End Model-Free Reinforcement Learning for Urban Driving using Implicit Affordances (Marin Toromanoff, Emilie Wirbel, Fabien Moutarde)
+
+[27 oct 2022] Presented by Rubén Lucas.
+
+* Paper: [https://arxiv.org/pdf/1911.10868v2.pdf](https://arxiv.org/pdf/1911.10868v2.pdf)
+* Code: [https://github.com/valeoai/LearningByCheating](https://github.com/valeoai/LearningByCheating)
+* Slides: [Link](https://drive.google.com/file/d/1csjozm8XuXJad4CLJyXq_H-JEHGatdJ5/view?usp=sharing)
 
 
 
