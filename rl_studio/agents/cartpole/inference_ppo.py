@@ -16,9 +16,10 @@ from rl_studio.algorithms.ppo import Actor, Critic, Mish, t, get_dist
 from rl_studio.visual.ascii.images import JDEROBOT_LOGO
 from rl_studio.visual.ascii.text import JDEROBOT, LETS_GO
 from rl_studio.agents.cartpole.utils import store_rewards, show_fails_success_comparisson
+from rl_studio.wrappers.inference_rlstudio import InferencerWrapper
 
 
-class PPOCartpoleTrainer:
+class PPOCartpoleInferencer:
     def __init__(self, params):
 
         self.now = datetime.datetime.now()
@@ -58,9 +59,6 @@ class PPOCartpoleTrainer:
         self.UPDATE_EVERY = self.environment_params[
             "update_every"
         ]  # How often the current progress is recorded
-        self.OBJECTIVE_REWARD = self.environment_params[
-            "objective_reward"
-        ]
         self.BLOCKED_EXPERIENCE_BATCH = self.environment_params[
             "block_experience_batch"
         ]
@@ -78,12 +76,9 @@ class PPOCartpoleTrainer:
         self.GAMMA = params.algorithm["params"]["gamma"]
         self.NUMBER_OF_EXPLORATION_STEPS = 128
 
-        input_dim = self.env.observation_space.shape[0]
-
-        self.actor = Actor(input_dim, self.actions, activation=Mish)
-        self.critic = Critic(input_dim, activation=Mish)
-
-        self.max_avg = 0
+        inference_file = params.inference["params"]["inference_file"]
+        # TODO the first parameter (algorithm) should come from configuration
+        self.inferencer = InferencerWrapper("ppo", inference_file, env=self.env)
 
     def print_init_info(self):
         logging.info(JDEROBOT)
@@ -141,27 +136,12 @@ class PPOCartpoleTrainer:
                     state, done, _, _ = self.env.perturbate(perturbation_action, self.PERTURBATIONS_INTENSITY_STD)
                     logging.debug("perturbated in step {} with action {}".format(episode_rew, perturbation_action))
 
-                probs = self.actor(t(state))
-                dist = get_dist(probs)
-                action = dist.sample()
-                prob_act = dist.log_prob(action)
-
+                action = self.inferencer.inference(state)
                 next_state, reward, done, info = self.env.step(action.detach().data.numpy())
-                advantage = reward + (1 - done) * self.GAMMA * self.critic(t(next_state)) - self.critic(t(state))
-
-                w.add_scalar("loss/advantage", advantage, global_step=global_steps)
-                w.add_scalar("actions/action_0_prob", dist.probs[0], global_step=global_steps)
-                w.add_scalar("actions/action_1_prob", dist.probs[1], global_step=global_steps)
 
                 episode_rew += reward
                 total_reward_in_epoch += reward
                 state = next_state
-
-                if prev_prob_act:
-                    actor_loss = self.actor.train(w, prev_prob_act, prob_act, advantage, global_steps, self.epsilon)
-                    self.critic.train(w, advantage, global_steps)
-
-                prev_prob_act = prob_act
 
                 w.add_scalar("reward/episode_reward", episode_rew, global_step=run)
                 episode_rewards.append(episode_rew)
@@ -179,14 +159,7 @@ class PPOCartpoleTrainer:
                                                                                      str(time_spent))
                 logging.info(updates_message)
                 print(updates_message)
-                if self.config["save_model"] and total_reward_in_epoch / self.UPDATE_EVERY > self.max_avg:
-                    self.max_avg = total_reward_in_epoch / self.UPDATE_EVERY
-                    logging.info(f"Saving model . . .")
-                    utils.save_ppo_model(self.actor, start_time_format, total_reward_in_epoch / self.UPDATE_EVERY, self.params)
 
-                if (total_reward_in_epoch / self.UPDATE_EVERY) > self.OBJECTIVE_REWARD:
-                    logging.info("Training objective reached!!")
-                    break
                 total_reward_in_epoch = 0
 
         # self.final_demonstration()

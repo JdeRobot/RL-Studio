@@ -59,6 +59,27 @@ def save_dqn_model(dqn, current_time, average, params):
     metadata.write(markdownTable(params_to_markdown_list(params.algorithm)).setParams(row_sep='always').getMarkdown())
     metadata.close()
 
+def save_ppo_model(actor, current_time, average, params):
+    file_dump = open(
+        "./checkpoints/cartpole/ppo_models/" + current_time + "_actor_avg_" + str(
+            average) + ".pkl",
+        "wb",
+    )
+    pickle.dump(actor.model, file_dump)
+    file_dump.close()
+
+    # And save metadata config too
+    metadata = open("./checkpoints/cartpole/ppo_models/" + current_time + "_metadata.md",
+                    "a")
+    metadata.write("AGENT PARAMETERS\n")
+    metadata.write(markdownTable(params_to_markdown_list(params.agent)).setParams(row_sep='always').getMarkdown())
+    metadata.write("\n```\n\nSETTINGS PARAMETERS\n")
+    metadata.write(markdownTable(params_to_markdown_list(params.settings)).setParams(row_sep='always').getMarkdown())
+    metadata.write("\n```\n\nENVIRONMENT PARAMETERS\n")
+    metadata.write(markdownTable(params_to_markdown_list(params.environment)).setParams(row_sep='always').getMarkdown())
+    metadata.write("\n```\n\nALGORITHM PARAMETERS\n")
+    metadata.write(markdownTable(params_to_markdown_list(params.algorithm)).setParams(row_sep='always').getMarkdown())
+    metadata.close()
 
 def save_actions_qlearn(actions, start_time):
     file_dump = open("./checkpoints/cartpole/qlearn_models/actions_set_" + start_time, "wb")

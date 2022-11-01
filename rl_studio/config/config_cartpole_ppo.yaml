@@ -22,10 +22,10 @@ environments:
     env_name: myCartpole-v0
     environment_folder: cartpole
 #    runs: 20000
-    runs: 20000
+    runs: 1000
     full_experimentation_runs: 0
-    update_every: 1000
-    show_every: 10000
+    update_every: 100
+    show_every: 1000
     objective_reward: 500
 #    block_experience_batch: False
     block_experience_batch: False
@@ -38,9 +38,9 @@ environments:
 
 inference:
   ppo:
-    inference_file: /home/ruben/Desktop/my-RL-Studio/rl_studio/checkpoints/cartpole/ppo_models/20221017_2118_epsilon_1_ppo_WEIGHTS_avg_475.825.pkl
+    inference_file: /home/ruben/Desktop/my-RL-Studio/rl_studio/checkpoints/cartpole/ppo_models/20221101_0159_actor_avg_126.92.pkl
 
 algorithm:
     ppo:
       gamma: 0.92
-      epsilon_discount: 0.9997
+      epsilon: 0.2
