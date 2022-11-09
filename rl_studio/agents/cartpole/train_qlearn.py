@@ -43,6 +43,9 @@ class QLearnCartpoleTrainer:
         self.UPDATE_EVERY = self.environment_params[
             "update_every"
         ]  # How oftern the current progress is recorded
+        self.SAVE_EVERY = self.environment_params[
+            "save_every"
+        ]  # How oftern the current model is saved
 
         self.bins, self.obsSpaceSize, self.qTable = utils.create_bins_and_q_table(
             self.env, self.BINS
@@ -112,7 +115,7 @@ class QLearnCartpoleTrainer:
         if self.config["save_model"]:
             print(f"\nSaving actions . . .\n")
             utils.save_actions_qlearn(self.actions, start_time_format, self.params)
-            save_metadata("qlearn", start_time_format, self.params)
+            save_metadata("qlearning", start_time_format, self.params)
 
         print(LETS_GO)
 
@@ -163,6 +166,7 @@ class QLearnCartpoleTrainer:
                     "time",
                     self.now
                 )
+            if run % self.SAVE_EVERY == 0:
                 if self.config["save_model"]:
                     print(f"\nSaving model . . .\n")
                     utils.save_model_qlearn(
