@@ -23,6 +23,16 @@ class InferencerFactory:
 
             return brain
 
+        if algorithm == AlgorithmsType.QLEARN_MULTIPLE.value:
+            from rl_studio.algorithms.qlearn_multiple_states import QLearn
+
+            actions_file_name = config.actions_file
+
+            brain = QLearn(config)
+            brain.load_model(inference_file_name, actions_file_name)
+
+            return brain
+
         elif algorithm == AlgorithmsType.DQN.value:
             from rl_studio.algorithms.dqn_torch import DQN_Agent
 

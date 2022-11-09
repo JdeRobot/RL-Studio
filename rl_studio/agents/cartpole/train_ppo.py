@@ -15,7 +15,7 @@ from rl_studio.agents.cartpole import utils
 from rl_studio.algorithms.ppo import Actor, Critic, Mish, t, get_dist
 from rl_studio.visual.ascii.images import JDEROBOT_LOGO
 from rl_studio.visual.ascii.text import JDEROBOT, LETS_GO
-from rl_studio.agents.cartpole.utils import store_rewards, show_fails_success_comparisson
+from rl_studio.agents.cartpole.utils import store_rewards, save_metadata
 
 
 class PPOCartpoleTrainer:
@@ -123,6 +123,11 @@ class PPOCartpoleTrainer:
         self.print_init_info()
 
         start_time_format = epoch_start_time.strftime("%Y%m%d_%H%M")
+
+        if self.config["save_model"]:
+            save_metadata("ppo", start_time_format, self.params)
+
+
         logging.info(LETS_GO)
         total_reward_in_epoch = 0
         episode_rewards = []
