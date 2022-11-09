@@ -1,5 +1,5 @@
 import pickle
-
+import matplotlib as pltlib
 import matplotlib.pyplot as plt
 import numpy as np
 from statsmodels.distributions.empirical_distribution import ECDF
@@ -19,6 +19,7 @@ def plot_ecdf(sample, color, label):
 
 if __name__ == "__main__":
 
+    pltlib.rcParams.update({'font.size': 15})
 
     rewards_file = open(
         "/rl_studio/logs/cartpole/old_datasets/dqn_analysis/training_with_frequencies/2022-10-20 23:05:26.343167__rewards_rsl-0_rpl-0.2_pi-10.pkl", "rb")

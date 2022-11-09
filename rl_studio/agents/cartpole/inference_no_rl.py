@@ -4,15 +4,13 @@ import gym
 import matplotlib.pyplot as plt
 import numpy as np
 
-from rl_studio.agents.cartpole import utils
 from rl_studio.visual.ascii.images import JDEROBOT_LOGO
 from rl_studio.visual.ascii.text import JDEROBOT, QLEARN_CAMERA, LETS_GO
-from rl_studio.wrappers.inference_rlstudio import InferencerWrapper
-from rl_studio.agents.cartpole.utils import store_rewards, show_fails_success_comparisson
+from rl_studio.agents.cartpole.utils import store_rewards
 import random
 
 
-class QLearnCartpoleInferencer:
+class NoRLCartpoleInferencer:
     def __init__(self, params):
         # TODO: Create a pydantic metaclass to simplify the way we extract the params
         # environment params
@@ -35,17 +33,12 @@ class QLearnCartpoleInferencer:
         self.RUNS = self.environment_params[
             "runs"
         ]  # Number of iterations run TODO set this from config.yml
-        self.BINS = self.environment_params["bins"]
         self.SHOW_EVERY = self.environment_params[
             "show_every"
         ]  # How oftern the current solution is rendered TODO set this from config.yml
         self.UPDATE_EVERY = self.environment_params[
             "update_every"
         ]  # How oftern the current progress is recorded TODO set this from config.yml
-
-        self.bins, self.obsSpaceSize, self.qTable = utils.create_bins_and_q_table(
-            self.env, self.BINS
-        )
 
         self.previousCnt = []  # array of all scores over runs
         self.metrics = {
@@ -61,15 +54,8 @@ class QLearnCartpoleInferencer:
 
         self.actions = range(self.env.action_space.n)
         self.env.done = True
-        inference_file = params.inference["params"]["inference_file"]
-        actions_file = params.inference["params"]["actions_file"]
 
         self.total_episodes = 20000
-
-        # TODO the first parameter (algorithm) should come from configuration
-        self.inferencer = InferencerWrapper(
-            "qlearn", inference_file, actions_file
-        )
 
     def print_init_info(self):
         print(JDEROBOT)
@@ -78,16 +64,18 @@ class QLearnCartpoleInferencer:
         print(f"\t- Start hour: {datetime.datetime.now()}\n")
         print(f"\t- Environment params:\n{self.environment_params}")
 
-    def evaluate_and_learn_from_step(self, state):
-
+    def evaluate_from_step(self, state):
         # Pick an action based on the current state
-        action = self.inferencer.inference(state)
+        theta, w = state[2:4]
+        if abs(theta) < 0.03:
+            action = 0 if w < 0 else 1
+        else:
+            action = 0 if theta < 0 else 1
 
         # Execute the action and get feedback
-        nextState, reward, done, info = self.env.step(action)
-        nextState = utils.get_discrete_state(nextState, self.bins, self.obsSpaceSize)
+        next_state, reward, done, info = self.env.step(action)
 
-        return nextState, done
+        return next_state, done
 
     def main(self):
 
@@ -99,9 +87,7 @@ class QLearnCartpoleInferencer:
         print(LETS_GO)
 
         for run in range(self.RUNS):
-            state = utils.get_discrete_state(
-                self.env.reset(), self.bins, self.obsSpaceSize
-            )
+            state = self.env.reset()
             done = False  # has the enviroment finished?
             cnt = 0  # how may movements cart has made
 
@@ -113,7 +99,7 @@ class QLearnCartpoleInferencer:
                 if random.uniform(0, 1) < self.RANDOM_PERTURBATIONS_LEVEL:
                     perturbation_action = random.randrange(self.env.action_space.n)
                     obs, done, _, _ = self.env.perturbate(perturbation_action, self.PERTURBATIONS_INTENSITY_STD)
-                next_state, done = self.evaluate_and_learn_from_step(state)
+                next_state, done = self.evaluate_from_step(state)
 
                 if not done:
                     state = next_state
@@ -124,7 +110,7 @@ class QLearnCartpoleInferencer:
 
         self.env.close()
         base_file_name = f'_rewards_rsl-{self.RANDOM_START_LEVEL}_rpl-{self.RANDOM_PERTURBATIONS_LEVEL}_pi-{self.PERTURBATIONS_INTENSITY_STD}'
-        file_path = f'./logs/cartpole/qlearning/inference/{datetime.datetime.now()}_{base_file_name}.pkl'
+        file_path = f'./logs/cartpole/no_rl/inference/{datetime.datetime.now()}_{base_file_name}.pkl'
         store_rewards(self.metrics["avg"], file_path)
 
         # Plot graph

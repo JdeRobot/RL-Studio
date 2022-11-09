@@ -24,12 +24,12 @@ environments:
 #    runs: 20000
     runs: 100
     full_experimentation_runs: 0
-    update_every: 10000
-    show_every: 10000
-    random_start_level: 0.05 # Number between 0 and 1 that indicates the difficulty of the start position
+    update_every: 100
+    show_every: 100
+    random_start_level: 0 # Number between 0 and 1 that indicates the difficulty of the start position
     random_perturbations_level: 0 # Number between 0 and 1 that indicates the frequency of the random perturbations
     perturbations_intensity_std: 0 # Number between 0 and 1 that indicates the standard deviation of perturbations intensity
-    initial_pole_angle: 0
+    initial_pole_angle: 0.1
     non_recoverable_angle: 0.3
 
 algorithm:

@@ -8,7 +8,7 @@ from rl_studio.agents.cartpole import utils
 from rl_studio.algorithms.qlearn_multiple_states import QLearn
 from rl_studio.visual.ascii.images import JDEROBOT_LOGO
 from rl_studio.visual.ascii.text import JDEROBOT, QLEARN_CAMERA, LETS_GO
-from rl_studio.agents.cartpole.utils import store_rewards, show_fails_success_comparisson
+from rl_studio.agents.cartpole.utils import store_rewards, save_metadata
 
 
 class QLearnCartpoleTrainer:
@@ -20,9 +20,23 @@ class QLearnCartpoleTrainer:
         self.params = params
         self.environment_params = params.environment["params"]
         self.env_name = params.environment["params"]["env_name"]
-        env_params = params.environment["params"]
-        self.env = gym.make(self.env_name)
+
+        self.RANDOM_PERTURBATIONS_LEVEL = self.environment_params.get("random_perturbations_level", 0)
+        self.PERTURBATIONS_INTENSITY_STD = self.environment_params.get("perturbations_intensity_std", 0)
+        self.RANDOM_START_LEVEL = self.environment_params.get("random_start_level", 0)
+        self.INITIAL_POLE_ANGLE = self.environment_params.get("initial_pole_angle", None)
+
+
+        non_recoverable_angle = self.environment_params[
+            "non_recoverable_angle"
+        ]
+        # Unfortunately, max_steps is not working with new_step_api=True and it is not giving any benefit.
+        # self.env = gym.make(self.env_name, new_step_api=True, random_start_level=random_start_level)
+        self.env = gym.make(self.env_name, random_start_level=self.RANDOM_START_LEVEL, initial_pole_angle=self.INITIAL_POLE_ANGLE,
+                            non_recoverable_angle=non_recoverable_angle)
+
         self.RUNS = self.environment_params["runs"]  # Number of iterations run
+        self.BINS = self.environment_params["bins"]
         self.SHOW_EVERY = self.environment_params[
             "show_every"
         ]  # How oftern the current solution is rendered
@@ -31,7 +45,7 @@ class QLearnCartpoleTrainer:
         ]  # How oftern the current progress is recorded
 
         self.bins, self.obsSpaceSize, self.qTable = utils.create_bins_and_q_table(
-            self.env
+            self.env, self.BINS
         )
 
         self.previousCnt = []  # array of all scores over runs
@@ -97,7 +111,8 @@ class QLearnCartpoleTrainer:
 
         if self.config["save_model"]:
             print(f"\nSaving actions . . .\n")
-            utils.save_actions_qlearn(self.actions, start_time_format)
+            utils.save_actions_qlearn(self.actions, start_time_format, self.params)
+            save_metadata("qlearn", start_time_format, self.params)
 
         print(LETS_GO)
 
@@ -145,14 +160,16 @@ class QLearnCartpoleTrainer:
                     self.qlearn.epsilon,
                     "time spent",
                     time_spent,
+                    "time",
+                    self.now
                 )
+                if self.config["save_model"]:
+                    print(f"\nSaving model . . .\n")
+                    utils.save_model_qlearn(
+                        self.qlearn,
+                        start_time_format, averageCnt
+                    )
 
-        if self.config["save_model"]:
-            print(f"\nSaving model . . .\n")
-            utils.save_model_qlearn(
-                self.qlearn,
-                start_time_format
-            )
         self.env.close()
 
         base_file_name = f'_rewards_'
