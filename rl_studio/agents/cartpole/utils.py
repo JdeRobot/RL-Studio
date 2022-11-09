@@ -15,7 +15,7 @@ END_EPSILON_DECAYING = 10000 // 2
 epsilon_decay_value = epsilon / (END_EPSILON_DECAYING - START_EPSILON_DECAYING)
 
 
-def save_model_qlearn(qlearn, current_time):
+def save_model_qlearn(qlearn, current_time, avg):
     # Tabular RL: Tabular Q-learning basically stores the policy (Q-values) of  the agent into a matrix of shape
     # (S x A), where s are all states, a are all the possible actions. After the environment is solved, just save this
     # matrix as a csv file. I have a quick implementation of this on my GitHub under Reinforcement Learning.
@@ -24,7 +24,7 @@ def save_model_qlearn(qlearn, current_time):
     # Q TABLE
     base_file_name = "_epsilon_{}".format(round(qlearn.epsilon, 3))
     file_dump = open(
-        "./checkpoints/cartpole/qlearn_models/" + current_time + base_file_name + "_QTABLE.pkl_avg_.pkl",
+        "./checkpoints/cartpole/qlearn_models/" + current_time + base_file_name + "_" + str(avg) + "_QTABLE.pkl_avg_.pkl",
         "wb"
     )
     pickle.dump(qlearn.q, file_dump)
@@ -36,18 +36,8 @@ def params_to_markdown_list(dictionary):
         md_list.append({"parameter": item, "value": dictionary["params"][item]})
     return md_list
 
-
-def save_dqn_model(dqn, current_time, average, params):
-    base_file_name = "_epsilon_{}".format(round(epsilon, 2))
-    file_dump = open(
-        "./checkpoints/cartpole/dqn_models/" + current_time + base_file_name + "_DQN_WEIGHTS_avg_" + str(
-            average) + ".pkl",
-        "wb",
-    )
-    pickle.dump(dqn.q_net, file_dump)
-    file_dump.close()
-    # And save metadata config too
-    metadata = open("./checkpoints/cartpole/dqn_models/" + current_time + "_metadata.md",
+def save_metadata(algorithm, current_time, params):
+    metadata = open("./checkpoints/cartpole/" + algorithm + "_models/" + current_time + "_metadata.md",
                     "a")
     metadata.write("AGENT PARAMETERS\n")
     metadata.write(markdownTable(params_to_markdown_list(params.agent)).setParams(row_sep='always').getMarkdown())
@@ -58,6 +48,16 @@ def save_dqn_model(dqn, current_time, average, params):
     metadata.write("\n```\n\nALGORITHM PARAMETERS\n")
     metadata.write(markdownTable(params_to_markdown_list(params.algorithm)).setParams(row_sep='always').getMarkdown())
     metadata.close()
+def save_dqn_model(dqn, current_time, average, params):
+    base_file_name = "_epsilon_{}".format(round(epsilon, 2))
+    file_dump = open(
+        "./checkpoints/cartpole/dqn_models/" + current_time + base_file_name + "_DQN_WEIGHTS_avg_" + str(
+            average) + ".pkl",
+        "wb",
+    )
+    pickle.dump(dqn.q_net, file_dump)
+    file_dump.close()
+
 
 def save_ppo_model(actor, current_time, average, params):
     file_dump = open(
@@ -68,26 +68,15 @@ def save_ppo_model(actor, current_time, average, params):
     pickle.dump(actor.model, file_dump)
     file_dump.close()
 
-    # And save metadata config too
-    metadata = open("./checkpoints/cartpole/ppo_models/" + current_time + "_metadata.md",
-                    "a")
-    metadata.write("AGENT PARAMETERS\n")
-    metadata.write(markdownTable(params_to_markdown_list(params.agent)).setParams(row_sep='always').getMarkdown())
-    metadata.write("\n```\n\nSETTINGS PARAMETERS\n")
-    metadata.write(markdownTable(params_to_markdown_list(params.settings)).setParams(row_sep='always').getMarkdown())
-    metadata.write("\n```\n\nENVIRONMENT PARAMETERS\n")
-    metadata.write(markdownTable(params_to_markdown_list(params.environment)).setParams(row_sep='always').getMarkdown())
-    metadata.write("\n```\n\nALGORITHM PARAMETERS\n")
-    metadata.write(markdownTable(params_to_markdown_list(params.algorithm)).setParams(row_sep='always').getMarkdown())
-    metadata.close()
 
-def save_actions_qlearn(actions, start_time):
+def save_actions_qlearn(actions, start_time, params):
     file_dump = open("./checkpoints/cartpole/qlearn_models/actions_set_" + start_time, "wb")
     pickle.dump(actions, file_dump)
+    file_dump.close()
 
 
 # Create bins and Q table
-def create_bins_and_q_table(env):
+def create_bins_and_q_table(env, number_bins):
     # env.observation_space.high
     # [4.8000002e+00 3.4028235e+38 4.1887903e-01 3.4028235e+38]
     # env.observation_space.low
@@ -95,7 +84,7 @@ def create_bins_and_q_table(env):
 
     # remove hard coded Values when I know how to
 
-    numBins = 20
+    numBins = number_bins
     obsSpaceSize = len(env.observation_space.high)
 
     # Get the size of each bucket
