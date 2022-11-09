@@ -184,12 +184,13 @@ class PPOCartpoleTrainer:
                                                                                      str(time_spent))
                 logging.info(updates_message)
                 print(updates_message)
-                if self.config["save_model"] and total_reward_in_epoch / self.UPDATE_EVERY > self.max_avg:
+                last_average = total_reward_in_epoch / self.UPDATE_EVERY;
+                if self.config["save_model"] and last_average > self.max_avg:
                     self.max_avg = total_reward_in_epoch / self.UPDATE_EVERY
                     logging.info(f"Saving model . . .")
-                    utils.save_ppo_model(self.actor, start_time_format, total_reward_in_epoch / self.UPDATE_EVERY, self.params)
+                    utils.save_ppo_model(self.actor, start_time_format, last_average, self.params)
 
-                if (total_reward_in_epoch / self.UPDATE_EVERY) > self.OBJECTIVE_REWARD:
+                if last_average >= self.OBJECTIVE_REWARD:
                     logging.info("Training objective reached!!")
                     break
                 total_reward_in_epoch = 0
