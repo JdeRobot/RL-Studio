@@ -24,7 +24,7 @@ def save_model_qlearn(qlearn, current_time, avg):
     # Q TABLE
     base_file_name = "_epsilon_{}".format(round(qlearn.epsilon, 3))
     file_dump = open(
-        "./checkpoints/cartpole/qlearn_models/" + current_time + base_file_name + "_" + str(avg) + "_QTABLE.pkl_avg_.pkl",
+        "./logs/cartpole/qlearning/checkpoints/" + current_time + base_file_name + "_" + str(avg) + "_QTABLE.pkl_avg_.pkl",
         "wb"
     )
     pickle.dump(qlearn.q, file_dump)
@@ -37,7 +37,7 @@ def params_to_markdown_list(dictionary):
     return md_list
 
 def save_metadata(algorithm, current_time, params):
-    metadata = open("./checkpoints/cartpole/" + algorithm + "_models/" + current_time + "_metadata.md",
+    metadata = open("./logs/cartpole/" + algorithm + "/checkpoints/" + current_time + "_metadata.md",
                     "a")
     metadata.write("AGENT PARAMETERS\n")
     metadata.write(markdownTable(params_to_markdown_list(params.agent)).setParams(row_sep='always').getMarkdown())
@@ -51,7 +51,7 @@ def save_metadata(algorithm, current_time, params):
 def save_dqn_model(dqn, current_time, average, params):
     base_file_name = "_epsilon_{}".format(round(epsilon, 2))
     file_dump = open(
-        "./checkpoints/cartpole/dqn_models/" + current_time + base_file_name + "_DQN_WEIGHTS_avg_" + str(
+        "./logs/cartpole/dqn/checkpoints/" + current_time + base_file_name + "_DQN_WEIGHTS_avg_" + str(
             average) + ".pkl",
         "wb",
     )
@@ -61,7 +61,7 @@ def save_dqn_model(dqn, current_time, average, params):
 
 def save_ppo_model(actor, current_time, average, params):
     file_dump = open(
-        "./checkpoints/cartpole/ppo_models/" + current_time + "_actor_avg_" + str(
+        "./logs/cartpole/ppo/checkpoints/" + current_time + "_actor_avg_" + str(
             average) + ".pkl",
         "wb",
     )
@@ -70,7 +70,7 @@ def save_ppo_model(actor, current_time, average, params):
 
 
 def save_actions_qlearn(actions, start_time, params):
-    file_dump = open("./checkpoints/cartpole/qlearn_models/actions_set_" + start_time, "wb")
+    file_dump = open("./logs/cartpole/qlearning/checkpoints/actions_set_" + start_time, "wb")
     pickle.dump(actions, file_dump)
     file_dump.close()
 
