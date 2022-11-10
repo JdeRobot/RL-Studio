@@ -107,6 +107,17 @@ class F1TrainerDDPG:
         self.environment["model_state_name"] = params.settings["params"][
             "model_state_name"
         ]
+        # Training or inference
+        self.environment["load_ddpg_tf_model"] = params.settings["params"][
+            "load_ddpg_tf_model"
+        ]
+        self.environment["ddpg_tf_actor_model"] = params.settings["params"][
+            "ddpg_tf_actor_model"
+        ]
+        self.environment["ddpg_tf_critic_model"] = params.settings["params"][
+            "ddpg_tf_critic_model"
+        ]
+
         # Env
         self.environment["env"] = params.environment["params"]["env_name"]
         self.environment["circuit_name"] = params.environment["params"]["circuit_name"]
@@ -270,7 +281,7 @@ class F1TrainerDDPG:
             while not done:
                 tf_prev_state = tf.expand_dims(tf.convert_to_tensor(prev_state), 0)
                 action = ac_agent.policy(tf_prev_state, ou_noise, self.action_space)
-                state, reward, done, _ = self.env.step(action)
+                state, reward, done, _ = self.env.step(action, step)
                 cumulated_reward += reward
                 # best_reward_total += reward
 
@@ -382,12 +393,21 @@ class F1TrainerDDPG:
                         in_best_step=best_step,
                         with_highest_reward=int(current_max_reward),
                     )
+                    # save model protobuf
                     ac_agent.actor_model.save(
-                        f"{self.outdir}/models/{self.model_name}_LAPCOMPLETED_ACTOR_Max{int(cumulated_reward)}_Epoch{episode}_inTime{time.strftime('%Y%m%d-%H%M%S')}.model"
+                        f"{self.outdir}/models/{time.strftime('%Y%m%d')}_{self.model_name}_LAPCOMPLETED_ACTOR_Max-{int(cumulated_reward)}_Epoch-{episode}_State-{self.state_space}_Actions-{self.action_space}_Rewards-{self.reward_function}_inTime-{time.strftime('%Y%m%d-%H%M%S')}"
                     )
                     ac_agent.critic_model.save(
-                        f"{self.outdir}/models/{self.model_name}_LAPCOMPLETED_CRITIC_Max{int(cumulated_reward)}_Epoch{episode}_inTime{time.strftime('%Y%m%d-%H%M%S')}.model"
+                        f"{self.outdir}/models/{time.strftime('%Y%m%d')}_{self.model_name}_LAPCOMPLETED_CRITIC_Max-{int(cumulated_reward)}_Epoch-{episode}_State-{self.state_space}_Actions-{self.action_space}_Rewards-{self.reward_function}_inTime-{time.strftime('%Y%m%d-%H%M%S')}"
                     )
+                    # save model in format h5
+                    ac_agent.actor_model.save(
+                        f"{self.outdir}/models/{time.strftime('%Y%m%d')}_{self.model_name}_LAPCOMPLETED_ACTOR_Max{int(cumulated_reward)}_Epoch-{episode}_State-{self.state_space}_Actions-{self.action_space}_Rewards-{self.reward_function}_inTime-{time.strftime('%Y%m%d-%H%M%S')}.h5"
+                    )
+                    ac_agent.critic_model.save(
+                        f"{self.outdir}/models/{time.strftime('%Y%m%d')}_{self.model_name}_LAPCOMPLETED_CRITIC_Max{int(cumulated_reward)}_Epoch-{episode}_State-{self.state_space}_Actions-{self.action_space}_Rewards-{self.reward_function}_inTime-{time.strftime('%Y%m%d-%H%M%S')}.h5"
+                    )
+                    # save some stats
                     save_agent_npy(
                         self.environment, self.outdir, self.actions_rewards, start_time
                     )
@@ -424,13 +444,20 @@ class F1TrainerDDPG:
                 save_stats_episodes(
                     self.environment, self.outdir, self.best_current_epoch, start_time
                 )
+                # save protobuf model
                 ac_agent.actor_model.save(
-                    f"{self.outdir}/models/{self.model_name}_BESTLAP_ACTOR_Max{int(current_max_reward)}_Epoch{episode}_inTime{time.strftime('%Y%m%d-%H%M%S')}.model"
+                    f"{self.outdir}/models/{time.strftime('%Y%m%d')}_{self.model_name}_BESTLAP_ACTOR_Max{int(current_max_reward)}_Epoch-{episode}_State-{self.state_space}_Actions-{self.action_space}_Rewards-{self.reward_function}_inTime-{time.strftime('%Y%m%d-%H%M%S')}"
                 )
                 ac_agent.critic_model.save(
-                    f"{self.outdir}/models/{self.model_name}_BESTLAP_CRITIC_Max{int(current_max_reward)}_Epoch{episode}_inTime{time.strftime('%Y%m%d-%H%M%S')}.model"
+                    f"{self.outdir}/models/{time.strftime('%Y%m%d')}_{self.model_name}_BESTLAP_CRITIC_Max{int(current_max_reward)}_Epoch-{episode}_State-{self.state_space}_Actions-{self.action_space}_Rewards-{self.reward_function}_inTime-{time.strftime('%Y%m%d-%H%M%S')}"
                 )
-
+                # save h5 model
+                ac_agent.actor_model.save(
+                    f"{self.outdir}/models/{time.strftime('%Y%m%d')}_{self.model_name}_BESTLAP_ACTOR_Max{int(current_max_reward)}_Epoch-{episode}_State-{self.state_space}_Actions-{self.action_space}_Rewards-{self.reward_function}_inTime-{time.strftime('%Y%m%d-%H%M%S')}.h5"
+                )
+                ac_agent.critic_model.save(
+                    f"{self.outdir}/models/{time.strftime('%Y%m%d')}_{self.model_name}_BESTLAP_CRITIC_Max{int(current_max_reward)}_Epoch-{episode}_State-{self.state_space}_Actions-{self.action_space}_Rewards-{self.reward_function}_inTime-{time.strftime('%Y%m%d-%H%M%S')}.h5"
+                )
             # ended at training time setting: 2 hours, 15 hours...
             if datetime.now() - timedelta(hours=self.training_time) > start_time:
                 print_messages(
@@ -445,13 +472,20 @@ class F1TrainerDDPG:
                     with_the_highest_Total_reward=int(current_max_reward),
                 )
                 if cumulated_reward > current_max_reward:
+                    # save protobuf model
                     ac_agent.actor_model.save(
-                        f"{self.outdir}/models/{self.model_name}_END_TRAININGTIME_ACTOR_Max{int(cumulated_reward)}_Epoch{episode}_inTime{time.strftime('%Y%m%d-%H%M%S')}.model"
+                        f"{self.outdir}/models/{time.strftime('%Y%m%d')}_{self.model_name}_END_TRAININGTIME_ACTOR_Max{int(cumulated_reward)}_Epoch-{episode}_State-{self.state_space}_Actions-{self.action_space}_Rewards-{self.reward_function}_inTime-{time.strftime('%Y%m%d-%H%M%S')}"
                     )
                     ac_agent.critic_model.save(
-                        f"{self.outdir}/models/{self.model_name}_END_TRAININGTIME_CRITIC_Max{int(cumulated_reward)}_Epoch{episode}_inTime{time.strftime('%Y%m%d-%H%M%S')}.model"
+                        f"{self.outdir}/models/{time.strftime('%Y%m%d')}_{self.model_name}_END_TRAININGTIME_CRITIC_Max{int(cumulated_reward)}_Epoch-{episode}_State-{self.state_space}_Actions-{self.action_space}_Rewards-{self.reward_function}_inTime-{time.strftime('%Y%m%d-%H%M%S')}"
                     )
-
+                    # save h5 model
+                    ac_agent.actor_model.save(
+                        f"{self.outdir}/models/{time.strftime('%Y%m%d')}_{self.model_name}_END_TRAININGTIME_ACTOR_Max{int(cumulated_reward)}_Epoch-{episode}_State-{self.state_space}_Actions-{self.action_space}_Rewards-{self.reward_function}_inTime-{time.strftime('%Y%m%d-%H%M%S')}.h5"
+                    )
+                    ac_agent.critic_model.save(
+                        f"{self.outdir}/models/{time.strftime('%Y%m%d')}_{self.model_name}_END_TRAININGTIME_CRITIC_Max{int(cumulated_reward)}_Epoch-{episode}_State-{self.state_space}_Actions-{self.action_space}_Rewards-{self.reward_function}_inTime-{time.strftime('%Y%m%d-%H%M%S')}.h5"
+                    )
                 break
 
             # save best values every save_episode times
@@ -491,11 +525,19 @@ class F1TrainerDDPG:
 
                 # if max_reward >= current_max_reward:
                 #    print_messages("Saving batch", max_reward=int(max_reward))
+                # save protobuf model
                 ac_agent.actor_model.save(
-                    f"{self.outdir}/models/{self.model_name}_BATCH_ACTOR_Max{int(max_reward)}_Epoch{episode}_inTime{time.strftime('%Y%m%d-%H%M%S')}.model"
+                    f"{self.outdir}/models/{time.strftime('%Y%m%d')}_{self.model_name}_BATCH_ACTOR_Max{int(max_reward)}_Epoch-{episode}_State-{self.state_space}_Actions-{self.action_space}_Rewards-{self.reward_function}_inTime-{time.strftime('%Y%m%d-%H%M%S')}"
                 )
                 ac_agent.critic_model.save(
-                    f"{self.outdir}/models/{self.model_name}_BATCH_CRITIC_Max{int(max_reward)}_Epoch{episode}_inTime{time.strftime('%Y%m%d-%H%M%S')}.model"
+                    f"{self.outdir}/models/{time.strftime('%Y%m%d')}_{self.model_name}_BATCH_CRITIC_Max{int(max_reward)}_Epoch-{episode}_State-{self.state_space}_Actions-{self.action_space}_Rewards-{self.reward_function}_inTime-{time.strftime('%Y%m%d-%H%M%S')}"
+                )
+                # save h5 model
+                ac_agent.actor_model.save(
+                    f"{self.outdir}/models/{time.strftime('%Y%m%d')}_{self.model_name}_BATCH_ACTOR_Max{int(max_reward)}_Epoch-{episode}_State-{self.state_space}_Actions-{self.action_space}_Rewards-{self.reward_function}_inTime-{time.strftime('%Y%m%d-%H%M%S')}.h5"
+                )
+                ac_agent.critic_model.save(
+                    f"{self.outdir}/models/{time.strftime('%Y%m%d')}_{self.model_name}_BATCH_CRITIC_Max{int(max_reward)}_Epoch-{episode}_State-{self.state_space}_Actions-{self.action_space}_Rewards-{self.reward_function}_inTime-{time.strftime('%Y%m%d-%H%M%S')}.h5"
                 )
                 save_stats_episodes(
                     self.environment, self.outdir, self.aggr_ep_rewards, start_time
