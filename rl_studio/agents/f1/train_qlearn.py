@@ -1,10 +1,12 @@
-from datetime import datetime, timedelta
+import datetime
 from functools import reduce
 import os
 import time
 from pprint import pprint
 
+import cv2
 import gym
+import matplotlib.pyplot as plt
 import numpy as np
 from tqdm import tqdm
 
@@ -384,9 +386,6 @@ class QlearnF1FollowLaneTrainer:
         self.environment["min_reward"] = params.agent["params"]["rewards"][
             self.reward_function
         ]["min_reward"]
-        # self.environment["goal_reward"] = params.agent["params"]["rewards"][
-        #    self.reward_function
-        # ]["goal_reward"]
 
         # Environment Algorithm
 
@@ -407,7 +406,7 @@ class QlearnF1FollowLaneTrainer:
 
     def main(self):
         os.makedirs(f"{self.outdir}", exist_ok=True)
-        start_time = datetime.now()
+        start_time = datetime.datetime.now()
         start_time_format = start_time.strftime("%Y%m%d_%H%M")
         min_reward = self.min_reward
         best_epoch = 1
@@ -440,7 +439,7 @@ class QlearnF1FollowLaneTrainer:
             done = False
             cumulated_reward = 0
             step = 0
-            start_time_epoch = datetime.now()
+            start_time_epoch = datetime.datetime.now()
 
             observation = self.env.reset()
             state = "".join(map(str, observation))
@@ -493,7 +492,9 @@ class QlearnF1FollowLaneTrainer:
                     current_max_reward = cumulated_reward
                     best_epoch = episode
                     best_step = step
-                    best_epoch_training_time = datetime.now() - start_time_epoch
+                    best_epoch_training_time = (
+                        datetime.datetime.now() - start_time_epoch
+                    )
                     # saving params to show
                     self.actions_rewards["episode"].append(episode)
                     self.actions_rewards["step"].append(step)
@@ -510,8 +511,8 @@ class QlearnF1FollowLaneTrainer:
                         current_episode=episode,
                         current_step=step,
                         cumulated_reward_in_this_episode=int(cumulated_reward),
-                        total_training_time=(datetime.now() - start_time),
-                        epoch_time=datetime.now() - start_time_epoch,
+                        total_training_time=(datetime.datetime.now() - start_time),
+                        epoch_time=datetime.datetime.now() - start_time_epoch,
                     )
                     print_messages(
                         "... and best record...",
@@ -537,15 +538,15 @@ class QlearnF1FollowLaneTrainer:
                     # self.min_reward = cumulated_reward
                     print_messages(
                         "end training",
-                        epoch_time=datetime.now() - start_time_epoch,
-                        training_time=datetime.now() - start_time,
+                        epoch_time=datetime.datetime.now() - start_time_epoch,
+                        training_time=datetime.datetime.now() - start_time,
                         episode=episode,
                         episode_reward=cumulated_reward,
                         steps=step,
                         estimated_steps=self.estimated_steps,
                         start_time=start_time,
-                        step_time=datetime.now()
-                        - timedelta(seconds=self.training_time),
+                        step_time=datetime.datetime.now()
+                        - datetime.timedelta(seconds=self.training_time),
                     )
                     # only save incrementally in success
                     if min_reward < cumulated_reward:
@@ -571,7 +572,7 @@ class QlearnF1FollowLaneTrainer:
                     in_best_step=best_step,
                     with_highest_reward=int(cumulated_reward),
                     in_best_epoch_trining_time=best_epoch_training_time,
-                    total_training_time=(datetime.now() - start_time),
+                    total_training_time=(datetime.datetime.now() - start_time),
                 )
                 self.best_current_epoch["best_epoch"].append(best_epoch)
                 self.best_current_epoch["highest_reward"].append(cumulated_reward)
@@ -580,7 +581,7 @@ class QlearnF1FollowLaneTrainer:
                     best_epoch_training_time
                 )
                 self.best_current_epoch["current_total_training_time"].append(
-                    datetime.now() - start_time
+                    datetime.datetime.now() - start_time
                 )
                 save_stats_episodes(
                     self.environment, self.outdir, self.best_current_epoch, start_time
@@ -599,13 +600,19 @@ class QlearnF1FollowLaneTrainer:
                 )
 
             # ended at training time setting: 2 hours, 15 hours...
-            if datetime.now() - timedelta(hours=self.training_time) > start_time:
+            if (
+                datetime.datetime.now() - datetime.timedelta(hours=self.training_time)
+                > start_time
+            ):
                 print_messages(
                     "Training time finished in:",
-                    time=datetime.now() - start_time,
+                    time=datetime.datetime.now() - start_time,
                     episode=episode,
                     cumulated_reward=cumulated_reward,
-                    total_time=(datetime.now() - timedelta(hours=self.training_time)),
+                    total_time=(
+                        datetime.datetime.now()
+                        - datetime.timedelta(hours=self.training_time)
+                    ),
                 )
                 if cumulated_reward >= current_max_reward:
                     save_stats_episodes(
@@ -642,7 +649,7 @@ class QlearnF1FollowLaneTrainer:
                     current_episode_batch=episode,
                     max_reward_in_current_batch=int(max_reward),
                     highest_reward_in_all_training=int(max(self.ep_rewards)),
-                    total_time=(datetime.now() - start_time),
+                    total_time=(datetime.datetime.now() - start_time),
                 )
                 self.aggr_ep_rewards["episode"].append(episode)
                 self.aggr_ep_rewards["step"].append(step)
@@ -650,10 +657,10 @@ class QlearnF1FollowLaneTrainer:
                 self.aggr_ep_rewards["max"].append(max_reward)
                 self.aggr_ep_rewards["min"].append(min_reward)
                 self.aggr_ep_rewards["epoch_training_time"].append(
-                    (datetime.now() - start_time_epoch).total_seconds()
+                    (datetime.datetime.now() - start_time_epoch).total_seconds()
                 )
                 self.aggr_ep_rewards["total_training_time"].append(
-                    (datetime.now() - start_time).total_seconds()
+                    (datetime.datetime.now() - start_time).total_seconds()
                 )
                 save_stats_episodes(
                     self.environment, self.outdir, self.aggr_ep_rewards, start_time
