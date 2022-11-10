@@ -120,14 +120,14 @@ class InferenceExecutorFactory:
         elif agent == AgentsType.CARTPOLE.value:
             if algorithm == AlgorithmsType.DQN.value:
                 from rl_studio.agents.cartpole.inference_dqn import (
-                    DQNCartpoleInferencer,
+                    DQNCartpoleInferencer as CartpoleInferencer,
                 )
             else:
                 from rl_studio.agents.cartpole.inference_qlearn import (
-                    QLearnCartpoleInferencer,
+                    QLearnCartpoleInferencer as CartpoleInferencer,
                 )
 
-            return QLearnCartpoleInferencer(config)
+            return CartpoleInferencer(config)
 
         elif agent == AgentsType.MOUNTAIN_CAR.value:
             from rl_studio.agents.mountain_car.inference_qlearn import (

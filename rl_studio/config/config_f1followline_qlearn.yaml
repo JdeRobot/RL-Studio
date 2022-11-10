@@ -21,7 +21,7 @@ settings:
   plotter_graphic: False
   model_state_name: f1_camera_parking # autoparking
   total_episodes: 50_000
-  training_time: 6
+  training_time: 4
   save_episodes: 50
   save_every_step: 1_000
   lap_completed: False
@@ -129,8 +129,8 @@ agent:
 #####################################################################################
 
 actions:
-    actions_number: 2
-    actions_set: continuous #simple
+    actions_number: 3
+    actions_set: simple #simple
     available_actions:
       simple:
         0: [ 3, 0 ]
@@ -180,7 +180,7 @@ environments:
   simple:
     env_name: F1Env-v0
     circuit_name: simple
-    training_type: qlearn_camera #qlearn_camera, ddpg, dqn
+    training_type: qlearn_camera_follow_line #qlearn_camera_follow_lane, dqn_follow_line, dqn_follow_lane, ddpg_follow_line, ddpg_follow_lane
     launchfile: simple_circuit.launch
     environment_folder: f1
     robot_name: f1_renault

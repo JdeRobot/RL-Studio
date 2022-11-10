@@ -8,6 +8,7 @@ from rl_studio.agents.cartpole import utils
 from rl_studio.algorithms.qlearn_multiple_states import QLearn
 from rl_studio.visual.ascii.images import JDEROBOT_LOGO
 from rl_studio.visual.ascii.text import JDEROBOT, QLEARN_CAMERA, LETS_GO
+from rl_studio.agents.cartpole.utils import store_rewards, show_fails_success_comparisson
 
 
 class QLearnCartpoleTrainer:
@@ -49,7 +50,6 @@ class QLearnCartpoleTrainer:
         self.last_time_steps = np.ndarray(0)
 
         self.config = params.settings["params"]
-        self.outdir = "./logs/robot_mesh_experiments/"
         self.actions = range(self.env.action_space.n)
         self.env.done = True
 
@@ -97,7 +97,7 @@ class QLearnCartpoleTrainer:
 
         if self.config["save_model"]:
             print(f"\nSaving actions . . .\n")
-            utils.save_actions(self.actions, start_time_format)
+            utils.save_actions_qlearn(self.actions, start_time_format)
 
         print(LETS_GO)
 
@@ -149,14 +149,15 @@ class QLearnCartpoleTrainer:
 
         if self.config["save_model"]:
             print(f"\nSaving model . . .\n")
-            utils.save_model(
+            utils.save_model_qlearn(
                 self.qlearn,
-                start_time_format,
-                self.metrics,
-                self.states_counter,
-                self.states_reward,
+                start_time_format
             )
         self.env.close()
+
+        base_file_name = f'_rewards_'
+        file_path = f'./logs/cartpole/qlearning/training/{datetime.datetime.now()}_{base_file_name}.pkl'
+        store_rewards(self.metrics["avg"], file_path)
 
         # Plot graph
         plt.plot(self.metrics["ep"], self.metrics["avg"], label="average rewards")

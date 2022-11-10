@@ -16,6 +16,7 @@ settings:
   output_dir: "./logs/"
   save_model: True
   save_positions: True
+  debug_level: DEBUG
   telemetry: False
   telemetry_mask: False
   plotter_graphic: False
@@ -58,7 +59,7 @@ agent:
       new_image_size: 32
       num_regions: 16
     states:
-      state_space: sp1 #sp1
+      state_space: image #sp1
       image:
         0: [3]
       sp1: 
@@ -129,8 +130,8 @@ agent:
 #####################################################################################
 
 actions:
-    actions_number: 2
-    actions_set: continuous #simple
+    actions_number: 5
+    actions_set: autoparking_simple #simple
     available_actions:
       simple:
         0: [ 3, 0 ]
@@ -169,7 +170,7 @@ actions:
 #
 # Most relevant params:
 #   env_name: F1Env-v0, RobotMeshEnv-v0, myCartpole-v0, MyMountainCarEnv-v0
-#   training_type: qlearn_camera, qlearn_laser, dqn, manual, ddpg
+#   training_type: qlearn_camera_follow_line, qlearn_camera_follow_lane, qlearn_laser, dqn, manual, ddpg
 #   circuit_positions_set: different positions in Gazebo simulator for every environment. Set represents x, y, z, 0, roll, pitch, yaw          
 #   start_pose: agent initial pose in every training. It takes number from circuit_positions_set param
 #   alternate_pose: if True, the agent randoms initial pose, taking from circuit_positions_set param. Otherwise, it takes start_pose number
@@ -180,13 +181,13 @@ environments:
   simple:
     env_name: F1Env-v0
     circuit_name: simple
-    training_type: qlearn_camera #qlearn_camera, ddpg, dqn
+    training_type: qlearn_camera_follow_line #qlearn_camera_follow_line, ddpg, dqn
     launchfile: simple_circuit.launch
     environment_folder: f1
     robot_name: f1_renault
     start_pose: 0 # 0, 1, 2, 3, 4
     alternate_pose: False
-    estimated_steps: 15_000
+    estimated_steps: 4000
     sensor: camera
     circuit_positions_set:
       0: [53.462, -41.988, 0.004, 0, 0, 1.57, -1.57]
@@ -197,7 +198,7 @@ environments:
   nurburgring:
     env_name: F1Env-v0
     circuit_name: nurburgring
-    training_type: qlearn_camera
+    training_type: qlearn_camera_follow_line
     launchfile: nurburgring_line.launch
     environment_folder: f1
     robot_name: f1_renault
@@ -215,7 +216,7 @@ environments:
   montreal:
     env_name: F1Env-v0
     circuit_name: montreal
-    training_type: qlearn_camera
+    training_type: qlearn_camera_follow_line
     launchfile: montreal_line.launch
     environment_folder: f1
     robot_name: f1_renault
@@ -232,7 +233,7 @@ environments:
   curves:
     env_name: F1Env-v0
     circuit_name: curves
-    training_type: qlearn_camera
+    training_type: qlearn_camera_follow_line
     launchfile: many_curves.launch
     environment_folder: f1
     robot_name: f1_renault
@@ -254,7 +255,7 @@ environments:
   manual:
     env_name: F1Env-v0
     circuit_name: manual
-    training_type: qlearn_camera
+    training_type: qlearn_camera_follow_line
     launchfile: simple_circuit.launch
     environment_folder: f1
     robot_name: f1_renault

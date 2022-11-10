@@ -21,7 +21,7 @@ from tensorflow.keras.layers import (
 from tensorflow.keras.models import Sequential, load_model
 from tensorflow.keras.optimizers import Adam, RMSprop
 
-import memory
+import rl_studio.algorithms.memory as memory
 
 
 class DeepQ:
@@ -343,6 +343,7 @@ class DQNF1FollowLine:
         self.MODEL_NAME = config["model_name"]
         self.DISCOUNT = config["gamma"]  # gamma: min 0 - max 1
 
+        self.state_space = config["state_space"]
         # main model  # gets trained every step
         if config["state_space"] == "image":
             self.model = self.get_model_conv2D()
@@ -437,14 +438,17 @@ class DQNF1FollowLine:
 
         x = Dense(self.ACTION_SIZE, activation="tanh", kernel_initializer=last_init)(x)
         # x = Activation("tanh", name=action_name)(x)
-        model = Model(inputs=inputs, outputs=x, name="hola")
+        model = Model(inputs=inputs, outputs=x, name="conv2D")
+        model.compile(
+            loss="mse", optimizer=Adam(learning_rate=0.001), metrics=["accuracy"]
+        )
         return model
 
     def update_replay_memory(self, transition):
         self.replay_memory.append(transition)
 
-    def get_qs(self, state, training_type):
-        if training_type == "image":
+    def get_qs(self, state):
+        if self.state_space == "image":
             return self.model.predict(np.array(state).reshape(-1, *state.shape) / 255)[
                 0
             ]

@@ -1,6 +1,8 @@
 import pickle
 
 import numpy as np
+import matplotlib.pyplot as plt
+from markdownTable import markdownTable
 
 # How much new info will override old info. 0 means nothing is learned, 1 means only most recent is considered, old knowledge is discarded
 LEARNING_RATE = 0.1
@@ -13,7 +15,7 @@ END_EPSILON_DECAYING = 10000 // 2
 epsilon_decay_value = epsilon / (END_EPSILON_DECAYING - START_EPSILON_DECAYING)
 
 
-def save_model(qlearn, current_time, states, states_counter, states_rewards):
+def save_model_qlearn(qlearn, current_time):
     # Tabular RL: Tabular Q-learning basically stores the policy (Q-values) of  the agent into a matrix of shape
     # (S x A), where s are all states, a are all the possible actions. After the environment is solved, just save this
     # matrix as a csv file. I have a quick implementation of this on my GitHub under Reinforcement Learning.
@@ -22,38 +24,44 @@ def save_model(qlearn, current_time, states, states_counter, states_rewards):
     # Q TABLE
     base_file_name = "_epsilon_{}".format(round(qlearn.epsilon, 3))
     file_dump = open(
-        "./logs/qlearn_models/1_" + current_time + base_file_name + "_QTABLE.pkl", "wb"
+        "./checkpoints/cartpole/qlearn_models/" + current_time + base_file_name + "_QTABLE.pkl_avg_.pkl",
+        "wb"
     )
     pickle.dump(qlearn.q, file_dump)
-    # STATES COUNTER
-    states_counter_file_name = base_file_name + "_STATES_COUNTER.pkl"
-    file_dump = open(
-        "./logs/qlearn_models/2_" + current_time + states_counter_file_name, "wb"
-    )
-    pickle.dump(states_counter, file_dump)
-    # STATES CUMULATED REWARD
-    states_cum_reward_file_name = base_file_name + "_STATES_CUM_REWARD.pkl"
-    file_dump = open(
-        "./logs/qlearn_models/3_" + current_time + states_cum_reward_file_name, "wb"
-    )
-    pickle.dump(states_rewards, file_dump)
-    # STATES
-    steps = base_file_name + "_STATES_STEPS.pkl"
-    file_dump = open("./logs/qlearn_models/4_" + current_time + steps, "wb")
-    pickle.dump(states, file_dump)
 
 
-def save_dqn_model(dqn, current_time):
+def params_to_markdown_list(dictionary):
+    md_list = []
+    for item in dictionary["params"]:
+        md_list.append({"parameter": item, "value": dictionary["params"][item]})
+    return md_list
+
+
+def save_dqn_model(dqn, current_time, average, params):
     base_file_name = "_epsilon_{}".format(round(epsilon, 2))
     file_dump = open(
-        "./logs/dqn_models/1_" + current_time + base_file_name + "_DQN_WEIGHTS.pkl",
+        "./checkpoints/cartpole/dqn_models/" + current_time + base_file_name + "_DQN_WEIGHTS_avg_" + str(
+            average) + ".pkl",
         "wb",
     )
     pickle.dump(dqn.q_net, file_dump)
+    file_dump.close()
+    # And save metadata config too
+    metadata = open("./checkpoints/cartpole/dqn_models/" + current_time + "_metadata.md",
+                    "a")
+    metadata.write("AGENT PARAMETERS\n")
+    metadata.write(markdownTable(params_to_markdown_list(params.agent)).setParams(row_sep='always').getMarkdown())
+    metadata.write("\n```\n\nSETTINGS PARAMETERS\n")
+    metadata.write(markdownTable(params_to_markdown_list(params.settings)).setParams(row_sep='always').getMarkdown())
+    metadata.write("\n```\n\nENVIRONMENT PARAMETERS\n")
+    metadata.write(markdownTable(params_to_markdown_list(params.environment)).setParams(row_sep='always').getMarkdown())
+    metadata.write("\n```\n\nALGORITHM PARAMETERS\n")
+    metadata.write(markdownTable(params_to_markdown_list(params.algorithm)).setParams(row_sep='always').getMarkdown())
+    metadata.close()
 
 
-def save_actions(actions, start_time):
-    file_dump = open("./logs/qlearn_models/actions_set_" + start_time, "wb")
+def save_actions_qlearn(actions, start_time):
+    file_dump = open("./checkpoints/cartpole/qlearn_models/actions_set_" + start_time, "wb")
     pickle.dump(actions, file_dump)
 
 
@@ -92,3 +100,90 @@ def get_discrete_state(state, bins, obsSpaceSize):
             np.digitize(state[i], bins[i]) - 1
         )  # -1 will turn bin into index
     return tuple(stateIndex)
+
+
+def extract(lst, pos):
+    return [item[pos] for item in lst]
+
+
+def plot_detail_random_start_level_monitoring(unsuccessful_episodes_count, unsuccessful_initial_states,
+                                              unsuccess_rewards, success_rewards, successful_initial_states,
+                                              RUNS, random_start_level):
+    figure, (ax1, ax2, ax3, ax4, ax5) = plt.subplots(5)
+    ax1.plot(range(unsuccessful_episodes_count), extract(unsuccessful_initial_states, 0))
+    ax1.set(title="FAILURES: initial states with random level = " + str(random_start_level),
+            ylabel="Cart Position")
+    ax2.plot(range(unsuccessful_episodes_count), extract(unsuccessful_initial_states, 1))
+    ax2.set(ylabel="Cart Velocity")
+    ax3.plot(range(unsuccessful_episodes_count), extract(unsuccessful_initial_states, 2))
+    ax3.set(ylabel="Pole Angle")
+    ax4.plot(range(unsuccessful_episodes_count), extract(unsuccessful_initial_states, 3))
+    ax4.set(ylabel="Pole Angular Velocity")
+    ax5.plot(range(unsuccessful_episodes_count), unsuccess_rewards)
+    ax5.set(ylabel="Rewards")
+
+    figure2, (ax6, ax7, ax8, ax9, ax10) = plt.subplots(5)
+    ax6.plot(range(RUNS - unsuccessful_episodes_count), extract(successful_initial_states, 0))
+    ax6.set(title="SUCCESS: initial states with random level = " + str(random_start_level),
+            ylabel="Cart Position")
+    ax7.plot(range(RUNS - unsuccessful_episodes_count), extract(successful_initial_states, 1))
+    ax7.set(ylabel="Cart Velocity")
+    ax8.plot(range(RUNS - unsuccessful_episodes_count), extract(successful_initial_states, 2))
+    ax8.set(ylabel="Pole Angle")
+    ax9.plot(range(RUNS - unsuccessful_episodes_count), extract(successful_initial_states, 3))
+    ax9.set(ylabel="Pole Angular Velocity")
+    ax10.plot(range(RUNS - unsuccessful_episodes_count), success_rewards)
+    ax10.set(ylabel="Rewards")
+
+
+def plot_detail_random_perturbations_monitoring(unsuccessful_episodes_count, success_perturbations_in_twenty,
+                                                success_max_perturbations_in_twenty_run, success_rewards,
+                                                unsuccess_perturbations_in_twenty,
+                                                unsuccess_max_perturbations_in_twenty_run, unsuccess_rewards,
+                                                RUNS, RANDOM_PERTURBATIONS_LEVEL, PERTURBATIONS_INTENSITY):
+    figure3, (ax11, ax12, ax13) = plt.subplots(3)
+    ax11.plot(range(RUNS - unsuccessful_episodes_count), success_perturbations_in_twenty)
+    ax11.set(title="SUCCESS: perturbation level "
+                   "= " + str(RANDOM_PERTURBATIONS_LEVEL) + " and intensity = " + str(PERTURBATIONS_INTENSITY),
+             ylabel="max number of perturbations in twenty consecutive steps")
+    ax12.plot(range(RUNS - unsuccessful_episodes_count), success_max_perturbations_in_twenty_run)
+    ax12.set(ylabel="in which step")
+    ax13.plot(range(RUNS - unsuccessful_episodes_count), success_rewards)
+    ax13.set(ylabel="Rewards")
+
+    figure4, (ax14, ax15, ax16) = plt.subplots(3)
+    ax14.plot(range(unsuccessful_episodes_count), unsuccess_perturbations_in_twenty)
+    ax14.set(title="FAILURES: perturbation level = " + str(RANDOM_PERTURBATIONS_LEVEL) + " and intensity = "
+                   + str(PERTURBATIONS_INTENSITY), ylabel="max number of perturbations in twenty consecutive steps")
+    ax15.plot(range(unsuccessful_episodes_count), unsuccess_max_perturbations_in_twenty_run)
+    ax15.set(ylabel="in which step")
+    ax16.plot(range(unsuccessful_episodes_count), unsuccess_rewards)
+    ax16.set(ylabel="Rewards")
+
+
+def store_rewards(rewards, file_path):
+    file_dump = open(file_path, "wb")
+    pickle.dump(rewards, file_dump)
+
+
+def show_fails_success_comparisson(RUNS, max_episode_steps, rewards, RANDOM_START_LEVEL, RANDOM_PERTURBATIONS_LEVEL,
+                                   PERTURBATIONS_INTENSITY, INITIAL_POLE_ANGLE):
+    if INITIAL_POLE_ANGLE == None:
+        INITIAL_POLE_ANGLE = 0;
+
+    rewards = np.asarray(rewards)
+
+    fig, ax = plt.subplots()
+
+    my_color = np.where(rewards == max_episode_steps, 'green', 'red')
+    plt.scatter(range(RUNS), rewards, color=my_color, marker='x')
+    ax.set(title="initial random level = " + str(RANDOM_START_LEVEL) + ', initial pole angle = ' + str(
+        INITIAL_POLE_ANGLE) +
+                 ', perturbation frequency = ' + str(RANDOM_PERTURBATIONS_LEVEL) + ', perturbation intensity std = ' +
+                 str(PERTURBATIONS_INTENSITY), ylabel="cumulated reward", xlabel="episode")
+    ax.plot(range(RUNS), rewards)
+    plt.show()
+
+
+def show_monitoring():
+    plt.show()

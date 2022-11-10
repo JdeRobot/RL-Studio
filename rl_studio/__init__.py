@@ -17,8 +17,9 @@ register(
 
 register(
     id="myCartpole-v0",
-    entry_point="gym.envs.classic_control:CartPoleEnv",
+    entry_point="rl_studio.envs.openai_gym.cartpole.cartpole_env:CartPoleEnv",
     max_episode_steps=500,
+    kwargs={'random_start_level': 0.05}
 )
 
 

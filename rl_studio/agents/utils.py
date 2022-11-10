@@ -104,7 +104,7 @@ def print_messages(*args, **kwargs):
 
 def render_params(**kwargs):
     font = cv2.FONT_HERSHEY_SIMPLEX
-    canvas = np.zeros((300, 300, 3), dtype="uint8")
+    canvas = np.zeros((400, 400, 3), dtype="uint8")
     # blue = (255, 0, 0)
     # green = (0, 255, 0)
     # red = (0, 0, 255)
