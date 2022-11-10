@@ -76,7 +76,7 @@ def save_actions_qlearn(actions, start_time, params):
 
 
 # Create bins and Q table
-def create_bins_and_q_table(env, number_bins):
+def create_bins_and_q_table(env, number_angle_bins, number_pos_bins):
     # env.observation_space.high
     # [4.8000002e+00 3.4028235e+38 4.1887903e-01 3.4028235e+38]
     # env.observation_space.low
@@ -84,19 +84,18 @@ def create_bins_and_q_table(env, number_bins):
 
     # remove hard coded Values when I know how to
 
-    numBins = number_bins
     obsSpaceSize = len(env.observation_space.high)
 
     # Get the size of each bucket
     bins = [
-        np.linspace(-4.8, 4.8, numBins),
-        np.linspace(-4, 4, numBins),
-        np.linspace(-0.418, 0.418, numBins),
-        np.linspace(-4, 4, numBins),
+        np.linspace(-4.8, 4.8, number_pos_bins),
+        np.linspace(-4, 4, number_pos_bins),
+        np.linspace(-0.418, 0.418, number_angle_bins),
+        np.linspace(-4, 4, number_angle_bins),
     ]
 
     qTable = np.random.uniform(
-        low=-2, high=0, size=([numBins] * obsSpaceSize + [env.action_space.n])
+        low=-2, high=0, size=([number_pos_bins] * int(obsSpaceSize/2) + [number_angle_bins] * int(obsSpaceSize/2) + [env.action_space.n])
     )
 
     return bins, obsSpaceSize, qTable

@@ -25,12 +25,12 @@ environments:
     runs: 10000
     full_experimentation_runs: 0
     update_every: 100
-    show_every: 1000
+    show_every: 10000
     objective_reward: 500
 #    block_experience_batch: False
     block_experience_batch: False
   #  random_start_level: 0.05
-    random_start_level: 0.05 # Number between 0 and 1 that indicates the difficulty of the start position
+    random_start_level: 0.1 # Number between 0 and 1 that indicates the difficulty of the start position
     random_perturbations_level: 0 # Number between 0 and 1 that indicates the frequency of the random perturbations
     perturbations_intensity_std: 0 # Number between 0 and 1 that indicates the standard deviation of perturbations intensity
     initial_pole_angle: 0
@@ -38,9 +38,9 @@ environments:
 
 inference:
   ppo:
-    inference_file: /home/ruben/Desktop/my-RL-Studio/rl_studio/checkpoints/cartpole/ppo_models/20221108_2320_actor_avg_467.99.pkl
+    inference_file: /home/ruben/Desktop/my-RL-Studio/rl_studio/checkpoints/cartpole/ppo_models/20221109_0820_actor_avg_500.0.pkl
 
 algorithm:
     ppo:
-      gamma: 1
-      epsilon: 0.2
+      gamma: 0.9
+      epsilon: 0.25

@@ -22,12 +22,13 @@ environments:
     env_name: myCartpole-v0
     environment_folder: cartpole
 #    runs: 20000
-    bins: 100
-    runs: 4000000
+    angle_bins: 120
+    pos_bins: 120
+    runs: 8000000
     full_experimentation_runs: 0
     update_every: 10000
-    save_every: 400000
-    show_every: 400000
+    save_every: 800000
+    show_every: 800000
     objective_reward: 500
 #    block_experience_batch: False
     block_experience_batch: False
@@ -45,7 +46,7 @@ inference:
 
 algorithm:
     qlearn:
-      alpha: 0.9
+      alpha: 0.95
       epsilon: 0.99
-      gamma: 0.9
-      epsilon_discount: 0.99999999
+      gamma: 0.95
+      epsilon_discount: 0.999999994

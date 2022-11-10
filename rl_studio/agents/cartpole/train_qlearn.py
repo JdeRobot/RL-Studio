@@ -36,7 +36,9 @@ class QLearnCartpoleTrainer:
                             non_recoverable_angle=non_recoverable_angle)
 
         self.RUNS = self.environment_params["runs"]  # Number of iterations run
-        self.BINS = self.environment_params["bins"]
+        self.ANGLE_BINS = self.environment_params["angle_bins"]
+        self.POS_BINS = self.environment_params["pos_bins"]
+
         self.SHOW_EVERY = self.environment_params[
             "show_every"
         ]  # How oftern the current solution is rendered
@@ -48,7 +50,7 @@ class QLearnCartpoleTrainer:
         ]  # How oftern the current model is saved
 
         self.bins, self.obsSpaceSize, self.qTable = utils.create_bins_and_q_table(
-            self.env, self.BINS
+            self.env, self.ANGLE_BINS, self.POS_BINS
         )
 
         self.previousCnt = []  # array of all scores over runs

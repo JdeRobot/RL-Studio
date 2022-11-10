@@ -35,18 +35,19 @@ class QLearnCartpoleInferencer:
         self.RUNS = self.environment_params[
             "runs"
         ]  # Number of iterations run TODO set this from config.yml
-        self.BINS = self.environment_params["bins"]
+        self.ANGLE_BINS = self.environment_params["angle_bins"]
+        self.POS_BINS = self.environment_params["pos_bins"]
+
         self.SHOW_EVERY = self.environment_params[
             "show_every"
-        ]  # How oftern the current solution is rendered TODO set this from config.yml
+        ]  # How oftern the current solution is rendered
         self.UPDATE_EVERY = self.environment_params[
             "update_every"
-        ]  # How oftern the current progress is recorded TODO set this from config.yml
+        ]  # How oftern the current progress is recorded
 
         self.bins, self.obsSpaceSize, self.qTable = utils.create_bins_and_q_table(
-            self.env, self.BINS
+            self.env, self.ANGLE_BINS, self.POS_BINS
         )
-
         self.previousCnt = []  # array of all scores over runs
         self.metrics = {
             "ep": [],
