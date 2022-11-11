@@ -2,8 +2,10 @@ from enum import Enum
 
 
 class AlgorithmsType(Enum):
+    PROGRAMMATIC = 'programmatic'
     QLEARN = "qlearn"
-    QLEARN_MULTIPLE_STATES = "qlearn_multiple_states"
+    QLEARN_MULTIPLE = "qlearn_multiple_states"
     DQN = "dqn"
     DDPG = "ddpg"
+    PPO = "ppo"
     MANUAL = "manual"

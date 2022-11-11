@@ -62,11 +62,14 @@ class TrainerFactory:
                 from rl_studio.agents.cartpole.train_dqn import (
                     DQNCartpoleTrainer as CartpoleTrainer,
                 )
-            else:
+            elif algorithm == AlgorithmsType.QLEARN.value:
                 from rl_studio.agents.cartpole.train_qlearn import (
                     QLearnCartpoleTrainer as CartpoleTrainer,
                 )
-
+            elif algorithm == AlgorithmsType.PPO.value:
+                from rl_studio.agents.cartpole.train_ppo import (
+                    PPOCartpoleTrainer as CartpoleTrainer,
+                )
             return CartpoleTrainer(config)
 
         # AutoParking
@@ -119,11 +122,18 @@ class InferenceExecutorFactory:
                 from rl_studio.agents.cartpole.inference_dqn import (
                     DQNCartpoleInferencer as CartpoleInferencer,
                 )
-            else:
+            elif algorithm == AlgorithmsType.QLEARN.value:
                 from rl_studio.agents.cartpole.inference_qlearn import (
                     QLearnCartpoleInferencer as CartpoleInferencer,
                 )
-
+            elif algorithm == AlgorithmsType.PPO.value:
+                from rl_studio.agents.cartpole.inference_ppo import (
+                    PPOCartpoleInferencer as CartpoleInferencer,
+                )
+            elif algorithm == AlgorithmsType.PROGRAMMATIC.value:
+                from rl_studio.agents.cartpole.inference_no_rl import (
+                    NoRLCartpoleInferencer as CartpoleInferencer,
+                )
             return CartpoleInferencer(config)
 
         elif agent == AgentsType.MOUNTAIN_CAR.value:

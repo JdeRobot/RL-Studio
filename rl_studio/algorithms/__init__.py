@@ -23,7 +23,7 @@ class InferencerFactory:
 
             return brain
 
-        elif algorithm == AlgorithmsType.QLEARN_MULTIPLE_STATES.value:
+        if algorithm == AlgorithmsType.QLEARN_MULTIPLE.value:
             from rl_studio.algorithms.qlearn_multiple_states import QLearn
 
             actions_file_name = config.actions_file
@@ -43,6 +43,16 @@ class InferencerFactory:
 
             return brain
 
+        elif algorithm == AlgorithmsType.PPO.value:
+            from rl_studio.algorithms.ppo import Actor
+            from rl_studio.algorithms.ppo import Mish
+
+            input_dim = config.env.observation_space.shape[0]
+            output_dim = config.env.action_space.n
+            brain = Actor(input_dim, output_dim, activation=Mish)
+            brain.load_model(inference_file_name)
+
+            return brain
         # elif algorithm == AlgorithmsType.DQN.value:
         #     from rl_studio.algorithms.dqn import DeepQ
         #

@@ -40,8 +40,6 @@ inference:
   qlearn:
     inference_file: /home/ruben/Desktop/my-RL-Studio/rl_studio/checkPpoints/qlearn_models/1_20220718_0010_act_set_simple_epsilon_0.01_QTABLE.pkl
     actions_file: /home/ruben/Desktop/my-RL-Studio/rl_studio/checkpoints/qlearn_models/actions_set_20220718_0010
-  dqn:
-    inference_file: /home/ruben/Desktop/my-RL-Studio/rl_studio/checkpoints/cartpole/dqn_models/20221017_2118_epsilon_1_DQN_WEIGHTS_avg_475.825.pkl
 
 algorithm:
     qlearn:
@@ -49,13 +47,3 @@ algorithm:
       epsilon: 0.99
       gamma: 0.95
       epsilon_discount: 0.99999998
-
-    dqn:
-#      gamma: 0.95
-      gamma: 0.95
-      epsilon_discount: 0.9997
-#      epsilon_discount: 0.9998
-#      batch_size: 256
-      batch_size: 256
-
-    sarsa:
