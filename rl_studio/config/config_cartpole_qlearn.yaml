@@ -22,31 +22,32 @@ environments:
     env_name: myCartpole-v0
     environment_folder: cartpole
 #    runs: 20000
-    angle_bins: 120
-    pos_bins: 120
-    runs: 8000000
+    angle_bins: 250
+    pos_bins: 100
+    runs: 4000000
     full_experimentation_runs: 0
-    update_every: 10000
-    save_every: 800000
+    update_every: 1000
+    save_every: 100000
     show_every: 800000
     objective_reward: 500
 #    block_experience_batch: False
     block_experience_batch: False
   #  random_start_level: 0.05
-    random_start_level: 0.05 # Number between 0 and 1 that indicates the difficulty of the start position
+    random_start_level: 0.1 # Number between 0 and 1 that indicates the difficulty of the start position
     random_perturbations_level: 0 # Number between 0 and 1 that indicates the frequency of the random perturbations
     perturbations_intensity_std: 0 # Number between 0 and 1 that indicates the standard deviation of perturbations intensity
     initial_pole_angle: 0
     non_recoverable_angle: 0.3
+   # previously_trained_agent: /home/ruben/Desktop/my-RL-Studio/rl_studio/logs/cartpole/qlearning/checkpoints/20221110_0931_epsilon_0.01_300.0785_QTABLE.pkl_avg_.pkl
 
 inference:
   qlearn:
-    inference_file: /home/ruben/Desktop/my-RL-Studio/rl_studio/checkpoints/cartpole/qlearn_models/20221108_2320_epsilon_0.01_378.7926_QTABLE.pkl_avg_.pkl
-    actions_file: /home/ruben/Desktop/my-RL-Studio/rl_studio/checkpoints/cartpole/qlearn_models/actions_set_20221108_1144
+    inference_file: /home/ruben/Desktop/my-RL-Studio/rl_studio/logs/cartpole/qlearning/checkpoints/20221111_0002_epsilon_0.01_366.191_QTABLE.pkl_avg_.pkl
+    actions_file: /home/ruben/Desktop/my-RL-Studio/rl_studio/logs/cartpole/qlearning/checkpoints/actions_set_20221110_0357
 
 algorithm:
     qlearn:
-      alpha: 0.95
-      epsilon: 0.99
-      gamma: 0.95
-      epsilon_discount: 0.999999994
+      alpha: 1
+      epsilon: 0.5
+      gamma: 1
+      epsilon_discount: 0.999999993

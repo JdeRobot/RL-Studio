@@ -38,6 +38,7 @@ class QLearnCartpoleTrainer:
         self.RUNS = self.environment_params["runs"]  # Number of iterations run
         self.ANGLE_BINS = self.environment_params["angle_bins"]
         self.POS_BINS = self.environment_params["pos_bins"]
+        self.pretrained = self.environment_params.get("previously_trained_agent", None)
 
         self.SHOW_EVERY = self.environment_params[
             "show_every"
@@ -83,6 +84,8 @@ class QLearnCartpoleTrainer:
             gamma=self.gamma,
             epsilon=self.epsilon,
         )
+        if self.pretrained is not None:
+            self.qlearn.load_model(self.pretrained, self.actions)
 
     def print_init_info(self):
         print(JDEROBOT)
