@@ -17,8 +17,10 @@ class TrainerFactory:
                     F1Trainer,
                     QlearnF1FollowLaneTrainer,
                 )
-
-                return QlearnF1FollowLaneTrainer(config)
+                if config.environment['params']['training_type'] == 'qlearn_camera_follow_line':
+                    return F1Trainer(config)
+                else:
+                    return QlearnF1FollowLaneTrainer(config)
 
             # DDPG
             elif algorithm == AlgorithmsType.DDPG.value:
