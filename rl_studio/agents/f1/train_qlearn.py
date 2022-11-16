@@ -1,9 +1,7 @@
-import datetime
-import time
-import cv2
-from functools import reduce
 import os
 import time
+from datetime import datetime, timedelta
+from functools import reduce
 from pprint import pprint
 
 import cv2
@@ -12,6 +10,9 @@ import matplotlib.pyplot as plt
 import numpy as np
 from tqdm import tqdm
 
+from rl_studio.agents import liveplot
+from rl_studio.agents.f1 import utils
+from rl_studio.agents.f1.settings import QLearnConfig
 from rl_studio.agents.utils import (
     print_messages,
     render_params,
@@ -19,11 +20,6 @@ from rl_studio.agents.utils import (
     save_stats_episodes,
     save_model_qlearn,
 )
-import matplotlib.pyplot as plt
-
-from rl_studio.agents import liveplot
-from rl_studio.agents.f1 import utils
-from rl_studio.agents.f1.settings import QLearnConfig
 from rl_studio.algorithms.qlearn import QLearn
 from rl_studio.visual.ascii.images import JDEROBOT_LOGO
 from rl_studio.visual.ascii.text import JDEROBOT, QLEARN_CAMERA, LETS_GO
@@ -44,17 +40,12 @@ class F1Trainer:
         self.alpha = params.algorithm["params"]["alpha"]
         self.epsilon = params.algorithm["params"]["epsilon"]
         self.gamma = params.algorithm["params"]["gamma"]
-        # agent
-        # self.action_number = params.agent["params"]["actions_number"]
-        # self.actions_set = params.agent["params"]["actions_set"]
-        # self.actions_values = params.agent["params"]["available_actions"][self.actions_set]
 
     def main(self):
-
         print(JDEROBOT)
         print(JDEROBOT_LOGO)
         print(QLEARN_CAMERA)
-        print(f"\t- Start hour: {datetime.datetime.now()}\n")
+        print(f"\t- Start hour: {datetime.now()}\n")
         pprint(f"\t- Environment params:\n{self.environment_params}", indent=4)
         config = QLearnConfig()
 
@@ -70,20 +61,17 @@ class F1Trainer:
 
         self.actions = range(3)  # range(env.action_space.n)
         env = gym.wrappers.Monitor(self.env, outdir, force=True)
-        counter = 0
         estimate_step_per_lap = self.environment_params["estimated_steps"]
-        lap_completed = False
         total_episodes = 20000
         epsilon_discount = 0.9986  # Default 0.9986
 
         # TODO: Call the algorithm factory passing "qlearn" as parameter.
         qlearn = QLearn(actions=self.actions, alpha=self.alpha, gamma=0.9, epsilon=0.99)
-
         highest_reward = 0
         initial_epsilon = qlearn.epsilon
 
         telemetry_start_time = time.time()
-        start_time = datetime.datetime.now()
+        start_time = datetime.now()
         start_time_format = start_time.strftime("%Y%m%d_%H%M")
 
         if config.save_model:
@@ -92,12 +80,11 @@ class F1Trainer:
 
         print(LETS_GO)
 
-        previous = datetime.datetime.now()
+        previous = datetime.now()
         checkpoints = []  # "ID" - x, y - time
 
         # START
         for episode in range(total_episodes):
-
             counter = 0
             done = False
             lap_completed = False
@@ -136,23 +123,12 @@ class F1Trainer:
                 env._flush(force=True)
 
                 if config.save_positions:
-                    now = datetime.datetime.now()
-                    if now - datetime.timedelta(seconds=3) > previous:
-                        previous = datetime.datetime.now()
+                    now = datetime.now()
+                    if now - timedelta(seconds=3) > previous:
+                        previous = datetime.now()
                         x, y = env.get_position()
-                        checkpoints.append(
-                            [
-                                len(checkpoints),
-                                (x, y),
-                                datetime.datetime.now().strftime("%M:%S.%f")[-4],
-                            ]
-                        )
-
-                    if (
-                        datetime.datetime.now()
-                        - datetime.timedelta(minutes=3, seconds=12)
-                        > start_time
-                    ):
+                        checkpoints.append([len(checkpoints), (x, y), datetime.now().strftime("%M:%S.%f")[-4]])
+                    if datetime.now() - timedelta(minutes=3, seconds=12) > start_time:
                         print("Finish. Saving parameters . . .")
                         utils.save_times(checkpoints)
                         env.close()
@@ -164,27 +140,6 @@ class F1Trainer:
                     last_time_steps = np.append(last_time_steps, [int(step + 1)])
                     stats[int(episode)] = step
                     states_reward[int(episode)] = cumulated_reward
-
-                    # if config.plotter_graphic:
-                    # plotter.plot(env)
-                    plt.figure()
-                    plt.title('STEPS - EPISODES')
-                    plt.plot(list(stats.values()), color="blue")
-                    plt.gca().set_ylim(bottom=-1)
-                    plt.savefig('steps_per_episode_plot.png')
-                    steps_per_episode_plot = cv2.imread('steps_per_episode_plot.png')
-                    cv2.imshow("STEPS - EPISODES", steps_per_episode_plot)
-                    cv2.waitKey(3)
-                    
-                    plt.figure()
-                    plt.title('REWARDS - EPISODES')
-                    plt.plot(list(states_reward.values()), color="red")
-                    plt.gca().set_ylim(bottom=-110)
-                    plt.savefig('rewards_per_episode_plot.png')
-                    rewards_per_episode_plot = cv2.imread('rewards_per_episode_plot.png')
-                    cv2.imshow("REWARDS - EPISODES", rewards_per_episode_plot)
-                    cv2.waitKey(3)
-
                     print(
                         f"EP: {episode + 1} - epsilon: {round(qlearn.epsilon, 2)} - Reward: {cumulated_reward}"
                         f" - Time: {start_time_format} - Steps: {step}"
@@ -195,12 +150,11 @@ class F1Trainer:
                     lap_completed = True
                     if config.plotter_graphic:
                         plotter.plot_steps_vs_epoch(stats, save=True)
-                    print(f"\nSaving actions . . .\n")
                     utils.save_model(
                         qlearn, start_time_format, stats, states_counter, states_reward
                     )
                     print(
-                        f"\n\n====> LAP COMPLETED in: {datetime.datetime.now() - start_time} - Epoch: {episode}"
+                        f"\n\n====> LAP COMPLETED in: {datetime.now() - start_time} - Epoch: {episode}"
                         f" - Cum. Reward: {cumulated_reward} <====\n\n"
                     )
 
@@ -208,7 +162,6 @@ class F1Trainer:
                     if config.plotter_graphic:
                         plotter.plot_steps_vs_epoch(stats, save=True)
                     qlearn.epsilon *= epsilon_discount
-                    print(f"\nSaving actions . . .\n")
                     utils.save_model(
                         qlearn,
                         start_time_format,
@@ -218,12 +171,11 @@ class F1Trainer:
                     )
                     print(
                         f"\t- epsilon: {round(qlearn.epsilon, 2)}\n\t- cum reward: {cumulated_reward}\n\t- dict_size: "
-                        f"{len(qlearn.q)}\n\t- time: {datetime.datetime.now() - start_time}\n\t- steps: {step}\n"
+                        f"{len(qlearn.q)}\n\t- time: {datetime.now() - start_time}\n\t- steps: {step}\n"
                     )
                     counter = 0
 
-                if datetime.datetime.now() - datetime.timedelta(hours=2) > start_time:
-                    print(f"\nSaving actions . . .\n")
+                if datetime.now() - timedelta(hours=2) > start_time:
                     print(config.eop)
                     utils.save_model(
                         qlearn, start_time_format, stats, states_counter, states_reward
@@ -238,18 +190,13 @@ class F1Trainer:
                     exit(0)
 
             if episode % 1 == 0 and config.plotter_graphic:
-                # plotter.plot(env)
                 plotter.plot_steps_vs_epoch(stats)
-                # plotter.full_plot(env, stats, 2)  # optional parameter = mode (0, 1, 2)
 
             if episode % 250 == 0 and config.save_model and episode > 1:
                 print(f"\nSaving model . . .\n")
                 utils.save_model(
                     qlearn, start_time_format, stats, states_counter, states_reward
                 )
-
-            m, s = divmod(int(time.time() - telemetry_start_time), 60)
-            h, m = divmod(m, 60)
 
         print(
             "Total EP: {} - epsilon: {} - ep. discount: {} - Highest Reward: {}".format(
@@ -268,8 +215,6 @@ class F1Trainer:
         )
 
         plotter.plot_steps_vs_epoch(stats, save=True)
-
-
         env.close()
 
 
@@ -328,7 +273,6 @@ class QlearnF1FollowLaneTrainer:
         # States
         self.state_space = params.agent["params"]["states"]["state_space"]
         self.states = params.agent["params"]["states"]
-        # self.x_row = params.agent["params"]["states"][self.state_space][0]
 
         # Actions
         self.action_space = params.environment["actions_set"]
@@ -337,92 +281,47 @@ class QlearnF1FollowLaneTrainer:
 
         # Rewards
         self.reward_function = params.agent["params"]["rewards"]["reward_function"]
-        # self.highest_reward = params.agent["params"]["rewards"][self.reward_function][
-        #    "highest_reward"
-        # ]
-        self.min_reward = params.agent["params"]["rewards"][self.reward_function][
-            "min_reward"
-        ]
+        self.min_reward = params.agent["params"]["rewards"][self.reward_function]["min_reward"]
 
         # Agent
         self.environment = {}
         self.environment["agent"] = params.agent["name"]
-        self.environment["model_state_name"] = params.settings["params"][
-            "model_state_name"
-        ]
+        self.environment["model_state_name"] = params.settings["params"]["model_state_name"]
         # Env
         self.environment["env"] = params.environment["params"]["env_name"]
         self.environment["circuit_name"] = params.environment["params"]["circuit_name"]
-        self.environment["training_type"] = params.environment["params"][
-            "training_type"
-        ]
+        self.environment["training_type"] = params.environment["params"]["training_type"]
         self.environment["launchfile"] = params.environment["params"]["launchfile"]
-        self.environment["environment_folder"] = params.environment["params"][
-            "environment_folder"
-        ]
+        self.environment["environment_folder"] = params.environment["params"]["environment_folder"]
         self.environment["robot_name"] = params.environment["params"]["robot_name"]
-        self.environment["estimated_steps"] = params.environment["params"][
-            "estimated_steps"
-        ]
-        self.environment["alternate_pose"] = params.environment["params"][
-            "alternate_pose"
-        ]
+        self.environment["estimated_steps"] = params.environment["params"]["estimated_steps"]
+        self.environment["alternate_pose"] = params.environment["params"]["alternate_pose"]
         self.environment["sensor"] = params.environment["params"]["sensor"]
-        self.environment["gazebo_start_pose"] = [
-            params.environment["params"]["circuit_positions_set"][0]
-        ]
-        self.environment["gazebo_random_start_pose"] = params.environment["params"][
-            "circuit_positions_set"
-        ]
+        self.environment["gazebo_start_pose"] = [params.environment["params"]["circuit_positions_set"][0]]
+        self.environment["gazebo_random_start_pose"] = params.environment["params"]["circuit_positions_set"]
         self.environment["telemetry_mask"] = params.settings["params"]["telemetry_mask"]
 
         # Environment Image
-        self.environment["height_image"] = params.agent["params"]["camera_params"][
-            "height"
-        ]
-        self.environment["width_image"] = params.agent["params"]["camera_params"][
-            "width"
-        ]
-        self.environment["center_image"] = params.agent["params"]["camera_params"][
-            "center_image"
-        ]
-        self.environment["num_regions"] = params.agent["params"]["camera_params"][
-            "num_regions"
-        ]
-        self.environment["lower_limit"] = params.agent["params"]["camera_params"][
-            "lower_limit"
-        ]
+        self.environment["height_image"] = params.agent["params"]["camera_params"]["height"]
+        self.environment["width_image"] = params.agent["params"]["camera_params"]["width"]
+        self.environment["center_image"] = params.agent["params"]["camera_params"]["center_image"]
+        self.environment["num_regions"] = params.agent["params"]["camera_params"]["num_regions"]
+        self.environment["lower_limit"] = params.agent["params"]["camera_params"]["lower_limit"]
         # Environment States
-        self.environment["state_space"] = params.agent["params"]["states"][
-            "state_space"
-        ]
+        self.environment["state_space"] = params.agent["params"]["states"]["state_space"]
         self.environment["states"] = params.agent["params"]["states"][self.state_space]
-        self.environment["x_row"] = params.agent["params"]["states"][self.state_space][
-            0
-        ]
+        self.environment["x_row"] = params.agent["params"]["states"][self.state_space][0]
 
         # Environment Actions
         self.environment["action_space"] = params.environment["actions_set"]
         self.environment["actions"] = params.environment["actions"]
 
         # Environment Rewards
-        self.environment["reward_function"] = params.agent["params"]["rewards"][
-            "reward_function"
-        ]
-        self.environment["rewards"] = params.agent["params"]["rewards"][
-            self.reward_function
-        ]
-        self.environment["min_reward"] = params.agent["params"]["rewards"][
-            self.reward_function
-        ]["min_reward"]
-
-        # Environment Algorithm
-
-        #
+        self.environment["reward_function"] = params.agent["params"]["rewards"]["reward_function"]
+        self.environment["rewards"] = params.agent["params"]["rewards"][self.reward_function]
+        self.environment["min_reward"] = params.agent["params"]["rewards"][self.reward_function]["min_reward"]
         self.environment["ROS_MASTER_URI"] = params.settings["params"]["ros_master_uri"]
-        self.environment["GAZEBO_MASTER_URI"] = params.settings["params"][
-            "gazebo_master_uri"
-        ]
+        self.environment["GAZEBO_MASTER_URI"] = params.settings["params"]["gazebo_master_uri"]
         self.environment["telemetry"] = params.settings["params"]["telemetry"]
 
         print_messages(
@@ -435,7 +334,7 @@ class QlearnF1FollowLaneTrainer:
 
     def main(self):
         os.makedirs(f"{self.outdir}", exist_ok=True)
-        start_time = datetime.datetime.now()
+        start_time = datetime.now()
         start_time_format = start_time.strftime("%Y%m%d_%H%M")
         min_reward = self.min_reward
         best_epoch = 1
@@ -462,22 +361,17 @@ class QlearnF1FollowLaneTrainer:
 
         ## -------------    START TRAINING --------------------
         print(LETS_GO)
-        for episode in tqdm(
-            range(1, self.total_episodes + 1), ascii=True, unit="episodes"
-        ):
+        for episode in tqdm(range(1, self.total_episodes + 1), ascii=True, unit="episodes"):
             done = False
             cumulated_reward = 0
             step = 0
-            start_time_epoch = datetime.datetime.now()
-
+            start_time_epoch = datetime.now()
             observation = self.env.reset()
             state = "".join(map(str, observation))
 
             # ------- WHILE
             while not done:
-
                 step += 1
-
                 # Pick an action based on the current state
                 action = qlearn.selectAction(state)
 
@@ -507,7 +401,6 @@ class QlearnF1FollowLaneTrainer:
                 )
 
                 # -------------------------------------- stats
-
                 try:
                     self.states_counter[next_state] += 1
                 except KeyError:
@@ -516,21 +409,25 @@ class QlearnF1FollowLaneTrainer:
                 self.steps_in_every_epoch[int(episode)] = step
                 self.states_reward[int(episode)] = cumulated_reward
 
+                plt.figure()
+                plt.title('REWARDS - EPISODES')
+                plt.plot(list(self.states_reward.values()), color="red")
+                plt.gca().set_ylim(bottom=-110)
+                plt.savefig('rewards_per_episode_plot.png')
+                rewards_per_episode_plot = cv2.imread('rewards_per_episode_plot.png')
+                cv2.imshow("REWARDS - EPISODES", rewards_per_episode_plot)
+                cv2.waitKey(3)
+
                 # best episode and step's stats
                 if current_max_reward <= cumulated_reward:
                     current_max_reward = cumulated_reward
                     best_epoch = episode
                     best_step = step
-                    best_epoch_training_time = (
-                        datetime.datetime.now() - start_time_epoch
-                    )
+                    best_epoch_training_time = datetime.now() - start_time_epoch
                     # saving params to show
                     self.actions_rewards["episode"].append(episode)
                     self.actions_rewards["step"].append(step)
-                    # self.actions_rewards["v"].append(action[0][0])
-                    # self.actions_rewards["w"].append(action[0][1])
                     self.actions_rewards["reward"].append(reward)
-                    # self.actions_rewards["center"].append(self.env.image_center)
 
                 # Showing stats in screen for monitoring. Showing every 'save_every_step' value
                 if not step % self.save_every_step:
@@ -540,8 +437,8 @@ class QlearnF1FollowLaneTrainer:
                         current_episode=episode,
                         current_step=step,
                         cumulated_reward_in_this_episode=int(cumulated_reward),
-                        total_training_time=(datetime.datetime.now() - start_time),
-                        epoch_time=datetime.datetime.now() - start_time_epoch,
+                        total_training_time=(datetime.now() - start_time),
+                        epoch_time=datetime.now() - start_time_epoch,
                     )
                     print_messages(
                         "... and best record...",
@@ -550,32 +447,21 @@ class QlearnF1FollowLaneTrainer:
                         with_highest_reward=int(current_max_reward),
                         in_best_epoch_training_time=best_epoch_training_time,
                     )
-                    # print_messages(
-                    #    "... rewards:",
-                    #    max_reward=max(self.actions_rewards["reward"]),
-                    #    reward_avg=sum(self.actions_rewards["reward"])
-                    #    / len(self.actions_rewards["reward"]),
-                    #    min_reward=min(self.actions_rewards["reward"]),
-                    # )
-                    save_agent_npy(
-                        self.environment, self.outdir, self.actions_rewards, start_time
-                    )
+                    save_agent_npy(self.environment, self.outdir, self.actions_rewards, start_time)
 
                 # End epoch
                 if step > self.estimated_steps:
                     done = True
-                    # self.min_reward = cumulated_reward
                     print_messages(
                         "end training",
-                        epoch_time=datetime.datetime.now() - start_time_epoch,
-                        training_time=datetime.datetime.now() - start_time,
+                        epoch_time=datetime.now() - start_time_epoch,
+                        training_time=datetime.now() - start_time,
                         episode=episode,
                         episode_reward=cumulated_reward,
                         steps=step,
                         estimated_steps=self.estimated_steps,
                         start_time=start_time,
-                        step_time=datetime.datetime.now()
-                        - datetime.timedelta(seconds=self.training_time),
+                        step_time=datetime.now() - timedelta(seconds=self.training_time),
                     )
                     # only save incrementally in success
                     if min_reward < cumulated_reward:
@@ -601,7 +487,7 @@ class QlearnF1FollowLaneTrainer:
                     in_best_step=best_step,
                     with_highest_reward=int(cumulated_reward),
                     in_best_epoch_trining_time=best_epoch_training_time,
-                    total_training_time=(datetime.datetime.now() - start_time),
+                    total_training_time=(datetime.now() - start_time),
                 )
                 self.best_current_epoch["best_epoch"].append(best_epoch)
                 self.best_current_epoch["highest_reward"].append(cumulated_reward)
@@ -610,7 +496,7 @@ class QlearnF1FollowLaneTrainer:
                     best_epoch_training_time
                 )
                 self.best_current_epoch["current_total_training_time"].append(
-                    datetime.datetime.now() - start_time
+                    datetime.now() - start_time
                 )
                 save_stats_episodes(
                     self.environment, self.outdir, self.best_current_epoch, start_time
@@ -629,19 +515,13 @@ class QlearnF1FollowLaneTrainer:
                 )
 
             # ended at training time setting: 2 hours, 15 hours...
-            if (
-                datetime.datetime.now() - datetime.timedelta(hours=self.training_time)
-                > start_time
-            ):
+            if datetime.now() - timedelta(hours=self.training_time) > start_time:
                 print_messages(
                     "Training time finished in:",
-                    time=datetime.datetime.now() - start_time,
+                    time=datetime.now() - start_time,
                     episode=episode,
                     cumulated_reward=cumulated_reward,
-                    total_time=(
-                        datetime.datetime.now()
-                        - datetime.timedelta(hours=self.training_time)
-                    ),
+                    total_time=(datetime.now() - timedelta(hours=self.training_time)),
                 )
                 if cumulated_reward >= current_max_reward:
                     save_stats_episodes(
@@ -667,33 +547,25 @@ class QlearnF1FollowLaneTrainer:
             # save best values every save_episode times
             self.ep_rewards.append(cumulated_reward)
             if not episode % self.save_episodes:
-                average_reward = sum(self.ep_rewards[-self.save_episodes :]) / len(
-                    self.ep_rewards[-self.save_episodes :]
-                )
-                min_reward = min(self.ep_rewards[-self.save_episodes :])
-                max_reward = max(self.ep_rewards[-self.save_episodes :])
+                average_reward = sum(self.ep_rewards[-self.save_episodes:]) / len(self.ep_rewards[-self.save_episodes:])
+                min_reward = min(self.ep_rewards[-self.save_episodes:])
+                max_reward = max(self.ep_rewards[-self.save_episodes:])
 
                 print_messages(
                     "Showing batch:",
                     current_episode_batch=episode,
                     max_reward_in_current_batch=int(max_reward),
                     highest_reward_in_all_training=int(max(self.ep_rewards)),
-                    total_time=(datetime.datetime.now() - start_time),
+                    total_time=(datetime.now() - start_time),
                 )
                 self.aggr_ep_rewards["episode"].append(episode)
                 self.aggr_ep_rewards["step"].append(step)
                 self.aggr_ep_rewards["avg"].append(average_reward)
                 self.aggr_ep_rewards["max"].append(max_reward)
                 self.aggr_ep_rewards["min"].append(min_reward)
-                self.aggr_ep_rewards["epoch_training_time"].append(
-                    (datetime.datetime.now() - start_time_epoch).total_seconds()
-                )
-                self.aggr_ep_rewards["total_training_time"].append(
-                    (datetime.datetime.now() - start_time).total_seconds()
-                )
-                save_stats_episodes(
-                    self.environment, self.outdir, self.aggr_ep_rewards, start_time
-                )
+                self.aggr_ep_rewards["epoch_training_time"].append((datetime.now() - start_time_epoch).total_seconds())
+                self.aggr_ep_rewards["total_training_time"].append((datetime.now() - start_time).total_seconds())
+                save_stats_episodes(self.environment, self.outdir, self.aggr_ep_rewards, start_time)
                 print_messages(
                     "Saving batch",
                     max_reward=int(max_reward),
@@ -710,5 +582,3 @@ class QlearnF1FollowLaneTrainer:
             self.environment, self.outdir, self.aggr_ep_rewards, start_time
         )
         self.env.close()
-
-        env.close()
