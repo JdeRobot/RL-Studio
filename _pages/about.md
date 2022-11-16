@@ -34,5 +34,12 @@ to the already presented papers.
 * Code: [https://github.com/valeoai/LearningByCheating](https://github.com/valeoai/LearningByCheating)
 * Slides: [Link](https://drive.google.com/file/d/1csjozm8XuXJad4CLJyXq_H-JEHGatdJ5/view?usp=sharing)
 
+### End-to-end Driving via Conditional Imitation Learning (Felipe Codevilla, Matthias Müller, Antonio López, Vladlen Koltun and Alexey Dosovitskiy)
 
+[10 nov 2022] Presented by Sergio Paniego.
+
+* Paper: [http://vladlen.info/papers/conditional-imitation.pdf](http://vladlen.info/papers/conditional-imitation.pdf)
+* Code: [https://github.com/carla-simulator/imitation-learning](https://github.com/carla-simulator/imitation-learning)
+* Video: [https://www.youtube.com/watch?v=GNVHds_mvlg](https://www.youtube.com/watch?v=GNVHds_mvlg)
+* Slides: [Link](https://drive.google.com/file/d/1vH_wJzckWLzj_7PjccFqqb2ZZh4y936K/view?usp=sharing)
 
