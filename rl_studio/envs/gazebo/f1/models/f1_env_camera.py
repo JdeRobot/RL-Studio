@@ -100,17 +100,17 @@ class F1CameraEnv(F1Env):
 
     def step(self, action) -> Tuple:
         self._gazebo_unpause()
-        
+
         vel_cmd = Twist()
         vel_cmd.linear.x = self.actions[action][0]
         vel_cmd.angular.z = self.actions[action][1]
         self.vel_pub.publish(vel_cmd)
-        
+
         # Get camera info
         start = time.time()
         f1_image_camera = self.image.getImage()
         self.previous_image = f1_image_camera.data
-        
+
         while np.array_equal(self.previous_image, f1_image_camera.data):
             if (time.time() - start) > 0.1:
                 vel_cmd = Twist()
@@ -118,12 +118,12 @@ class F1CameraEnv(F1Env):
                 vel_cmd.angular.z = 0
                 self.vel_pub.publish(vel_cmd)
             f1_image_camera = self.image.getImage()
-        
+
         self._gazebo_pause()
         points = self.processed_image(f1_image_camera.data)
         state = self.calculate_observation(points)
         center = float(self.config.center_image - points[0]) / (
-            float(self.config.width) // 2
+                float(self.config.width) // 2
         )
 
         done = False
@@ -140,7 +140,7 @@ class F1CameraEnv(F1Env):
                 reward = 1
         else:
             reward = -100
-        
+
         return state, reward, done, {}
 
     def reset(self):
@@ -443,7 +443,8 @@ class QlearnF1FollowLaneEnvGazebo(F1Env):
 
     def rewards_discrete_follow_right_lane(self, centrals_normalized, centrals_in_pixels):
         done = False
-        if (centrals_in_pixels[1] > 640 and centrals_in_pixels[2] > 640) or (centrals_in_pixels[2] > 500 and centrals_in_pixels[3] > 350):
+        if (centrals_in_pixels[1] > 640 and centrals_in_pixels[2] > 640) or (
+                centrals_in_pixels[2] > 500 and centrals_in_pixels[3] > 350):
             done = True
             reward = self.rewards["penal"]
         else:
