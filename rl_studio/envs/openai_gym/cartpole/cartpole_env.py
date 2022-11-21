@@ -88,12 +88,15 @@ class CartPoleEnv(gym.Env[np.ndarray, Union[int, np.ndarray]]):
     }
 
     def __init__(self, random_start_level, initial_pole_angle=None, render_mode: Optional[str] = None,
-                 non_recoverable_angle=0.3):
+                 non_recoverable_angle=0.3, punish=0, reward_value=1, reward_shaping=0):
         self.random_start_level = random_start_level
 
         self.gravity = 9.8
         self.masscart = 1.0
         self.masspole = 0.1
+        self.punish = punish
+        self.reward_value = reward_value
+        self.reward_shaping = reward_shaping
         self.total_mass = self.masspole + self.masscart
         self.length = 0.5  # actually half the pole's length
         self.polemass_length = self.masspole * self.length
@@ -102,7 +105,9 @@ class CartPoleEnv(gym.Env[np.ndarray, Union[int, np.ndarray]]):
         self.kinematics_integrator = "euler"
         # Angle at which to fail the episode
         self.theta_threshold_radians = non_recoverable_angle * 50 * 2 * math.pi / 360
+        self.theta_threshold_radians_center = non_recoverable_angle/2 * 50 * 2 * math.pi / 360
         self.x_threshold = 2.4
+        self.x_threshold_center = 1.4
         self.init_pole_angle = initial_pole_angle
 
         # Angle limit set to 2 * theta_threshold_radians so failing observation
@@ -214,12 +219,21 @@ class CartPoleEnv(gym.Env[np.ndarray, Union[int, np.ndarray]]):
             or theta > self.theta_threshold_radians
         )
 
-        if not terminated:
-            reward = 1.0
+        centered = bool(
+            x < -self.x_threshold_center
+            or x > self.x_threshold_center
+            or theta < -self.theta_threshold_radians_center
+            or theta > self.theta_threshold_radians_center
+        )
+
+        if not terminated and centered:
+            reward = self.reward_value + self.reward_shaping
+        elif not terminated:
+            reward = self.reward_value
         elif self.steps_beyond_terminated is None:
             # Pole just fell!
             self.steps_beyond_terminated = 0
-            reward = 1.0
+            reward = self.reward_value
         else:
             if self.steps_beyond_terminated == 0:
                 logger.warn(
@@ -229,7 +243,7 @@ class CartPoleEnv(gym.Env[np.ndarray, Union[int, np.ndarray]]):
                     "True' -- any further steps are undefined behavior."
                 )
             self.steps_beyond_terminated += 1
-            reward = 0.0
+            reward = self.punish
 
         self.renderer.render_step()
         return np.array(self.state, dtype=np.float32), reward, terminated, False, {}
@@ -248,7 +262,7 @@ class CartPoleEnv(gym.Env[np.ndarray, Union[int, np.ndarray]]):
             options, -self.random_start_level, self.random_start_level  # default low
         )  # default high
         self.state = self.np_random.uniform(low=low, high=high, size=(4,))
-        if self.init_pole_angle != None:
+        if self.init_pole_angle is not None:
             self.state[2] = self.init_pole_angle
 
         self.steps_beyond_terminated = None

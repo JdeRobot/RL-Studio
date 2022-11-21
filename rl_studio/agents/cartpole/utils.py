@@ -24,7 +24,7 @@ def save_model_qlearn(qlearn, current_time, avg):
     # Q TABLE
     base_file_name = "_epsilon_{}".format(round(qlearn.epsilon, 3))
     file_dump = open(
-        "./logs/cartpole/qlearning/checkpoints/" + current_time + base_file_name + "_" + str(avg) + "_QTABLE.pkl_avg_.pkl",
+        "./logs/cartpole/qlearning/checkpoints/" + current_time + base_file_name + "_QTABLE_avg_ " +  str(avg) + ".pkl",
         "wb"
     )
     pickle.dump(qlearn.q, file_dump)

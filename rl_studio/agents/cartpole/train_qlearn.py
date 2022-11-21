@@ -25,6 +25,9 @@ class QLearnCartpoleTrainer:
         self.PERTURBATIONS_INTENSITY_STD = self.environment_params.get("perturbations_intensity_std", 0)
         self.RANDOM_START_LEVEL = self.environment_params.get("random_start_level", 0)
         self.INITIAL_POLE_ANGLE = self.environment_params.get("initial_pole_angle", None)
+        self.punish = self.environment_params.get("punish", 0)
+        self.reward_value = self.environment_params.get("reward_value", 1)
+        self.reward_shaping = self.environment_params.get("reward_shaping", 0)
 
 
         non_recoverable_angle = self.environment_params[
@@ -33,7 +36,8 @@ class QLearnCartpoleTrainer:
         # Unfortunately, max_steps is not working with new_step_api=True and it is not giving any benefit.
         # self.env = gym.make(self.env_name, new_step_api=True, random_start_level=random_start_level)
         self.env = gym.make(self.env_name, random_start_level=self.RANDOM_START_LEVEL, initial_pole_angle=self.INITIAL_POLE_ANGLE,
-                            non_recoverable_angle=non_recoverable_angle)
+                            non_recoverable_angle=non_recoverable_angle, punish=self.punish, reward_value=self.reward_value,
+                            reward_shaping=self.reward_shaping)
 
         self.RUNS = self.environment_params["runs"]  # Number of iterations run
         self.ANGLE_BINS = self.environment_params["angle_bins"]

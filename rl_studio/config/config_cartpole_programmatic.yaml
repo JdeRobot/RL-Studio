@@ -29,8 +29,8 @@ environments:
     random_start_level: 0 # Number between 0 and 1 that indicates the difficulty of the start position
     random_perturbations_level: 0 # Number between 0 and 1 that indicates the frequency of the random perturbations
     perturbations_intensity_std: 0 # Number between 0 and 1 that indicates the standard deviation of perturbations intensity
-    initial_pole_angle: 0.1
-    non_recoverable_angle: 0.3
+    initial_pole_angle: 0.5
+    non_recoverable_angle: 0.7
 
 algorithm:
   programmatic:
