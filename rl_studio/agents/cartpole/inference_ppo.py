@@ -108,7 +108,7 @@ class PPOCartpoleInferencer:
     def main(self):
         epoch_start_time = datetime.datetime.now()
 
-        logs_dir = 'logs/cartpole/ppo/training/'
+        logs_dir = 'logs/cartpole/ppo/inference/'
         logs_file_name = 'logs_file_' + str(self.RANDOM_START_LEVEL) + '_' + str(
             self.RANDOM_PERTURBATIONS_LEVEL) + '_' + str(epoch_start_time) \
                          + str(self.PERTURBATIONS_INTENSITY_STD) + '.log'
@@ -163,7 +163,7 @@ class PPOCartpoleInferencer:
                 total_reward_in_epoch = 0
 
         # self.final_demonstration()
-        base_file_name = f'_rewards_rsl-{self.RANDOM_START_LEVEL}_rpl-{self.RANDOM_PERTURBATIONS_LEVEL}_pi-{self.PERTURBATIONS_INTENSITY_STD}'
+        base_file_name = f'_rewards_rsl-{self.RANDOM_START_LEVEL}_rpl-{self.RANDOM_PERTURBATIONS_LEVEL}_pi-{self.PERTURBATIONS_INTENSITY_STD}_init_{self.INITIAL_POLE_ANGLE}'
         file_path = f'{logs_dir}{datetime.datetime.now()}_{base_file_name}.pkl'
         store_rewards(self.reward_list, file_path)
         plt.plot(self.reward_list)

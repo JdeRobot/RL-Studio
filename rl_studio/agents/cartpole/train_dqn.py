@@ -13,7 +13,7 @@ from rl_studio.agents.cartpole import utils
 from rl_studio.algorithms.dqn_torch import DQN_Agent
 from rl_studio.visual.ascii.images import JDEROBOT_LOGO
 from rl_studio.visual.ascii.text import JDEROBOT, LETS_GO
-from rl_studio.agents.cartpole.utils import store_rewards, show_fails_success_comparisson
+from rl_studio.agents.cartpole.utils import store_rewards, save_metadata
 
 
 class DQNCartpoleTrainer:
@@ -159,6 +159,10 @@ class DQNCartpoleTrainer:
         self.print_init_info()
 
         start_time_format = epoch_start_time.strftime("%Y%m%d_%H%M")
+
+        if self.config["save_model"]:
+            save_metadata("dqn", start_time_format, self.params)
+
         logging.info(LETS_GO)
         number_of_steps = 128
         total_reward_in_epoch = 0

@@ -35,17 +35,19 @@ class QLearnCartpoleInferencer:
         self.RUNS = self.environment_params[
             "runs"
         ]  # Number of iterations run TODO set this from config.yml
+        self.ANGLE_BINS = self.environment_params["angle_bins"]
+        self.POS_BINS = self.environment_params["pos_bins"]
+
         self.SHOW_EVERY = self.environment_params[
             "show_every"
-        ]  # How oftern the current solution is rendered TODO set this from config.yml
+        ]  # How oftern the current solution is rendered
         self.UPDATE_EVERY = self.environment_params[
             "update_every"
-        ]  # How oftern the current progress is recorded TODO set this from config.yml
+        ]  # How oftern the current progress is recorded
 
         self.bins, self.obsSpaceSize, self.qTable = utils.create_bins_and_q_table(
-            self.env
+            self.env, self.ANGLE_BINS, self.POS_BINS
         )
-
         self.previousCnt = []  # array of all scores over runs
         self.metrics = {
             "ep": [],
@@ -67,7 +69,7 @@ class QLearnCartpoleInferencer:
 
         # TODO the first parameter (algorithm) should come from configuration
         self.inferencer = InferencerWrapper(
-            "qlearn_multiple_states", inference_file, actions_file
+            "qlearn", inference_file, actions_file
         )
 
     def print_init_info(self):
@@ -77,7 +79,7 @@ class QLearnCartpoleInferencer:
         print(f"\t- Start hour: {datetime.datetime.now()}\n")
         print(f"\t- Environment params:\n{self.environment_params}")
 
-    def evaluate_and_learn_from_step(self, state):
+    def evaluate_from_step(self, state):
 
         # Pick an action based on the current state
         action = self.inferencer.inference(state)
@@ -112,7 +114,7 @@ class QLearnCartpoleInferencer:
                 if random.uniform(0, 1) < self.RANDOM_PERTURBATIONS_LEVEL:
                     perturbation_action = random.randrange(self.env.action_space.n)
                     obs, done, _, _ = self.env.perturbate(perturbation_action, self.PERTURBATIONS_INTENSITY_STD)
-                next_state, done = self.evaluate_and_learn_from_step(state)
+                next_state, done = self.evaluate_from_step(state)
 
                 if not done:
                     state = next_state
