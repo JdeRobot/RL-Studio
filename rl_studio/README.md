@@ -24,15 +24,15 @@ The config.yaml contains all project hyperparams and configuration needed to exe
 For example, if you want to train a F1 agent in Circuit Simple with Q-learning algorithm, just type:
 
 ```bash
-poetry run python main_rlstudio.py -n qlearn -a f1 -e simple -f config/config_f1_qlearn.yaml # if using Poetry for dependencies
-python main_rlstudio.py -n qlearn -a f1 -e simple -f config/config_f1_qlearn.yaml # if using PIP for dependencies
+poetry run python main_rlstudio.py -n qlearn -a f1 -e simple -f config/config_f1followline_qlearn.yaml # if using Poetry for dependencies
+python main_rlstudio.py -n qlearn -a f1 -e simple -f config/config_f1followline_qlearn.yaml # if using PIP for dependencies
 ```
 
 Or an inference making use of the script that uses a library created for that purpose
 
 ```bash
-poetry run python main_rlstudio.py -n qlearn -a f1 -e simple -f config/config_f1_qlearn.yaml -m inference # if using Poetry for dependencies
-python main_rlstudio.py -n qlearn -a f1 -e simple -f config/config_f1_qlearn.yaml -m inference # if using PIP for dependencies
+poetry run python main_rlstudio.py -n qlearn -a f1 -e simple -f config/config_f1followline_qlearn.yaml -m inference # if using Poetry for dependencies
+python main_rlstudio.py -n qlearn -a f1 -e simple -f config/config_f1followline_qlearn.yaml -m inference # if using PIP for dependencies
 ```
 
 > :warning: If you want to use inferencing in a program language other than python, you will
