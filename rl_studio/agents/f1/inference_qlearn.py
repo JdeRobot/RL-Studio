@@ -15,7 +15,7 @@ from rl_studio.wrappers.inference_rlstudio import InferencerWrapper
 
 class QlearnF1FollowLineInferencer:
     def __init__(self, params):
-        # TODO: Create a pydantic metaclass to simplify actions these way we extract the params
+        # TODO: Create a pydantic metaclass to simplify the way we extract the params
         # environment params
         self.environment_params = params.environment["params"]
         self.env_name = params.environment["params"]["env_name"]
@@ -157,7 +157,7 @@ class QlearnF1FollowLineInferencer:
 
 class QlearnF1FollowLaneInferencer:
     def __init__(self, params):
-        # TODO: Create a pydantic metaclass to simplify actions these way we extract the params
+        # TODO: Create a pydantic metaclass to simplify the way we extract the params
         # environment params
         self.environment_params = params.environment["params"]
         self.env_name = params.environment["params"]["env_name"]

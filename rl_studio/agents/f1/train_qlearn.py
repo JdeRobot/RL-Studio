@@ -243,7 +243,6 @@ class QlearnF1FollowLaneTrainer:
         # var to config Agents
         self.config = dict(params)
 
-        ## vars to config function main ddpg
         self.agent_name = params.agent["name"]
         self.model_state_name = params.settings["params"]["model_state_name"]
         # environment params
