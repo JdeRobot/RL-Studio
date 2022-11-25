@@ -140,6 +140,25 @@ class QlearnF1FollowLineTrainer:
                     last_time_steps = np.append(last_time_steps, [int(step + 1)])
                     stats[int(episode)] = step
                     states_reward[int(episode)] = cumulated_reward
+                    
+                    plt.figure()
+                    plt.title('STEPS - EPISODES')
+                    plt.plot(list(stats.values()), color="blue")
+                    plt.gca().set_ylim(bottom=-1)
+                    plt.savefig('steps_per_episode_plot.png')
+                    steps_per_episode_plot = cv2.imread('steps_per_episode_plot.png')
+                    cv2.imshow("STEPS - EPISODES", steps_per_episode_plot)
+                    cv2.waitKey(3)
+
+                    plt.figure()
+                    plt.title('REWARDS - EPISODES')
+                    plt.plot(list(states_reward.values()), color="red")
+                    plt.gca().set_ylim(bottom=-110)
+                    plt.savefig('rewards_per_episode_plot.png')
+                    rewards_per_episode_plot = cv2.imread('rewards_per_episode_plot.png')
+                    cv2.imshow("REWARDS - EPISODES", rewards_per_episode_plot)
+                    cv2.waitKey(3)
+                    
                     print(
                         f"EP: {episode + 1} - epsilon: {round(qlearn.epsilon, 2)} - Reward: {cumulated_reward}"
                         f" - Time: {start_time_format} - Steps: {step}"
