@@ -25,7 +25,7 @@ from rl_studio.visual.ascii.images import JDEROBOT_LOGO
 from rl_studio.visual.ascii.text import JDEROBOT, QLEARN_CAMERA, LETS_GO
 
 
-class F1Trainer:
+class QlearnF1FollowLineTrainer:
     def __init__(self, params):
         # TODO: Create a pydantic metaclass to simplify the way we extract the params
         # environment params

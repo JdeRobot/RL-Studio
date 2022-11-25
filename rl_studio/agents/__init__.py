@@ -14,11 +14,11 @@ class TrainerFactory:
             # Q-learn
             if algorithm == AlgorithmsType.QLEARN.value:
                 from rl_studio.agents.f1.train_qlearn import (
-                    F1Trainer,
+                    QlearnF1FollowLineTrainer,
                     QlearnF1FollowLaneTrainer,
                 )
                 if config.environment['params']['training_type'] == 'qlearn_camera_follow_line':
-                    return F1Trainer(config)
+                    return QlearnF1FollowLineTrainer(config)
                 else:
                     return QlearnF1FollowLaneTrainer(config)
 
@@ -110,9 +110,9 @@ class InferenceExecutorFactory:
         elif agent == AgentsType.F1.value:
             # Q-learn
             if algorithm == AlgorithmsType.QLEARN.value:
-                from rl_studio.agents.f1.inference_qlearn import (F1Inferencer, QlearnF1FollowLaneInferencer)
+                from rl_studio.agents.f1.inference_qlearn import (QlearnF1FollowLineInferencer, QlearnF1FollowLaneInferencer)
                 if config.environment['params']['training_type'] == 'qlearn_camera_follow_line':
-                    return F1Inferencer(config)
+                    return QlearnF1FollowLineInferencer(config)
                 else:
                     return QlearnF1FollowLaneInferencer(config)            
 

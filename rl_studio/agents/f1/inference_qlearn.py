@@ -13,7 +13,7 @@ from rl_studio.visual.ascii.text import JDEROBOT, QLEARN_CAMERA, LETS_GO
 from rl_studio.wrappers.inference_rlstudio import InferencerWrapper
 
 
-class F1Inferencer:
+class QlearnF1FollowLineInferencer:
     def __init__(self, params):
         # TODO: Create a pydantic metaclass to simplify actions these way we extract the params
         # environment params
