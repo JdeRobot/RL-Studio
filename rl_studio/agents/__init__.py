@@ -96,9 +96,9 @@ class TrainerFactory:
 
 class InferenceExecutorFactory:
     def __new__(cls, config):
-
         agent = config.agent["name"]
         algorithm = config.algorithm["name"]
+
 
         if agent == AgentsType.ROBOT_MESH.value:
             from rl_studio.agents.robot_mesh.inference_qlearn import (
@@ -108,9 +108,14 @@ class InferenceExecutorFactory:
             return QLearnRobotMeshInferencer(config)
 
         elif agent == AgentsType.F1.value:
-            from rl_studio.agents.f1.inference_qlearn import F1Inferencer
+            # Q-learn
+            if algorithm == AlgorithmsType.QLEARN.value:
+                from rl_studio.agents.f1.inference_qlearn import (F1Inferencer, QlearnF1FollowLaneInferencer)
+                if config.environment['params']['training_type'] == 'qlearn_camera_follow_line':
+                    return F1Inferencer(config)
+                else:
+                    return QlearnF1FollowLaneInferencer(config)            
 
-            return F1Inferencer(config)
 
         # elif agent == AgentsType.TURTLEBOT.value:
         #     from rl_studio.agents.turtlebot.turtlebot_Inferencer import TurtlebotInferencer
