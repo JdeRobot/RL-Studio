@@ -19,10 +19,10 @@ class F1Env:
         # Qlearn F1 FollowLine camera
         if training_type == EnvironmentType.qlearn_env_camera_follow_line.value:
             from rl_studio.envs.gazebo.f1.models.f1_env_camera import (
-                F1CameraEnv,
+                QlearnF1FollowLineEnvGazebo,
             )
 
-            return F1CameraEnv(**config)
+            return QlearnF1FollowLineEnvGazebo(**config)
 
         # Qlearn F1 FollowLane camera
         elif training_type == EnvironmentType.qlearn_env_camera_follow_lane.value:

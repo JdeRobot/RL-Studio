@@ -15,7 +15,8 @@ from rl_studio.envs.gazebo.f1.models.f1_env import F1Env
 from rl_studio.envs.gazebo.gazebo_utils import set_new_pose
 
 
-class F1CameraEnv(F1Env):
+
+class QlearnF1FollowLineEnvGazebo(F1Env):
     def __init__(self, **config):
         F1Env.__init__(self, **config)
         self.image = ListenerCamera("/F1ROS/cameraL/image_raw")
