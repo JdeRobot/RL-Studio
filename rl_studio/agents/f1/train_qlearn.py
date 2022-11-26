@@ -366,10 +366,7 @@ class QlearnF1FollowLaneTrainer:
             gamma=self.gamma,
         )
 
-        ## Epsilon
         epsilon_decay = self.epsilon / (self.total_episodes // 2)
-
-        # Checking state and actions
         print_messages(
             "In train_qlearn.py",
             actions_range=range(self.actions_size),
@@ -377,7 +374,6 @@ class QlearnF1FollowLaneTrainer:
             # epsilon_decay=epsilon_decay,
         )
 
-        ## -------------    START TRAINING --------------------
         print(LETS_GO)
         for episode in tqdm(range(1, self.total_episodes + 1), ascii=True, unit="episodes"):
             done = False
@@ -387,7 +383,6 @@ class QlearnF1FollowLaneTrainer:
             observation = self.env.reset()
             state = "".join(map(str, observation))
 
-            # ------- WHILE
             while not done:
                 step += 1
                 # Pick an action based on the current state
@@ -397,11 +392,7 @@ class QlearnF1FollowLaneTrainer:
                 observation, reward, done, _ = self.env.step(action)
                 cumulated_reward += reward
                 next_state = "".join(map(str, observation))
-
-                # qlearning
                 qlearn.learn(state, action, reward, next_state)
-
-                ## important!!!
                 state = next_state
 
                 # render params
@@ -418,7 +409,6 @@ class QlearnF1FollowLaneTrainer:
                     done=done,
                 )
 
-                # -------------------------------------- stats
                 try:
                     self.states_counter[next_state] += 1
                 except KeyError:
