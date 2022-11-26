@@ -20,6 +20,7 @@ class QlearnF1FollowLineEnvGazebo(F1Env):
     def __init__(self, **config):
         F1Env.__init__(self, **config)
         self.image = ListenerCamera("/F1ROS/cameraL/image_raw")
+        self.previous_image = self.image.getImage().data
         self.actions = config.get("actions")
         self.action_space = spaces.Discrete(3)
         self.config = QLearnConfig()
@@ -96,7 +97,6 @@ class QlearnF1FollowLineEnvGazebo(F1Env):
         # Get camera info
         start = time.time()
         f1_image_camera = self.image.getImage()
-        self.previous_image = f1_image_camera.data
 
         while np.array_equal(self.previous_image, f1_image_camera.data):
             if (time.time() - start) > 0.1:
@@ -105,6 +105,8 @@ class QlearnF1FollowLineEnvGazebo(F1Env):
                 vel_cmd.angular.z = 0
                 self.vel_pub.publish(vel_cmd)
             f1_image_camera = self.image.getImage()
+        
+        self.previous_image = f1_image_camera.data
 
         self._gazebo_pause()
         points = self.processed_image(f1_image_camera.data)
@@ -129,7 +131,7 @@ class QlearnF1FollowLineEnvGazebo(F1Env):
             reward = -100
 
         return state, reward, done, {}
-
+    
     def reset(self):
         if self.alternate_pose:
             pos_number = set_new_pose(self.circuit_positions_set)
@@ -139,17 +141,18 @@ class QlearnF1FollowLineEnvGazebo(F1Env):
         self._gazebo_unpause()
 
         # Get camera info
-        image_data = None
-        f1_image_camera = None
-        success = False
-        while image_data is None or success is False:
-            image_data = rospy.wait_for_message(
-                "/F1ROS/cameraL/image_raw", Image, timeout=5
-            )
-            cv_image = CvBridge().imgmsg_to_cv2(image_data, "bgr8")
-            f1_image_camera = self.image_msg_to_image(image_data, cv_image)
-            if f1_image_camera:
-                success = True
+        start = time.time()
+        f1_image_camera = self.image.getImage()
+
+        while np.array_equal(self.previous_image, f1_image_camera.data):
+            if (time.time() - start) > 0.1:
+                vel_cmd = Twist()
+                vel_cmd.linear.x = 0
+                vel_cmd.angular.z = 0
+                self.vel_pub.publish(vel_cmd)
+            f1_image_camera = self.image.getImage()
+        
+        self.previous_image = f1_image_camera.data
 
         points = self.processed_image(f1_image_camera.data)
         state = self.calculate_observation(points)
@@ -157,7 +160,7 @@ class QlearnF1FollowLineEnvGazebo(F1Env):
         self._gazebo_pause()
 
         return state
-
+    
     def inference(self, action):
         self._gazebo_unpause()
 
@@ -165,12 +168,20 @@ class QlearnF1FollowLineEnvGazebo(F1Env):
         vel_cmd.linear.x = self.config.ACTIONS_SET[action][0]
         vel_cmd.angular.z = self.config.ACTIONS_SET[action][1]
         self.vel_pub.publish(vel_cmd)
+        
+        # Get camera info
+        start = time.time()
+        f1_image_camera = self.image.getImage()
 
-        image_data = rospy.wait_for_message(
-            "/F1ROS/cameraL/image_raw", Image, timeout=1
-        )
-        cv_image = CvBridge().imgmsg_to_cv2(image_data, "bgr8")
-        f1_image_camera = self.image_msg_to_image(image_data, cv_image)
+        while np.array_equal(self.previous_image, f1_image_camera.data):
+            if (time.time() - start) > 0.1:
+                vel_cmd = Twist()
+                vel_cmd.linear.x = 0
+                vel_cmd.angular.z = 0
+                self.vel_pub.publish(vel_cmd)
+            f1_image_camera = self.image.getImage()
+        
+        self.previous_image = f1_image_camera.data
 
         self._gazebo_pause()
 
@@ -192,6 +203,7 @@ class QlearnF1FollowLaneEnvGazebo(F1Env):
     def __init__(self, **config):
         F1Env.__init__(self, **config)
         self.image = ListenerCamera("/F1ROS/cameraL/image_raw")
+        self.previous_image = self.image.getImage().data        
         self.actions = config.get("actions")
         self.action_space = spaces.Discrete(3)
         self.config = QLearnConfig()
@@ -405,7 +417,6 @@ class QlearnF1FollowLaneEnvGazebo(F1Env):
         # Get camera info
         start = time.time()
         f1_image_camera = self.image.getImage()
-        self.previous_image = f1_image_camera.data
 
         while np.array_equal(self.previous_image, f1_image_camera.data):
             if (time.time() - start) > 0.1:
@@ -414,7 +425,8 @@ class QlearnF1FollowLaneEnvGazebo(F1Env):
                 vel_cmd.angular.z = 0
                 self.vel_pub.publish(vel_cmd)
             f1_image_camera = self.image.getImage()
-
+        
+        self.previous_image = f1_image_camera.data
         self._gazebo_pause()
 
         centrals_in_pixels, centrals_normalized = self.calculate_centrals_lane(
@@ -428,7 +440,7 @@ class QlearnF1FollowLaneEnvGazebo(F1Env):
             centrals_normalized[0], centrals_in_pixels
         )
         return state, reward, done, {}
-
+    
     def reset(self):
         self._gazebo_reset()
         if self.alternate_pose:
@@ -439,17 +451,18 @@ class QlearnF1FollowLaneEnvGazebo(F1Env):
         self._gazebo_unpause()
 
         # Get camera info
-        image_data = None
-        f1_image_camera = None
-        success = False
-        while image_data is None or success is False:
-            image_data = rospy.wait_for_message(
-                "/F1ROS/cameraL/image_raw", Image, timeout=5
-            )
-            cv_image = CvBridge().imgmsg_to_cv2(image_data, "bgr8")
-            f1_image_camera = self.image_msg_to_image(image_data, cv_image)
-            if f1_image_camera:
-                success = True
+        start = time.time()
+        f1_image_camera = self.image.getImage()
+
+        while np.array_equal(self.previous_image, f1_image_camera.data):
+            if (time.time() - start) > 0.1:
+                vel_cmd = Twist()
+                vel_cmd.linear.x = 0
+                vel_cmd.angular.z = 0
+                self.vel_pub.publish(vel_cmd)
+            f1_image_camera = self.image.getImage()
+        
+        self.previous_image = f1_image_camera.data
 
         points, points_normalized = self.calculate_centrals_lane(f1_image_camera.data)
         states = self.calculate_observation(points)
@@ -459,7 +472,7 @@ class QlearnF1FollowLaneEnvGazebo(F1Env):
         self._gazebo_pause()
 
         return state
-
+    
 
     def inference(self, action):
         self._gazebo_unpause()
@@ -469,11 +482,19 @@ class QlearnF1FollowLaneEnvGazebo(F1Env):
         vel_cmd.angular.z = self.config.ACTIONS_SET[action][1]
         self.vel_pub.publish(vel_cmd)
 
-        image_data = rospy.wait_for_message(
-            "/F1ROS/cameraL/image_raw", Image, timeout=1
-        )
-        cv_image = CvBridge().imgmsg_to_cv2(image_data, "bgr8")
-        f1_image_camera = self.image_msg_to_image(image_data, cv_image)
+        # Get camera info
+        start = time.time()
+        f1_image_camera = self.image.getImage()
+
+        while np.array_equal(self.previous_image, f1_image_camera.data):
+            if (time.time() - start) > 0.1:
+                vel_cmd = Twist()
+                vel_cmd.linear.x = 0
+                vel_cmd.angular.z = 0
+                self.vel_pub.publish(vel_cmd)
+            f1_image_camera = self.image.getImage()
+        
+        self.previous_image = f1_image_camera.data
 
         self._gazebo_pause()
 
