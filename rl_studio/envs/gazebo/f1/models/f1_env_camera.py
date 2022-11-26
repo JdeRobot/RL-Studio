@@ -15,6 +15,7 @@ from rl_studio.envs.gazebo.f1.models.f1_env import F1Env
 from rl_studio.envs.gazebo.gazebo_utils import set_new_pose
 
 
+
 class QlearnF1FollowLineEnvGazebo(F1Env):
     def __init__(self, **config):
         F1Env.__init__(self, **config)
@@ -22,13 +23,6 @@ class QlearnF1FollowLineEnvGazebo(F1Env):
         self.actions = config.get("actions")
         self.action_space = spaces.Discrete(3)
         self.config = QLearnConfig()
-
-    def render(self, mode="human"):
-        pass
-
-    @staticmethod
-    def all_same(items):
-        return all(x == items[0] for x in items)
 
     def image_msg_to_image(self, img, cv_image):
         self.image.width = img.width
@@ -47,13 +41,6 @@ class QlearnF1FollowLineEnvGazebo(F1Env):
         except ValueError:
             print(f"No lines detected in the image")
             return 0
-
-    def calculate_reward(self, error: float) -> float:
-
-        d = np.true_divide(error, self.config.center_image)
-        reward = np.round(np.exp(-d), 4)
-
-        return reward
 
     def processed_image(self, img: Image) -> list:
         """
@@ -144,7 +131,6 @@ class QlearnF1FollowLineEnvGazebo(F1Env):
         return state, reward, done, {}
 
     def reset(self):
-        # === POSE ===
         if self.alternate_pose:
             pos_number = set_new_pose(self.circuit_positions_set)
         else:
@@ -167,7 +153,6 @@ class QlearnF1FollowLineEnvGazebo(F1Env):
 
         points = self.processed_image(f1_image_camera.data)
         state = self.calculate_observation(points)
-        # reset_state = (state, False)
 
         self._gazebo_pause()
 
@@ -202,17 +187,6 @@ class QlearnF1FollowLineEnvGazebo(F1Env):
 
         return state, done
 
-    def finish_line(self):
-        x, y = self.get_position()
-        current_point = np.array([x, y])
-
-        dist = (self.start_pose - current_point) ** 2
-        dist = np.sum(dist, axis=0)
-        dist = np.sqrt(dist)
-        if dist < self.config.max_distance:
-            return True
-        return False
-
 
 class QlearnF1FollowLaneEnvGazebo(F1Env):
     def __init__(self, **config):
@@ -242,17 +216,7 @@ class QlearnF1FollowLaneEnvGazebo(F1Env):
             self.x_row = [i for i in range(1, int(self.height / 2) - 1)]
         else:
             self.x_row = config["x_row"]
-
-    def render(self, mode="human"):
-        pass
-
-    @staticmethod
-    def all_same(items):
-        return all(x == items[0] for x in items)
-
-    #################################################################################
-    # Image
-    #################################################################################
+    
     def show_image(self, name, img, waitkey, centrals_in_pixels):
         window_name = f"{name}"
 
@@ -341,7 +305,6 @@ class QlearnF1FollowLaneEnvGazebo(F1Env):
     def processed_image(self, img):
         """
         detecting middle of the right lane
-
         """
         image_middle_line = self.height // 2
         # cropped image from second half to bottom line
@@ -364,10 +327,6 @@ class QlearnF1FollowLaneEnvGazebo(F1Env):
             final_state.append(int((self.center_image - x) / self.pixel_region) + 1)
 
         return final_state
-
-    #################################
-    # Central Lane
-    #################################
 
     @staticmethod
     def get_center_right_lane(lines):
@@ -417,26 +376,6 @@ class QlearnF1FollowLaneEnvGazebo(F1Env):
 
         return centrals_in_pixels, centrals_normalized
 
-    #################################
-    # Rewards
-    #################################
-
-    def rewards_discrete_follow_right_lane_lowerlimit(self, center, center_bottom):
-        done = False
-        if center_bottom > 480:
-            done = True
-            reward = self.rewards["penal"]
-        else:
-            if center > 0.9:
-                done = True
-                reward = self.rewards["penal"]
-            elif 0 <= center <= 0.2:
-                reward = self.rewards["from_10"]
-            else:
-                reward = self.rewards["from_02"]
-
-        return reward, done
-
     def rewards_discrete_follow_right_lane(self, centrals_normalized, centrals_in_pixels):
         done = False
         if (centrals_in_pixels[1] > 640 and centrals_in_pixels[2] > 640) or (
@@ -453,10 +392,6 @@ class QlearnF1FollowLaneEnvGazebo(F1Env):
                 reward = self.rewards["from_01"]
 
         return reward, done
-
-    #################################
-    # Step
-    #################################
 
     def step(self, action) -> Tuple:
 
@@ -494,13 +429,8 @@ class QlearnF1FollowLaneEnvGazebo(F1Env):
         )
         return state, reward, done, {}
 
-    #################################
-    # Reset
-    #################################
-
     def reset(self):
         self._gazebo_reset()
-        # === POSE ===
         if self.alternate_pose:
             self._gazebo_set_random_pose_f1_follow_rigth_lane()
         else:
@@ -530,9 +460,6 @@ class QlearnF1FollowLaneEnvGazebo(F1Env):
 
         return state
 
-    #################################
-    # Others
-    #################################
 
     def inference(self, action):
         self._gazebo_unpause()
@@ -564,14 +491,3 @@ class QlearnF1FollowLaneEnvGazebo(F1Env):
             done = True
 
         return state, done
-
-    def finish_line(self):
-        x, y = self.get_position()
-        current_point = np.array([x, y])
-
-        dist = (self.start_pose - current_point) ** 2
-        dist = np.sum(dist, axis=0)
-        dist = np.sqrt(dist)
-        if dist < self.config.max_distance:
-            return True
-        return False
