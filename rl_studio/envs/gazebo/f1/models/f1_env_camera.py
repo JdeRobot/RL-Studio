@@ -15,7 +15,6 @@ from rl_studio.envs.gazebo.f1.models.f1_env import F1Env
 from rl_studio.envs.gazebo.gazebo_utils import set_new_pose
 
 
-
 class QlearnF1FollowLineEnvGazebo(F1Env):
     def __init__(self, **config):
         F1Env.__init__(self, **config)
@@ -213,10 +212,6 @@ class QlearnF1FollowLineEnvGazebo(F1Env):
         if dist < self.config.max_distance:
             return True
         return False
-
-
-#####################################################################################
-#####################################################################################
 
 
 class QlearnF1FollowLaneEnvGazebo(F1Env):

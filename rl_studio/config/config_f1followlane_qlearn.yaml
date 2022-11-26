@@ -143,7 +143,7 @@ actions:
 #   env_name: F1Env-v0, RobotMeshEnv-v0, myCartpole-v0, MyMountainCarEnv-v0
 #   training_type: qlearn_camera, qlearn_laser, dqn, manual, ddpg
 #   circuit_positions_set: different positions in Gazebo simulator for every environment. Set represents x, y, z, 0, roll, pitch, yaw          
-#   start_pose: agnet initial pose in every training. It takes number from circuit_positions_set param
+#   start_pose: agent initial pose in every training. It takes number from circuit_positions_set param
 #   alternate_pose: if True, the agent randoms initial pose, taking from circuit_positions_set param. Otherwise, it takes start_pose number
 
 #####################################################################################
