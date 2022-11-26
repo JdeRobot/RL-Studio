@@ -25,11 +25,6 @@ settings:
   training_time: 6
   save_episodes: 50
   save_every_step: 100
-  lap_completed: False
-  load_qlearning_pickle_model: False
-  load_qlearning_pickle_file: 1_20210622_1512_actions_set_simple_epsilon_0.99_QTABLE.pkl
-  load_qlearning_model: False
-  load_qlearning_table: train_qlearning_f1_simple_EPISODE_1_20210625-082424-qtable.npy
   ros_master_uri: '11311'
   gazebo_master_uri: '11345'  
 
