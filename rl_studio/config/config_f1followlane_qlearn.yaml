@@ -242,8 +242,8 @@ environments:
 #####################################################################################
 inference:
   qlearn:
-    inference_file: logs/qlearn_models/1_20220601_1649_act_set_simple_epsilon_0.7_QTABLE.pkl
-    actions_file: logs/qlearn_models/actions_set_20221013_1442
+    inference_file: checkpoints/follow_lane/qlearn_models/1_20221128_1048_Circuit-simple_States-sp3_Actions-simple_epsilon-0.9_epoch-5_step-201_reward-2010_QTABLE.pkl
+    actions_file: checkpoints/follow_line/qlearn_models/actions_set_20221128_0938
 
 #####################################################################################
 # algorithm: every particular param
