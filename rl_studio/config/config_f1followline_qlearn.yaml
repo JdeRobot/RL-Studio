@@ -285,8 +285,8 @@ environments:
 #####################################################################################
 inference:
   qlearn:
-    inference_file: /root/RL-Studio/rl_studio/logs/qlearn_models/1_20220601_1649_act_set_simple_epsilon_0.7_QTABLE.pkl
-    actions_file: /root/RL-Studio/rl_studio/logs/qlearn_models/actions_set_20221013_1442
+    inference_file: logs/qlearn_models/1_20220601_1649_act_set_simple_epsilon_0.7_QTABLE.pkl
+    actions_file: logs/qlearn_models/actions_set_20221013_1442
 
 #####################################################################################
 # algorithm: every particular param
