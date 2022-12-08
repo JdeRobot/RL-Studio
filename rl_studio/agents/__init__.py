@@ -1,99 +1,267 @@
 from rl_studio.agents.agents_type import AgentsType
 from rl_studio.agents.exceptions import NoValidTrainingType
+from rl_studio.agents.tasks_type import TasksType
 from rl_studio.algorithms.algorithms_type import AlgorithmsType
+from rl_studio.envs.envs_type import EnvsType
 
 
 class TrainerFactory:
     def __new__(cls, config):
+        """
+        There are many options:
 
-        agent = config.agent["name"]
-        algorithm = config.algorithm["name"]
+         Tasks:
+           - Follow_line
+           - Follow_lane
 
-        # F1
-        if agent == AgentsType.F1.value:
-            # Q-learn
-            if algorithm == AlgorithmsType.QLEARN.value:
-                from rl_studio.agents.f1.train_qlearn import F1Trainer
+         Agents:
+           - F1 (Gazebo)
+           - robot_mesh
+           - Mountain car
+           - Cartpole
+           - Autoparking (Gazebo)
+           - AutoCarla (Carla)
 
-                return F1Trainer(config)
+         Algorithms:
+           - qlearn
+           - DQN
+           - DDPG
+           - PPO
 
-            # DDPG
-            elif algorithm == AlgorithmsType.DDPG.value:
-                from rl_studio.agents.f1.train_ddpg import F1TrainerDDPG
+         Simulators:
+           - Gazebo
+           - OpenAI
+           - Carla
+           - SUMO
+        """
 
-                return F1TrainerDDPG(config)
+        agent = config["settings"]["agent"]
+        algorithm = config["settings"]["algorithm"]
+        task = config["settings"]["task"]
+        simulator = config["settings"]["simulator"]
+        print(
+            f"agent:{agent}, algorithm:{algorithm}, task:{task}, simulator:{simulator}"
+        )
 
-            # DQN
-            elif algorithm == AlgorithmsType.DQN.value:
-                from rl_studio.agents.f1.train_dqn import DQNF1FollowLineTrainer
+        # =============================
+        # FollowLine - F1 - qlearn - Gazebo
+        # =============================
+        if (
+            task == TasksType.FOLLOWLINEGAZEBO.value
+            and agent == AgentsType.F1.value
+            and algorithm == AlgorithmsType.QLEARN.value
+            and simulator == EnvsType.GAZEBO.value
+        ):
+            from rl_studio.agents.f1.train_qlearn import TrainerFollowLineQlearnF1Gazebo
 
-                return DQNF1FollowLineTrainer(config)
+            return TrainerFollowLineQlearnF1Gazebo(config)
 
+        # =============================
+        # FollowLine - F1 - DDPG - Gazebo
+        # =============================
+        elif (
+            task == TasksType.FOLLOWLINEGAZEBO.value
+            and agent == AgentsType.F1.value
+            and algorithm == AlgorithmsType.DDPG.value
+            and simulator == EnvsType.GAZEBO.value
+        ):
+            from rl_studio.agents.f1.train_ddpg import TrainerFollowLineDDPGF1Gazebo
+
+            return TrainerFollowLineDDPGF1Gazebo(config)
+
+        # =============================
+        # FollowLine - F1 - DQN - Gazebo
+        # =============================
+        elif (
+            task == TasksType.FOLLOWLINEGAZEBO.value
+            and agent == AgentsType.F1.value
+            and algorithm == AlgorithmsType.DQN.value
+            and simulator == EnvsType.GAZEBO.value
+        ):
+            from rl_studio.agents.f1.train_dqn import TrainerFollowLineDQNF1Gazebo
+
+            return TrainerFollowLineDQNF1Gazebo(config)
+
+        # =============================
+        # Follow Lane - F1 - qlearn - Gazebo
+        # =============================
+        elif (
+            task == TasksType.FOLLOWLANEGAZEBO.value
+            and agent == AgentsType.F1.value
+            and algorithm == AlgorithmsType.QLEARN.value
+            and simulator == EnvsType.GAZEBO.value
+        ):
+            from rl_studio.agents.f1.train_dqn import TrainerFollowLaneQlearnF1Gazebo
+
+            return TrainerFollowLaneQlearnF1Gazebo(config)
+
+        # =============================
+        # Follow Lane - F1 - DDPG - Gazebo
+        # =============================
+        elif (
+            task == TasksType.FOLLOWLANEGAZEBO.value
+            and agent == AgentsType.F1.value
+            and algorithm == AlgorithmsType.DDPG.value
+            and simulator == EnvsType.GAZEBO.value
+        ):
+            from rl_studio.agents.f1.train_ddpg import TrainerFollowLaneDDPGF1Gazebo
+
+            return TrainerFollowLaneDDPGF1Gazebo(config)
+
+        # =============================
+        # Follow Lane - F1 - DQN - Gazebo
+        # =============================
+        elif (
+            task == TasksType.FOLLOWLANEGAZEBO.value
+            and agent == AgentsType.F1.value
+            and algorithm == AlgorithmsType.DQN.value
+            and simulator == EnvsType.GAZEBO.value
+        ):
+            from rl_studio.agents.f1.train_dqn import TrainerFollowLaneDQNF1Gazebo
+
+            return TrainerFollowLaneDQNF1Gazebo(config)
+
+        # =============================
+        # Robot Mesh - Qlearn - Gazebo
+        # =============================
+        elif (
+            agent == AgentsType.ROBOT_MESH.value
+            and algorithm == AlgorithmsType.QLEARN.value
+        ):
+            from rl_studio.agents.robot_mesh.train_qlearn import (
+                QLearnRobotMeshTrainer as RobotMeshTrainer,
+            )
+
+            return RobotMeshTrainer(config)
+
+        # =============================
+        # Robot Mesh - Manual
+        # =============================
+        elif (
+            agent == AgentsType.ROBOT_MESH.value
+            and algorithm == AlgorithmsType.MANUAL.value
+        ):
+            from rl_studio.agents.robot_mesh.manual_pilot import (
+                ManualRobotMeshTrainer as RobotMeshTrainer,
+            )
+
+            return RobotMeshTrainer(config)
+
+        # =============================
+        # Mountain Car - Qlearn
+        # =============================
+        elif (
+            agent == AgentsType.MOUNTAIN_CAR.value
+            and algorithm == AlgorithmsType.QLEARN.value
+        ):
+            from rl_studio.agents.mountain_car.train_qlearn import (
+                QLearnMountainCarTrainer as MountainCarTrainer,
+            )
+
+            return MountainCarTrainer(config)
+
+        # =============================
+        # Mountain Car - Manual
+        # =============================
+        elif (
+            agent == AgentsType.MOUNTAIN_CAR.value
+            and algorithm == AlgorithmsType.MANUAL.value
+        ):
+            from rl_studio.agents.mountain_car.manual_pilot import (
+                ManualMountainCarTrainerr as MountainCarTrainer,
+            )
+
+            return MountainCarTrainer(config)
+
+        # =============================
+        # CartPole - DQN
+        # =============================
+        elif (
+            agent == AgentsType.CARTPOLE.value and algorithm == AlgorithmsType.DQN.value
+        ):
+            from rl_studio.agents.cartpole.train_dqn import (
+                DQNCartpoleTrainer as CartpoleTrainer,
+            )
+
+            return CartpoleTrainer(config)
+
+        # =============================
+        # CartPole - Qlearn
+        # =============================
+        elif (
+            agent == AgentsType.CARTPOLE.value
+            and algorithm == AlgorithmsType.QLEARN.value
+        ):
+            from rl_studio.agents.cartpole.train_qlearn import (
+                QLearnCartpoleTrainer as CartpoleTrainer,
+            )
+
+            return CartpoleTrainer(config)
+
+        # =============================
+        # CartPole - PPO
+        # =============================
+        elif (
+            agent == AgentsType.CARTPOLE.value and algorithm == AlgorithmsType.PPO.value
+        ):
+            from rl_studio.agents.cartpole.train_ppo import (
+                PPOCartpoleTrainer as CartpoleTrainer,
+            )
+
+            return CartpoleTrainer(config)
+
+        # =============================
+        # Autoparking - F1 - DDPG - Gazebo
+        # =============================
+        elif (
+            task == TasksType.AUTOPARKINGGAZEBO.value
+            and agent == AgentsType.AUTOPARKINGGAZEBO.value
+            and algorithm == AlgorithmsType.DDPG.value
+            and simulator == EnvsType.GAZEBO.value
+        ):
+            from rl_studio.agents.autoparking.train_ddpg import (
+                TrainerAutoParkingDDPGGazebo,
+            )
+
+            return TrainerAutoParkingDDPGGazebo(config)
+
+        # =============================
+        # Autoparking - F1 - Qlearn - Gazebo
+        # =============================
+        elif (
+            task == TasksType.AUTOPARKINGGAZEBO.value
+            and agent == AgentsType.AUTOPARKINGGAZEBO.value
+            and algorithm == AlgorithmsType.QLEARN.value
+            and simulator == EnvsType.GAZEBO.value
+        ):
+            from rl_studio.agents.autoparking.train_ddpg import (
+                TrainerAutoParkingQlearnGazebo,
+            )
+
+            return TrainerAutoParkingQlearnGazebo(config)
+
+        # =============================
+        # Turtlebot - Qlearn - Gazebo
+        # =============================
         elif agent == AgentsType.TURTLEBOT.value:
             from rl_studio.agents.turtlebot.turtlebot_trainer import TurtlebotTrainer
 
             return TurtlebotTrainer(config)
 
-        elif agent == AgentsType.ROBOT_MESH.value:
-            if algorithm == AlgorithmsType.QLEARN.value:
-                from rl_studio.agents.robot_mesh.train_qlearn import (
-                    QLearnRobotMeshTrainer as RobotMeshTrainer,
-                )
-            elif algorithm == AlgorithmsType.MANUAL.value:
-                from rl_studio.agents.robot_mesh.manual_pilot import (
-                    ManualRobotMeshTrainer as RobotMeshTrainer,
-                )
-
-            return RobotMeshTrainer(config)
-
-        elif agent == AgentsType.MOUNTAIN_CAR.value:
-            if algorithm == AlgorithmsType.QLEARN.value:
-                from rl_studio.agents.mountain_car.train_qlearn import (
-                    QLearnMountainCarTrainer as MountainCarTrainer,
-                )
-            elif algorithm == AlgorithmsType.MANUAL.value:
-                from rl_studio.agents.mountain_car.manual_pilot import (
-                    ManualMountainCarTrainerr as MountainCarTrainer,
-                )
-
-            return MountainCarTrainer(config)
-        elif agent == AgentsType.CARTPOLE.value:
-            if algorithm == AlgorithmsType.DQN.value:
-                from rl_studio.agents.cartpole.train_dqn import (
-                    DQNCartpoleTrainer as CartpoleTrainer,
-                )
-            else:
-                from rl_studio.agents.cartpole.train_qlearn import (
-                    QLearnCartpoleTrainer as CartpoleTrainer,
-                )
-
-            return CartpoleTrainer(config)
-
-        # AutoParking
-        elif agent == AgentsType.AUTOPARKING.value:
-            # DDPG
-            if algorithm == AlgorithmsType.DDPG.value:
-                from rl_studio.agents.autoparking.train_ddpg import (
-                    DDPGAutoparkingTrainer,
-                )
-
-                return DDPGAutoparkingTrainer(config)
-
-            elif algorithm == AlgorithmsType.QLEARN.value:
-                from rl_studio.agents.autoparking.train_qlearn import (
-                    QlearnAutoparkingTrainer,
-                )
-
-                return QlearnAutoparkingTrainer(config)
         else:
             raise NoValidTrainingType(agent)
 
 
-class InferenceExecutorFactory:
+class InferenceFactory:
     def __new__(cls, config):
 
-        agent = config.agent["name"]
-        algorithm = config.algorithm["name"]
+        agent = config["settings"]["agent"]
+        algorithm = config["settings"]["algorithm"]
+        task = config["settings"]["task"]
+        simulator = config["settings"]["simulator"]
+        print(
+            f" InferenceFactory() -> agent:{agent}, algorithm:{algorithm}, task:{task}, simulator:{simulator}"
+        )
 
         if agent == AgentsType.ROBOT_MESH.value:
             from rl_studio.agents.robot_mesh.inference_qlearn import (
