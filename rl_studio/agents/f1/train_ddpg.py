@@ -3,8 +3,9 @@ import os
 import random
 import time
 
-import gym
-import matplotlib.pyplot as plt
+import gymnasium as gym
+
+# import matplotlib.pyplot as plt
 import numpy as np
 import tensorflow as tf
 from tqdm import tqdm
@@ -15,7 +16,13 @@ from rl_studio.agents.utils import (
     save_agent_npy,
     save_stats_episodes,
 )
-from rl_studio.agents.liveplot import LivePlot
+from rl_studio.agents.f1.loaders import (
+    LoadAlgorithmParams,
+    LoadEnvParams,
+    LoadEnvVariablesDDPGGazebo,
+    LoadGlobalParams,
+)
+
 from rl_studio.algorithms.ddpg import (
     ModifiedTensorBoard,
     OUActionNoise,
@@ -23,28 +30,53 @@ from rl_studio.algorithms.ddpg import (
     DDPGAgent,
 )
 from rl_studio.envs.gazebo.gazebo_envs import *
-
 from rl_studio.visual.ascii.images import JDEROBOT_LOGO
 from rl_studio.visual.ascii.text import JDEROBOT, LETS_GO
 
 
-class F1TrainerDDPG:
-    def __init__(self, params):
+class TrainerFollowLaneDDPGF1GazeboTF:
+    def __init__(self, config):
+        self.algoritmhs_params = LoadAlgorithmParams(config)
+        self.env_params = LoadEnvParams(config)
+        self.environment = LoadEnvVariablesDDPGGazebo(config)
+        self.global_params = LoadGlobalParams(config)
+
+    def main(self):
+        print_messages(
+            "TrainerFollowLaneDDPGF1GazeboTF",
+            algoritmhs_params_gamma=self.algoritmhs_params.gamma,
+            env_params_estimated_steps=self.env_params.estimated_steps,
+            environment=self.environment.environment,
+            global_params_actions=self.global_params.actions,
+            env_params_env_name=self.env_params.env_name
+            # config=config,
+        )
+
+        # Env
+        self.env = gym.make(self.env_params.env_name, **self.environment.environment)
+
+
+###################################
+#
+## CLASE A COPIAR OLDDD
+####################################
+class TrainerFollowLaneDDPGF1GazeboTF_OJOJOJ__:
+    def __init__(self, config):
         # TODO: Create a pydantic metaclass to simplify the way we extract the params
         # var to config Agents
-        self.config = dict(params)
+        # self.config = dict(config)
 
-        # print_messages(
-        #    "self.config",
-        #    config=self.config,
-        #    params=params,
-        # )
+        print_messages(
+            "configs",
+            # self_config=self.config,
+            config=config,
+        )
         ## vars to config function main ddpg
-        self.agent_name = params.agent["name"]
-        self.model_state_name = params.settings["params"]["model_state_name"]
-
+        self.agent_name = config["settings"]["agent"]
+        self.model_state_name = config["gazebo_environments"]["simple"][
+            "model_state_name"
+        ]
         # environment params
-        self.outdir = f"{params.settings['params']['output_dir']}{params.algorithm['name']}_{params.agent['name']}_{params.settings['params']['task']}_{params.environment['params']['sensor']}"
         self.ep_rewards = []
         self.actions_rewards = {
             "episode": [],
@@ -70,6 +102,19 @@ class F1TrainerDDPG:
             "best_epoch_training_time": [],
             "current_total_training_time": [],
         }
+        # self.models_dir = f"{params.settings['params']['output_dir']}{params.algorithm['name']}_{params.agent['name']}_{params.settings['params']['task']}_{params.environment['params']['sensor']}"
+        self.models_dir = f"{config['settings']['models_dir']}{config['settings']['task']}_{config['settings']['algorithm']}_{config['settings']['agent']}_{config['settings']['simulator']}_{config['settings']['framework']}"
+        self.logs_dir = f"{config['settings']['logs_dir']}/TensorBoard/{config['settings']['task']}_{config['settings']['algorithm']}_{config['settings']['agent']}_{config['settings']['simulator']}_{config['settings']['framework']}"
+        self.metrics_dir = f"{config['settings']['logs_dir']}/TensorBoard/{config['settings']['task']}_{config['settings']['algorithm']}_{config['settings']['agent']}_{config['settings']['simulator']}_{config['settings']['framework']}"
+
+        # self.model_state_name = params.settings["params"]["model_state_name"]
+        print_messages(
+            "vamos construyendo",
+            agent_name=self.agent_name,
+            model_state_name=self.model_state_name,
+            models_dir=self.models_dir,
+        )
+
         self.environment_params = params.environment["params"]
         self.env_name = params.environment["params"]["env_name"]
         self.total_episodes = params.settings["params"]["total_episodes"]

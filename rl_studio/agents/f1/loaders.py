@@ -1,0 +1,211 @@
+# This file contains all clasess to parser parameters from config.yaml into training RL
+
+
+
+class LoadAlgorithmParams:
+    """
+    Retrieve Algorithm params
+    """
+
+    def __init__(self, config):
+        if config["settings"]["algorithm"] == "ddpg":
+            self.gamma = config["algorithm"]["ddpg"]["gamma"]
+            self.tau = config["algorithm"]["ddpg"]["tau"]
+            self.std_dev = config["algorithm"]["ddpg"]["std_dev"]
+            self.model_name = config["algorithm"]["ddpg"]["model_name"]
+            self.buffer_capacity = config["algorithm"]["ddpg"]["buffer_capacity"]
+            self.batch_size = config["algorithm"]["ddpg"]["batch_size"]
+
+        elif config["settings"]["algorithm"] == "dqn":
+            self.alpha = config["algorithm"]["dqn"]["alpha"]
+            self.gamma = config["algorithm"]["dqn"]["gamma"]
+            self.epsilon = config["algorithm"]["dqn"]["epsilon"]
+            self.epsilon_discount = config["algorithm"]["dqn"]["epsilon_discount"]
+            self.epsilon_min = config["algorithm"]["dqn"]["epsilon_min"]
+            self.model_name = config["algorithm"]["dqn"]["model_name"]
+            self.replay_memory_size = config["algorithm"]["dqn"]["replay_memory_size"]
+            self.min_replay_memory_size = config["algorithm"]["dqn"][
+                "min_replay_memory_size"
+            ]
+            self.minibatch_size = config["algorithm"]["dqn"]["minibatch_size"]
+            self.update_target_every = config["algorithm"]["dqn"]["update_target_every"]
+            self.memory_fraction = config["algorithm"]["dqn"]["memory_fraction"]
+            self.buffer_capacity = config["algorithm"]["dqn"]["buffer_capacity"]
+            self.batch_size = config["algorithm"]["dqn"]["batch_size"]
+
+        elif config["settings"]["algorithm"] == "qlearn":
+            self.alpha = config["algorithm"]["qlearn"]["alpha"]
+            self.gamma = config["algorithm"]["qlearn"]["gamma"]
+            self.epsilon = config["algorithm"]["qlearn"]["epsilon"]
+            self.epsilon_min = config["algorithm"]["qlearn"]["epsilon_min"]
+
+
+class LoadEnvParams:
+    """
+    Retrieve environment parameters: Gazebo, Carla, OpenAI...
+    """
+
+    def __init__(self, config):
+        if config["settings"]["simulator"] == "gazebo":
+            self.env = config["settings"]["env"]
+            self.env_name = config['gazebo_environments'][self.env]['env_name']
+            self.model_state_name = config["gazebo_environments"][self.env][
+                "model_state_name"
+            ]
+            self.total_episodes = config["settings"]["total_episodes"]
+            self.training_time = config["settings"]["training_time"]
+            self.save_episodes = config["gazebo_environments"][self.env][
+                "save_episodes"
+            ]
+            self.save_every_step = config["gazebo_environments"][self.env][
+                "save_every_step"
+            ]
+            self.estimated_steps = config["gazebo_environments"][self.env][
+                "estimated_steps"
+            ]
+
+        elif config["settings"]["simulator"] == "carla":
+            pass
+
+
+class LoadEnvVariablesDDPGGazebo:
+    """
+    Create a new variable 'environment', which contains values to Gazebo env, Carla env ...
+    """
+    def __init__(self, config) -> None:
+        """environment variable for reset(), step() methods"""
+        self.environment_set = config["settings"]["environment_set"]
+        self.env = config["settings"]["env"]
+        self.agent = config["settings"]["agent"]
+        self.states = config["settings"]["states"]
+        self.actions = config["settings"]["actions"]
+        self.actions_set = config["actions"][self.actions]
+        self.rewards = config["settings"]["rewards"]
+        ##### environment variable
+        self.environment = {}
+        self.environment["agent"] = config["settings"]["agent"]
+        self.environment["model_state_name"] = config[self.environment_set][self.env][
+            "model_state_name"
+        ]
+        # Env
+        self.environment["env"] = config["settings"]["env"]
+        self.environment["training_type"] = config[self.environment_set][self.env][
+            "training_type"
+        ]
+        self.environment["launchfile"] = config[self.environment_set][self.env][
+            "launchfile"
+        ]
+        self.environment["environment_folder"] = config[self.environment_set][self.env][
+            "environment_folder"
+        ]
+        self.environment["robot_name"] = config[self.environment_set][self.env][
+            "robot_name"
+        ]
+        self.environment["estimated_steps"] = config[self.environment_set][self.env][
+            "estimated_steps"
+        ]
+        self.environment["alternate_pose"] = config[self.environment_set][self.env][
+            "alternate_pose"
+        ]
+        self.environment["sensor"] = config[self.environment_set][self.env]["sensor"]
+        self.environment["gazebo_start_pose"] = [
+            config[self.environment_set][self.env]["circuit_positions_set"][0]
+        ]
+        self.environment["gazebo_random_start_pose"] = config[self.environment_set][
+            self.env
+        ]["circuit_positions_set"]
+        self.environment["telemetry_mask"] = config[self.environment_set][self.env][
+            "telemetry_mask"
+        ]
+        self.environment["telemetry"] = config[self.environment_set][self.env][
+            "telemetry"
+        ]
+
+        # Image
+        self.environment["height_image"] = config["agents"][self.agent][
+            "camera_params"
+        ]["height"]
+        self.environment["width_image"] = config["agents"][self.agent]["camera_params"][
+            "width"
+        ]
+        self.environment["center_image"] = config["agents"][self.agent][
+            "camera_params"
+        ]["center_image"]
+        self.environment["image_resizing"] = config["agents"][self.agent][
+            "camera_params"
+        ]["image_resizing"]
+        self.environment["new_image_size"] = config["agents"][self.agent][
+            "camera_params"
+        ]["new_image_size"]
+        self.environment["raw_image"] = config["agents"][self.agent]["camera_params"][
+            "raw_image"
+        ]
+        self.environment["num_regions"] = config["agents"][self.agent]["camera_params"][
+            "num_regions"
+        ]
+        # States
+        self.environment["states"] = config["settings"]["states"]
+        self.environment["x_row"] = config["states"][self.states][0]
+
+        # Actions
+        self.environment["action_space"] = config["actions"]
+        self.environment["actions"] = config["actions"][self.actions]
+
+        # Rewards
+        self.environment["reward_function"] = config["settings"]["rewards"]
+        self.environment["rewards"] = config["rewards"][self.rewards]
+        self.environment["min_reward"] = config["rewards"][self.rewards]["min_reward"]
+
+        # Algorithm
+        self.environment["critic_lr"] = config["algorithm"]["ddpg"]["critic_lr"]
+        self.environment["actor_lr"] = config["algorithm"]["ddpg"]["actor_lr"]
+        self.environment["model_name"] = config["algorithm"]["ddpg"]["model_name"]
+        #
+        self.environment["ROS_MASTER_URI"] = config["ros"]["ros_master_uri"]
+        self.environment["GAZEBO_MASTER_URI"] = config["ros"]["gazebo_master_uri"]
+
+
+class LoadGlobalParams:
+    """
+    Retrieve Global params from config.yaml
+    """
+    def __init__(self, config):
+        self.ep_rewards = []
+        self.actions_rewards = {
+            "episode": [],
+            "step": [],
+            "v": [],
+            "w": [],
+            "reward": [],
+            "center": [],
+        }
+        self.aggr_ep_rewards = {
+            "episode": [],
+            "avg": [],
+            "max": [],
+            "min": [],
+            "step": [],
+            "epoch_training_time": [],
+            "total_training_time": [],
+        }
+        self.best_current_epoch = {
+            "best_epoch": [],
+            "highest_reward": [],
+            "best_step": [],
+            "best_epoch_training_time": [],
+            "current_total_training_time": [],
+        }
+        self.settings = config["settings"]
+        self.agent = config["settings"]["agent"]
+        self.models_dir = f"{config['settings']['models_dir']}{config['settings']['task']}_{config['settings']['algorithm']}_{config['settings']['agent']}_{config['settings']['framework']}"
+        self.logs_dir = f"{config['settings']['logs_dir']}{config['settings']['task']}_{config['settings']['algorithm']}_{config['settings']['agent']}_{config['settings']['framework']}"
+        self.metrics_dir = f"{config['settings']['metrics_dir']}{config['settings']['task']}_{config['settings']['algorithm']}_{config['settings']['agent']}_{config['settings']['framework']}"
+        self.graphics_dir = f"{config['settings']['graphics_dir']}{config['settings']['task']}_{config['settings']['algorithm']}_{config['settings']['agent']}_{config['settings']['framework']}"
+
+        ####### States
+        self.states = config["settings"]["states"]
+        ####### Actions
+        self.actions = config["settings"]["actions"]
+        self.actions_set = config["actions"][self.actions]
+        ####### Rewards
+        self.rewards = config["settings"]["rewards"]

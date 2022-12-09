@@ -1,6 +1,7 @@
 from rl_studio.agents.agents_type import AgentsType
 from rl_studio.agents.exceptions import NoValidTrainingType
 from rl_studio.agents.tasks_type import TasksType
+from rl_studio.agents.frameworks_type import FrameworksType
 from rl_studio.algorithms.algorithms_type import AlgorithmsType
 from rl_studio.envs.envs_type import EnvsType
 
@@ -21,6 +22,7 @@ class TrainerFactory:
            - Cartpole
            - Autoparking (Gazebo)
            - AutoCarla (Carla)
+           - Turtlebot (Gazebo)
 
          Algorithms:
            - qlearn
@@ -39,8 +41,9 @@ class TrainerFactory:
         algorithm = config["settings"]["algorithm"]
         task = config["settings"]["task"]
         simulator = config["settings"]["simulator"]
+        framework = config["settings"]["framework"]
         print(
-            f"agent:{agent}, algorithm:{algorithm}, task:{task}, simulator:{simulator}"
+            f"task:{task}, algorithm:{algorithm}, simulator:{simulator}, agent:{agent}, framework:{framework}"
         )
 
         # =============================
@@ -48,7 +51,7 @@ class TrainerFactory:
         # =============================
         if (
             task == TasksType.FOLLOWLINEGAZEBO.value
-            and agent == AgentsType.F1.value
+            and agent == AgentsType.F1GAZEBO.value
             and algorithm == AlgorithmsType.QLEARN.value
             and simulator == EnvsType.GAZEBO.value
         ):
@@ -57,37 +60,39 @@ class TrainerFactory:
             return TrainerFollowLineQlearnF1Gazebo(config)
 
         # =============================
-        # FollowLine - F1 - DDPG - Gazebo
+        # FollowLine - F1 - DDPG - Gazebo - TensorFlow
         # =============================
         elif (
             task == TasksType.FOLLOWLINEGAZEBO.value
-            and agent == AgentsType.F1.value
+            and agent == AgentsType.F1GAZEBO.value
             and algorithm == AlgorithmsType.DDPG.value
             and simulator == EnvsType.GAZEBO.value
+            and framework == FrameworksType.TF.value
         ):
-            from rl_studio.agents.f1.train_ddpg import TrainerFollowLineDDPGF1Gazebo
+            from rl_studio.agents.f1.train_ddpg import TrainerFollowLineDDPGF1GazeboTF
 
-            return TrainerFollowLineDDPGF1Gazebo(config)
+            return TrainerFollowLineDDPGF1GazeboTF(config)
 
         # =============================
         # FollowLine - F1 - DQN - Gazebo
         # =============================
         elif (
             task == TasksType.FOLLOWLINEGAZEBO.value
-            and agent == AgentsType.F1.value
+            and agent == AgentsType.F1GAZEBO.value
             and algorithm == AlgorithmsType.DQN.value
             and simulator == EnvsType.GAZEBO.value
+            and framework == FrameworksType.TF.value
         ):
-            from rl_studio.agents.f1.train_dqn import TrainerFollowLineDQNF1Gazebo
+            from rl_studio.agents.f1.train_dqn import TrainerFollowLineDQNF1GazeboTF
 
-            return TrainerFollowLineDQNF1Gazebo(config)
+            return TrainerFollowLineDQNF1GazeboTF(config)
 
         # =============================
         # Follow Lane - F1 - qlearn - Gazebo
         # =============================
         elif (
             task == TasksType.FOLLOWLANEGAZEBO.value
-            and agent == AgentsType.F1.value
+            and agent == AgentsType.F1GAZEBO.value
             and algorithm == AlgorithmsType.QLEARN.value
             and simulator == EnvsType.GAZEBO.value
         ):
@@ -100,26 +105,28 @@ class TrainerFactory:
         # =============================
         elif (
             task == TasksType.FOLLOWLANEGAZEBO.value
-            and agent == AgentsType.F1.value
+            and agent == AgentsType.F1GAZEBO.value
             and algorithm == AlgorithmsType.DDPG.value
             and simulator == EnvsType.GAZEBO.value
+            and framework == FrameworksType.TF.value
         ):
-            from rl_studio.agents.f1.train_ddpg import TrainerFollowLaneDDPGF1Gazebo
+            from rl_studio.agents.f1.train_ddpg import TrainerFollowLaneDDPGF1GazeboTF
 
-            return TrainerFollowLaneDDPGF1Gazebo(config)
+            return TrainerFollowLaneDDPGF1GazeboTF(config)
 
         # =============================
         # Follow Lane - F1 - DQN - Gazebo
         # =============================
         elif (
             task == TasksType.FOLLOWLANEGAZEBO.value
-            and agent == AgentsType.F1.value
+            and agent == AgentsType.F1GAZEBO.value
             and algorithm == AlgorithmsType.DQN.value
             and simulator == EnvsType.GAZEBO.value
+            and framework == FrameworksType.TF.value
         ):
-            from rl_studio.agents.f1.train_dqn import TrainerFollowLaneDQNF1Gazebo
+            from rl_studio.agents.f1.train_dqn import TrainerFollowLaneDQNF1GazeboTF
 
-            return TrainerFollowLaneDQNF1Gazebo(config)
+            return TrainerFollowLaneDQNF1GazeboTF(config)
 
         # =============================
         # Robot Mesh - Qlearn - Gazebo
@@ -218,12 +225,13 @@ class TrainerFactory:
             and agent == AgentsType.AUTOPARKINGGAZEBO.value
             and algorithm == AlgorithmsType.DDPG.value
             and simulator == EnvsType.GAZEBO.value
+            and framework == FrameworksType.TF.value
         ):
             from rl_studio.agents.autoparking.train_ddpg import (
-                TrainerAutoParkingDDPGGazebo,
+                TrainerAutoParkingDDPGGazeboTF,
             )
 
-            return TrainerAutoParkingDDPGGazebo(config)
+            return TrainerAutoParkingDDPGGazeboTF(config)
 
         # =============================
         # Autoparking - F1 - Qlearn - Gazebo
@@ -259,8 +267,9 @@ class InferenceFactory:
         algorithm = config["settings"]["algorithm"]
         task = config["settings"]["task"]
         simulator = config["settings"]["simulator"]
+        framework = config["settings"]["framework"]
         print(
-            f" InferenceFactory() -> agent:{agent}, algorithm:{algorithm}, task:{task}, simulator:{simulator}"
+            f"task:{task}, algorithm:{algorithm}, simulator:{simulator}, agent:{agent}, framework:{framework}"
         )
 
         if agent == AgentsType.ROBOT_MESH.value:

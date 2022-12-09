@@ -26,6 +26,5 @@ def main():
         trainer = TrainerFactory(config_file)
         trainer.main()
 
-
 if __name__ == "__main__":
     main()
