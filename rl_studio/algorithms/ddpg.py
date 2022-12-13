@@ -266,7 +266,7 @@ class DDPGAgent:
 
         self.ACTION_SPACE_SIZE = action_space_size
         self.OBSERVATION_SPACE_VALUES = observation_space_values
-        if config["state_space"] == "image":
+        if config["states"] == "image":
             self.OBSERVATION_SPACE_VALUES_FLATTEN = (
                 observation_space_values[0]
                 * observation_space_values[1]
@@ -275,10 +275,10 @@ class DDPGAgent:
 
         # Continuous Actions
         if config["action_space"] == "continuous":
-            self.V_UPPER_BOUND = config["actions"]["v_max"]
-            self.V_LOWER_BOUND = config["actions"]["v_min"]
-            self.W_RIGHT_BOUND = config["actions"]["w_right"]
-            self.W_LEFT_BOUND = config["actions"]["w_left"]
+            self.V_UPPER_BOUND = config["actions"]["v"][1]
+            self.V_LOWER_BOUND = config["actions"]["v"][0]
+            self.W_RIGHT_BOUND = config["actions"]["w"][0]
+            self.W_LEFT_BOUND = config["actions"]["w"][1]
 
         # NN settings
         self.MODEL_NAME = config["model_name"]
@@ -289,25 +289,25 @@ class DDPGAgent:
 
         # Custom tensorboard object
         self.tensorboard = ModifiedTensorBoard(
-            log_dir=f"{outdir}/logs_TensorBoard/{self.MODEL_NAME}-{time.strftime('%Y%m%d-%H%M%S')}"
+            log_dir=f"{outdir}/{self.MODEL_NAME}-{time.strftime('%Y%m%d-%H%M%S')}"
         )
 
         # Used to count when to update target network with main network's weights
         self.target_update_counter = 0
 
         # load pretrained model for continuing training (not inference)
-        if config["load_ddpg_tf_model"]:
+        if config["retrain_ddpg_tf_model"]:
             # print("---------------------- entramos en cargar modelos")
             # print(f"{outdir}/models/{config['ddpg_tf_actor_model']}")
             # print(f"{outdir}/models/{config['ddpg_tf_critic_model']}")
             # load pretrained actor and critic models
             # self.actor_model = tf.saved_model.load(f"{config['ddpg_tf_actor_model']}")
             self.actor_model = load_model(
-                f"{config['ddpg_tf_actor_model']}", compile=False
+                f"{config['retrain_ddpg_tf_actor_model_name']}", compile=False
             )
             # self.critic_model = tf.saved_model.load(f"{config['ddpg_tf_critic_model']}")
             self.critic_model = load_model(
-                f"{config['ddpg_tf_critic_model']}", compile=False
+                f"{config['retrain_ddpg_tf_critic_model_name']}", compile=False
             )
             # self.critic_model = load_model(
             #    f"{outdir}/models/{config['ddpg_tf_critic_model']}"
@@ -316,7 +316,7 @@ class DDPGAgent:
             # Actor Target model this is what we .predict against every step
             # self.target_actor = tf.saved_model.load(f"{config['ddpg_tf_actor_model']}")
             self.target_actor = load_model(
-                f"{config['ddpg_tf_actor_model']}", compile=False
+                f"{config['retrain_ddpg_tf_actor_model_name']}", compile=False
             )
             # self.target_actor = load_model(
             #    f"{outdir}/models/{config['ddpg_tf_actor_model']}"
@@ -325,7 +325,7 @@ class DDPGAgent:
             # Critic Target model this is what we .predict against every step
             # self.target_critic = tf.saved_model.load(f"{config['ddpg_tf_actor_model']}")
             self.target_critic = load_model(
-                f"{config['ddpg_tf_critic_model']}", compile=False
+                f"{config['retrain_ddpg_tf_critic_model_name']}", compile=False
             )
             # self.target_critic = load_model(
             #    f"{outdir}/models/{config['ddpg_tf_critic_model']}"
@@ -334,10 +334,7 @@ class DDPGAgent:
 
         else:  # training from scratch
             # Actor & Critic main models  # gets trained every step
-            if (
-                config["action_space"] == "continuous"
-                and config["state_space"] != "image"
-            ):
+            if config["action_space"] == "continuous" and config["states"] != "image":
                 self.actor_model = self.get_actor_model_sp_continuous_actions()
                 self.critic_model = self.get_critic_model_sp_continuous_actions()
                 # Actor Target model this is what we .predict against every step
@@ -347,10 +344,7 @@ class DDPGAgent:
                 self.target_critic = self.get_critic_model_sp_continuous_actions()
                 self.target_critic.set_weights(self.critic_model.get_weights())
 
-            elif (
-                config["action_space"] != "continuous"
-                and config["state_space"] != "image"
-            ):
+            elif config["action_space"] != "continuous" and config["states"] != "image":
                 self.actor_model = (
                     self.get_actor_model_simplified_perception_discrete_actions()
                 )
@@ -368,10 +362,7 @@ class DDPGAgent:
                 )
                 self.target_critic.set_weights(self.critic_model.get_weights())
 
-            elif (
-                config["action_space"] == "continuous"
-                and config["state_space"] == "image"
-            ):
+            elif config["action_space"] == "continuous" and config["states"] == "image":
                 self.actor_model = self.get_actor_model_image_continuous_actions()
                 self.critic_model = (
                     self.get_critic_model_image_continuous_actions_conv()

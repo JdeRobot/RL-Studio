@@ -3,7 +3,7 @@
 
 class LoadAlgorithmParams:
     """
-    Retrieve Algorithm params
+    Retrieves Algorithm params
     """
 
     def __init__(self, config):
@@ -41,7 +41,7 @@ class LoadAlgorithmParams:
 
 class LoadEnvParams:
     """
-    Retrieve environment parameters: Gazebo, Carla, OpenAI...
+    Retrieves environment parameters: Gazebo, Carla, OpenAI...
     """
 
     def __init__(self, config):
@@ -69,7 +69,7 @@ class LoadEnvParams:
 
 class LoadEnvVariablesDDPGGazebo:
     """
-    Create a new variable 'environment', which contains values to Gazebo env, Carla env ...
+    Creates a new variable 'environment', which contains values to Gazebo env, Carla env ...
     """
 
     def __init__(self, config) -> None:
@@ -197,7 +197,7 @@ class LoadEnvVariablesDDPGGazebo:
 
 class LoadGlobalParams:
     """
-    Retrieve Global params from config.yaml
+    Retrieves Global params from config.yaml
     """
 
     def __init__(self, config):
@@ -227,12 +227,13 @@ class LoadGlobalParams:
             "current_total_training_time": [],
         }
         self.settings = config["settings"]
+        self.task = config["settings"]["task"]
         self.agent = config["settings"]["agent"]
         self.models_dir = f"{config['settings']['models_dir']}{config['settings']['task']}_{config['settings']['algorithm']}_{config['settings']['agent']}_{config['settings']['framework']}"
         self.logs_dir = f"{config['settings']['logs_dir']}{config['settings']['task']}_{config['settings']['algorithm']}_{config['settings']['agent']}_{config['settings']['framework']}"
         self.metrics_dir = f"{config['settings']['metrics_dir']}{config['settings']['task']}_{config['settings']['algorithm']}_{config['settings']['agent']}_{config['settings']['framework']}"
         self.graphics_dir = f"{config['settings']['graphics_dir']}{config['settings']['task']}_{config['settings']['algorithm']}_{config['settings']['agent']}_{config['settings']['framework']}"
-
+        self.trainingtime = config["settings"]["training_time"]
         ####### States
         self.states = config["settings"]["states"]
         ####### Actions

@@ -44,19 +44,349 @@ class TrainerFollowLaneDDPGF1GazeboTF:
     def main(self):
         print_messages(
             "TrainerFollowLaneDDPGF1GazeboTF",
-            algoritmhs_params_gamma=self.algoritmhs_params.gamma,
-            env_params_estimated_steps=self.env_params.estimated_steps,
+            # algoritmhs_params=self.algoritmhs_params,
+            # env_params=self.env_params,
             environment=self.environment.environment,
-            global_params_actions=self.global_params.actions,
-            env_params_env_name=self.env_params.env_name
+            # global_params=self.global_params,
+            global_params_models_dir=self.global_params.models_dir,
+            global_params_logs_dir=self.global_params.logs_dir,
+            global_params_metrics_dir=self.global_params.metrics_dir,
+            global_params_graphics_dir=self.global_params.graphics_dir,
+            # global_params_actions=self.global_params.actions,
+            # env_params_env_name=self.env_params.env_name
             # config=config,
         )
 
-        # Env
-        self.env = gym.make(self.env_params.env_name, **self.environment.environment)
+        ## Load Environment
+        env = gym.make(self.env_params.env_name, **self.environment.environment)
+
+        random.seed(1)
+        np.random.seed(1)
+        tf.compat.v1.random.set_random_seed(1)
+
+        os.makedirs(f"{self.global_params.models_dir}", exist_ok=True)
+        os.makedirs(f"{self.global_params.logs_dir}", exist_ok=True)
+        os.makedirs(f"{self.global_params.metrics_dir}", exist_ok=True)
+        os.makedirs(f"{self.global_params.graphics_dir}", exist_ok=True)
+        start_time = datetime.now()
+        best_epoch = 1
+        current_max_reward = 0
+        best_step = 0
+
+        ## Reset env
+        state, state_size = env.reset()
+
+        # Print state and actions for Debug
+        print_messages(
+            "In train_ddpg.py",
+            state_size=state_size,
+            action_space=self.global_params.actions,
+            action_size=len(self.global_params.actions_set),
+        )
+        print_messages(
+            "train_ddpg()",
+            std_deviation=float(self.algoritmhs_params.std_dev),
+            action_size=len(self.global_params.actions_set),
+            logs_dir=self.global_params.logs_dir,
+            states=self.global_params.states,
+            action_space=self.global_params.actions,
+            buffer_capacity=self.algoritmhs_params.buffer_capacity,
+            batch_size=self.algoritmhs_params.batch_size,
+        )
+        ## --------------------- Deep Nets ------------------
+        ou_noise = OUActionNoise(
+            mean=np.zeros(1),
+            std_deviation=float(self.algoritmhs_params.std_dev) * np.ones(1),
+        )
+        # Init Agents
+        ac_agent = DDPGAgent(
+            self.environment.environment,
+            len(self.global_params.actions_set),
+            state_size,
+            self.global_params.logs_dir,
+        )
+        # init Buffer
+        buffer = Buffer(
+            state_size,
+            len(self.global_params.actions_set),
+            self.global_params.states,
+            self.global_params.actions,
+            self.algoritmhs_params.buffer_capacity,
+            self.algoritmhs_params.batch_size,
+        )
+        # Init TensorBoard
+        tensorboard = ModifiedTensorBoard(
+            log_dir=f"{self.global_params.logs_dir}/{self.algoritmhs_params.model_name}-{time.strftime('%Y%m%d-%H%M%S')}"
+        )
+        # show rewards stats per episode
+
+        ## -------------    START TRAINING --------------------
+        print(LETS_GO)
+        for episode in tqdm(
+            range(1, self.env_params.total_episodes + 1), ascii=True, unit="episodes"
+        ):
+            tensorboard.step = episode
+            done = False
+            cumulated_reward = 0
+            step = 1
+            start_time_epoch = datetime.now()
+
+            prev_state, prev_state_size = env.reset()
+
+            while not done:
+                tf_prev_state = tf.expand_dims(tf.convert_to_tensor(prev_state), 0)
+                action = ac_agent.policy(
+                    tf_prev_state, ou_noise, self.global_params.actions
+                )
+                state, reward, done, _ = env.step(action, step)
+                cumulated_reward += reward
+
+                # learn and update
+                buffer.record((prev_state, action, reward, state))
+                buffer.learn(ac_agent, self.algoritmhs_params.gamma)
+                ac_agent.update_target(
+                    ac_agent.target_actor.variables,
+                    ac_agent.actor_model.variables,
+                    self.algoritmhs_params.tau,
+                )
+                ac_agent.update_target(
+                    ac_agent.target_critic.variables,
+                    ac_agent.critic_model.variables,
+                    self.algoritmhs_params.tau,
+                )
+
+                #
+                prev_state = state
+                step += 1
+
+                # save var best episode and step's stats
+                if current_max_reward <= cumulated_reward:
+                    current_max_reward = cumulated_reward
+                    best_epoch = episode
+                    best_step = step
+                    best_epoch_training_time = datetime.now() - start_time_epoch
+                    # saving params to show
+                    self.global_params.actions_rewards["episode"].append(episode)
+                    self.global_params.actions_rewards["step"].append(step)
+                    # For continuous actios
+                    # self.actions_rewards["v"].append(action[0][0])
+                    # self.actions_rewards["w"].append(action[0][1])
+                    self.global_params.actions_rewards["reward"].append(reward)
+                    self.global_params.actions_rewards["center"].append(
+                        env.image_center
+                    )
+
+                # render params
+                render_params(
+                    task=self.global_params.task,
+                    v=action[0][0],
+                    w=action[0][1],
+                    # Discrete Actions
+                    episode=episode,
+                    step=step,
+                    state=state,
+                    # v=self.actions[action][0], # this case for discrete
+                    # w=self.actions[action][1], # this case for discrete
+                    # self.env.image_center,
+                    # self.actions_rewards,
+                    reward_in_step=reward,
+                    cumulated_reward_in_this_episode=cumulated_reward,
+                    _="--------------------------",
+                    best_episode_until_now=best_epoch,
+                    in_best_step=best_step,
+                    with_highest_reward=int(current_max_reward),
+                    in_best_epoch_training_time=best_epoch_training_time,
+                )
+
+                # Showing stats in screen for monitoring. Showing every 'save_every_step' value
+                if not step % self.env_params.save_every_step:
+                    save_agent_npy(
+                        self.environment,
+                        self.global_params.metrics_dir,
+                        self.global_params.actions_rewards,
+                        start_time,
+                    )
+
+                # save at completed steps
+                if step >= self.env_params.estimated_steps:
+                    done = True
+                    print_messages(
+                        "Lap completed in:",
+                        time=datetime.now() - start_time_epoch,
+                        in_episode=episode,
+                        episode_reward_in_this_episode=int(cumulated_reward),
+                        with_steps=step,
+                        best_episode_in_training=best_epoch,
+                        in_best_step=best_step,
+                        with_highest_reward=int(current_max_reward),
+                    )
+                    # save model protobuf
+                    ac_agent.actor_model.save(
+                        f"{self.global_params.models_dir}/{time.strftime('%Y%m%d')}_{self.algoritmhs_params.model_name}_LAPCOMPLETED_ACTOR_Max-{int(cumulated_reward)}_Epoch-{episode}_State-{self.global_params.states}_Actions-{self.global_params.actions}_Rewards-{self.global_params.rewards}_inTime-{time.strftime('%Y%m%d-%H%M%S')}"
+                    )
+                    ac_agent.critic_model.save(
+                        f"{self.global_params.models_dir}/{time.strftime('%Y%m%d')}_{self.algoritmhs_params.model_name}_LAPCOMPLETED_CRITIC_Max-{int(cumulated_reward)}_Epoch-{episode}_State-{self.global_params.states}_Actions-{self.global_params.actions}_Rewards-{self.global_params.rewards}_inTime-{time.strftime('%Y%m%d-%H%M%S')}"
+                    )
+                    # save model in format h5
+                    ac_agent.actor_model.save(
+                        f"{self.global_params.models_dir}/{time.strftime('%Y%m%d')}_{self.algoritmhs_params.model_name}_LAPCOMPLETED_ACTOR_Max-{int(cumulated_reward)}_Epoch-{episode}_State-{self.global_params.states}_Actions-{self.global_params.actions}_Rewards-{self.global_params.rewards}_inTime-{time.strftime('%Y%m%d-%H%M%S')}.h5"
+                    )
+                    ac_agent.critic_model.save(
+                        f"{self.global_params.models_dir}/{time.strftime('%Y%m%d')}_{self.algoritmhs_params.model_name}_LAPCOMPLETED_CRITIC_Max-{int(cumulated_reward)}_Epoch-{episode}_State-{self.global_params.states}_Actions-{self.global_params.actions}_Rewards-{self.global_params.rewards}_inTime-{time.strftime('%Y%m%d-%H%M%S')}.h5"
+                    )
+                    # save some stats
+                    save_agent_npy(
+                        self.environment,
+                        self.global_params.metrics_dir,
+                        self.global_params.actions_rewards,
+                        start_time,
+                    )
+
+            if (
+                cumulated_reward - (-self.environment.rewards["penal"])
+            ) >= current_max_reward and episode > 1:
+                print_messages(
+                    "Saving best lap",
+                    best_episode_until_now=best_epoch,
+                    in_best_step=best_step,
+                    with_highest_reward=int(current_max_reward),
+                    in_best_epoch_training_time=best_epoch_training_time,
+                    total_training_time=(datetime.now() - start_time),
+                )
+                self.global_params.best_current_epoch["best_epoch"].append(best_epoch)
+                self.global_params.best_current_epoch["highest_reward"].append(
+                    current_max_reward
+                )
+                self.global_params.best_current_epoch["best_step"].append(best_step)
+                self.global_params.best_current_epoch[
+                    "best_epoch_training_time"
+                ].append(best_epoch_training_time)
+                self.global_params.best_current_epoch[
+                    "current_total_training_time"
+                ].append(datetime.now() - start_time)
+                save_stats_episodes(
+                    self.environment,
+                    self.global_params.metrics_dir,
+                    self.global_params.best_current_epoch,
+                    start_time,
+                )
+                # save protobuf model
+                ac_agent.actor_model.save(
+                    f"{self.global_params.models_dir}/{time.strftime('%Y%m%d')}_{self.algoritmhs_params.model_name}_BESTLAP_ACTOR_Max-{int(cumulated_reward)}_Epoch-{episode}_State-{self.global_params.states}_Actions-{self.global_params.actions}_Rewards-{self.global_params.rewards}_inTime-{time.strftime('%Y%m%d-%H%M%S')}"
+                )
+                ac_agent.critic_model.save(
+                    f"{self.global_params.models_dir}/{time.strftime('%Y%m%d')}_{self.algoritmhs_params.model_name}_BESTLAP_CRITIC_Max-{int(cumulated_reward)}_Epoch-{episode}_State-{self.global_params.states}_Actions-{self.global_params.actions}_Rewards-{self.global_params.rewards}_inTime-{time.strftime('%Y%m%d-%H%M%S')}"
+                )
+                # save h5 model
+                ac_agent.actor_model.save(
+                    f"{self.global_params.models_dir}/{time.strftime('%Y%m%d')}_{self.algoritmhs_params.model_name}_BESTLAP_ACTOR_Max-{int(cumulated_reward)}_Epoch-{episode}_State-{self.global_params.states}_Actions-{self.global_params.actions}_Rewards-{self.global_params.rewards}_inTime-{time.strftime('%Y%m%d-%H%M%S')}.h5"
+                )
+                ac_agent.critic_model.save(
+                    f"{self.global_params.models_dir}/{time.strftime('%Y%m%d')}_{self.algoritmhs_params.model_name}_BESTLAP_CRITIC_Max-{int(cumulated_reward)}_Epoch-{episode}_State-{self.global_params.states}_Actions-{self.global_params.actions}_Rewards-{self.global_params.rewards}_inTime-{time.strftime('%Y%m%d-%H%M%S')}.h5"
+                )
+            # ended at training time setting: 2 hours, 15 hours...
+            if (
+                datetime.now() - timedelta(hours=self.global_params.training_time)
+                > start_time
+            ):
+                print_messages(
+                    "Training time finished in:",
+                    time=datetime.now() - start_time,
+                    episode=episode,
+                    cumulated_reward=cumulated_reward,
+                    current_max_reward=current_max_reward,
+                    total_time=(datetime.now() - timedelta(hours=self.training_time)),
+                    best_episode_in_total_training=best_epoch,
+                    in_the_very_best_step=best_step,
+                    with_the_highest_Total_reward=int(current_max_reward),
+                )
+                if cumulated_reward > current_max_reward:
+                    # save protobuf model
+                    ac_agent.actor_model.save(
+                        f"{self.global_params.models_dir}/{time.strftime('%Y%m%d')}_{self.algoritmhs_params.model_name}_END_TRAININGTIME_ACTOR_Max{int(cumulated_reward)}_Epoch-{episode}_State-{self.global_params.states}_Actions-{self.global_params.actions}_Rewards-{self.global_params.rewards}_inTime-{time.strftime('%Y%m%d-%H%M%S')}"
+                    )
+                    ac_agent.critic_model.save(
+                        f"{self.global_params.models_dir}/{time.strftime('%Y%m%d')}_{self.algoritmhs_params.model_name}_END_TRAININGTIME_CRITIC_Max-{int(cumulated_reward)}_Epoch-{episode}_State-{self.global_params.states}_Actions-{self.global_params.actions}_Rewards-{self.global_params.rewards}_inTime-{time.strftime('%Y%m%d-%H%M%S')}"
+                    )
+                    # save h5 model
+                    ac_agent.actor_model.save(
+                        f"{self.global_params.models_dir}/{time.strftime('%Y%m%d')}_{self.algoritmhs_params.model_name}_END_TRAININGTIME_ACTOR_Max{int(cumulated_reward)}_Epoch-{episode}_State-{self.global_params.states}_Actions-{self.global_params.actions}_Rewards-{self.global_params.rewards}_inTime-{time.strftime('%Y%m%d-%H%M%S')}.h5"
+                    )
+                    ac_agent.critic_model.save(
+                        f"{self.global_params.models_dir}/{time.strftime('%Y%m%d')}_{self.algoritmhs_params.model_name}_END_TRAININGTIME_CRITIC_Max-{int(cumulated_reward)}_Epoch-{episode}_State-{self.global_params.states}_Actions-{self.global_params.actions}_Rewards-{self.global_params.rewards}_inTime-{time.strftime('%Y%m%d-%H%M%S')}.h5"
+                    )
+                break
+
+            # save best values every save_episode times
+            self.global_params.ep_rewards.append(cumulated_reward)
+            if not episode % self.env_params.save_episodes:
+                average_reward = sum(
+                    self.global_params.ep_rewards[-self.env_params.save_episodes :]
+                ) / len(self.global_params.ep_rewards[-self.env_params.save_episodes :])
+                min_reward = min(
+                    self.global_params.ep_rewards[-self.env_params.save_episodes :]
+                )
+                max_reward = max(
+                    self.global_params.ep_rewards[-self.env_params.save_episodes :]
+                )
+                tensorboard.update_stats(
+                    reward_avg=int(average_reward),
+                    reward_max=int(max_reward),
+                    steps=step,
+                )
+
+                print_messages(
+                    "Showing batch:",
+                    current_episode_batch=episode,
+                    max_reward_in_current_batch=int(max_reward),
+                    best_epoch_in_all_training=best_epoch,
+                    highest_reward_in_all_training=int(current_max_reward),
+                    in_best_step=best_step,
+                    total_time=(datetime.now() - start_time),
+                )
+                self.global_params.aggr_ep_rewards["episode"].append(episode)
+                self.global_params.aggr_ep_rewards["step"].append(step)
+                self.global_params.aggr_ep_rewards["avg"].append(average_reward)
+                self.global_params.aggr_ep_rewards["max"].append(max_reward)
+                self.global_params.aggr_ep_rewards["min"].append(min_reward)
+                self.global_params.aggr_ep_rewards["epoch_training_time"].append(
+                    (datetime.now() - start_time_epoch).total_seconds()
+                )
+                self.global_params.aggr_ep_rewards["total_training_time"].append(
+                    (datetime.now() - start_time).total_seconds()
+                )
+
+                # save protobuf model
+                ac_agent.actor_model.save(
+                    f"{self.global_params.models_dir}/{time.strftime('%Y%m%d')}_{self.algoritmhs_params.model_name}_BATCH_ACTOR_Max{int(cumulated_reward)}_Epoch-{episode}_State-{self.global_params.states}_Actions-{self.global_params.actions}_Rewards-{self.global_params.rewards}_inTime-{time.strftime('%Y%m%d-%H%M%S')}"
+                )
+                ac_agent.critic_model.save(
+                    f"{self.global_params.models_dir}/{time.strftime('%Y%m%d')}_{self.algoritmhs_params.model_name}_BATCH_CRITIC_Max{int(cumulated_reward)}_Epoch-{episode}_State-{self.global_params.states}_Actions-{self.global_params.actions}_Rewards-{self.global_params.rewards}_inTime-{time.strftime('%Y%m%d-%H%M%S')}"
+                )
+                # save h5 model
+                ac_agent.actor_model.save(
+                    f"{self.global_params.models_dir}/{time.strftime('%Y%m%d')}_{self.algoritmhs_params.model_name}_BATCH_ACTOR_Max{int(cumulated_reward)}_Epoch-{episode}_State-{self.global_params.states}_Actions-{self.global_params.actions}_Rewards-{self.global_params.rewards}_inTime-{time.strftime('%Y%m%d-%H%M%S')}.h5"
+                )
+                ac_agent.critic_model.save(
+                    f"{self.global_params.models_dir}/{time.strftime('%Y%m%d')}_{self.algoritmhs_params.model_name}_BATCH_CRITIC_Max{int(cumulated_reward)}_Epoch-{episode}_State-{self.global_params.states}_Actions-{self.global_params.actions}_Rewards-{self.global_params.rewards}_inTime-{time.strftime('%Y%m%d-%H%M%S')}.h5"
+                )
+                save_stats_episodes(
+                    self.environment,
+                    self.global_params.metrics_dir,
+                    self.global_params.aggr_ep_rewards,
+                    start_time,
+                )
+
+        save_stats_episodes(
+            self.environment,
+            self.global_params.metrics_dir,
+            self.global_params.aggr_ep_rewards,
+            start_time,
+        )
+        env.close()
 
 
-###################################
+###############################################################################################################################################################################
 #
 ## CLASE A COPIAR OLDDD
 ####################################

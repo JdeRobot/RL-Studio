@@ -2,6 +2,7 @@ from rl_studio.agents.agents_type import AgentsType
 from rl_studio.agents.exceptions import NoValidTrainingType
 from rl_studio.agents.tasks_type import TasksType
 from rl_studio.agents.frameworks_type import FrameworksType
+from rl_studio.agents.utils import print_messages
 from rl_studio.algorithms.algorithms_type import AlgorithmsType
 from rl_studio.envs.envs_type import EnvsType
 
@@ -42,8 +43,14 @@ class TrainerFactory:
         task = config["settings"]["task"]
         simulator = config["settings"]["simulator"]
         framework = config["settings"]["framework"]
-        print(
-            f"task:{task}, algorithm:{algorithm}, simulator:{simulator}, agent:{agent}, framework:{framework}"
+
+        print_messages(
+            "TrainerFactory",
+            task=task,
+            algorithm=algorithm,
+            simulator=simulator,
+            agent=agent,
+            framework=framework,
         )
 
         # =============================
@@ -110,7 +117,9 @@ class TrainerFactory:
             and simulator == EnvsType.GAZEBO.value
             and framework == FrameworksType.TF.value
         ):
-            from rl_studio.agents.f1.train_ddpg import TrainerFollowLaneDDPGF1GazeboTF
+            from rl_studio.agents.f1.train_followlane_ddpg_f1_gazebo_tf import (
+                TrainerFollowLaneDDPGF1GazeboTF,
+            )
 
             return TrainerFollowLaneDDPGF1GazeboTF(config)
 
