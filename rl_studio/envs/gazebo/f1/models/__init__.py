@@ -1,9 +1,15 @@
+from rl_studio.agents.agents_type import AgentsType
+from rl_studio.agents.exceptions import NoValidTrainingType
+from rl_studio.agents.tasks_type import TasksType
+from rl_studio.agents.frameworks_type import FrameworksType
+from rl_studio.algorithms.algorithms_type import AlgorithmsType
+from rl_studio.envs.envs_type import EnvsType
 from rl_studio.envs.gazebo.f1.env_type import EnvironmentType
 from rl_studio.envs.gazebo.f1.exceptions import NoValidEnvironmentType
 
 
 class F1Env:
-    def __new__(cls, **config):
+    def __new__(cls, **environment):
         cls.circuit = None
         cls.vel_pub = None
         cls.unpause = None
@@ -14,72 +20,124 @@ class F1Env:
         cls.model_coordinates = None
         cls.position = None
 
-        training_type = config.get("training_type")
+        # training_type = config.get("training_type")
+        # print(f"F1Env -> environment:{environment}")
 
-        # Qlearn F1 FollowLine camera
-        if training_type == EnvironmentType.qlearn_env_camera_follow_line.value:
-            from rl_studio.envs.gazebo.f1.models.f1_env_camera import (
-                F1CameraEnv,
+        agent = environment["agent"]
+        algorithm = environment["algorithm"]
+        task = environment["task"]
+        framework = environment["framework"]
+        # print(
+        #    f"ens/gazebo/f1/models/__init__.py -> task:{task}, algorithm:{algorithm}, agent:{agent}, framework:{framework}"
+        # )
+
+        # =============================
+        # FollowLine - qlearn - (we are already in F1 - Gazebo)
+        # =============================
+        if (
+            task == TasksType.FOLLOWLINEGAZEBO.value
+            and algorithm == AlgorithmsType.QLEARN.value
+        ):
+            from rl_studio.envs.gazebo.f1.models.followline_qlearn import (
+                FollowlineQlearnF1Gazebo,
             )
 
-            return F1CameraEnv(**config)
+            return FollowlineQlearnF1Gazebo(environment)
 
-        # Qlearn F1 FollowLane camera
-        elif training_type == EnvironmentType.qlearn_env_camera_follow_lane.value:
-            from rl_studio.envs.gazebo.f1.models.f1_env_camera import (
-                QlearnF1FollowLaneEnvGazebo,
+        # =============================
+        # FollowLane - qlearn
+        # =============================
+        if (
+            task == TasksType.FOLLOWLANEGAZEBO.value
+            and algorithm == AlgorithmsType.QLEARN.value
+        ):
+            from rl_studio.envs.gazebo.f1.models.followlane_qlearn import (
+                FollowlaneQlearnF1Gazebo,
             )
 
-            return QlearnF1FollowLaneEnvGazebo(**config)
+            return FollowlaneQlearnF1Gazebo(environment)
 
-        # Qlearn F1 FollowLine laser
-        elif training_type == EnvironmentType.qlearn_env_laser_follow_line.value:
-            from rl_studio.envs.gazebo.f1.models.f1_env_qlearn_laser import (
-                F1QlearnLaserEnv,
-            )
-
-            return F1QlearnLaserEnv(**config)
-
+        # =============================
+        # FollowLine - DQN - TensorFlow
+        # =============================
         # DQN F1 FollowLine
-        elif training_type == EnvironmentType.dqn_env_follow_line.value:
-            from rl_studio.envs.gazebo.f1.models.f1_env_dqn_camera import (
-                DQNF1FollowLineEnvGazebo,
+        elif (
+            task == TasksType.FOLLOWLINEGAZEBO.value
+            and algorithm == AlgorithmsType.DQN.value
+            and framework == FrameworksType.TF.value
+        ):
+            from rl_studio.envs.gazebo.f1.models.followline_dqn_tf import (
+                FollowLineDQNF1GazeboTF,
             )
 
-            return DQNF1FollowLineEnvGazebo(**config)
+            return FollowLineDQNF1GazeboTF(**environment)
 
+        # =============================
+        # FollowLane - DQN - TensorFlow
+        # =============================
         # DQN F1 FollowLane
-        elif training_type == EnvironmentType.dqn_env_follow_lane.value:
-            from rl_studio.envs.gazebo.f1.models.f1_env_dqn_camera import (
-                DQNF1FollowLaneEnvGazebo,
+        elif (
+            task == TasksType.FOLLOWLANEGAZEBO.value
+            and algorithm == AlgorithmsType.DQN.value
+            and framework == FrameworksType.TF.value
+        ):
+            from rl_studio.envs.gazebo.f1.models.followlane_dqn_tf import (
+                FollowLaneDQNF1GazeboTF,
             )
 
-            return DQNF1FollowLaneEnvGazebo(**config)
+            return FollowLaneDQNF1GazeboTF(**environment)
 
-        # DDPG F1 FollowLine
-        elif training_type == EnvironmentType.ddpg_env_follow_line.value:
-            from rl_studio.envs.gazebo.f1.models.f1_env_ddpg import (
-                DDPGF1FollowLineEnvGazebo,
+        # =============================
+        # FollowLine - DDPG - TensorFlow
+        # =============================
+        elif (
+            task == TasksType.FOLLOWLINEGAZEBO.value
+            and algorithm == AlgorithmsType.DDPG.value
+            and framework == FrameworksType.TF.value
+        ):
+            from rl_studio.envs.gazebo.f1.models.followline_ddpg_tf import (
+                FollowLineDDPGF1GazeboTF,
             )
 
-            return DDPGF1FollowLineEnvGazebo(**config)
+            return FollowLineDDPGF1GazeboTF(**environment)
 
+        # =============================
+        # FollowLane - DDPG - TensorFlow
+        # =============================
         # DDPG F1 FollowLane
-        elif training_type == EnvironmentType.ddpg_env_follow_lane.value:
-            from rl_studio.envs.gazebo.f1.models.f1_env_ddpg import (
-                DDPGF1FollowLaneEnvGazebo,
+        elif (
+            task == TasksType.FOLLOWLANEGAZEBO.value
+            and algorithm == AlgorithmsType.DDPG.value
+            and framework == FrameworksType.TF.value
+        ):
+            from rl_studio.envs.gazebo.f1.models.followlane_ddpg_tf import (
+                FollowLaneDDPGF1GazeboTF,
             )
 
-            return DDPGF1FollowLaneEnvGazebo(**config)
+            return FollowLaneDDPGF1GazeboTF(**environment)
 
-        # F1 Manual
-        elif training_type == EnvironmentType.manual_env.value:
-            from rl_studio.envs.gazebo.f1.models.f1_env_manual_pilot import (
-                GazeboF1ManualCameraEnv,
+        # =============================
+        # FollowLine - qlearn - Manual
+        # =============================
+        if (
+            task == TasksType.FOLLOWLINEGAZEBO.value
+            and algorithm == AlgorithmsType.MANUAL.value
+        ):
+            from rl_studio.envs.gazebo.f1.models.followline_qlearn_manual import (
+                FollowLineQlearnF1Gazebo,
             )
 
-            return GazeboF1ManualCameraEnv(**config)
+            return FollowLineQlearnF1Gazebo(**environment)
 
-        # Wrong!
+        # =============================
+        # FollowLine - qlearn - (we are already in F1 - Gazebo) - laser
+        # =============================
+        # elif training_type == EnvironmentType.qlearn_env_laser_follow_line.value:
+        #    from rl_studio.envs.gazebo.f1.models.f1_env_qlearn_laser import (
+        #        F1QlearnLaserEnv,
+        #    )
+
+        #    return F1QlearnLaserEnv(**config)
+
         else:
-            raise NoValidEnvironmentType(training_type)
+            raise NoValidEnvironmentType(task)

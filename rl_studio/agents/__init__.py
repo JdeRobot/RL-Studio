@@ -74,7 +74,7 @@ class TrainerFactory:
             return TrainerFollowLineDDPGF1GazeboTF(config)
 
         # =============================
-        # FollowLine - F1 - DQN - Gazebo
+        # FollowLine - F1 - DQN - Gazebo - TensorFlow
         # =============================
         elif (
             task == TasksType.FOLLOWLINEGAZEBO.value
@@ -101,7 +101,7 @@ class TrainerFactory:
             return TrainerFollowLaneQlearnF1Gazebo(config)
 
         # =============================
-        # Follow Lane - F1 - DDPG - Gazebo
+        # Follow Lane - F1 - DDPG - Gazebo - TF
         # =============================
         elif (
             task == TasksType.FOLLOWLANEGAZEBO.value
@@ -115,7 +115,7 @@ class TrainerFactory:
             return TrainerFollowLaneDDPGF1GazeboTF(config)
 
         # =============================
-        # Follow Lane - F1 - DQN - Gazebo
+        # Follow Lane - F1 - DQN - Gazebo - TF
         # =============================
         elif (
             task == TasksType.FOLLOWLANEGAZEBO.value
@@ -218,7 +218,7 @@ class TrainerFactory:
             return CartpoleTrainer(config)
 
         # =============================
-        # Autoparking - F1 - DDPG - Gazebo
+        # Autoparking - F1 - DDPG - Gazebo - TF
         # =============================
         elif (
             task == TasksType.AUTOPARKINGGAZEBO.value

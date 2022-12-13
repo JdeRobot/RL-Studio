@@ -1,7 +1,6 @@
 # This file contains all clasess to parser parameters from config.yaml into training RL
 
 
-
 class LoadAlgorithmParams:
     """
     Retrieve Algorithm params
@@ -48,7 +47,7 @@ class LoadEnvParams:
     def __init__(self, config):
         if config["settings"]["simulator"] == "gazebo":
             self.env = config["settings"]["env"]
-            self.env_name = config['gazebo_environments'][self.env]['env_name']
+            self.env_name = config["gazebo_environments"][self.env]["env_name"]
             self.model_state_name = config["gazebo_environments"][self.env][
                 "model_state_name"
             ]
@@ -72,8 +71,13 @@ class LoadEnvVariablesDDPGGazebo:
     """
     Create a new variable 'environment', which contains values to Gazebo env, Carla env ...
     """
+
     def __init__(self, config) -> None:
         """environment variable for reset(), step() methods"""
+        # self.agent = config["settings"]["agent"]
+        # self.algorithm = config["settings"]["algorithm"]
+        # self.task = config["settings"]["task"]
+        # self.framework = config["settings"]["framework"]
         self.environment_set = config["settings"]["environment_set"]
         self.env = config["settings"]["env"]
         self.agent = config["settings"]["agent"]
@@ -84,9 +88,32 @@ class LoadEnvVariablesDDPGGazebo:
         ##### environment variable
         self.environment = {}
         self.environment["agent"] = config["settings"]["agent"]
+        self.environment["algorithm"] = config["settings"]["algorithm"]
+        self.environment["task"] = config["settings"]["task"]
+        self.environment["framework"] = config["settings"]["framework"]
         self.environment["model_state_name"] = config[self.environment_set][self.env][
             "model_state_name"
         ]
+        # Training/inference
+        self.environment["retrain_ddpg_tf_model"] = config["retraining"]["ddpg"][
+            "retrain_ddpg_tf_model"
+        ]
+        self.environment["retrain_ddpg_tf_actor_model_name"] = config["retraining"][
+            "ddpg"
+        ]["retrain_ddpg_tf_actor_model_name"]
+        self.environment["retrain_ddpg_tf_critic_model_name"] = config["retraining"][
+            "ddpg"
+        ]["retrain_ddpg_tf_critic_model_name"]
+        self.environment["inference_ddpg_tf_model"] = config["inference"]["ddpg"][
+            "inference_ddpg_tf_model"
+        ]
+        self.environment["inference_ddpg_tf_actor_model_name"] = config["inference"][
+            "ddpg"
+        ]["inference_ddpg_tf_actor_model_name"]
+        self.environment["inference_ddpg_tf_critic_model_name"] = config["inference"][
+            "ddpg"
+        ]["inference_ddpg_tf_critic_model_name"]
+
         # Env
         self.environment["env"] = config["settings"]["env"]
         self.environment["training_type"] = config[self.environment_set][self.env][
@@ -143,12 +170,15 @@ class LoadEnvVariablesDDPGGazebo:
         self.environment["num_regions"] = config["agents"][self.agent]["camera_params"][
             "num_regions"
         ]
+        self.environment["lower_limit"] = config["agents"][self.agent]["camera_params"][
+            "lower_limit"
+        ]
         # States
         self.environment["states"] = config["settings"]["states"]
         self.environment["x_row"] = config["states"][self.states][0]
 
         # Actions
-        self.environment["action_space"] = config["actions"]
+        self.environment["action_space"] = config["settings"]["actions"]
         self.environment["actions"] = config["actions"][self.actions]
 
         # Rewards
@@ -169,6 +199,7 @@ class LoadGlobalParams:
     """
     Retrieve Global params from config.yaml
     """
+
     def __init__(self, config):
         self.ep_rewards = []
         self.actions_rewards = {

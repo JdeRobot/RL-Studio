@@ -17,6 +17,7 @@ from tensorflow.keras.models import Sequential, load_model
 from tensorflow.keras.optimizers import Adam
 
 
+# Sharing GPU
 gpus = tf.config.experimental.list_physical_devices("GPU")
 for gpu in gpus:
     tf.config.experimental.set_memory_growth(gpu, True)

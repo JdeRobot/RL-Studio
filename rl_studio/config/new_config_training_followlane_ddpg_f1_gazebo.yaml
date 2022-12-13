@@ -2,7 +2,7 @@ settings:
   mode: training # training, retraining, inference
   task: follow_lane_gazebo # follow_line_gazebo, follow_lane_gazebo, autoparking_gazebo
   algorithm: ddpg # qlearn, dqn, ddpg, ppo
-  simulator: gazebo # openai, carla, gazebo
+  simulator: gazebo # openai, carla, gazebo, sumo
   environment_set: gazebo_environments # gazebo_environments, carla_environments
   env: simple # simple, nurburgring, montreal, curves, simple_laser, manual, autoparking
   agent: f1 # f1, autoparkingRL, auto_carla, mountain_car, robot_mesh, cartpole, turtlebot
@@ -21,6 +21,18 @@ settings:
 ros:
   ros_master_uri: "11311"
   gazebo_master_uri: "11345"
+
+retraining:
+  ddpg:
+    retrain_ddpg_tf_model: False
+    retrain_ddpg_tf_actor_model_name:
+    retrain_ddpg_tf_critic_model_name:
+
+inference:
+  ddpg:
+    inference_ddpg_tf_model: False
+    inference_ddpg_tf_actor_model_name:
+    inference_ddpg_tf_critic_model_name:
 
 algorithm:
   ddpg:
@@ -45,6 +57,7 @@ agents:
       image_resizing: 100
       new_image_size: 32
       num_regions: 16
+      lower_limit: 220
 
 states:
   image:
