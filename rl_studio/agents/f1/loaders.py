@@ -95,18 +95,13 @@ class LoadEnvVariablesDDPGGazebo:
             "model_state_name"
         ]
         # Training/inference
-        self.environment["retrain_ddpg_tf_model"] = config["retraining"]["ddpg"][
-            "retrain_ddpg_tf_model"
-        ]
+        self.environment["mode"] = config["settings"]["mode"]
         self.environment["retrain_ddpg_tf_actor_model_name"] = config["retraining"][
             "ddpg"
         ]["retrain_ddpg_tf_actor_model_name"]
         self.environment["retrain_ddpg_tf_critic_model_name"] = config["retraining"][
             "ddpg"
         ]["retrain_ddpg_tf_critic_model_name"]
-        self.environment["inference_ddpg_tf_model"] = config["inference"]["ddpg"][
-            "inference_ddpg_tf_model"
-        ]
         self.environment["inference_ddpg_tf_actor_model_name"] = config["inference"][
             "ddpg"
         ]["inference_ddpg_tf_actor_model_name"]
@@ -229,11 +224,11 @@ class LoadGlobalParams:
         self.settings = config["settings"]
         self.task = config["settings"]["task"]
         self.agent = config["settings"]["agent"]
-        self.models_dir = f"{config['settings']['models_dir']}{config['settings']['task']}_{config['settings']['algorithm']}_{config['settings']['agent']}_{config['settings']['framework']}"
-        self.logs_dir = f"{config['settings']['logs_dir']}{config['settings']['task']}_{config['settings']['algorithm']}_{config['settings']['agent']}_{config['settings']['framework']}"
-        self.metrics_dir = f"{config['settings']['metrics_dir']}{config['settings']['task']}_{config['settings']['algorithm']}_{config['settings']['agent']}_{config['settings']['framework']}"
-        self.graphics_dir = f"{config['settings']['graphics_dir']}{config['settings']['task']}_{config['settings']['algorithm']}_{config['settings']['agent']}_{config['settings']['framework']}"
-        self.trainingtime = config["settings"]["training_time"]
+        self.models_dir = f"{config['settings']['models_dir']}/{config['settings']['task']}_{config['settings']['algorithm']}_{config['settings']['agent']}_{config['settings']['framework']}"
+        self.logs_tensorboard_dir = f"{config['settings']['logs_dir']}/{config['settings']['mode']}/{config['settings']['task']}_{config['settings']['algorithm']}_{config['settings']['agent']}_{config['settings']['framework']}/TensorBoard"
+        self.metrics_data_dir = f"{config['settings']['metrics_dir']}/{config['settings']['mode']}/{config['settings']['task']}_{config['settings']['algorithm']}_{config['settings']['agent']}_{config['settings']['framework']}/data"
+        self.metrics_graphics_dir = f"{config['settings']['metrics_dir']}/{config['settings']['mode']}/{config['settings']['task']}_{config['settings']['algorithm']}_{config['settings']['agent']}_{config['settings']['framework']}/graphics"
+        self.training_time = config["settings"]["training_time"]
         ####### States
         self.states = config["settings"]["states"]
         ####### Actions

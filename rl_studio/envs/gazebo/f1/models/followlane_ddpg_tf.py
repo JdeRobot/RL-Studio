@@ -1,10 +1,10 @@
-"""
-- Task: Follow Lane 
-- Algorithm: DDPG
-- actions: discrete and continuous
-- State: Simplified perception
-
-"""
+#############################################
+# - Task: Follow Lane
+# - Algorithm: DDPG
+# - actions: discrete and continuous
+# - State: Simplified perception
+#
+############################################
 
 import math
 
@@ -13,29 +13,19 @@ import cv2
 from geometry_msgs.msg import Twist
 import numpy as np
 
-# from PIL import Image as im
-
 import rospy
 from sensor_msgs.msg import Image
-
-# from sklearn.cluster import KMeans
-# from sklearn.utils import shuffle
 
 from rl_studio.agents.utils import (
     print_messages,
 )
 from rl_studio.envs.gazebo.f1.image_f1 import ImageF1
-from rl_studio.envs.gazebo.f1.models.camera import F1GazeboCamera
+from rl_studio.envs.gazebo.f1.models.images import F1GazeboImages
 from rl_studio.envs.gazebo.f1.models.f1_env import F1Env
 from rl_studio.envs.gazebo.f1.models.utils import F1GazeboUtils
-from rl_studio.envs.gazebo.f1.models.rewards import (
-    rewards_discrete_follow_lane,
-    rewards_discrete,
-    reward_v_center_step,
-    rewards_discrete_follow_right_lane,
-    reward_v_w_center_linear_no_working_at_all,
-    reward_v_w_center_linear_second,
-    reward_v_w_center_linear_first_formula,
+from rl_studio.envs.gazebo.f1.models.rewards import F1GazeboRewards
+from rl_studio.envs.gazebo.f1.models.simplified_perception import (
+    F1GazeboSimplifiedPerception,
 )
 
 
@@ -43,6 +33,11 @@ class FollowLaneDDPGF1GazeboTF(F1Env):
     def __init__(self, **config):
 
         F1Env.__init__(self, **config)
+        self.simplifiedperception = F1GazeboSimplifiedPerception()
+        self.f1gazeborewards = F1GazeboRewards()
+        self.f1gazeboutils = F1GazeboUtils()
+        self.f1gazeboimages = F1GazeboImages()
+
         self.image = ImageF1()
         self.image_raw_from_topic = None
         self.f1_image_camera = None
@@ -80,10 +75,11 @@ class FollowLaneDDPGF1GazeboTF(F1Env):
         self.reward_function = config["reward_function"]
         self.rewards = config["rewards"]
         self.min_reward = config["min_reward"]
-        self.beta_1 = self.actions["w"][1] / (
-            self.actions["v"][1] - self.actions["v"][0]
-        )
-        self.beta_0 = self.beta_1 * self.actions["v"][1]
+        if self.action_space == "continuous":
+            self.beta_1 = self.actions["w"][1] / (
+                self.actions["v"][1] - self.actions["v"][0]
+            )
+            self.beta_0 = self.beta_1 * self.actions["v"][1]
 
         # Others
         self.telemetry = config["telemetry"]
@@ -92,10 +88,11 @@ class FollowLaneDDPGF1GazeboTF(F1Env):
             "FollowLaneDDPGF1GazeboTF() PROVISIONAL",
             actions=self.actions,
             len_actions=len(self.actions),
-            actions_v=self.actions["v"],
-            actions_w=self.actions["w"],
-            beta_1=self.beta_1,
-            beta_0=self.beta_0,
+            # actions_v=self.actions["v"], # for continuous actions
+            # actions_v=self.actions[0], # for discrete actions
+            # beta_1=self.beta_1,
+            # beta_0=self.beta_0,
+            rewards=self.rewards,
         )
 
     #################################################################################
@@ -122,23 +119,37 @@ class FollowLaneDDPGF1GazeboTF(F1Env):
             self._gazebo_set_fix_pose_f1_follow_right_lane()
 
         self._gazebo_unpause()
-        # get image from sensor camera
+
+        ##==== get image from sensor camera
         f1_image_camera, _ = self.get_camera_info()
         self._gazebo_pause()
-        # calculating State
-        # If image as observation
+
+        ##==== calculating State
+        # image as observation
         if self.state_space == "image":
             state = np.array(
-                F1GazeboCamera.preprocessing_black_white_32x32(f1_image_camera.data)
+                self.f1gazeboimages.image_preprocessing_black_white_32x32(
+                    f1_image_camera.data, self.height
+                )
             )
             state_size = state.shape
 
         # simplified perception as observation
         else:
-            centrals_in_pixels, centrals_normalized = self.calculate_centrals_lane(
-                f1_image_camera.data
+            (
+                centrals_in_pixels,
+                centrals_normalized,
+            ) = self.simplifiedperception.calculate_centrals_lane(
+                f1_image_camera.data,
+                self.height,
+                self.width,
+                self.x_row,
+                self.lower_limit,
+                self.center_image,
             )
-            states = self.calculate_observation(centrals_in_pixels)
+            states = self.simplifiedperception.calculate_observation(
+                centrals_in_pixels, self.center_image, self.pixel_region
+            )
             state = [states[0]]
             state_size = len(state)
 
@@ -174,128 +185,6 @@ class FollowLaneDDPGF1GazeboTF(F1Env):
         return self.image
 
     #################################################################################
-    # Center
-    #################################################################################
-
-    def processed_image(self, img):
-        """
-        Convert img to HSV. Get the image processed. Get 3 lines from the image.
-
-        :parameters: input image 640x480
-        :return: x, y, z: 3 coordinates
-        """
-        image_middle_line = self.height // 2
-        img_sliced = img[image_middle_line:]
-        img_proc = cv2.cvtColor(img_sliced, cv2.COLOR_BGR2HSV)
-        line_pre_proc = cv2.inRange(img_proc, (0, 30, 30), (0, 255, 255))
-        _, mask = cv2.threshold(line_pre_proc, 240, 255, cv2.THRESH_BINARY)
-
-        lines = [mask[self.x_row[idx], :] for idx, x in enumerate(self.x_row)]
-        centrals = list(map(self.get_center, lines))
-
-        centrals_normalized = [
-            float(self.center_image - x) / (float(self.width) // 2)
-            for _, x in enumerate(centrals)
-        ]
-        # print_messages(
-        #    "",
-        #    lines=lines,
-        #    centrals=centrals,
-        # )
-        self.show_image_with_centrals(
-            "centrals", mask, 5, int(centrals[0]), centrals_normalized
-        )
-
-        return centrals, centrals_normalized
-
-    @staticmethod
-    def get_center(lines):
-        try:
-            point = np.divide(np.max(np.nonzero(lines)) - np.min(np.nonzero(lines)), 2)
-            return np.min(np.nonzero(lines)) + point
-        except ValueError:
-            return 0
-
-    def calculate_observation(self, state: list) -> list:
-        final_state = []
-        for _, x in enumerate(state):
-            final_state.append(int((self.center_image - x) / self.pixel_region) + 1)
-
-        return final_state
-
-    def calculate_centrals_lane(self, img):
-        image_middle_line = self.height // 2
-        # cropped image from second half to bottom line
-        img_sliced = img[image_middle_line:]
-        # convert to black and white mask
-        # lower_grey = np.array([30, 32, 22])
-        # upper_grey = np.array([128, 128, 128])
-        img_gray = cv2.cvtColor(img_sliced, cv2.COLOR_BGR2GRAY)
-        _, mask = cv2.threshold(img_gray, 110, 255, cv2.THRESH_BINARY)
-        # get Lines to work for
-        lines = [mask[self.x_row[idx], :] for idx, _ in enumerate(self.x_row)]
-        # added last line (239), to control center line in bottom
-        lines.append(mask[self.lower_limit, :])
-
-        centrals_in_pixels = list(map(self.get_center_right_lane, lines))
-        centrals_normalized = [
-            abs(float(self.center_image - x) / (float(self.width) // 2))
-            for _, x in enumerate(centrals_in_pixels)
-        ]
-
-        F1GazeboUtils.show_image_with_centrals(
-            "mask", mask, 5, centrals_in_pixels, centrals_normalized, self.x_row
-        )
-
-        return centrals_in_pixels, centrals_normalized
-
-    @staticmethod
-    def get_center_right_lane(lines):
-        try:
-            # inversed line
-            inversed_lane = [x for x in reversed(lines)]
-            # cut off right blanks
-            inv_index_right = np.argmin(inversed_lane)
-            # cropped right blanks
-            cropped_lane = inversed_lane[inv_index_right:]
-            # cut off central line
-            inv_index_left = np.argmax(cropped_lane)
-            # get real lane index
-            index_real_right = len(lines) - inv_index_right
-            if inv_index_left == 0:
-                index_real_left = 0
-            else:
-                index_real_left = len(lines) - inv_index_right - inv_index_left
-            # get center lane
-            center = (index_real_right - index_real_left) // 2
-            center_lane = center + index_real_left
-
-            # avoid finish line or other blank marks on the road
-            if center_lane == 0:
-                center_lane = 320
-
-            return center_lane
-
-        except ValueError:
-            return 0
-
-    @staticmethod
-    def get_center_circuit_no_wall(lines):
-        try:
-            pos_final_linea_negra = np.argmin(lines) + 15
-            carril_derecho_entero = lines[pos_final_linea_negra:]
-            final_carril_derecho = np.argmin(carril_derecho_entero)
-            lim_izq = pos_final_linea_negra
-            lim_der = pos_final_linea_negra + final_carril_derecho
-
-            punto_central_carril = (lim_der - lim_izq) // 2
-            punto_central_absoluto = lim_izq + punto_central_carril
-            return punto_central_absoluto
-
-        except ValueError:
-            return 0
-
-    #################################################################################
     # step
     #################################################################################
 
@@ -311,12 +200,15 @@ class FollowLaneDDPGF1GazeboTF(F1Env):
             vel_cmd.angular.z = self.actions[action][1]
 
         self.vel_pub.publish(vel_cmd)
-        # get image from sensor camera
+
+        ##==== get image from sensor camera
         f1_image_camera, _ = self.get_camera_info()
         self._gazebo_pause()
 
-        ######### center
-        points, centrals_normalized = self.processed_image(f1_image_camera.data)
+        ##==== get center
+        points, centrals_normalized = self.simplifiedperception.processed_image(
+            f1_image_camera.data, self.height, self.width, self.x_row, self.center_image
+        )
         if self.state_space == "spn":
             self.point = points[self.poi]
         else:
@@ -324,48 +216,35 @@ class FollowLaneDDPGF1GazeboTF(F1Env):
         # center = abs(float(self.center_image - self.point) / (float(self.width) // 2))
         center = float(self.center_image - self.point) / (float(self.width) // 2)
 
-        # print_messages(
-        #   "step()",
-        #   points=points,
-        #   points_0=points[0],
-        #   center=center,
-        #   self_x_row=self.x_row,
-        #   centrals_normalized=centrals_normalized,
-        # )
-        self.show_image_with_centrals(
-            "centrals",
-            f1_image_camera.data[self.height // 2 :],
-            5,
-            points[0],
-            centrals_normalized,
-        )
-        ########## calculating State
-        # If image as observation
+        ##==== get State
+        ##==== image as observation
         if self.state_space == "image":
             state = np.array(
-                self.image_preprocessing_black_white_32x32(f1_image_camera.data)
+                self.f1gazeboimages.image_preprocessing_black_white_32x32(
+                    f1_image_camera.data, self.height
+                )
             )
 
-        # simplified perception as observation
+        ##==== simplified perception as observation
         else:
-            state = self.calculate_observation(points)
+            state = self.simplifiedperception.calculate_observation(
+                points, self.center_image, self.pixel_region
+            )
 
-        ########## calculating Rewards
-        if self.reward_function == "linear":
-            reward, done = self.reward_v_center_step(vel_cmd, center, step)
-        elif self.reward_function == "linear_follow_line":
-            reward, done = self.reward_v_w_center_linear(vel_cmd, center)
+        ##==== get Rewards
+        if self.reward_function == "follow_right_lane_center_v_step":
+            reward, done = self.f1gazeborewards.rewards_followlane_v_centerline_step(
+                vel_cmd, center, step, self.rewards
+            )
+        elif (
+            self.reward_function == "follow_right_lane_center_v_w_linear"
+        ):  # this reward function ONLY for continuous actions
+            reward, done = self.f1gazeborewards.rewards_followlane_v_w_centerline(
+                vel_cmd, center, self.rewards, self.beta_1, self.beta_0
+            )
         else:
-            reward, done = self.rewards_discrete_follow_lane(center)
-
-        # print_messages(
-        #    "in step()",
-        #    self_x_row=self.x_row,
-        #    points=points,
-        #    center=center,
-        #    reward=reward,
-        #    done=done,
-        # state=state,
-        # )
+            reward, done = self.f1gazeborewards.rewards_followlane_centerline(
+                center, self.rewards
+            )
 
         return state, reward, done, {}

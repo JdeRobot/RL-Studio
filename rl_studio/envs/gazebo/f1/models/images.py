@@ -1,5 +1,4 @@
 import cv2
-
 from cv_bridge import CvBridge
 import numpy as np
 from PIL import Image as im
@@ -8,14 +7,12 @@ from sensor_msgs.msg import Image
 from sklearn.cluster import KMeans
 from sklearn.utils import shuffle
 
+from rl_studio.envs.gazebo.f1.models.utils import F1GazeboUtils
 
-class F1GazeboCamera:
-    
 
-    #################################################################################
-    # image preprocessing
-    #################################################################################
-
+class F1GazeboImages:
+    def __init__(self):
+        self.f1gazeboutils = F1GazeboUtils()
 
     def image_preprocessing_black_white_original_size(self, img):
         image_middle_line = self.height // 2
@@ -27,9 +24,8 @@ class F1GazeboCamera:
 
         return mask_black_White_3D
 
-
-    def image_preprocessing_black_white_32x32(self, img):
-        image_middle_line = self.height // 2
+    def image_preprocessing_black_white_32x32(self, img, height):
+        image_middle_line = height // 2
         img_sliced = img[image_middle_line:]
         img_proc = cv2.cvtColor(img_sliced, cv2.COLOR_BGR2HSV)
         line_pre_proc = cv2.inRange(img_proc, (0, 120, 120), (0, 255, 255))
@@ -37,10 +33,8 @@ class F1GazeboCamera:
         mask_black_white_32x32 = cv2.resize(mask, (32, 32), cv2.INTER_AREA)
         mask_black_white_32x32 = np.expand_dims(mask_black_white_32x32, axis=2)
 
-        self.show_image("mask32x32", mask_black_white_32x32, 5)
-        # self.show_image("mask", mask, 5)
+        self.f1gazeboutils.show_image("mask32x32", mask_black_white_32x32, 5)
         return mask_black_white_32x32
-
 
     def image_preprocessing_gray_32x32(self, img):
         image_middle_line = self.height // 2
@@ -51,13 +45,11 @@ class F1GazeboCamera:
 
         return img_gray_3D
 
-
     def image_preprocessing_raw_original_size(self, img):
         image_middle_line = self.height // 2
         img_sliced = img[image_middle_line:]
 
         return img_sliced
-
 
     def image_preprocessing_color_quantization_original_size(self, img):
         n_colors = 3
@@ -72,7 +64,6 @@ class F1GazeboCamera:
         labels = kmeans.predict(image_array)
 
         return kmeans.cluster_centers_[labels].reshape(w, h, -1)
-
 
     def image_preprocessing_color_quantization_32x32x1(self, img):
         n_colors = 3
@@ -90,21 +81,20 @@ class F1GazeboCamera:
 
         return im_resize32x32x1
 
-
     def image_preprocessing_reducing_color_PIL_original_size(self, img):
         num_colors = 4
         image_middle_line = self.height // 2
         img_sliced = img[image_middle_line:]
 
         array2pil = im.fromarray(img_sliced)
-        array2pil_reduced = array2pil.convert("P", palette=im.ADAPTIVE, colors=num_colors)
+        array2pil_reduced = array2pil.convert(
+            "P", palette=im.ADAPTIVE, colors=num_colors
+        )
         pil2array = np.expand_dims(np.array(array2pil_reduced), 2)
         return pil2array
 
-
     def image_callback(self, image_data):
         self.image_raw_from_topic = CvBridge().imgmsg_to_cv2(image_data, "bgr8")
-
 
     def processed_image_circuit_no_wall(self, img):
         """

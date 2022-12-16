@@ -296,41 +296,21 @@ class DDPGAgent:
         self.target_update_counter = 0
 
         # load pretrained model for continuing training (not inference)
-        if config["retrain_ddpg_tf_model"]:
-            # print("---------------------- entramos en cargar modelos")
-            # print(f"{outdir}/models/{config['ddpg_tf_actor_model']}")
-            # print(f"{outdir}/models/{config['ddpg_tf_critic_model']}")
+        if config["mode"] == "retraining":
+            print("---------------------- entramos en cargar modelos")
+            print(f"{outdir}/{config['retrain_ddpg_tf_actor_model_name']}")
+            print(f"{outdir}/{config['retrain_ddpg_tf_critic_model_name']}")
             # load pretrained actor and critic models
-            # self.actor_model = tf.saved_model.load(f"{config['ddpg_tf_actor_model']}")
-            self.actor_model = load_model(
-                f"{config['retrain_ddpg_tf_actor_model_name']}", compile=False
+            actor_retrained_model = (
+                f"{outdir}/{config['retrain_ddpg_tf_actor_model_name']}"
             )
-            # self.critic_model = tf.saved_model.load(f"{config['ddpg_tf_critic_model']}")
-            self.critic_model = load_model(
-                f"{config['retrain_ddpg_tf_critic_model_name']}", compile=False
+            critic_retrained_model = (
+                f"{outdir}/{config['retrain_ddpg_tf_critic_model_name']}"
             )
-            # self.critic_model = load_model(
-            #    f"{outdir}/models/{config['ddpg_tf_critic_model']}"
-            # )
-
-            # Actor Target model this is what we .predict against every step
-            # self.target_actor = tf.saved_model.load(f"{config['ddpg_tf_actor_model']}")
-            self.target_actor = load_model(
-                f"{config['retrain_ddpg_tf_actor_model_name']}", compile=False
-            )
-            # self.target_actor = load_model(
-            #    f"{outdir}/models/{config['ddpg_tf_actor_model']}"
-            # )
-            # self.target_actor.set_weights(self.actor_model.get_weights())
-            # Critic Target model this is what we .predict against every step
-            # self.target_critic = tf.saved_model.load(f"{config['ddpg_tf_actor_model']}")
-            self.target_critic = load_model(
-                f"{config['retrain_ddpg_tf_critic_model_name']}", compile=False
-            )
-            # self.target_critic = load_model(
-            #    f"{outdir}/models/{config['ddpg_tf_critic_model']}"
-            # )
-            # self.target_critic.set_weights(self.critic_model.get_weights())
+            self.actor_model = load_model(actor_retrained_model, compile=False)
+            self.critic_model = load_model(critic_retrained_model, compile=False)
+            self.target_actor = load_model(actor_retrained_model, compile=False)
+            self.target_critic = load_model(critic_retrained_model, compile=False)
 
         else:  # training from scratch
             # Actor & Critic main models  # gets trained every step
@@ -373,6 +353,26 @@ class DDPGAgent:
                 # Critic Target model this is what we .predict against every step
                 self.target_critic = (
                     self.get_critic_model_image_continuous_actions_conv()
+                )
+                self.target_critic.set_weights(self.critic_model.get_weights())
+
+            else:
+                ##############
+                # TODO: create specific models for State=image and actions=discrete
+                self.actor_model = (
+                    self.get_actor_model_simplified_perception_discrete_actions()
+                )
+                self.critic_model = (
+                    self.get_critic_model_simplified_perception_discrete_actions()
+                )
+                # Actor Target model this is what we .predict against every step
+                self.target_actor = (
+                    self.get_actor_model_simplified_perception_discrete_actions()
+                )
+                self.target_actor.set_weights(self.actor_model.get_weights())
+                # Critic Target model this is what we .predict against every step
+                self.target_critic = (
+                    self.get_critic_model_simplified_perception_discrete_actions()
                 )
                 self.target_critic.set_weights(self.critic_model.get_weights())
 

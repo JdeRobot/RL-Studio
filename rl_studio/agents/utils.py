@@ -1,6 +1,7 @@
 import datetime
 import os
 import pickle
+import time
 
 import cv2
 import numpy as np
@@ -10,6 +11,9 @@ from rl_studio.agents.f1 import settings
 
 
 def load_model(qlearn, file_name):
+    """
+    Qlearn only
+    """
 
     qlearn_file = open("./logs/qlearn_models/" + file_name)
     model = pickle.load(qlearn_file)
@@ -28,6 +32,9 @@ def load_model(qlearn, file_name):
 
 
 def save_model(qlearn, current_time, states, states_counter, states_rewards):
+    """
+    Qlearn only
+    """
     # Tabular RL: Tabular Q-learning basically stores the policy (Q-values) of  the agent into a matrix of shape
     # (S x A), where s are all states, a are all the possible actions. After the environment is solved, just save this
     # matrix as a csv file. I have a quick implementation of this on my GitHub under Reinforcement Learning.
@@ -128,31 +135,22 @@ def render_params(**kwargs):
     cv2.waitKey(100)
 
 
-def save_agent_npy(environment, outdir, physics, current_time):
-    """ """
-
-    outdir_episode = f"{outdir}_stats"
-    os.makedirs(f"{outdir_episode}", exist_ok=True)
-
-    file_npy = f"{outdir_episode}/{current_time}_Circuit-{environment['circuit_name']}_States-{environment['state_space']}_Actions-{environment['action_space']}_rewards-{environment['reward_function']}.npy"
-
-    np.save(file_npy, physics)
-
-
-def save_stats_episodes(environment, outdir, aggr_ep_rewards, current_time):
+def save_dataframe_episodes(environment, outdir, aggr_ep_rewards, actions_rewards=None):
     """
-    We save info of EPISODES in a dataframe to export or manage
+    We save info every certains epochs in a dataframe and .npy format to export or manage
     """
+    os.makedirs(f"{outdir}", exist_ok=True)
 
-    outdir_episode = f"{outdir}_stats"
-    os.makedirs(f"{outdir_episode}", exist_ok=True)
-
-    file_csv = f"{outdir_episode}/{current_time}_Circuit-{environment['circuit_name']}_States-{environment['state_space']}_Actions-{environment['action_space']}_rewards-{environment['reward_function']}.csv"
-    file_excel = f"{outdir_episode}/{current_time}_Circuit-{environment['circuit_name']}_States-{environment['state_space']}_Actions-{environment['action_space']}_rewards-{environment['reward_function']}.xlsx"
+    file_csv = f"{outdir}/{time.strftime('%Y%m%d-%H%M%S')}_Circuit-{environment['env']}_States-{environment['states']}_Actions-{environment['actions']}_rewards-{environment['rewards']}.csv"
+    file_excel = f"{outdir}/{time.strftime('%Y%m%d-%H%M%S')}_Circuit-{environment['env']}_States-{environment['states']}_Actions-{environment['actions']}_rewards-{environment['rewards']}.xlsx"
 
     df = pd.DataFrame(aggr_ep_rewards)
     df.to_csv(file_csv, mode="a", index=False, header=None)
     df.to_excel(file_excel)
+
+    if actions_rewards is not None:
+        file_npy = f"{outdir}/{time.strftime('%Y%m%d-%H%M%S')}_Circuit-{environment['env']}_States-{environment['states']}_Actions-{environment['actions']}_rewards-{environment['rewards']}.npy"
+        np.save(file_npy, actions_rewards)
 
 
 def save_model_qlearn(
