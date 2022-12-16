@@ -7,7 +7,7 @@ settings:
   env: simple # simple, nurburgring, montreal, curves, simple_laser, manual, autoparking
   agent: f1 # f1, autoparkingRL, auto_carla, mountain_car, robot_mesh, cartpole, turtlebot
   actions: continuous # continuous, simple, medium, hard, test, autoparking_simple
-  states: image #image, sp1 (simplified perception with 1 point), sp3 (simplified perception with 3 points), spn (simplified perception with n points)
+  states: sp1 #image, sp1 (simplified perception with 1 point), sp3 (simplified perception with 3 points), spn (simplified perception with n points)
   rewards: follow_right_lane_center_v_w_linear # follow_right_lane_only_center, follow_right_lane_center_v_step, follow_right_lane_center_v_w_linear
   framework: TensorFlow # TensorFlow, Pytorch
   total_episodes: 10
@@ -22,13 +22,13 @@ ros:
 
 retraining:
   ddpg:
-    retrain_ddpg_tf_actor_model_name: "DDPG_Actor_conv2d32x64_Critic_conv2d32x64_BESTLAP_ACTOR_Max90069_Epoch226_inTime20221017-163548.h5"
-    retrain_ddpg_tf_critic_model_name: "DDPG_Actor_conv2d32x64_Critic_conv2d32x64_BESTLAP_CRITIC_Max90069_Epoch226_inTime20221017-163548.h5"
+    retrain_ddpg_tf_actor_model_name:
+    retrain_ddpg_tf_critic_model_name:
 
 inference:
   ddpg:
-    inference_ddpg_tf_actor_model_name:
-    inference_ddpg_tf_critic_model_name:
+    inference_ddpg_tf_actor_model_name: "DDPG_Actor_conv2d32x64_Critic_conv2d32x64_BESTLAP_ACTOR_Max90069_Epoch226_inTime20221017-163548.h5"
+    inference_ddpg_tf_critic_model_name: "DDPG_Actor_conv2d32x64_Critic_conv2d32x64_BESTLAP_CRITIC_Max90069_Epoch226_inTime20221017-163548.h5"
 
 algorithm:
   ddpg:

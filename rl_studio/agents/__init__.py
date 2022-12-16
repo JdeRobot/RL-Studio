@@ -269,7 +269,7 @@ class TrainerFactory:
             raise NoValidTrainingType(agent)
 
 
-class InferenceFactory:
+class InferenceExecutorFactory:
     def __new__(cls, config):
 
         agent = config["settings"]["agent"]
@@ -277,29 +277,122 @@ class InferenceFactory:
         task = config["settings"]["task"]
         simulator = config["settings"]["simulator"]
         framework = config["settings"]["framework"]
-        print(
-            f"task:{task}, algorithm:{algorithm}, simulator:{simulator}, agent:{agent}, framework:{framework}"
+        print_messages(
+            "InferenceExecutorFactory",
+            task=task,
+            algorithm=algorithm,
+            simulator=simulator,
+            agent=agent,
+            framework=framework,
         )
 
-        if agent == AgentsType.ROBOT_MESH.value:
+        # =============================
+        # FollowLine - F1 - qlearn - Gazebo
+        # =============================
+        if (
+            task == TasksType.FOLLOWLINEGAZEBO.value
+            and agent == AgentsType.F1GAZEBO.value
+            and algorithm == AlgorithmsType.QLEARN.value
+            and simulator == EnvsType.GAZEBO.value
+        ):
+            from rl_studio.agents.f1.inference_qlearn import (
+                InferencerFollowLineQlearnF1Gazebo,
+            )
+
+            return InferencerFollowLineQlearnF1Gazebo(config)
+
+        # =============================
+        # FollowLine - F1 - DDPG - Gazebo - TensorFlow
+        # =============================
+        elif (
+            task == TasksType.FOLLOWLINEGAZEBO.value
+            and agent == AgentsType.F1GAZEBO.value
+            and algorithm == AlgorithmsType.DDPG.value
+            and simulator == EnvsType.GAZEBO.value
+            and framework == FrameworksType.TF.value
+        ):
+            from rl_studio.agents.f1.inference_followline_ddpg_f1_gazebo_tf import (
+                InferencerFollowLineDDPGF1GazeboTF,
+            )
+
+            return InferencerFollowLineDDPGF1GazeboTF(config)
+
+        # =============================
+        # FollowLine - F1 - DQN - Gazebo - TensorFlow
+        # =============================
+        elif (
+            task == TasksType.FOLLOWLINEGAZEBO.value
+            and agent == AgentsType.F1GAZEBO.value
+            and algorithm == AlgorithmsType.DQN.value
+            and simulator == EnvsType.GAZEBO.value
+            and framework == FrameworksType.TF.value
+        ):
+            from rl_studio.agents.f1.inference_dqn import (
+                InferencerFollowLineDQNF1GazeboTF,
+            )
+
+            return InferencerFollowLineDQNF1GazeboTF(config)
+
+        # =============================
+        # Follow Lane - F1 - qlearn - Gazebo
+        # =============================
+        elif (
+            task == TasksType.FOLLOWLANEGAZEBO.value
+            and agent == AgentsType.F1GAZEBO.value
+            and algorithm == AlgorithmsType.QLEARN.value
+            and simulator == EnvsType.GAZEBO.value
+        ):
+            from rl_studio.agents.f1.inference_dqn import (
+                InferencerFollowLaneQlearnF1Gazebo,
+            )
+
+            return InferencerFollowLaneQlearnF1Gazebo(config)
+
+        # =============================
+        # Follow Lane - F1 - DDPG - Gazebo - TF
+        # =============================
+        elif (
+            task == TasksType.FOLLOWLANEGAZEBO.value
+            and agent == AgentsType.F1GAZEBO.value
+            and algorithm == AlgorithmsType.DDPG.value
+            and simulator == EnvsType.GAZEBO.value
+            and framework == FrameworksType.TF.value
+        ):
+            from rl_studio.agents.f1.inference_followlane_ddpg_f1_gazebo_tf import (
+                InferencerFollowLaneDDPGF1GazeboTF,
+            )
+
+            return InferencerFollowLaneDDPGF1GazeboTF(config)
+
+        # =============================
+        # Follow Lane - F1 - DQN - Gazebo - TF
+        # =============================
+        elif (
+            task == TasksType.FOLLOWLANEGAZEBO.value
+            and agent == AgentsType.F1GAZEBO.value
+            and algorithm == AlgorithmsType.DQN.value
+            and simulator == EnvsType.GAZEBO.value
+            and framework == FrameworksType.TF.value
+        ):
+            from rl_studio.agents.f1.inference_dqn import (
+                InferencerFollowLaneDQNF1GazeboTF,
+            )
+
+            return InferencerFollowLaneDQNF1GazeboTF(config)
+
+        # =============================
+        # Robot Mesh - Qlearn - Gazebo
+        # =============================
+        elif agent == AgentsType.ROBOT_MESH.value:
             from rl_studio.agents.robot_mesh.inference_qlearn import (
                 QLearnRobotMeshInferencer,
             )
 
             return QLearnRobotMeshInferencer(config)
 
-        elif agent == AgentsType.F1.value:
-            from rl_studio.agents.f1.inference_qlearn import F1Inferencer
-
-            return F1Inferencer(config)
-
-        # elif agent == AgentsType.TURTLEBOT.value:
-        #     from rl_studio.agents.turtlebot.turtlebot_Inferencer import TurtlebotInferencer
-        #
-        #     return TurtlebotInferencer(config)
-        #
-        #
-        #
+        # =============================
+        # CartPole - DQN
+        # =============================
         elif agent == AgentsType.CARTPOLE.value:
             if algorithm == AlgorithmsType.DQN.value:
                 from rl_studio.agents.cartpole.inference_dqn import (
@@ -312,6 +405,9 @@ class InferenceFactory:
 
             return CartpoleInferencer(config)
 
+        # =============================
+        # Mountain Car - Qlearn
+        # =============================
         elif agent == AgentsType.MOUNTAIN_CAR.value:
             from rl_studio.agents.mountain_car.inference_qlearn import (
                 MountainCarInferencer,
