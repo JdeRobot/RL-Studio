@@ -88,6 +88,13 @@ class TrainerFactory:
                 )
 
                 return QlearnAutoparkingTrainer(config)
+
+        elif agent == AgentsType.PENDULUM.value:
+            if algorithm == AlgorithmsType.DDPG.value:
+                from rl_studio.agents.pendulum.train_ddpg import (
+                    DDPGPendulumTrainer as PendulumTrainer,
+                )
+            return PendulumTrainer(config)
         else:
             raise NoValidTrainingType(agent)
 
