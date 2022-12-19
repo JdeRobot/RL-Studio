@@ -9,20 +9,20 @@ class F1GazeboRewards:
         reward = np.round(np.exp(-d), 4)
         return reward
 
-    def rewards_followline_center(self, center):
+    def rewards_followline_center(self, center, rewards):
         """
         original for Following Line
         """
         done = False
         if center > 0.9:
             done = True
-            reward = self.rewards["penal"]
+            reward = rewards["penal"]
         elif 0 <= center <= 0.2:
-            reward = self.rewards["from_0_to_02"]
+            reward = rewards["from_10"]
         elif 0.2 < center <= 0.4:
-            reward = self.rewards["from_02_to_04"]
+            reward = rewards["from_02"]
         else:
-            reward = self.rewards["from_others"]
+            reward = rewards["from_01"]
 
         return reward, done
 
@@ -87,7 +87,9 @@ class F1GazeboRewards:
 
         return reward, done
 
-    def reward_v_w_center_linear_second(self, vel_cmd, center):
+    def rewards_followline_v_w_centerline(
+        self, vel_cmd, center, rewards, beta_1, beta_0
+    ):
         """
         Applies a linear regression between v and w
         Supposing there is a lineal relationship V and W. So, formula w = B_0 + x*v.
@@ -116,13 +118,13 @@ class F1GazeboRewards:
         #    beta0=self.beta_0,
         # )
 
-        w_target = self.beta_0 - (self.beta_1 * abs(vel_cmd.linear.x))
+        w_target = beta_0 - (beta_1 * abs(vel_cmd.linear.x))
         w_error = abs(w_target - abs(vel_cmd.angular.z))
         done = False
 
         if abs(center) > 0.9:
             done = True
-            reward = self.rewards["penal"]
+            reward = rewards["penal"]
         elif center > 0:
             reward = (
                 (1 / math.exp(w_error)) + (1 / math.exp(center)) + 2

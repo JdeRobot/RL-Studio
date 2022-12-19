@@ -69,6 +69,7 @@ class LoadEnvParams:
 
 class LoadEnvVariablesDDPGGazebo:
     """
+    ONLY FOR DDPG algorithm
     Creates a new variable 'environment', which contains values to Gazebo env, Carla env ...
     """
 
@@ -236,3 +237,110 @@ class LoadGlobalParams:
         self.actions_set = config["actions"][self.actions]
         ####### Rewards
         self.rewards = config["settings"]["rewards"]
+
+
+class LoadEnvVariablesQlearnGazebo:
+    """
+    ONLY FOR Qlearn algorithm
+    Creates a new variable 'environment', which contains values to Gazebo env, Carla env ...
+    """
+
+    def __init__(self, config) -> None:
+        """environment variable for reset(), step() methods"""
+        # self.agent = config["settings"]["agent"]
+        # self.algorithm = config["settings"]["algorithm"]
+        # self.task = config["settings"]["task"]
+        # self.framework = config["settings"]["framework"]
+        self.environment_set = config["settings"]["environment_set"]
+        self.env = config["settings"]["env"]
+        self.agent = config["settings"]["agent"]
+        self.states = config["settings"]["states"]
+        self.actions = config["settings"]["actions"]
+        self.actions_set = config["actions"][self.actions]
+        self.rewards = config["settings"]["rewards"]
+        ##### environment variable
+        self.environment = {}
+        self.environment["agent"] = config["settings"]["agent"]
+        self.environment["algorithm"] = config["settings"]["algorithm"]
+        self.environment["task"] = config["settings"]["task"]
+        self.environment["framework"] = config["settings"]["framework"]
+        self.environment["model_state_name"] = config[self.environment_set][self.env][
+            "model_state_name"
+        ]
+        # Training/inference
+        self.environment["mode"] = config["settings"]["mode"]
+        self.environment["retrain_qlearn_model_name"] = config["retraining"]["qlearn"][
+            "retrain_qlearn_model_name"
+        ]
+        self.environment["inference_qlearn_model_name"] = config["inference"]["qlearn"][
+            "inference_qlearn_model_name"
+        ]
+
+        # Env
+        self.environment["env"] = config["settings"]["env"]
+        self.environment["training_type"] = config[self.environment_set][self.env][
+            "training_type"
+        ]
+        self.environment["launchfile"] = config[self.environment_set][self.env][
+            "launchfile"
+        ]
+        self.environment["environment_folder"] = config[self.environment_set][self.env][
+            "environment_folder"
+        ]
+        self.environment["robot_name"] = config[self.environment_set][self.env][
+            "robot_name"
+        ]
+        self.environment["estimated_steps"] = config[self.environment_set][self.env][
+            "estimated_steps"
+        ]
+        self.environment["alternate_pose"] = config[self.environment_set][self.env][
+            "alternate_pose"
+        ]
+        self.environment["sensor"] = config[self.environment_set][self.env]["sensor"]
+        self.environment["gazebo_start_pose"] = [
+            config[self.environment_set][self.env]["circuit_positions_set"][0]
+        ]
+        self.environment["gazebo_random_start_pose"] = config[self.environment_set][
+            self.env
+        ]["circuit_positions_set"]
+        self.environment["telemetry_mask"] = config[self.environment_set][self.env][
+            "telemetry_mask"
+        ]
+        self.environment["telemetry"] = config[self.environment_set][self.env][
+            "telemetry"
+        ]
+
+        # Image
+        self.environment["height_image"] = config["agents"][self.agent][
+            "camera_params"
+        ]["height"]
+        self.environment["width_image"] = config["agents"][self.agent]["camera_params"][
+            "width"
+        ]
+        self.environment["center_image"] = config["agents"][self.agent][
+            "camera_params"
+        ]["center_image"]
+        self.environment["num_regions"] = config["agents"][self.agent]["camera_params"][
+            "num_regions"
+        ]
+        # States
+        self.environment["states"] = config["settings"]["states"]
+        self.environment["x_row"] = config["states"][self.states][0]
+
+        # Actions
+        self.environment["action_space"] = config["settings"]["actions"]
+        self.environment["actions"] = config["actions"][self.actions]
+
+        # Rewards
+        self.environment["reward_function"] = config["settings"]["rewards"]
+        self.environment["rewards"] = config["rewards"][self.rewards]
+        self.environment["min_reward"] = config["rewards"][self.rewards]["min_reward"]
+
+        # Algorithm
+        self.environment["alpha"] = config["algorithm"]["qlearn"]["alpha"]
+        self.environment["epsilon"] = config["algorithm"]["qlearn"]["epsilon"]
+        self.environment["epsilon_min"] = config["algorithm"]["qlearn"]["epsilon_min"]
+        self.environment["gamma"] = config["algorithm"]["qlearn"]["gamma"]
+        #
+        self.environment["ROS_MASTER_URI"] = config["ros"]["ros_master_uri"]
+        self.environment["GAZEBO_MASTER_URI"] = config["ros"]["gazebo_master_uri"]

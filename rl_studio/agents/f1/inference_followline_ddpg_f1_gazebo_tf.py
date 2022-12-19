@@ -4,37 +4,41 @@ import random
 import time
 
 import gymnasium as gym
+
+# import matplotlib.pyplot as plt
 import numpy as np
 import tensorflow as tf
 from tqdm import tqdm
 
+from rl_studio.agents.utils import (
+    print_messages,
+    print_dictionnay,
+    render_params,
+    save_dataframe_episodes,
+)
 from rl_studio.agents.f1.loaders import (
     LoadAlgorithmParams,
     LoadEnvParams,
     LoadEnvVariablesDDPGGazebo,
     LoadGlobalParams,
 )
-from rl_studio.agents.utils import (
-    print_messages,
-    render_params,
-    save_dataframe_episodes,
-    save_actorcritic_model,
-)
+
 from rl_studio.algorithms.ddpg import (
     ModifiedTensorBoard,
     OUActionNoise,
     Buffer,
     DDPGAgent,
 )
+from rl_studio.algorithms.utils import save_actorcritic_model
 from rl_studio.envs.gazebo.gazebo_envs import *
 from rl_studio.visual.ascii.images import JDEROBOT_LOGO
 from rl_studio.visual.ascii.text import JDEROBOT, LETS_GO
 
 
-class TrainerFollowLaneDDPGF1GazeboTF:
+class InferencerFollowLineDDPGF1GazeboTF:
     """
-    Mode: training
-    Task: Follow Lane
+    Mode: Inference
+    Task: Follow Line
     Algorithm: DDPG
     Agent: F1
     Simulator: Gazebo
@@ -49,10 +53,10 @@ class TrainerFollowLaneDDPGF1GazeboTF:
 
     def main(self):
         print_messages(
-            "TrainerFollowLaneDDPGF1GazeboTF",
+            "InferencerFollowLineDDPGF1GazeboTF",
             # algoritmhs_params=self.algoritmhs_params,
             # env_params=self.env_params,
-            environment=self.environment.environment,
+            # environment=self.environment.environment,
             environment_rewards=self.environment.environment["rewards"],
             # global_params=self.global_params,
             global_params_models_dir=self.global_params.models_dir,
@@ -63,6 +67,7 @@ class TrainerFollowLaneDDPGF1GazeboTF:
             # env_params_env_name=self.env_params.env_name
             # config=config,
         )
+        print_dictionnay(self.environment.environment)
 
         ## Load Environment
         env = gym.make(self.env_params.env_name, **self.environment.environment)
@@ -85,13 +90,13 @@ class TrainerFollowLaneDDPGF1GazeboTF:
 
         # Print state and actions for Debug
         print_messages(
-            "In train_ddpg.py",
+            "In InferencerFollowLineDDPGF1GazeboTF",
             state_size=state_size,
             action_space=self.global_params.actions,
             action_size=len(self.global_params.actions_set),
         )
         print_messages(
-            "train_ddpg()",
+            "InferencerFollowLineDDPGF1GazeboTF()",
             std_deviation=float(self.algoritmhs_params.std_dev),
             action_size=len(self.global_params.actions_set),
             logs_tensorboard_dir=self.global_params.logs_tensorboard_dir,
@@ -100,11 +105,12 @@ class TrainerFollowLaneDDPGF1GazeboTF:
             buffer_capacity=self.algoritmhs_params.buffer_capacity,
             batch_size=self.algoritmhs_params.batch_size,
         )
+
         ## --------------------- Deep Nets ------------------
-        ou_noise = OUActionNoise(
-            mean=np.zeros(1),
-            std_deviation=float(self.algoritmhs_params.std_dev) * np.ones(1),
-        )
+        # ou_noise = OUActionNoise(
+        #    mean=np.zeros(1),
+        #    std_deviation=float(self.algoritmhs_params.std_dev) * np.ones(1),
+        # )
         # Init Agents
         ac_agent = DDPGAgent(
             self.environment.environment,
@@ -112,22 +118,26 @@ class TrainerFollowLaneDDPGF1GazeboTF:
             state_size,
             self.global_params.models_dir,
         )
-        # init Buffer
-        buffer = Buffer(
-            state_size,
-            len(self.global_params.actions_set),
-            self.global_params.states,
-            self.global_params.actions,
-            self.algoritmhs_params.buffer_capacity,
-            self.algoritmhs_params.batch_size,
+        ## ----- Load model -----
+        model = ac_agent.load_inference_model(
+            self.global_params.models_dir, self.environment.environment
         )
+        # init Buffer
+        # buffer = Buffer(
+        #    state_size,
+        #    len(self.global_params.actions_set),
+        #    self.global_params.states,
+        #    self.global_params.actions,
+        #    self.algoritmhs_params.buffer_capacity,
+        #    self.algoritmhs_params.batch_size,
+        # )
         # Init TensorBoard
         tensorboard = ModifiedTensorBoard(
             log_dir=f"{self.global_params.logs_tensorboard_dir}/{self.algoritmhs_params.model_name}-{time.strftime('%Y%m%d-%H%M%S')}"
         )
         # show rewards stats per episode
 
-        ## -------------    START TRAINING --------------------
+        ## -------------    START INFERENCING --------------------
         print(LETS_GO)
         for episode in tqdm(
             range(1, self.env_params.total_episodes + 1), ascii=True, unit="episodes"
@@ -142,12 +152,23 @@ class TrainerFollowLaneDDPGF1GazeboTF:
 
             while not done:
                 tf_prev_state = tf.expand_dims(tf.convert_to_tensor(prev_state), 0)
-                action = ac_agent.policy(
-                    tf_prev_state, ou_noise, self.global_params.actions
+                # action = ac_agent.policy(
+                #    tf_prev_state, ou_noise, self.global_params.actions
+                # )
+                actions = model.predict(tf_prev_state)
+                action = [[actions[0][0][0], actions[1][0][0]]]
+                print_messages(
+                    "inference",
+                    action=action,
+                    action_0=action[0],
+                    action_0_0=action[0][0],
+                    action_0_1=action[0][1],
                 )
+
                 state, reward, done, _ = env.step(action, step)
                 cumulated_reward += reward
 
+                """ NO UPDATES
                 # learn and update
                 buffer.record((prev_state, action, reward, state))
                 buffer.learn(ac_agent, self.algoritmhs_params.gamma)
@@ -161,7 +182,7 @@ class TrainerFollowLaneDDPGF1GazeboTF:
                     ac_agent.critic_model.variables,
                     self.algoritmhs_params.tau,
                 )
-
+                """
                 #
                 prev_state = state
                 step += 1
@@ -229,14 +250,7 @@ class TrainerFollowLaneDDPGF1GazeboTF:
                         in_best_step=best_step,
                         with_highest_reward=int(current_max_reward),
                     )
-                    save_actorcritic_model(
-                        ac_agent,
-                        self.global_params,
-                        self.algoritmhs_params,
-                        cumulated_reward,
-                        episode,
-                        "LAPCOMPLETED",
-                    )
+
             #####################################################
             #### save best lap in episode
             if (
@@ -267,14 +281,6 @@ class TrainerFollowLaneDDPGF1GazeboTF:
                     self.global_params.metrics_data_dir,
                     self.global_params.best_current_epoch,
                 )
-                save_actorcritic_model(
-                    ac_agent,
-                    self.global_params,
-                    self.algoritmhs_params,
-                    cumulated_reward,
-                    episode,
-                    "BESTLAP",
-                )
 
             #####################################################
             ### end episode in time settings: 2 hours, 15 hours...
@@ -296,15 +302,6 @@ class TrainerFollowLaneDDPGF1GazeboTF:
                     in_the_very_best_step=best_step,
                     with_the_highest_Total_reward=int(current_max_reward),
                 )
-                if cumulated_reward > current_max_reward:
-                    save_actorcritic_model(
-                        ac_agent,
-                        self.global_params,
-                        self.algoritmhs_params,
-                        cumulated_reward,
-                        episode,
-                        "FINISHTIME",
-                    )
 
                 break
 
@@ -346,14 +343,6 @@ class TrainerFollowLaneDDPGF1GazeboTF:
                 )
                 self.global_params.aggr_ep_rewards["total_training_time"].append(
                     (datetime.now() - start_time).total_seconds()
-                )
-                save_actorcritic_model(
-                    ac_agent,
-                    self.global_params,
-                    self.algoritmhs_params,
-                    cumulated_reward,
-                    episode,
-                    "BATCH",
                 )
 
                 save_dataframe_episodes(

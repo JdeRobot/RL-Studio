@@ -1,5 +1,5 @@
 #############################################
-# - Task: Follow Lane
+# - Task: Follow Line
 # - Algorithm: DDPG
 # - actions: discrete and continuous
 # - State: Simplified perception and raw image
@@ -29,7 +29,7 @@ from rl_studio.envs.gazebo.f1.models.simplified_perception import (
 )
 
 
-class FollowLaneDDPGF1GazeboTF(F1Env):
+class FollowLineDDPGF1GazeboTF(F1Env):
     def __init__(self, **config):
 
         F1Env.__init__(self, **config)
@@ -85,7 +85,7 @@ class FollowLaneDDPGF1GazeboTF(F1Env):
         self.telemetry = config["telemetry"]
 
         print_messages(
-            "FollowLaneDDPGF1GazeboTF()",
+            "FollowLineDDPGF1GazeboTF()",
             actions=self.actions,
             len_actions=len(self.actions),
             # actions_v=self.actions["v"], # for continuous actions
@@ -113,9 +113,9 @@ class FollowLaneDDPGF1GazeboTF(F1Env):
         self._gazebo_reset()
         # === POSE ===
         if self.alternate_pose:
-            self._gazebo_set_random_pose_f1_follow_rigth_lane()
+            self._gazebo_set_random_pose_f1_followline()
         else:
-            self._gazebo_set_fix_pose_f1_follow_right_lane()
+            self._gazebo_set_fix_pose_f1_followline()
 
         self._gazebo_unpause()
 
@@ -231,19 +231,12 @@ class FollowLaneDDPGF1GazeboTF(F1Env):
             )
 
         ##==== get Rewards
-        if self.reward_function == "follow_right_lane_center_v_step":
-            reward, done = self.f1gazeborewards.rewards_followlane_v_centerline_step(
-                vel_cmd, center, step, self.rewards
-            )
-        elif (
-            self.reward_function == "follow_right_lane_center_v_w_linear"
-        ):  # this reward function ONLY for continuous actions
-            reward, done = self.f1gazeborewards.rewards_followlane_v_w_centerline(
-                vel_cmd, center, self.rewards, self.beta_1, self.beta_0
-            )
-        else:
-            reward, done = self.f1gazeborewards.rewards_followlane_centerline(
+        if self.reward_function == "followline_center":
+            reward, done = self.f1gazeborewards.rewards_followline_center(
                 center, self.rewards
             )
-
+        else:
+            reward, done = self.f1gazeborewards.rewards_followline_v_w_centerline(
+                vel_cmd, center, self.rewards, self.beta_1, self.beta_0
+            )
         return state, reward, done, {}

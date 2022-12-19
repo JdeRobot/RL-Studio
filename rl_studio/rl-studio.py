@@ -2,7 +2,7 @@ import argparse
 
 import yaml
 
-from rl_studio.agents import TrainerFactory, InferenceExecutorFactory
+from rl_studio.agents import TrainerFactory, InferencerFactory
 
 
 def main():
@@ -20,7 +20,7 @@ def main():
     config_file = yaml.load(args.file, Loader=yaml.FullLoader)
 
     if config_file["settings"]["mode"] == "inference":
-        inferencer = InferenceExecutorFactory(config_file)
+        inferencer = InferencerFactory(config_file)
         inferencer.main()
     else:
         trainer = TrainerFactory(config_file)

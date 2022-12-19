@@ -403,6 +403,58 @@ class GazeboEnv(gym.Env):
             print(f"Service call failed: {e}")
         return pos_number
 
+    def _gazebo_set_fix_pose_f1_followline(self):
+        pos_number = self.start_pose
+        state = ModelState()
+        state.model_name = self.model_state_name
+        # Pose Position
+        state.pose.position.x = self.start_pose[0][0]
+        state.pose.position.y = self.start_pose[0][1]
+        state.pose.position.z = self.start_pose[0][2]
+
+        # Pose orientation
+        state.pose.orientation.x = self.start_pose[0][3]
+        state.pose.orientation.y = self.start_pose[0][4]
+        state.pose.orientation.z = self.start_pose[0][5]
+        state.pose.orientation.w = self.start_pose[0][6]
+
+        rospy.wait_for_service("/gazebo/set_model_state")
+        try:
+            set_state = rospy.ServiceProxy("/gazebo/set_model_state", SetModelState)
+            set_state(state)
+        except rospy.ServiceException as e:
+            print(f"Service call failed: {e}")
+        return pos_number
+
+    def _gazebo_set_random_pose_f1_followline(self):
+        """
+        (pos_number, pose_x, pose_y, pose_z, or_x, or_y, or_z, or_z)
+        """
+        random_init = np.random.randint(0, high=len(self.start_random_pose))
+        # pos_number = self.start_random_pose[posit][0]
+        pos_number = self.start_random_pose[random_init][0]
+
+        state = ModelState()
+        state.model_name = self.model_state_name
+        # Pose Position
+        state.pose.position.x = self.start_random_pose[random_init][0]
+        state.pose.position.y = self.start_random_pose[random_init][1]
+        state.pose.position.z = self.start_random_pose[random_init][2]
+        # Pose orientation
+        state.pose.orientation.x = self.start_random_pose[random_init][3]
+        state.pose.orientation.y = self.start_random_pose[random_init][4]
+        state.pose.orientation.z = self.start_random_pose[random_init][5]
+        state.pose.orientation.w = self.start_random_pose[random_init][6]
+
+        rospy.wait_for_service("/gazebo/set_model_state")
+        try:
+            set_state = rospy.ServiceProxy("/gazebo/set_model_state", SetModelState)
+            set_state(state)
+        except rospy.ServiceException as e:
+            print(f"Service call failed: {e}")
+        return pos_number
+
+
     def _render(self, mode="human", close=False):
 
         if close:

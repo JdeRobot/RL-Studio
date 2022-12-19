@@ -13,6 +13,7 @@
 #####################################################################################
 
 settings:
+  task: follow_line
   output_dir: "./logs/"
   save_model: True
   save_positions: True
@@ -23,13 +24,16 @@ settings:
   model_state_name: f1_renault
   total_episodes: 50_000
   training_time: 6
-  save_episodes: 50
+  save_episodes: 500
   save_every_step: 1_000
   lap_completed: False
   load_qlearning_pickle_model: False
   load_qlearning_pickle_file: 1_20210622_1512_actions_set_simple_epsilon_0.99_QTABLE.pkl
   load_qlearning_model: False
   load_qlearning_table: train_qlearning_f1_simple_EPISODE_1_20210625-082424-qtable.npy
+  load_ddpg_tf_model: False
+  ddpg_tf_actor_model: logs/ddpg_f1_follow_lane_camera/models/DDPG_Actor_conv2d256x512_Critic_conv2d32x64_actionsCont_stateImg_BESTLAP_ACTOR_Max8868_Epoch1520_inTime20221011-183242.h5
+  ddpg_tf_critic_model: logs/ddpg_f1_follow_lane_camera/models/DDPG_Actor_conv2d256x512_Critic_conv2d32x64_actionsCont_stateImg_BESTLAP_CRITIC_Max8868_Epoch1520_inTime20221011-183242.h5  
   ros_master_uri: '11311'
   gazebo_master_uri: '11345'  
 
@@ -58,6 +62,7 @@ agent:
       image_resizing: 100
       new_image_size: 32
       num_regions: 16
+      lower_limit: 220
     states:
       state_space: image #sp1
       image:
@@ -123,10 +128,10 @@ actions:
       test:
         0: [ 0, 0 ]
       continuous:
-        v_min: 2
-        v_max: 30
-        w_right: -3
-        w_left: 3
+        v_min: 2 # 2
+        v_max: 30 # 30
+        w_right: -3 # -3
+        w_left: 3 # 3
 
 
 #####################################################################################
@@ -145,16 +150,17 @@ environments:
   simple:
     env_name: F1Env-v0
     circuit_name: simple
-    training_type: ddpg #qlearn_camera
+    training_type: ddpg_follow_line #qlearn_camera_follow_line, qlearn_laser_follow_line, qlearn_camera_follow_lane, ddpg_follow_line, ddpg_follow_lane, dqn_follow_line, dqn_follow_lane
     launchfile: simple_circuit.launch
     environment_folder: f1
     robot_name: f1_renault
     start_pose: 0
     alternate_pose: False
-    estimated_steps: 4000
+    estimated_steps: 15_000
     sensor: camera
     circuit_positions_set:
-      0: [53.462, -41.988, 0.004, 0, 0, 1.57, -1.57]
+      0: [52.800, -41.988, 0.004, 0, 0, 1.57, -1.57]
+      #0: [53.462, -41.988, 0.004, 0, 0, 1.57, -1.57]
       1: [53.462, -8.734, 0.004, 0, 0, 1.57, -1.57]
       2: [39.712, -30.741, 0.004, 0, 0, 1.56, 1.56]
       3: [-6.861, -36.481, 0.004, 0, 0.01, -0.858, 0.613]

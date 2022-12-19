@@ -1,12 +1,15 @@
 from datetime import datetime, timedelta
 import os
+import pprint
 import random
 import time
 
 import gymnasium as gym
+
 import numpy as np
 import tensorflow as tf
 from tqdm import tqdm
+
 
 from rl_studio.agents.f1.loaders import (
     LoadAlgorithmParams,
@@ -14,27 +17,29 @@ from rl_studio.agents.f1.loaders import (
     LoadEnvVariablesDDPGGazebo,
     LoadGlobalParams,
 )
-from rl_studio.agents.utils import (
-    print_messages,
-    render_params,
-    save_dataframe_episodes,
-    save_actorcritic_model,
-)
+
 from rl_studio.algorithms.ddpg import (
     ModifiedTensorBoard,
     OUActionNoise,
     Buffer,
     DDPGAgent,
 )
+from rl_studio.agents.utils import (
+    print_messages,
+    print_dictionnay,
+    render_params,
+    save_dataframe_episodes,
+    save_actorcritic_model,
+)
 from rl_studio.envs.gazebo.gazebo_envs import *
 from rl_studio.visual.ascii.images import JDEROBOT_LOGO
 from rl_studio.visual.ascii.text import JDEROBOT, LETS_GO
 
 
-class TrainerFollowLaneDDPGF1GazeboTF:
+class TrainerFollowLineDDPGF1GazeboTF:
     """
     Mode: training
-    Task: Follow Lane
+    Task: Follow Line
     Algorithm: DDPG
     Agent: F1
     Simulator: Gazebo
@@ -49,10 +54,10 @@ class TrainerFollowLaneDDPGF1GazeboTF:
 
     def main(self):
         print_messages(
-            "TrainerFollowLaneDDPGF1GazeboTF",
+            "TrainerFollowLineDDPGF1GazeboTF",
             # algoritmhs_params=self.algoritmhs_params,
             # env_params=self.env_params,
-            environment=self.environment.environment,
+            # environment=self.environment.environment,
             environment_rewards=self.environment.environment["rewards"],
             # global_params=self.global_params,
             global_params_models_dir=self.global_params.models_dir,
@@ -63,6 +68,7 @@ class TrainerFollowLaneDDPGF1GazeboTF:
             # env_params_env_name=self.env_params.env_name
             # config=config,
         )
+        print_dictionnay(self.environment.environment)
 
         ## Load Environment
         env = gym.make(self.env_params.env_name, **self.environment.environment)

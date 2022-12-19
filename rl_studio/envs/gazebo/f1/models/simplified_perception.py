@@ -7,10 +7,13 @@ from rl_studio.envs.gazebo.f1.models.utils import F1GazeboUtils
 class F1GazeboSimplifiedPerception:
     def processed_image(self, img, height, width, x_row, center_image):
         """
-        Convert img to HSV. Get the image processed. Get 3 lines from the image.
+        In FollowLine tasks, gets the centers of central line
+        In Followlane Tasks, gets the center of lane
 
         :parameters: input image 640x480
-        :return: x, y, z: 3 coordinates
+        :return:
+            centrals: lists with distance to center in pixels
+            cntrals_normalized: lists with distance in range [0,1] for calculating rewards
         """
         image_middle_line = height // 2
         img_sliced = img[image_middle_line:]
@@ -41,6 +44,9 @@ class F1GazeboSimplifiedPerception:
             return 0
 
     def calculate_observation(self, state, center_image, pixel_region: list) -> list:
+        """
+        returns list of states in range [1,17]
+        """
         final_state = []
         for _, x in enumerate(state):
             final_state.append(int((center_image - x) / pixel_region) + 1)

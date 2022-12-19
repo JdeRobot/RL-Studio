@@ -1,6 +1,6 @@
 settings:
   mode: inference # training, retraining, inference
-  task: follow_lane_gazebo # follow_line_gazebo, follow_lane_gazebo, autoparking_gazebo
+  task: follow_line_gazebo # follow_line_gazebo, follow_lane_gazebo, autoparking_gazebo
   algorithm: ddpg # qlearn, dqn, ddpg, ppo
   simulator: gazebo # openai, carla, gazebo, sumo
   environment_set: gazebo_environments # gazebo_environments, carla_environments
@@ -8,7 +8,7 @@ settings:
   agent: f1 # f1, autoparkingRL, auto_carla, mountain_car, robot_mesh, cartpole, turtlebot
   actions: continuous # continuous, simple, medium, hard, test, autoparking_simple
   states: sp1 #image, sp1 (simplified perception with 1 point), sp3 (simplified perception with 3 points), spn (simplified perception with n points)
-  rewards: follow_right_lane_only_center # rewards_followline_center
+  rewards: followline_center # rewards_followline_center
   framework: TensorFlow # TensorFlow, Pytorch
   total_episodes: 10
   training_time: 6
@@ -19,6 +19,11 @@ settings:
 ros:
   ros_master_uri: "11311"
   gazebo_master_uri: "11345"
+
+retraining:
+  ddpg:
+    retrain_ddpg_tf_actor_model_name:
+    retrain_ddpg_tf_critic_model_name:
 
 inference:
   ddpg:
@@ -88,21 +93,14 @@ actions:
     w: [-3, 3]
 
 rewards:
-  follow_right_lane_only_center:
+  followline_center:
     from_10: 10
     from_02: 2
     from_01: 1
     penal: -100
     min_reward: 5_000
     highest_reward: 100
-  follow_right_lane_center_v_step:
-    from_10: 10
-    from_02: 2
-    from_01: 1
-    penal: -100
-    min_reward: 5_000
-    highest_reward: 100
-  follow_right_lane_center_v_w_linear: # only for continuous actions
+  followline_center_v_w_linear: # only for continuous actions
     beta_0: 3
     beta_1: -0.1
     penal: 0

@@ -62,7 +62,9 @@ class TrainerFactory:
             and algorithm == AlgorithmsType.QLEARN.value
             and simulator == EnvsType.GAZEBO.value
         ):
-            from rl_studio.agents.f1.train_qlearn import TrainerFollowLineQlearnF1Gazebo
+            from rl_studio.agents.f1.train_followline_qlearn_f1_gazebo import (
+                TrainerFollowLineQlearnF1Gazebo,
+            )
 
             return TrainerFollowLineQlearnF1Gazebo(config)
 
@@ -76,7 +78,9 @@ class TrainerFactory:
             and simulator == EnvsType.GAZEBO.value
             and framework == FrameworksType.TF.value
         ):
-            from rl_studio.agents.f1.train_ddpg import TrainerFollowLineDDPGF1GazeboTF
+            from rl_studio.agents.f1.train_followline_ddpg_f1_gazebo_tf import (
+                TrainerFollowLineDDPGF1GazeboTF,
+            )
 
             return TrainerFollowLineDDPGF1GazeboTF(config)
 
@@ -269,7 +273,7 @@ class TrainerFactory:
             raise NoValidTrainingType(agent)
 
 
-class InferenceExecutorFactory:
+class InferencerFactory:
     def __new__(cls, config):
 
         agent = config["settings"]["agent"]
