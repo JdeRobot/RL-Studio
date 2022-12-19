@@ -26,7 +26,7 @@ environments:
     full_experimentation_runs: 0
     update_every: 20
     show_every: 50
-    objective_reward: -400
+    objective_reward: -350
 #    block_experience_batch: False
     block_experience_batch: False
   #  random_start_level: 0.05

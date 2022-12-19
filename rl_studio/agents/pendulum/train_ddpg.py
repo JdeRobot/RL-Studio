@@ -2,7 +2,7 @@ import datetime
 import time
 import random
 
-import gym
+import gymnasium as gym
 import matplotlib.pyplot as plt
 from torch.utils import tensorboard
 from tqdm import tqdm
@@ -69,9 +69,6 @@ class DDPGPendulumTrainer:
         #                                   ))
         self.env = gym.make(self.env_name)
         self.RUNS = self.environment_params["runs"]
-        self.SHOW_EVERY = self.environment_params[
-            "show_every"
-        ]
         self.UPDATE_EVERY = self.environment_params[
             "update_every"
         ]  # How often the current progress is recorded
@@ -184,7 +181,8 @@ class DDPGPendulumTrainer:
         total_reward_in_epoch = 0
 
         for episode in tqdm(range(self.RUNS)):
-            state, done = self.env.reset(), False
+            state, _ = self.env.reset()
+            done = False
             self.actor.reset_noise()
             episode_reward = 0
             step = 0
@@ -196,7 +194,7 @@ class DDPGPendulumTrainer:
                 #     logging.debug("perturbated in step {} with action {}".format(episode_rew, perturbation_action))
 
                 action = self.actor.get_action(state, step)
-                new_state, reward, done, _ = self.env.step(action)
+                new_state, reward, _, done, _ = self.env.step(action)
                 self.memory.push(state, action, reward, new_state, done)
 
                 if len(self.memory) > self.batch_size:
@@ -209,9 +207,6 @@ class DDPGPendulumTrainer:
                 w.add_scalar("reward/episode_reward", episode_reward, global_step=episode)
                 w.add_scalar("loss/actor_loss", actor_loss, global_step=episode)
                 w.add_scalar("loss/critic_loss", critic_loss, global_step=episode)
-
-                if episode % self.SHOW_EVERY == 0:
-                    self.env.render()
 
             self.gather_statistics(actor_loss, step, episode_reward)
 
@@ -229,7 +224,7 @@ class DDPGPendulumTrainer:
                 if self.config["save_model"] and last_average > self.max_avg:
                     self.max_avg = total_reward_in_epoch / self.UPDATE_EVERY
                     logging.info(f"Saving model . . .")
-                    utils.save_ddpg_model(self.actor, start_time_format, last_average, self.params)
+                    utils.save_ddpg_model(self.actor, start_time_format, last_average)
 
                 if last_average >= self.OBJECTIVE_REWARD:
                     logging.info("Training objective reached!!")

@@ -2,7 +2,7 @@ import datetime
 import time
 import random
 
-import gym
+import gymnasium as gym
 import matplotlib.pyplot as plt
 from torch.utils import tensorboard
 from tqdm import tqdm
@@ -68,11 +68,8 @@ class DDPGPendulumInferencer:
         #                                   # ,random_start_level=self.RANDOM_START_LEVEL, initial_pole_angle=self.INITIAL_POLE_ANGLE,
         #                                   # non_recoverable_angle=non_recoverable_angle
         #                                   ))
-        self.env = gym.make(self.env_name)
+        self.env = gym.make(self.env_name, render_mode="human")
         self.RUNS = self.environment_params["runs"]
-        self.SHOW_EVERY = self.environment_params[
-            "show_every"
-        ]
         self.UPDATE_EVERY = self.environment_params[
             "update_every"
         ]  # How often the current progress is recorded
@@ -129,7 +126,8 @@ class DDPGPendulumInferencer:
         total_reward_in_epoch = 0
 
         for episode in tqdm(range(self.RUNS)):
-            state, done = self.env.reset(), False
+            state, _ = self.env.reset()
+            done = False
             episode_reward = 0
             step = 0
             while not done:
@@ -140,15 +138,12 @@ class DDPGPendulumInferencer:
                 #     logging.debug("perturbated in step {} with action {}".format(episode_rew, perturbation_action))
 
                 action = self.inferencer.inference(state)
-                new_state, reward, done, _ = self.env.step(action)
+                new_state, reward, _, done, _ = self.env.step(action)
                 state = new_state
                 episode_reward += reward
                 total_reward_in_epoch += reward
 
                 w.add_scalar("reward/episode_reward", episode_reward, global_step=episode)
-
-                if episode % self.SHOW_EVERY == 0:
-                    self.env.render()
 
             self.gather_statistics(step, episode_reward)
 
