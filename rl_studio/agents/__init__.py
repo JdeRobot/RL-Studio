@@ -90,7 +90,7 @@ class TrainerFactory:
                 return QlearnAutoparkingTrainer(config)
 
         elif agent == AgentsType.PENDULUM.value:
-            if algorithm == AlgorithmsType.DDPG.value:
+            if algorithm == AlgorithmsType.DDPG_TORCH.value:
                 from rl_studio.agents.pendulum.train_ddpg import (
                     DDPGPendulumTrainer as PendulumTrainer,
                 )
@@ -150,5 +150,11 @@ class InferenceExecutorFactory:
 
             return MountainCarInferencer(config)
 
+        elif agent == AgentsType.PENDULUM.value:
+            from rl_studio.agents.pendulum.inference_ddpg import (
+                DDPGPendulumInferencer as PendulumInferencer,
+            )
+
+            return PendulumInferencer(config)
         else:
             raise NoValidTrainingType(agent)

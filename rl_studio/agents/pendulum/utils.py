@@ -48,10 +48,9 @@ def save_metadata(algorithm, current_time, params):
     metadata.write("\n```\n\nALGORITHM PARAMETERS\n")
     metadata.write(markdownTable(params_to_markdown_list(params.algorithm)).setParams(row_sep='always').getMarkdown())
     metadata.close()
-def save_dqn_model(dqn, current_time, average, params):
-    base_file_name = "_epsilon_{}".format(round(epsilon, 2))
+def save_ddpg_model(dqn, current_time, average):
     file_dump = open(
-        "./logs/pendulum/dqn/checkpoints/" + current_time + base_file_name + "_DQN_WEIGHTS_avg_" + str(
+        "./logs/pendulum/dqn/checkpoints/" + current_time + "_DQN_WEIGHTS_avg_" + str(
             average) + ".pkl",
         "wb",
     )
@@ -59,13 +58,13 @@ def save_dqn_model(dqn, current_time, average, params):
     file_dump.close()
 
 
-def save_ddpg_model(actor, current_time, average, params):
+def save_ddpg_model(actor, current_time, average):
     file_dump = open(
         "./logs/pendulum/ddpg/checkpoints/" + current_time + "_actor_avg_" + str(
             average) + ".pkl",
         "wb",
     )
-    pickle.dump(actor.model, file_dump)
+    pickle.dump(actor, file_dump)
     file_dump.close()
 
 

@@ -24,9 +24,9 @@ environments:
 #    runs: 20000
     runs: 20000
     full_experimentation_runs: 0
-    update_every: 200
-    show_every: 1000
-    objective_reward: 500
+    update_every: 20
+    show_every: 50
+    objective_reward: -400
 #    block_experience_batch: False
     block_experience_batch: False
   #  random_start_level: 0.05
@@ -37,11 +37,11 @@ environments:
     non_recoverable_angle: 0.3
 
 inference:
-  ppo:
-    inference_file: /home/ruben/Desktop/my-RL-Studio/rl_studio/logs/cartpole/ppo/checkpoints/20221110_0937_actor_avg_500.0.pkl
+  ddpg_torch:
+    inference_file: /home/ruben/Desktop/my-RL-Studio/rl_studio/logs/pendulum/ddpg/checkpoints/20221219_0112_actor_avg_-381.2062594472542.pkl
 
 algorithm:
-    ddpg:
-      gamma: 1
-      hidden_size: 64
+    ddpg_torch:
+      gamma: 0.99
+      hidden_size: 512
       batch_size: 128

@@ -16,6 +16,7 @@ from rl_studio.algorithms.ddpg_torch import Actor, Critic, Memory
 from rl_studio.visual.ascii.images import JDEROBOT_LOGO
 from rl_studio.visual.ascii.text import JDEROBOT, LETS_GO
 from rl_studio.agents.pendulum.utils import store_rewards, save_metadata
+from rl_studio.wrappers.inference_rlstudio import InferencerWrapper
 
 
 # # https://github.com/openai/gym/blob/master/gym/core.py
@@ -33,7 +34,7 @@ from rl_studio.agents.pendulum.utils import store_rewards, save_metadata
 #         return act_k_inv * (action - act_b)
 
 
-class DDPGPendulumTrainer:
+class DDPGPendulumInferencer:
     def __init__(self, params):
 
         self.now = datetime.datetime.now()
@@ -88,29 +89,15 @@ class DDPGPendulumTrainer:
             [],
         )  # metrics
         # recorded for graph
-        self.GAMMA = params.algorithm["params"]["gamma"]
-        hidden_size = params.algorithm["params"]["hidden_size"]
         self.batch_size = params.algorithm["params"]["batch_size"]
         self.tau = 1e-2
 
         self.max_avg = -1000
 
         self.num_actions = self.env.action_space.shape[0]
-        input_dim = self.env.observation_space.shape[0]
 
-        self.actor = Actor(input_dim, self.num_actions, self.env.action_space, hidden_size)
-        self.actor_target = Actor(input_dim, self.num_actions, self.env.action_space,  hidden_size)
-        self.critic = Critic(input_dim + self.num_actions, hidden_size, self.num_actions)
-        self.critic_target = Critic(input_dim + self.num_actions, hidden_size, self.num_actions)
-
-        # We initialize the target networks as copies of the original networks
-        for target_param, param in zip(self.actor_target.parameters(), self.actor.parameters()):
-            target_param.data.copy_(param.data)
-        for target_param, param in zip(self.critic_target.parameters(), self.critic.parameters()):
-            target_param.data.copy_(param.data)
-
-            # Training
-        self.memory = Memory(50000)
+        inference_file = params.inference["params"]["inference_file"]
+        self.inferencer = InferencerWrapper("ddpg_torch", inference_file, env=self.env)
 
     def print_init_info(self):
         logging.info(JDEROBOT)
@@ -118,46 +105,9 @@ class DDPGPendulumTrainer:
         logging.info(f"\t- Start hour: {datetime.datetime.now()}\n")
         logging.info(f"\t- self.environment params:\n{self.environment_params}")
 
-    def gather_statistics(self, losses, ep_len, episode_rew):
-        if losses is not None:
-            self.losses_list.append(losses / ep_len)
+    def gather_statistics(self, ep_len, episode_rew):
         self.reward_list.append(episode_rew)
         self.episode_len_list.append(ep_len)
-
-    def update(self, batch_size):
-        states, actions, rewards, next_states, _ = self.memory.sample(batch_size)
-        states = torch.FloatTensor(states)
-        actions = torch.FloatTensor(actions)
-        rewards = torch.FloatTensor(rewards)
-        next_states = torch.FloatTensor(next_states)
-
-        # Critic loss
-        qvals = self.critic.forward(states, actions)
-        next_actions = self.actor_target.forward(next_states)
-        next_q = self.critic_target.forward(next_states, next_actions.detach())
-        qprime = rewards + self.GAMMA * next_q
-        critic_loss = self.critic.critic_criterion(qvals, qprime)
-
-        # Actor loss
-        policy_loss = -self.critic.forward(states, self.actor.forward(states)).mean()
-
-        # update networks
-        self.actor.actor_optimizer.zero_grad()
-        policy_loss.backward()
-        self.actor.actor_optimizer.step()
-
-        self.critic.critic_optimizer.zero_grad()
-        critic_loss.backward()
-        self.critic.critic_optimizer.step()
-
-        # update target networks
-        for target_param, param in zip(self.actor_target.parameters(), self.actor.parameters()):
-            target_param.data.copy_(param.data * self.tau + target_param.data * (1.0 - self.tau))
-
-        for target_param, param in zip(self.critic_target.parameters(), self.critic.parameters()):
-            target_param.data.copy_(param.data * self.tau + target_param.data * (1.0 - self.tau))
-
-        return policy_loss, critic_loss
 
     def main(self):
         epoch_start_time = datetime.datetime.now()
@@ -173,19 +123,13 @@ class DDPGPendulumTrainer:
 
         start_time_format = epoch_start_time.strftime("%Y%m%d_%H%M")
 
-        if self.config["save_model"]:
-            save_metadata("ddpg", start_time_format, self.params)
-
         logging.info(LETS_GO)
         w = tensorboard.SummaryWriter(log_dir=f"{logs_dir}/tensorboard/{start_time_format}")
 
-        actor_loss = 0
-        critic_loss = 0
         total_reward_in_epoch = 0
 
         for episode in tqdm(range(self.RUNS)):
             state, done = self.env.reset(), False
-            self.actor.reset_noise()
             episode_reward = 0
             step = 0
             while not done:
@@ -195,25 +139,18 @@ class DDPGPendulumTrainer:
                 #     state, done, _, _ = self.env.perturbate(perturbation_action, self.PERTURBATIONS_INTENSITY_STD)
                 #     logging.debug("perturbated in step {} with action {}".format(episode_rew, perturbation_action))
 
-                action = self.actor.get_action(state, step)
+                action = self.inferencer.inference(state)
                 new_state, reward, done, _ = self.env.step(action)
-                self.memory.push(state, action, reward, new_state, done)
-
-                if len(self.memory) > self.batch_size:
-                    actor_loss, critic_loss = self.update(self.batch_size)
-
                 state = new_state
                 episode_reward += reward
                 total_reward_in_epoch += reward
 
                 w.add_scalar("reward/episode_reward", episode_reward, global_step=episode)
-                w.add_scalar("loss/actor_loss", actor_loss, global_step=episode)
-                w.add_scalar("loss/critic_loss", critic_loss, global_step=episode)
 
                 if episode % self.SHOW_EVERY == 0:
                     self.env.render()
 
-            self.gather_statistics(actor_loss, step, episode_reward)
+            self.gather_statistics(step, episode_reward)
 
             # monitor progress
             if (episode + 1) % self.UPDATE_EVERY == 0:
@@ -224,18 +161,7 @@ class DDPGPendulumTrainer:
                                                                                 str(time_spent))
                 logging.info(updates_message)
                 print(updates_message)
-                last_average = total_reward_in_epoch / self.UPDATE_EVERY;
-
-                if self.config["save_model"] and last_average > self.max_avg:
-                    self.max_avg = total_reward_in_epoch / self.UPDATE_EVERY
-                    logging.info(f"Saving model . . .")
-                    utils.save_ddpg_model(self.actor, start_time_format, last_average, self.params)
-
-                if last_average >= self.OBJECTIVE_REWARD:
-                    logging.info("Training objective reached!!")
-                    break
-                total_reward_in_epoch = 0
-
+                total_reward_in_epoch=0
         base_file_name = f'_rewards_rsl-{self.RANDOM_START_LEVEL}_rpl-{self.RANDOM_PERTURBATIONS_LEVEL}_pi-{self.PERTURBATIONS_INTENSITY_STD}'
         file_path = f'{logs_dir}{datetime.datetime.now()}_{base_file_name}.pkl'
         store_rewards(self.reward_list, file_path)

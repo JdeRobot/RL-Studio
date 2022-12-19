@@ -11,7 +11,7 @@ import pickle
 
 import random
 from collections import deque
-
+from collections.abc import Sequence
 
 # Ornstein-Ulhenbeck Process
 # Taken from #https://github.com/vitchyr/rlkit/blob/master/rlkit/exploration_strategies/ou_strategy.py
@@ -41,6 +41,7 @@ class OUNoise(object):
         ou_state = self.evolve_state()
         self.sigma = self.max_sigma - (self.max_sigma - self.min_sigma) * min(1.0, t / self.decay_period)
         return np.clip(action + ou_state, self.low, self.high)
+
 
 class Memory:
     def __init__(self, max_size):
@@ -72,6 +73,8 @@ class Memory:
 
     def __len__(self):
         return len(self.buffer)
+
+
 class Critic(nn.Module):
     def __init__(self, input_size, hidden_size, output_size, learning_rate=1e-3):
         super(Critic, self).__init__()
@@ -94,13 +97,16 @@ class Critic(nn.Module):
 
 
 class Actor(nn.Module):
-    def __init__(self, input_size, hidden_size, output_size, actions_space, learning_rate=1e-4):
+    def __init__(self, input_size=None, output_size=None, actions_space=None, hidden_size=None, learning_rate=1e-4):
         super(Actor, self).__init__()
-        self.linear1 = nn.Linear(input_size, hidden_size)
-        self.linear2 = nn.Linear(hidden_size, hidden_size)
-        self.linear3 = nn.Linear(hidden_size, output_size)
-        self.actor_optimizer = optim.Adam(self.parameters(), lr=learning_rate)
-        self.noise = OUNoise(actions_space)
+        if hidden_size is not None:
+            self.linear1 = nn.Linear(input_size, hidden_size)
+            self.linear2 = nn.Linear(hidden_size, hidden_size)
+            self.linear3 = nn.Linear(hidden_size, output_size)
+            self.actor_optimizer = optim.Adam(self.parameters(), lr=learning_rate)
+        if actions_space is not None:
+            self.noise = OUNoise(actions_space)
+
     # def train(self, w, advantage, global_steps):
     #     critic_loss = advantage.pow(2).mean()
     #     w.add_scalar("loss/critic_loss", critic_loss, global_step=global_steps)
@@ -114,13 +120,15 @@ class Actor(nn.Module):
 
     def reset_noise(self):
         self.noise.reset()
-    def get_action(self, state, step):
+
+    def get_action(self, state, step=None, explore=True):
         state = Variable(torch.from_numpy(state).float().unsqueeze(0))
         action = self.forward(state)
-        action = action.detach().numpy()[0,0]
-        action = self.noise.get_action(action, step)
+        action = action.detach().numpy()[0, 0]
+        if explore:
+            action = self.noise.get_action(action, step)
 
-        return action
+        return action if isinstance(action, Sequence) else [action]
 
     def forward(self, state):
         """
@@ -132,16 +140,15 @@ class Actor(nn.Module):
 
         return x
 
-    # def load_model(self, actor_file_path):
-    #     model = open(actor_file_path, "rb")
-    #
-    #     self.model = pickle.load(model)
-    #
-    #     print(f"\n\nMODEL LOADED.")
-    #
-    # def inference(self, state):
-    #     probs = self(t(state))
-    #     dist = get_dist(probs)
-    #     action = dist.sample()
-    #
-    #     return action
+    def load_model(self, actor_file_path):
+        model = open(actor_file_path, "rb")
+
+        loaded_brain = pickle.load(model)
+        self.linear1 = loaded_brain.linear1
+        self.linear2 = loaded_brain.linear2
+        self.linear3 = loaded_brain.linear3
+
+        print(f"\n\nMODEL LOADED.")
+
+    def inference(self, state):
+        return self.get_action(state, explore=False)
