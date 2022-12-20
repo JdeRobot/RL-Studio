@@ -43,3 +43,10 @@ to the already presented papers.
 * Video: [https://www.youtube.com/watch?v=GNVHds_mvlg](https://www.youtube.com/watch?v=GNVHds_mvlg)
 * Slides: [Link](https://drive.google.com/file/d/1vH_wJzckWLzj_7PjccFqqb2ZZh4y936K/view?usp=sharing)
 
+### Reinforcement Learning-Based Autonomous Driving at Intersections in CARLA Simulator (Rodrigo Gutiérrez-Moreno, Rafael Barea, Elena López-Guillén, Javier Araluce and Luis M. Bergasa)
+
+[21 dec 2022] Presented by Rubén Lucas.
+
+* Paper: [https://www.mdpi.com/1424-8220/22/21/8373/pdf](https://www.mdpi.com/1424-8220/22/21/8373/pdf)
+* Slides: [Link](https://drive.google.com/file/d/1z4TPq1i9-RdowkBjbDIavlDibbjOPMpk/view?usp=share_link)
+
