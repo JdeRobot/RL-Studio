@@ -1,0 +1,47 @@
+settings:
+  output_dir: "./logs/"
+  save_model: True
+  save_positions: True
+  telemetry: False
+  logging_level: info
+
+# TODO make this section optional
+actions:
+    available_actions:
+      simple:
+
+agent:
+  pendulum:
+    # TODO To be removed
+    camera_params:
+      witdh: 640
+      height: 480
+
+environments:
+  simple:
+    env_name: Pendulum-v1
+    environment_folder: cartpole
+#    runs: 20000
+    runs: 20000
+    full_experimentation_runs: 0
+    update_every: 20
+    show_every: 50
+    objective_reward: -350
+#    block_experience_batch: False
+    block_experience_batch: False
+  #  random_start_level: 0.05
+    random_start_level: 0 # Number between 0 and 1 that indicates the difficulty of the start position
+    random_perturbations_level: 0.8 # Number between 0 and 1 that indicates the frequency of the random perturbations
+    perturbations_intensity_std: 1 # Number between 0 and 1 that indicates the standard deviation of perturbations intensity
+    initial_pole_angle: 0
+    non_recoverable_angle: 0.3
+
+inference:
+  ddpg_torch:
+    inference_file: /home/ruben/Desktop/my-RL-Studio/rl_studio/logs/pendulum/ddpg/checkpoints/20221219_0112_actor_avg_-381.2062594472542.pkl
+
+algorithm:
+    ddpg_torch:
+      gamma: 0.99
+      hidden_size: 512
+      batch_size: 128

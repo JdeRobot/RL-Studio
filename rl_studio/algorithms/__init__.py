@@ -45,6 +45,14 @@ class InferencerFactory:
             brain.load_model(inference_file_name)
 
             return brain
+
+        elif algorithm == AlgorithmsType.DDPG_TORCH.value:
+            from rl_studio.algorithms.ddpg_torch import Actor
+
+            brain = Actor()
+            brain.load_model(inference_file_name)
+
+            return brain
         # elif algorithm == AlgorithmsType.DQN.value:
         #     from rl_studio.algorithms.dqn import DeepQ
         #
