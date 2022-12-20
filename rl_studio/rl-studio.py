@@ -1,3 +1,13 @@
+##########################################################################
+#
+# RL-Studio entry point. Call it:
+#
+# $ python rl-studio.py -f config/config.yaml
+#
+# where config.yaml can be one of the multiples files in config directory
+##########################################################################
+
+
 import argparse
 
 import yaml
