@@ -1,10 +1,12 @@
 import datetime
 import time
+import cv2
 from functools import reduce
 from pprint import pprint
 
 import gym
 import numpy as np
+import matplotlib.pyplot as plt
 
 from rl_studio.agents import liveplot
 from rl_studio.agents.f1 import utils
@@ -149,6 +151,27 @@ class F1Trainer:
                     last_time_steps = np.append(last_time_steps, [int(step + 1)])
                     stats[int(episode)] = step
                     states_reward[int(episode)] = cumulated_reward
+
+                    # if config.plotter_graphic:
+                    # plotter.plot(env)
+                    plt.figure()
+                    plt.title('STEPS - EPISODES')
+                    plt.plot(list(stats.values()), color="blue")
+                    plt.gca().set_ylim(bottom=-1)
+                    plt.savefig('steps_per_episode_plot.png')
+                    steps_per_episode_plot = cv2.imread('steps_per_episode_plot.png')
+                    cv2.imshow("STEPS - EPISODES", steps_per_episode_plot)
+                    cv2.waitKey(3)
+                    
+                    plt.figure()
+                    plt.title('REWARDS - EPISODES')
+                    plt.plot(list(states_reward.values()), color="red")
+                    plt.gca().set_ylim(bottom=-110)
+                    plt.savefig('rewards_per_episode_plot.png')
+                    rewards_per_episode_plot = cv2.imread('rewards_per_episode_plot.png')
+                    cv2.imshow("REWARDS - EPISODES", rewards_per_episode_plot)
+                    cv2.waitKey(3)
+
                     print(
                         f"EP: {episode + 1} - epsilon: {round(qlearn.epsilon, 2)} - Reward: {cumulated_reward}"
                         f" - Time: {start_time_format} - Steps: {step}"
@@ -159,6 +182,7 @@ class F1Trainer:
                     lap_completed = True
                     if config.plotter_graphic:
                         plotter.plot_steps_vs_epoch(stats, save=True)
+                    print(f"\nSaving actions . . .\n")
                     utils.save_model(
                         qlearn, start_time_format, stats, states_counter, states_reward
                     )
@@ -171,6 +195,7 @@ class F1Trainer:
                     if config.plotter_graphic:
                         plotter.plot_steps_vs_epoch(stats, save=True)
                     qlearn.epsilon *= epsilon_discount
+                    print(f"\nSaving actions . . .\n")
                     utils.save_model(
                         qlearn,
                         start_time_format,
@@ -180,11 +205,12 @@ class F1Trainer:
                     )
                     print(
                         f"\t- epsilon: {round(qlearn.epsilon, 2)}\n\t- cum reward: {cumulated_reward}\n\t- dict_size: "
-                        f"{len(qlearn.q)}\n\t- time: {datetime.datetime.now()-start_time}\n\t- steps: {step}\n"
+                        f"{len(qlearn.q)}\n\t- time: {datetime.datetime.now() - start_time}\n\t- steps: {step}\n"
                     )
                     counter = 0
 
                 if datetime.datetime.now() - datetime.timedelta(hours=2) > start_time:
+                    print(f"\nSaving actions . . .\n")
                     print(config.eop)
                     utils.save_model(
                         qlearn, start_time_format, stats, states_counter, states_reward

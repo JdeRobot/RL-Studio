@@ -73,14 +73,13 @@ class QLearn:
             return action, q
         return action
 
-    def load_model(self, file_path, actions_path):
+    def load_model(self, file_path, actions):
 
         qlearn_file = open(file_path, "rb")
-        actions_file = open(actions_path, "rb")
 
         self.q = pickle.load(qlearn_file)
         # TODO it may be possible to infer the actions from the model. I don know enough to assume that for every algorithm
-        self.actions = pickle.load(actions_file)
+        self.actions = actions
 
         print(f"\n\nMODEL LOADED.")
         print(f"    - Loading:    {file_path}")

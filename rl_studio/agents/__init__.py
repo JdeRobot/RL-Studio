@@ -213,6 +213,7 @@ class TrainerFactory:
 
             return CartpoleTrainer(config)
 
+
         # =============================
         # CartPole - Qlearn
         # =============================
@@ -223,6 +224,7 @@ class TrainerFactory:
             from rl_studio.agents.cartpole.train_qlearn import (
                 QLearnCartpoleTrainer as CartpoleTrainer,
             )
+
 
             return CartpoleTrainer(config)
 
@@ -410,11 +412,18 @@ class InferencerFactory:
                 from rl_studio.agents.cartpole.inference_dqn import (
                     DQNCartpoleInferencer as CartpoleInferencer,
                 )
-            else:
+            elif algorithm == AlgorithmsType.QLEARN.value:
                 from rl_studio.agents.cartpole.inference_qlearn import (
                     QLearnCartpoleInferencer as CartpoleInferencer,
                 )
-
+            elif algorithm == AlgorithmsType.PPO.value:
+                from rl_studio.agents.cartpole.inference_ppo import (
+                    PPOCartpoleInferencer as CartpoleInferencer,
+                )
+            elif algorithm == AlgorithmsType.PROGRAMMATIC.value:
+                from rl_studio.agents.cartpole.inference_no_rl import (
+                    NoRLCartpoleInferencer as CartpoleInferencer,
+                )
             return CartpoleInferencer(config)
 
         # =============================

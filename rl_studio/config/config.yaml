@@ -27,6 +27,7 @@
 #
 #####################################################################################
 settings:
+
   mode: training # training, retraining, inference
   task: follow_lane_gazebo # follow_line_gazebo, follow_lane_gazebo, autoparking_gazebo
   algorithm: ddpg # qlearn, dqn, ddpg, ppo
@@ -41,6 +42,8 @@ settings:
   models_dir: "./checkpoints"
   logs_dir: "./logs"
   metrics_dir: "./metrics"
+
+
   total_episodes: 50_000
   training_time: 6
 

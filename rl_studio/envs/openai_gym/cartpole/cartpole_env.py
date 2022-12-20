@@ -6,6 +6,7 @@ permalink: https://perma.cc/C9ZM-652R
 import math
 from typing import Optional, Union
 
+# Note that this environment needs gym==0.25.0 to work
 import gym
 import numpy as np
 from gym import logger, spaces
@@ -86,12 +87,16 @@ class CartPoleEnv(gym.Env[np.ndarray, Union[int, np.ndarray]]):
         "render_fps": 50,
     }
 
-    def __init__(self, random_start_level, render_mode: Optional[str] = None):
+    def __init__(self, random_start_level, initial_pole_angle=None, render_mode: Optional[str] = None,
+                 non_recoverable_angle=0.3, punish=0, reward_value=1, reward_shaping=0):
         self.random_start_level = random_start_level
 
         self.gravity = 9.8
         self.masscart = 1.0
         self.masspole = 0.1
+        self.punish = punish
+        self.reward_value = reward_value
+        self.reward_shaping = reward_shaping
         self.total_mass = self.masspole + self.masscart
         self.length = 0.5  # actually half the pole's length
         self.polemass_length = self.masspole * self.length
@@ -99,8 +104,11 @@ class CartPoleEnv(gym.Env[np.ndarray, Union[int, np.ndarray]]):
         self.tau = 0.02  # seconds between state updates
         self.kinematics_integrator = "euler"
         # Angle at which to fail the episode
-        self.theta_threshold_radians = 12 * 2 * math.pi / 360
+        self.theta_threshold_radians = non_recoverable_angle * 50 * 2 * math.pi / 360
+        self.theta_threshold_radians_center = non_recoverable_angle/2 * 50 * 2 * math.pi / 360
         self.x_threshold = 2.4
+        self.x_threshold_center = 1.4
+        self.init_pole_angle = initial_pole_angle
 
         # Angle limit set to 2 * theta_threshold_radians so failing observation
         # is still within bounds.
@@ -129,22 +137,23 @@ class CartPoleEnv(gym.Env[np.ndarray, Union[int, np.ndarray]]):
 
         self.steps_beyond_terminated = None
 
-    def step(self, action):
+    def perturbate(self, action, intensity_deviation):
         err_msg = f"{action!r} ({type(action)}) invalid"
         assert self.action_space.contains(action), err_msg
         assert self.state is not None, "Call reset before using step method."
         x, x_dot, theta, theta_dot = self.state
         force = self.force_mag if action == 1 else -self.force_mag
+        force += np.random.normal(loc=0.0, scale=intensity_deviation, size=None)
         costheta = math.cos(theta)
         sintheta = math.sin(theta)
 
         # For the interested reader:
         # https://coneural.org/florian/papers/05_cart_pole.pdf
         temp = (
-            force + self.polemass_length * theta_dot**2 * sintheta
-        ) / self.total_mass
+                       force + self.polemass_length * theta_dot ** 2 * sintheta
+               ) / self.total_mass
         thetaacc = (self.gravity * sintheta - costheta * temp) / (
-            self.length * (4.0 / 3.0 - self.masspole * costheta**2 / self.total_mass)
+                self.length * (4.0 / 3.0 - self.masspole * costheta ** 2 / self.total_mass)
         )
         xacc = temp - self.polemass_length * thetaacc * costheta / self.total_mass
 
@@ -168,12 +177,63 @@ class CartPoleEnv(gym.Env[np.ndarray, Union[int, np.ndarray]]):
             or theta > self.theta_threshold_radians
         )
 
-        if not terminated:
-            reward = 1.0
+        self.renderer.render_step()
+        return np.array(self.state, dtype=np.float32), terminated, False, {}
+
+    def step(self, action):
+        err_msg = f"{action!r} ({type(action)}) invalid"
+        assert self.action_space.contains(action), err_msg
+        assert self.state is not None, "Call reset before using step method."
+        x, x_dot, theta, theta_dot = self.state
+        force = self.force_mag if action == 1 else -self.force_mag
+        costheta = math.cos(theta)
+        sintheta = math.sin(theta)
+
+        # For the interested reader:
+        # https://coneural.org/florian/papers/05_cart_pole.pdf
+        temp = (
+                       force + self.polemass_length * theta_dot ** 2 * sintheta
+               ) / self.total_mass
+        thetaacc = (self.gravity * sintheta - costheta * temp) / (
+                self.length * (4.0 / 3.0 - self.masspole * costheta ** 2 / self.total_mass)
+        )
+        xacc = temp - self.polemass_length * thetaacc * costheta / self.total_mass
+
+        if self.kinematics_integrator == "euler":
+            x = x + self.tau * x_dot
+            x_dot = x_dot + self.tau * xacc
+            theta = theta + self.tau * theta_dot
+            theta_dot = theta_dot + self.tau * thetaacc
+        else:  # semi-implicit euler
+            x_dot = x_dot + self.tau * xacc
+            x = x + self.tau * x_dot
+            theta_dot = theta_dot + self.tau * thetaacc
+            theta = theta + self.tau * theta_dot
+
+        self.state = (x, x_dot, theta, theta_dot)
+
+        terminated = bool(
+            x < -self.x_threshold
+            or x > self.x_threshold
+            or theta < -self.theta_threshold_radians
+            or theta > self.theta_threshold_radians
+        )
+
+        centered = bool(
+            x < -self.x_threshold_center
+            or x > self.x_threshold_center
+            or theta < -self.theta_threshold_radians_center
+            or theta > self.theta_threshold_radians_center
+        )
+
+        if not terminated and centered:
+            reward = self.reward_value + self.reward_shaping
+        elif not terminated:
+            reward = self.reward_value
         elif self.steps_beyond_terminated is None:
             # Pole just fell!
             self.steps_beyond_terminated = 0
-            reward = 1.0
+            reward = self.reward_value
         else:
             if self.steps_beyond_terminated == 0:
                 logger.warn(
@@ -183,17 +243,17 @@ class CartPoleEnv(gym.Env[np.ndarray, Union[int, np.ndarray]]):
                     "True' -- any further steps are undefined behavior."
                 )
             self.steps_beyond_terminated += 1
-            reward = 0.0
+            reward = self.punish
 
         self.renderer.render_step()
         return np.array(self.state, dtype=np.float32), reward, terminated, False, {}
 
     def reset(
-        self,
-        *,
-        seed: Optional[int] = None,
-        return_info: bool = False,
-        options: Optional[dict] = None,
+            self,
+            *,
+            seed: Optional[int] = None,
+            return_info: bool = False,
+            options: Optional[dict] = None,
     ):
         super().reset(seed=seed)
         # Note that if you use custom reset bounds, it may lead to out-of-bound
@@ -202,6 +262,9 @@ class CartPoleEnv(gym.Env[np.ndarray, Union[int, np.ndarray]]):
             options, -self.random_start_level, self.random_start_level  # default low
         )  # default high
         self.state = self.np_random.uniform(low=low, high=high, size=(4,))
+        if self.init_pole_angle is not None:
+            self.state[2] = self.init_pole_angle
+
         self.steps_beyond_terminated = None
         self.renderer.reset()
         self.renderer.render_step()
