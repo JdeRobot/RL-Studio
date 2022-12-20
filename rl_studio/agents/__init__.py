@@ -1,11 +1,3 @@
-##########################################################################
-#
-# TrainerFactory behaves like a training hub, distributing to different
-# simulators, tasks, agents and algorithms.
-# While InferencerFactory does the same but in inferencing mode
-#
-##########################################################################
-
 from rl_studio.agents.agents_type import AgentsType
 from rl_studio.agents.exceptions import NoValidTrainingType
 from rl_studio.agents.tasks_type import TasksType

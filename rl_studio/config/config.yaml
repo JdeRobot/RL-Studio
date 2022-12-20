@@ -1,120 +1,55 @@
 #####################################################################################
-# General configuration file to launch RL-Studio in the training or inference mode
-#
-# Warning: Do not use this file!!
-#
-#       this file contains all parameters for whole tasks, agents, simulators,
-#       frameworks...as a didactic proposes. It is recommended creating a new specific
-#       config file for a dedicated task, with the form:
-#             config_mode_task_algorithm_agent_simulator.yaml
+# General configuration file to configure RL-Studio in the training or inference mode
 #####################################################################################
 
 #####################################################################################
-# General settings
+# settings: General parameters
 #
-# Main Options:
-#
-# mode: training, retraining, inference
-# task: follow_line, follow_lane
-# algorithm: qlearn, dqn, ddpg, ppo
-# simulator: openai, carla, gazebo
-# environment_set: gazebo_environments # gazebo_environments, carla_environments
-# env: simple, nurburgring, montreal, curves, simple_laser, manual, autoparking
-# agent: f1, autoparking
-# actions: continuous, simple, medium, hard, test, autoparking_simple
-# states: image, sp1, sp3, spn
-# rewards: discrete_follow_line, linear_follow_line, discrete_follow_right_lane, discrete_autoparking
-#
+# Most relevant params:
+#   model_state_name: agent name
+#   total_episodes: training epochs
+#   training_time: in hours
+#   save_episodes: variable for TensorFlow savings
 #####################################################################################
+
 settings:
-  mode: training # training, retraining, inference
-  task: follow_lane_gazebo # follow_line_gazebo, follow_lane_gazebo, autoparking_gazebo
-  algorithm: ddpg # qlearn, dqn, ddpg, ppo
-  simulator: gazebo # openai, carla, gazebo
-  environment_set: gazebo_environments # gazebo_environments, carla_environments
-  env: simple # simple, nurburgring, montreal, curves, simple_laser, manual, autoparking
-  agent: f1 # f1, autoparkingRL, auto_carla, mountain_car, robot_mesh, cartpole, turtlebot
-  actions: continuous # continuous, simple, medium, hard, test, autoparking_simple
-  states: sp1 #image, sp1, sp3, spn
-  rewards: discrete_follow_right_lane # discrete_follow_line, linear_follow_line, discrete_follow_right_lane, discrete_autoparking
-  framework: TensorFlow # TensorFlow, Pytorch
-  models_dir: "./checkpoints"
-  logs_dir: "./logs"
-  metrics_dir: "./metrics"
+  output_dir: "./logs/"
+  save_model: True
+  save_positions: True
+  debug_level: DEBUG
+  telemetry: False
+  telemetry_mask: False
+  plotter_graphic: False
+  model_state_name: f1_camera_parking # autoparking
   total_episodes: 50_000
   training_time: 6
+  save_episodes: 50
+  save_every_step: 1_000
+  lap_completed: False
+  load_qlearning_pickle_model: False
+  load_qlearning_pickle_file: 1_20210622_1512_actions_set_simple_epsilon_0.99_QTABLE.pkl
+  load_qlearning_model: False
+  load_qlearning_table: train_qlearning_f1_simple_EPISODE_1_20210625-082424-qtable.npy
+  ros_master_uri: '11311'
+  gazebo_master_uri: '11345'  
 
 #####################################################################################
-# ROS general settings
+# agent: every agent configures states, rewards and sensors
+#
+# Most relevant params:
+#   image_resizing: percentage of image redimension to feed neural nets. I.e. 10 means a width of 64 pixels and height of 48 pixels
+#   num_regions: in simplified perception, number of image vertical divisions in which every state falls
+#   new_image_size: every image size is fixed in to feed neural net. I.e. 32 means a size of 32x32 pixels
+#   state_space: configurates how input data is feeding. Image means raw data from camera sensor. sp1,...spn means simplified perception of 1 to n points. 
+#   image: 0: distance from image midline down in pixels
+#   sp1, sp3, sp5, spn: simplified perception with 1, 3, 5 or n points respectively. Every number represents pixels from image midline down
+#   reward_function: discrete_follow_line represents a hardcoded reward function in follow line project, linear_follow_line means regression function in follow line project
+#
 #####################################################################################
-ros:
-  ros_master_uri: "11311"
-  gazebo_master_uri: "11345"
 
-#####################################################################################
-# Carla simulator general settings
-#####################################################################################
-carla:
-  prefernvidia: True
-  port_rpc:
-  port_streaming:
-  quality_level:
-  render_mode:
-  off_screen_mode:
-
-#####################################################################################
-# Inference and retraining: loading training files
-#####################################################################################
-retraining:
-  qlearn:
-    model_name: DDPG_Actor_conv2d32x64_Critic_conv2d32x64_actionsCont_stateImg_BATCH_CRITIC_Max61351_Epoch-500_State-image_Actions-continuous_inTime-20221018-221521.h5
-
-inference:
-  ddpg:
-    inference_ddpg_tf_actor_model_name: "DDPG_Actor_conv2d32x64_Critic_conv2d32x64_BESTLAP_ACTOR_Max90069_Epoch226_inTime20221017-163548.h5"
-    inference_ddpg_tf_critic_model_name: "DDPG_Actor_conv2d32x64_Critic_conv2d32x64_BESTLAP_CRITIC_Max90069_Epoch226_inTime20221017-163548.h5"
-
-#####################################################################################
-# Algorithms parameters
-#####################################################################################
-algorithm:
-  qlearn:
-    alpha: 0.2
-    epsilon: 0.95
-    epsilon_min: 0.05
-    gamma: 0.9
-  dqn:
-    alpha: 0.8
-    gamma: 0.9
-    epsilon: 0.99
-    epsilon_discount: 0.9986
-    epsilon_min: 0.05
-    model_name: DQN_sp_16x16
-    replay_memory_size: 50_000
-    min_replay_memory_size: 1000
-    minibatch_size: 64
-    update_target_every: 5
-    memory_fraction: 0.20
-    buffer_capacity: 100_000
-    batch_size: 64
-  sarsa:
-  ddpg:
-    gamma: 0.9
-    tau: 0.005
-    std_dev: 0.2
-    model_name: DDPG_Actor_conv2d32x64_Critic_conv2d32x64
-    replay_memory_size: 50_000
-    memory_fraction: 0.20
-    critic_lr: 0.002
-    actor_lr: 0.001
-    buffer_capacity: 100_000
-    batch_size: 64
-
-#####################################################################################
-# Agent
-#####################################################################################
-agents:
+agent:
   f1:
+    agent_name: f1
     camera_params:
       width: 640
       height: 480
@@ -123,7 +58,35 @@ agents:
       image_resizing: 100
       new_image_size: 32
       num_regions: 16
+    states:
+      state_space: sp1 #sp1
+      image:
+        0: [3]
+      sp1: 
+        0: [10]
+      sp3:
+        0: [5, 15, 22]
+      sp5: 
+        0: [3, 5, 10, 15, 20]  
+      spn: 
+        0: [10]   
+    rewards:
+      reward_function: discrete_follow_line #linear_follow_line
+      discrete_follow_line:
+        from_0_to_02: 10
+        from_02_to_04: 2
+        from_others: 1
+        penal: -100
+        min_reward: 1_000
+        highest_reward: 100
+      linear_follow_line:
+        beta_0: 3
+        beta_1: -0.1
+        penal: 0
+        min_reward: 1_000
+        highest_reward: 100
   autoparking:
+    agent_name: autoparking
     camera_params:
       width: 640
       height: 480
@@ -131,88 +94,90 @@ agents:
       raw_image: False
       image_resizing: 100
       new_image_size: 32
+    states:
+      state_space: sp_curb 
+      sp_curb:
+        poi: 3
+        regions: 16
+        pixels_cropping: 200 
+      sp_curb3:
+        0: [5, 15, 22]
+      sp5: 
+        0: [3, 5, 10, 15, 20]  
+      spn: 
+        0: [10]   
+    rewards:
+      reward_function: discrete_autoparking
+      discrete_autoparking:
+        from_1_to_05: 10
+        from_05_to_085: 20
+        from_085_to_095: 40
+        from_others: 1
+        penal_reward: -100
+        min_reward: 50
+        goal_reward: 1100
 
 #####################################################################################
-# States
+# actions: mainly divided into continuous and discrete sets of actions. In continuous for plannar agents it is divided in min and max.
+# In other cases, we create a set of actions, 3, 5 or more, where every one is [linear velocity, angular velocity]
+#
+#   actions_number: for plannar agents, two actions are executed
+#   simple: 
+#         0: [3 m/sec, 0 rad/sec]
+#         1: [2 m/sec, 1 rad/sec]
+#         2: [2 m/sec, -1 rad/sec]
+#
 #####################################################################################
-states:
-  image:
-    0: [3]
-  sp1:
-    0: [10]
-  sp3:
-    0: [5, 15, 22]
-  sp5:
-    0: [3, 5, 10, 15, 20]
-  spn:
-    0: [10]
-  sp_curb: #autoparking
-    poi: 3
-    regions: 16
-    pixels_cropping: 200
-    sp_curb3:
-      0: [5, 15, 22]
-    sp5:
-      0: [3, 5, 10, 15, 20]
-    spn:
-      0: [10]
 
-#####################################################################################
-# Actions
-#####################################################################################
 actions:
-  simple:
-    0: [3, 0]
-    1: [2, 1]
-    2: [2, -1]
-  medium:
-    0: [3, 0]
-    1: [2, 1]
-    2: [2, -1]
-    3: [1, 1.5]
-    4: [1, -1.5]
-  hard:
-    0: [3, 0]
-    1: [2, 1]
-    2: [2, -1]
-    3: [1.5, 1]
-    4: [1.5, -1]
-    5: [1, -1.5]
-    6: [1, -1.5]
-  test:
-    0: [0, 0]
-  continuous:
-    v: [2, 30]
-    w: [-3, 3]
-  autoparking_simple:
-    0: [3, 0]
-    1: [2, 0]
-    2: [1, 0]
-    3: [0, 0]
-    4: [-1, 0]
+    actions_number: 2
+    actions_set: continuous #simple
+    available_actions:
+      simple:
+        0: [ 3, 0 ]
+        1: [ 2, 1 ]
+        2: [ 2, -1 ]
+      medium:
+        0: [ 3, 0 ]
+        1: [ 2, 1 ]
+        2: [ 2, -1 ]
+        3: [ 1, 1.5 ]
+        4: [ 1, -1.5 ]
+      hard:
+        0: [ 3, 0 ]
+        1: [ 2, 1 ]
+        2: [ 2, -1 ]
+        3: [ 1.5, 1 ]
+        4: [ 1.5, -1 ]
+        5: [ 1, -1.5 ]
+        6: [ 1, -1.5 ]
+      test:
+        0: [ 0, 0 ]
+      continuous:
+        v_min: 2
+        v_max: 30
+        w_right: -3
+        w_left: 3
+      autoparking_simple:
+        0: [ 3, 0 ]
+        1: [ 2, 0 ]
+        2: [ 1, 0 ]
+        3: [ 0, 0 ]
+        4: [ -1, 0 ]
 
 #####################################################################################
-# Rewards
-#####################################################################################
-rewards:
-  followline_center:
-    from_10: 10
-    from_02: 2
-    from_01: 1
-    penal: -100
-    min_reward: 5_000
-    highest_reward: 100
-  followline_center_v_w_linear: # only for continuous actions
-    beta_0: 3
-    beta_1: -0.1
-    penal: 0
-    min_reward: 1_000
-    highest_reward: 100
+# environments: configurates every param in all envs. 
+#
+# Most relevant params:
+#   env_name: F1Env-v0, RobotMeshEnv-v0, myCartpole-v0, MyMountainCarEnv-v0
+#   training_type: qlearn_camera, qlearn_laser, dqn, manual, ddpg
+#   circuit_positions_set: different positions in Gazebo simulator for every environment. Set represents x, y, z, 0, roll, pitch, yaw          
+#   start_pose: agent initial pose in every training. It takes number from circuit_positions_set param
+#   alternate_pose: if True, the agent randoms initial pose, taking from circuit_positions_set param. Otherwise, it takes start_pose number
 
 #####################################################################################
-# Environments: Gazebo, Carla, OpenAI
-#####################################################################################
-gazebo_environments:
+
+environments:
   simple:
     env_name: F1Env-v0
     circuit_name: simple
@@ -220,20 +185,10 @@ gazebo_environments:
     launchfile: simple_circuit.launch
     environment_folder: f1
     robot_name: f1_renault
-    model_state_name: f1_camera_parking # autoparking
     start_pose: 0 # 0, 1, 2, 3, 4
     alternate_pose: False
     estimated_steps: 15_000
     sensor: camera
-    save_episodes: 50
-    save_every_step: 1_000
-    lap_completed: False
-    save_model: True
-    save_positions: True
-    debug_level: DEBUG
-    telemetry: False
-    telemetry_mask: False
-    plotter_graphic: False
     circuit_positions_set:
       0: [53.462, -41.988, 0.004, 0, 0, 1.57, -1.57]
       1: [53.462, -8.734, 0.004, 0, 0, 1.57, -1.57]
@@ -251,15 +206,6 @@ gazebo_environments:
     alternate_pose: True
     estimated_steps: 3500
     sensor: camera
-    save_episodes: 50
-    save_every_step: 1_000
-    lap_completed: False
-    save_model: True
-    save_positions: True
-    debug_level: DEBUG
-    telemetry: False
-    telemetry_mask: False
-    plotter_graphic: False
     circuit_positions_set:
       0: [-32.3188, 12.2921, 0, 0.0014, 0.0049, -0.2727, 0.9620]
       1: [-30.6566, -21.4929, 0, 0.0014, 0.0049, -0.4727, 0.8720]
@@ -278,15 +224,6 @@ gazebo_environments:
     alternate_pose: True
     estimated_steps: 8000
     sensor: camera
-    save_episodes: 50
-    save_every_step: 1_000
-    lap_completed: False
-    save_model: True
-    save_positions: True
-    debug_level: DEBUG
-    telemetry: False
-    telemetry_mask: False
-    plotter_graphic: False
     circuit_positions_set:
       0: [-201.88, -91.02, 0, 0.00, 0.001, 0.98, -0.15]
       1: [-278.71, -95.50, 0, 0.00, 0.001, 1, 0.03]
@@ -332,29 +269,64 @@ gazebo_environments:
     training_type: qlearn #qlearn, dqn, qlearn, manual, ddpg
     launchfile: autoparking.launch
     environment_folder: autoparking
-    robot_name: f1_camera_parking # autoparking_f1_camera_laser #
+    robot_name: f1_camera_parking # autoparking_f1_camera_laser # 
     estimated_steps: 50
     sensor: laser #laser, camera_laser, camera
     start_pose: 0
     alternate_pose: False
-    save_episodes: 50
-    save_every_step: 1_000
-    lap_completed: False
-    save_model: True
-    save_positions: True
-    debug_level: DEBUG
-    telemetry: False
-    telemetry_mask: False
-    plotter_graphic: False
     circuit_positions_set:
       0: [5.81294, 4.30243, 0.025329, 0.00013, 0.010376, 3.138] #x, y, z, roll, pitch, waw
       1: [10.0231, -0.720526, 0.025333, 0.000116, 0.010372, 2.5]
       2: [9.81003, 16.7248, 0.025296, 0.0002, 0.010271, -1.92009]
-      3: [15.1722, 4.66392, 0.025344, 7.6e-05, 0.010362, -3.12394]
+      3: [15.1722, 4.66392, 0.025344,  7.6e-05, 0.010362, -3.12394]
       4: [14.2657, -2.26994, 0.02533, 5.1e-05, 0.010363, -3.12403]
       5: [18.4119, 22.1479, 0.025338, 8.1e-05, 0.010356, -3.12407]
       6: [8.43921, -2.90071, 0.025338, 8.1e-05, 0.010356, 1.55485]
     parking_spot_position_x: 2
     parking_spot_position_y: 4.30
 
-carla_environments:
+#####################################################################################
+# inference: loading training files
+
+#####################################################################################
+inference:
+  qlearn:
+    inference_file: /home/rubenlucas93/1_20220428_2115_act_set_simple_epsilon_0.8_QTABLE.pkl
+    actions_file: /home/rubenlucas93/actions_set_20220428_2115
+
+#####################################################################################
+# algorithm: every particular param
+
+#####################################################################################
+algorithm:
+    qlearn:
+      alpha: 0.2
+      epsilon: 0.95
+      epsilon_min: 0.05      
+      gamma: 0.9
+    dqn:
+      alpha: 0.8
+      gamma: 0.9
+      epsilon: 0.99
+      epsilon_discount: 0.9986
+      epsilon_min: 0.05
+      model_name: DQN_sp_16x16
+      replay_memory_size: 50_000
+      min_replay_memory_size: 1000
+      minibatch_size: 64
+      update_target_every: 5
+      memory_fraction: 0.20
+      buffer_capacity: 100_000
+      batch_size: 64
+    sarsa:
+    ddpg:
+      gamma: 0.9
+      tau: 0.005
+      std_dev: 0.2
+      model_name: DDPG_Actor_conv2d32x64_Critic_conv2d32x64
+      replay_memory_size: 50_000
+      memory_fraction: 0.20
+      critic_lr: 0.002
+      actor_lr: 0.001
+      buffer_capacity: 100_000
+      batch_size: 64
