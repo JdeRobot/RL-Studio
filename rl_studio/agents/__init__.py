@@ -95,7 +95,9 @@ class TrainerFactory:
             and simulator == EnvsType.GAZEBO.value
             and framework == FrameworksType.TF.value
         ):
-            from rl_studio.agents.f1.train_dqn import TrainerFollowLineDQNF1GazeboTF
+            from rl_studio.agents.f1.train_followline_dqn_f1_gazebo_tf import (
+                TrainerFollowLineDQNF1GazeboTF,
+            )
 
             return TrainerFollowLineDQNF1GazeboTF(config)
 
@@ -138,7 +140,9 @@ class TrainerFactory:
             and simulator == EnvsType.GAZEBO.value
             and framework == FrameworksType.TF.value
         ):
-            from rl_studio.agents.f1.train_dqn import TrainerFollowLaneDQNF1GazeboTF
+            from rl_studio.agents.f1.train_followlane_dqn_f1_gazebo_tf import (
+                TrainerFollowLaneDQNF1GazeboTF,
+            )
 
             return TrainerFollowLaneDQNF1GazeboTF(config)
 
