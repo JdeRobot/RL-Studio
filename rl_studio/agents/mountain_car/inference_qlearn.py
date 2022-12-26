@@ -12,17 +12,14 @@ from rl_studio.wrappers.inference_rlstudio import InferencerWrapper
 from . import utils as specific_utils
 
 
-class QLearnMountainCarTrainer:
+class QLearnMountainCarInferencer:
     def __init__(self, params):
         # TODO: Create a pydantic metaclass to simplify the way we extract the params
         # environment params
         self.params = params
-        self.environment_params = params.environment["params"]
-        self.env_name = params.environment["params"]["env_name"]
-        env_params = params.environment["params"]
-        actions = params.environment["actions"]
-        env_params["actions"] = actions
-        self.env = gym.make(self.env_name, **env_params)
+        self.environment_params = params["environments"]
+        self.env_name = params["environments"]["env_name"]
+        self.env = gym.make(self.env_name, **self.params)
         # algorithm params
         self.states_counter = {}
         self.states_reward = {}
@@ -32,8 +29,8 @@ class QLearnMountainCarTrainer:
         self.env = gym.wrappers.Monitor(self.env, self.outdir, force=True)
         self.env.done = True
 
-        inference_file = params.inference["params"]["inference_file"]
-        actions_file = params.inference["params"]["actions_file"]
+        inference_file = params["inference"]["inference_file"]
+        actions_file = params["inference"]["actions_file"]
         self.highest_reward = 0
 
         self.inferencer = InferencerWrapper("qlearn", inference_file, actions_file)

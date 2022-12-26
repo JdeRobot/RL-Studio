@@ -17,16 +17,14 @@ class QLearnMountainCarTrainer:
         # TODO: Create a pydantic metaclass to simplify the way we extract the params
         # environment params
         self.params = params
-        self.environment_params = params.environment["params"]
-        self.env_name = params.environment["params"]["env_name"]
-        env_params = params.environment["params"]
-        actions = params.environment["actions"]
-        env_params["actions"] = actions
-        self.env = gym.make(self.env_name, **env_params)
+        self.config = params["settings"]
+        self.environment_params = params["environments"]
+        self.env_name = self.environment_params["env_name"]
+        self.env = gym.make(self.env_name, **self.params)
         # algorithm params
-        self.alpha = params.algorithm["params"]["alpha"]
-        self.epsilon = params.algorithm["params"]["epsilon"]
-        self.gamma = params.algorithm["params"]["gamma"]
+        self.alpha = params["algorithm"]["alpha"]
+        self.epsilon = params["algorithm"]["epsilon"]
+        self.gamma = params["algorithm"]["gamma"]
         self.states_counter = {}
         self.states_reward = {}
         self.stats = {}
@@ -129,7 +127,7 @@ class QLearnMountainCarTrainer:
 
                     break
 
-                if episode % 250 == 0 and self.config.save_model and episode > 1:
+                if episode % 250 == 0 and self.config["save_model"] and episode > 1:
                     print(f"\nSaving model . . .\n")
                     utils.save_model(
                         self.qlearn,
