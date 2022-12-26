@@ -15,30 +15,29 @@ cd ~/PATH/TO/RL-Studio/rl_studio
 and then just type (depending on how the dependencies are managed):
 
 ```bash
-poetry run python main_rlstudio.py -n [algorithm] -a [agent] -e [environment] -f config/config.yaml # if using Poetry for dependencies
-python main_rlstudio.py -n [algorithm] -a [agent] -e [environment] -f config/config.yaml # if using PIP for dependencies
+poetry run python main_rlstudio.py -f config/config.yaml # if using Poetry for dependencies
+python main_rlstudio.py -f config/config.yaml # if using PIP for dependencies
 ```
 
 The config.yaml contains all project hyperparams and configuration needed to execute correctly.
 
-For example, if you want to train a F1 agent in Circuit Simple with Q-learning algorithm, just type:
+For example, if you want to train a F1 agent in Circuit Simple with Q-learning algorithm,
+gazebo simulator and tensorflow, you must add the following:
 
-```bash
-poetry run python main_rlstudio.py -n qlearn -a f1 -e simple -f config/config_f1_qlearn.yaml # if using Poetry for dependencies
-python main_rlstudio.py -n qlearn -a f1 -e simple -f config/config_f1_qlearn.yaml # if using PIP for dependencies
-```
 
-Or an inference making use of the script that uses a library created for that purpose
+```yaml
+settings:
+  algorithm: qlearn
+  task: f1
+  environment: simple 
+  mode: training # or inference
+  agent: f1
+  simulator: gazebo
+  framework: tensorflow
 
-```bash
-poetry run python main_rlstudio.py -n qlearn -a f1 -e simple -f config/config_f1_qlearn.yaml -m inference # if using Poetry for dependencies
-python main_rlstudio.py -n qlearn -a f1 -e simple -f config/config_f1_qlearn.yaml -m inference # if using PIP for dependencies
 ```
 
 > :warning: If you want to use inferencing in a program language other than python, you will
 > need extend the main_rlstudio.py to listen for inputs in a port and execute the loaded brain/algorithm to provide
 > outputs in the desired way. Note that inference_rlstudio.py is just the library used to inference
-
-Open the `config.yaml` file and set the params you need.
-
 
