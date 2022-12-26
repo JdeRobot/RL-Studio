@@ -51,9 +51,9 @@ class GazeboEnv(gym.Env):
                 Path(
                     Path(__file__).resolve().parents[2]
                     / "CustomRobots"
-                    / config.get("environment_folder")
+                    / config["environment_folder"]
                     / "launch"
-                    / config.get("launchfile")
+                    / config["launchfile"]
                 )
             )
             # print(f"-----> {fullpath}")
@@ -179,6 +179,13 @@ class GazeboEnv(gym.Env):
         except rospy.ServiceException as e:
             print(f"Service call failed: {e}")
         return pos_number
+
+    def get_position(self):
+        object_coordinates = self.model_coordinates(self.robot_name, "")
+        x_position = round(object_coordinates.pose.position.x, 2)
+        y_position = round(object_coordinates.pose.position.y, 2)
+
+        return x_position, y_position
 
     def _gazebo_set_new_pose_robot(self):
         """

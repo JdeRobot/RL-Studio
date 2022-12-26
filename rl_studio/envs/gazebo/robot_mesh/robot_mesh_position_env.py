@@ -20,6 +20,7 @@ def euclidean_distance(x_a, x_b, y_a, y_b):
 class RobotMeshEnv(gazebo_envs.GazeboEnv):
     def __init__(self, **config):
         self.actions = config.get("actions")
+        config = config["environments"]
         self.action_space = spaces.Discrete(
             len(self.actions)
         )  # actions  # spaces.Discrete(3)  # F,L,R

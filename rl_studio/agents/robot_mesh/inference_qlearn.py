@@ -29,7 +29,7 @@ class QLearnRobotMeshInferencer:
         self.last_time_steps = np.ndarray(0)
         self.total_episodes = 20000
 
-        self.outdir = "./logs/robot_mesh_experiments/"
+        self.outdir = "./logs/robot_mesh/"
         self.env = gym.wrappers.Monitor(self.env, self.outdir, force=True)
 
         inference_file = params.inference["params"]["inference_file"]
