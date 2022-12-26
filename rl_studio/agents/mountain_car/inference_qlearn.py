@@ -16,6 +16,7 @@ class QLearnMountainCarInferencer:
     def __init__(self, params):
         # TODO: Create a pydantic metaclass to simplify the way we extract the params
         # environment params
+        self.n_steps = 0
         self.params = params
         self.environment_params = params["environments"]
         self.env_name = params["environments"]["env_name"]
@@ -25,13 +26,13 @@ class QLearnMountainCarInferencer:
         self.states_reward = {}
         self.last_time_steps = np.ndarray(0)
 
-        self.outdir = "./logs/robot_mesh_experiments/"
-        self.env = gym.wrappers.Monitor(self.env, self.outdir, force=True)
-        self.env.done = True
-
         inference_file = params["inference"]["inference_file"]
         actions_file = params["inference"]["actions_file"]
+
         self.highest_reward = 0
+        self.total_episodes = 20000
+        self.epsilon_discount = 0.999  # Default 0.9986
+        self.cumulated_reward = 0
 
         self.inferencer = InferencerWrapper("qlearn", inference_file, actions_file)
 
@@ -51,15 +52,14 @@ class QLearnMountainCarInferencer:
             nextState, reward, done, info = self.env.step(-1)
         else:
             nextState, reward, done, info = self.env.step(action)
-        n_steps = self.n_steps + 1
-        print("step " + str(n_steps) + "!!!! ----------------------------")
+        self.n_steps = self.n_steps + 1
+        print("step " + str(self.n_steps) + "!!!! ----------------------------")
 
         self.cumulated_reward += reward
 
         if self.highest_reward < self.cumulated_reward:
             self.highest_reward = self.cumulated_reward
 
-        self.env._flush(force=True)
         return nextState, done
 
     def simulation(self, queue):
@@ -73,7 +73,6 @@ class QLearnMountainCarInferencer:
 
         for episode in range(self.total_episodes):
 
-            done = False
             self.n_steps = 0
 
             cumulated_reward = 0
@@ -87,8 +86,7 @@ class QLearnMountainCarInferencer:
                 if not done:
                     state = next_state
                 else:
-                    last_time_steps = np.append(last_time_steps, [int(step + 1)])
-                    self.stats[int(episode)] = step
+                    self.last_time_steps = np.append(self.last_time_steps, [int(step + 1)])
                     self.states_reward[int(episode)] = cumulated_reward
                     print(
                         "---------------------------------------------------------------------------------------------"
@@ -98,7 +96,6 @@ class QLearnMountainCarInferencer:
                         f"- Time: {start_time_format} - Steps: {step}"
                     )
 
-                    self.rewards_per_run.append(cumulated_reward)
                     queue.put(self.n_steps)
 
                     break
@@ -109,10 +106,10 @@ class QLearnMountainCarInferencer:
             )
         )
 
-        l = last_time_steps.tolist()
+        l = self.last_time_steps.tolist()
         l.sort()
 
-        print("Overall score: {:0.2f}".format(last_time_steps.mean()))
+        print("Overall score: {:0.2f}".format(self.last_time_steps.mean()))
         print(
             "Best 100 score: {:0.2f}".format(
                 reduce(lambda x, y: x + y, l[-100:]) / len(l[-100:])

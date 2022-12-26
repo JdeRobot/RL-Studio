@@ -30,7 +30,7 @@ class QLearnMountainCarTrainer:
         self.stats = {}
         self.last_time_steps = np.ndarray(0)
 
-        self.outdir = "./logs/robot_mesh_experiments/"
+        self.outdir = "./logs/mountain_car/"
         self.env = gym.wrappers.Monitor(self.env, self.outdir, force=True)
         self.actions = range(self.env.action_space.n)
         self.env.done = True
@@ -98,7 +98,6 @@ class QLearnMountainCarTrainer:
 
         for episode in range(self.total_episodes):
 
-            done = False
             cumulated_reward = 0
             print("resetting")
             state = self.env.reset()
@@ -127,15 +126,15 @@ class QLearnMountainCarTrainer:
 
                     break
 
-                if episode % 250 == 0 and self.config["save_model"] and episode > 1:
-                    print(f"\nSaving model . . .\n")
-                    utils.save_model(
-                        self.qlearn,
-                        start_time_format,
-                        self.stats,
-                        self.states_counter,
-                        self.states_reward,
-                    )
+            if episode % 250 == 0 and self.config["save_model"] and episode > 1:
+                print(f"\nSaving model . . .\n")
+                utils.save_model(
+                    self.qlearn,
+                    start_time_format,
+                    self.stats,
+                    self.states_counter,
+                    self.states_reward,
+                )
 
         print(
             "Total EP: {} - epsilon: {} - ep. discount: {} - Highest Reward: {}".format(

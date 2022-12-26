@@ -3,7 +3,7 @@ settings:
   save_model: True
   save_positions: True
   telemetry: False
-  mode: training
+  mode: inference
   agent: mountain_car
   algorithm: qlearn
 
@@ -52,8 +52,8 @@ environments:
   #   sensor: camera
 
 inference:
-  inference_file:
-  actions: /home/ruben/Desktop/my-RL-Studio/rl_studio/checkpoints/mountain_car/actions_set_20221226_1814
+  inference_file: /home/ruben/Desktop/my-RL-Studio/rl_studio/checkpoints/mountain_car/1_20221226_1928_epsilon_0.01_QTABLE.pkl
+  actions_file: /home/ruben/Desktop/my-RL-Studio/rl_studio/checkpoints/mountain_car/actions_set_20221226_1814
 
 algorithm:
     alpha: 0.9
