@@ -23,6 +23,7 @@ class QLearnRobotMeshTrainer:
         self.epsilon = params["algorithm"]["epsilon"]
         self.gamma = params["algorithm"]["gamma"]
         self.config = params["settings"]
+        self.actions = params["actions"]
         self.stats = {}  # epoch: steps
         self.states_counter = {}
         self.states_reward = {}
@@ -42,7 +43,6 @@ class QLearnRobotMeshTrainer:
         self.env_name = self.environment_params["env_name"]
         self.env = gym.make(self.env_name, **self.params)
         self.env = gym.wrappers.Monitor(self.env, self.outdir, force=True)
-        self.actions = range(self.env.action_space.n)
 
         self.highest_reward = 0
         self.cumulated_reward = 0
@@ -86,7 +86,6 @@ class QLearnRobotMeshTrainer:
 
         initial_epsilon = self.qlearn.epsilon
 
-        telemetry_start_time = time.time()
         start_time = datetime.datetime.now()
         start_time_format = start_time.strftime("%Y%m%d_%H%M")
 

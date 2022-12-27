@@ -3,7 +3,7 @@ settings:
   save_model: True
   save_positions: True
   telemetry: False
-  mode: training
+  mode: inference
   agent: robot_mesh
   algorithm: qlearn
 
@@ -77,8 +77,8 @@ environments:
   #   sensor: camera
 
 inference:
-  inference_file: /home/rubenlucas93/qvalues.pkl
-  actions_file: /home/rubenlucas93/actions_set.pkl
+  inference_file: /home/ruben/Desktop/my-RL-Studio/rl_studio/checkpoints/robot_mesh/1_20221227_0306_epsilon_0.05_QTABLE.pkl
+  actions_file: /home/ruben/Desktop/my-RL-Studio/rl_studio/checkpoints/robot_mesh/actions_set_20221227_0657
 
 algorithm:
     alpha: 0.2

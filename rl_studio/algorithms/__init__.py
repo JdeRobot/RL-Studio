@@ -20,7 +20,19 @@ class InferencerFactory:
             actions_file = open(actions_file_name, "rb")
             actions = pickle.load(actions_file)
 
-            brain = QLearn(config)
+            brain = QLearn(config, epsilon=0)
+            brain.load_model(inference_file_name, actions)
+
+            return brain
+
+        if algorithm == AlgorithmsType.DEPRECATED_QLEARN.value:
+            from rl_studio.algorithms.qlearn import QLearn
+
+            actions_file_name = config.actions_file
+            actions_file = open(actions_file_name, "rb")
+            actions = pickle.load(actions_file)
+
+            brain = QLearn(config, epsilon=0.05)
             brain.load_model(inference_file_name, actions)
 
             return brain
