@@ -10,7 +10,7 @@ from gym import spaces
 from gym.utils import seeding
 from std_srvs.srv import Empty
 
-from rl_studio.envs.gazebo import gazebo_envs
+from rl_studio.envs.gazebo.robot_mesh import gazebo_envs
 
 
 def euclidean_distance(x_a, x_b, y_a, y_b):
@@ -20,6 +20,7 @@ def euclidean_distance(x_a, x_b, y_a, y_b):
 class RobotMeshEnv(gazebo_envs.GazeboEnv):
     def __init__(self, **config):
         self.actions = config.get("actions")
+        config = config["environments"]
         self.action_space = spaces.Discrete(
             len(self.actions)
         )  # actions  # spaces.Discrete(3)  # F,L,R
@@ -34,7 +35,6 @@ class RobotMeshEnv(gazebo_envs.GazeboEnv):
         self.reset_pos_x = config.get("pos_x")
         self.reset_pos_y = config.get("pos_y")
         self.reset_pos_z = config.get("pos_z")
-        self.vel_pub = rospy.Publisher("/cmd_vel", Twist, queue_size=5)
         self.unpause = rospy.ServiceProxy("/gazebo/unpause_physics", Empty)
         self.pause = rospy.ServiceProxy("/gazebo/pause_physics", Empty)
         self.reset_proxy = rospy.ServiceProxy("/gazebo/reset_simulation", Empty)
@@ -47,6 +47,18 @@ class RobotMeshEnv(gazebo_envs.GazeboEnv):
         self._seed()
         self.movement_precision = 0.6
         self.cells_span = self.actions_force / 10
+
+        self.gzclient_pid = 0
+        self.vel_pub = rospy.Publisher("/cmd_vel", Twist, queue_size=5)
+        # self.vel_pub = self.get_publisher("/cmd_vel", Twist, queue_size=5)
+
+        # Launch the simulation with the given launchfile name
+        rospy.init_node("gym", anonymous=True)
+        time.sleep(10)
+        vel_cmd = Twist()
+        vel_cmd.linear.x = self.actions_force
+        vel_cmd.angular.z = 0
+        self.vel_pub.publish(vel_cmd)
 
     def render(self, mode="human"):
         pass
@@ -76,18 +88,14 @@ class RobotMeshEnv(gazebo_envs.GazeboEnv):
         state.pose.orientation.y = self.actions[action][1]
         state.pose.orientation.z = self.actions[action][2]
         state.pose.orientation.w = self.actions[action][3]
+        state.twist.linear.x = self.actions_force
+
         rospy.wait_for_service("/gazebo/set_model_state")
         try:
             set_state = rospy.ServiceProxy("/gazebo/set_model_state", SetModelState)
             set_state(state)
         except rospy.ServiceException as e:
             print(f"Service call failed: {e}")
-
-        vel_cmd = Twist()
-        vel_cmd.linear.x = self.actions_force
-        vel_cmd.angular.z = 0
-
-        self.vel_pub.publish(vel_cmd)
 
         self._gazebo_unpause()
 
@@ -111,9 +119,9 @@ class RobotMeshEnv(gazebo_envs.GazeboEnv):
         completed = False
 
         if (
-            euclidean_distance(x_prev, x, y_prev, y)
-            < self.movement_precision * self.cells_span
-            and self.boot_on_crash
+                euclidean_distance(x_prev, x, y_prev, y)
+                < self.movement_precision * self.cells_span
+                and self.boot_on_crash
         ):
             reward = -1
             done = True

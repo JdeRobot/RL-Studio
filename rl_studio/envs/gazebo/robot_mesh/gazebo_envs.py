@@ -5,6 +5,7 @@ import signal
 import subprocess
 import sys
 
+import rosgraph
 from gazebo_msgs.msg import ModelState
 from gazebo_msgs.srv import SetModelState
 import gym
@@ -12,9 +13,10 @@ import numpy as np
 from rosgraph_msgs.msg import Clock
 import rospy
 from tf.transformations import quaternion_from_euler
+from geometry_msgs.msg import Twist
 
-from agents.utils import print_messages
-
+from rl_studio.agents.utils import print_messages
+import time
 
 class GazeboEnv(gym.Env):
     """
@@ -24,13 +26,11 @@ class GazeboEnv(gym.Env):
     metadata = {"render.models": ["human"]}
 
     def __init__(self, config):
-        # print(config.get("launchfile"))
         self.last_clock_msg = Clock()
         self.port = "11311"  # str(random_number) #os.environ["ROS_PORT_SIM"]
         self.port_gazebo = "11345"  # str(random_number+1) #os.environ["ROS_PORT_SIM"]
 
         self.robot_name = config.get("robot_name")
-
         # print(f"\nROS_MASTER_URI = http://localhost:{self.port}\n")
         # print(f"GAZEBO_MASTER_URI = http://localhost:{self.port_gazebo}\n")
 
@@ -49,7 +49,7 @@ class GazeboEnv(gym.Env):
             # TODO: Global env for 'my_env'. It must be passed in constructor.
             fullpath = str(
                 Path(
-                    Path(__file__).resolve().parents[2]
+                    Path(__file__).resolve().parents[3]
                     / "CustomRobots"
                     / config["environment_folder"]
                     / "launch"
@@ -69,12 +69,7 @@ class GazeboEnv(gym.Env):
                 fullpath,
             ]
         )
-        # print("Gazebo launched!")
 
-        self.gzclient_pid = 0
-
-        # Launch the simulation with the given launchfile name
-        rospy.init_node("gym", anonymous=True)
 
         ################################################################################################################
         # r = rospy.Rate(1)
@@ -104,6 +99,24 @@ class GazeboEnv(gym.Env):
     #     self.last_clock_msg = message
     #     # print("Message", message)
 
+    # def get_publisher(self, topic_path, msg_type, **kwargs):
+    #     pub = rospy.Publisher(topic_path, msg_type, **kwargs)
+    #     num_subs = len(self._get_subscribers(topic_path))
+    #     for i in range(10):
+    #         num_cons = pub.get_num_connections()
+    #         if num_cons == num_subs:
+    #             return pub
+    #         time.sleep(0.1)
+    #     raise RuntimeError("failed to get publisher")
+    # def _get_subscribers(self, topic_path):
+    #     ros_master = rosgraph.Master('/rostopic')
+    #     topic_path = rosgraph.names.script_resolve_name('rostopic', topic_path)
+    #     state = ros_master.getSystemState()
+    #     subs = []
+    #     for sub in state[1]:
+    #         if sub[0] == topic_path:
+    #             subs.extend(sub[1])
+    #     return subs
     def step(self, action):
 
         # Implement this method in every subclass
