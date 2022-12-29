@@ -22,10 +22,10 @@ class DQNCartpoleTrainer:
         self.now = datetime.datetime.now()
         # self.environment params
         self.params = params
-        self.environment_params = params.environment["params"]
-        self.env_name = params.environment["params"]["env_name"]
-        self.config = params.settings["params"]
-        self.agent_config = params.agent["params"]
+        self.environment_params = params["environments"]
+        self.env_name = self.environment_params["env_name"]
+        self.config = params["settings"]
+        self.agent_config = params["agent"]
 
         if self.config["logging_level"] == "debug":
             self.LOGGING_LEVEL = logging.DEBUG
@@ -75,13 +75,13 @@ class DQNCartpoleTrainer:
         )  # metrics
         # recorded for graph
         self.epsilon = 1
-        self.EPSILON_DISCOUNT = params.algorithm["params"]["epsilon_discount"]
-        self.GAMMA = params.algorithm["params"]["gamma"]
+        self.EPSILON_DISCOUNT = params["algorithm"]["epsilon_discount"]
+        self.GAMMA = params["algorithm"]["gamma"]
         self.NUMBER_OF_EXPLORATION_STEPS = 128
 
         input_dim = self.env.observation_space.shape[0]
         output_dim = self.env.action_space.n
-        self.exp_replay_size = params.algorithm["params"]["batch_size"]
+        self.exp_replay_size = params["algorithm"]["batch_size"]
         self.deepq = DQN_Agent(
             layer_sizes=[input_dim, 64, output_dim],
             lr=1e-3,

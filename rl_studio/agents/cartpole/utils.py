@@ -32,21 +32,21 @@ def save_model_qlearn(qlearn, current_time, avg):
 
 def params_to_markdown_list(dictionary):
     md_list = []
-    for item in dictionary["params"]:
-        md_list.append({"parameter": item, "value": dictionary["params"][item]})
+    for item in dictionary:
+        md_list.append({"parameter": item, "value": dictionary.get(item)})
     return md_list
 
 def save_metadata(algorithm, current_time, params):
     metadata = open("./logs/cartpole/" + algorithm + "/checkpoints/" + current_time + "_metadata.md",
                     "a")
     metadata.write("AGENT PARAMETERS\n")
-    metadata.write(markdownTable(params_to_markdown_list(params.agent)).setParams(row_sep='always').getMarkdown())
+    metadata.write(markdownTable(params_to_markdown_list(params.get("agent"))).setParams(row_sep='always').getMarkdown())
     metadata.write("\n```\n\nSETTINGS PARAMETERS\n")
-    metadata.write(markdownTable(params_to_markdown_list(params.settings)).setParams(row_sep='always').getMarkdown())
+    metadata.write(markdownTable(params_to_markdown_list(params.get("settings"))).setParams(row_sep='always').getMarkdown())
     metadata.write("\n```\n\nENVIRONMENT PARAMETERS\n")
-    metadata.write(markdownTable(params_to_markdown_list(params.environment)).setParams(row_sep='always').getMarkdown())
+    metadata.write(markdownTable(params_to_markdown_list(params.get("environments"))).setParams(row_sep='always').getMarkdown())
     metadata.write("\n```\n\nALGORITHM PARAMETERS\n")
-    metadata.write(markdownTable(params_to_markdown_list(params.algorithm)).setParams(row_sep='always').getMarkdown())
+    metadata.write(markdownTable(params_to_markdown_list(params.get("algorithm"))).setParams(row_sep='always').getMarkdown())
     metadata.close()
 def save_dqn_model(dqn, current_time, average, params):
     base_file_name = "_epsilon_{}".format(round(epsilon, 2))

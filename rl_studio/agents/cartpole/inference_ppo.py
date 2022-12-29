@@ -25,10 +25,10 @@ class PPOCartpoleInferencer:
         self.now = datetime.datetime.now()
         # self.environment params
         self.params = params
-        self.environment_params = params.environment["params"]
-        self.env_name = params.environment["params"]["env_name"]
-        self.config = params.settings["params"]
-        self.agent_config = params.agent["params"]
+        self.environment_params = params["environments"]
+        self.env_name = self.environment_params["env_name"]
+        self.config = params["settings"]
+        self.agent_config = params["agent"]
 
         if self.config["logging_level"] == "debug":
             self.LOGGING_LEVEL = logging.DEBUG
@@ -72,11 +72,11 @@ class PPOCartpoleInferencer:
             [],
         )  # metrics
         # recorded for graph
-        self.epsilon = params.algorithm["params"]["epsilon"]
-        self.GAMMA = params.algorithm["params"]["gamma"]
+        self.epsilon = params["algorithm"]["epsilon"]
+        self.GAMMA = params["algorithm"]["gamma"]
         self.NUMBER_OF_EXPLORATION_STEPS = 128
 
-        inference_file = params.inference["params"]["inference_file"]
+        inference_file = params["inference"]["inference_file"]
         # TODO the first parameter (algorithm) should come from configuration
         self.inferencer = InferencerWrapper("ppo", inference_file, env=self.env)
 
