@@ -14,8 +14,8 @@ class RobotMeshEnv:
         cls.model_coordinates = None
         cls.position = None
 
-        training_type = config.get("training_type")
-        print(config.get("launchfile"))
+        training_type = config["environments"].get("training_type")
+        print(config["environments"].get("launchfile"))
         if (
             training_type == TrainingType.qlearn_env_camera.value
             or training_type == TrainingType.manual_env.value

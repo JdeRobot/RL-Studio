@@ -49,7 +49,7 @@ class ManualRobotMeshTrainer:
 
         print(f"\t- Start hour: {datetime.datetime.now()}\n")
         print(f"\t- Environment params:\n{self.environment_params}")
-        outdir = "./logs/robot_mesh_experiments/"
+        outdir = "./logs/robot_mesh/"
         env = gym.wrappers.Monitor(self.env, outdir, force=True)
         total_episodes = 20000
         env.done = False
