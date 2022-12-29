@@ -4,6 +4,9 @@ settings:
   save_positions: True
   telemetry: False
   logging_level: info
+  mode: inference
+  agent: cartpole
+  algorithm: qlearn
 
 # TODO make this section optional
 actions:
@@ -18,12 +21,11 @@ agent:
     height: 480
 
 environments:
-  simple:
     env_name: myCartpole-v0
     environment_folder: cartpole
 #    runs: 20000
-    angle_bins: 300
-    pos_bins: 50
+    angle_bins: 100
+    pos_bins: 100
     runs: 100
     full_experimentation_runs: 0
     update_every: 1000
@@ -38,19 +40,17 @@ environments:
     perturbations_intensity_std: 0 # Number between 0 and 1 that indicates the standard deviation of perturbations intensity
     initial_pole_angle: 0.3
     non_recoverable_angle: 0.7
-    previously_trained_agent: /home/ruben/Desktop/my-RL-Studio/rl_studio/logs/cartpole/qlearning/checkpoints/20221116_2001_epsilon_0.01_QTABLE_avg_ 179.357.pkl
+#    previously_trained_agent: /home/ruben/Desktop/my-RL-Studio/rl_studio/logs/cartpole/qlearning/checkpoints/20221116_2001_epsilon_0.01_QTABLE_avg_ 179.357.pkl
     reward_value: 1
     punish: 0
     reward_shaping: 0
 
 inference:
-  qlearn:
-    inference_file: /home/ruben/Desktop/my-RL-Studio/rl_studio/logs/cartpole/qlearning/checkpoints/20221116_1010_epsilon_0.051_368.4092_QTABLE.pkl_avg_.pkl
+    inference_file: /home/ruben/Desktop/my-RL-Studio/rl_studio/checkpoints/cartpole/qlearn_models/20221116_0028_epsilon_0_267.0_QTABLE.pkl_avg_.pkl
     actions_file: /home/ruben/Desktop/my-RL-Studio/rl_studio/logs/cartpole/qlearning/checkpoints/actions_set_20221109_2108
 
 algorithm:
-    qlearn:
-      alpha: 0.9
-      epsilon: 0.5
-      gamma: 0.9
-      epsilon_discount: 0.9999995
+    alpha: 0.9
+    epsilon: 0.5
+    gamma: 0.9
+    epsilon_discount: 0.9999995

@@ -18,8 +18,8 @@ class QLearnCartpoleTrainer:
         self.now = datetime.datetime.now()
         # environment params
         self.params = params
-        self.environment_params = params.environment["params"]
-        self.env_name = params.environment["params"]["env_name"]
+        self.environment_params = params["environments"]
+        self.env_name = self.environment_params["env_name"]
 
         self.RANDOM_PERTURBATIONS_LEVEL = self.environment_params.get("random_perturbations_level", 0)
         self.PERTURBATIONS_INTENSITY_STD = self.environment_params.get("perturbations_intensity_std", 0)
@@ -66,19 +66,19 @@ class QLearnCartpoleTrainer:
             "max": [],
         }  # metrics recorded for graph
         # algorithm params
-        self.alpha = params.algorithm["params"]["alpha"]
-        self.epsilon = params.algorithm["params"]["epsilon"]
-        self.gamma = params.algorithm["params"]["gamma"]
+        self.alpha = params["algorithm"]["alpha"]
+        self.epsilon = params["algorithm"]["epsilon"]
+        self.gamma = params["algorithm"]["gamma"]
         self.states_counter = {}
         self.states_reward = {}
         self.last_time_steps = np.ndarray(0)
 
-        self.config = params.settings["params"]
+        self.config = params["settings"]
         self.actions = range(self.env.action_space.n)
         self.env.done = True
 
         self.total_episodes = 20000
-        self.epsilon_discount = params.algorithm["params"][
+        self.epsilon_discount = params["algorithm"][
             "epsilon_discount"
         ]  # Default 0.9986
 
