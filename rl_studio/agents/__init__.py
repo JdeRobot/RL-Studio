@@ -433,10 +433,10 @@ class InferencerFactory:
         # =============================
         elif agent == AgentsType.MOUNTAIN_CAR.value:
             from rl_studio.agents.mountain_car.inference_qlearn import (
-                MountainCarInferencer,
+                QLearnMountainCarInferencer,
             )
 
-            return MountainCarInferencer(config)
+            return QLearnMountainCarInferencer(config)
 
         # =============================
         # Pendulum - DDPG - Pytorch
