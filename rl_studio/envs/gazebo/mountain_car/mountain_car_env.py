@@ -14,6 +14,7 @@ from rl_studio.envs.gazebo import gazebo_envs
 class MountainCarEnv(gazebo_envs.GazeboEnv):
     def __init__(self, **config):
         self.actions = config.get("actions")
+        config = config["environments"]
         self.action_space = spaces.Discrete(
             len(self.actions)
         )  # actions  # spaces.Discrete(3)  # F,L,R

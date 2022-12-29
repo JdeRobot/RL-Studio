@@ -1,5 +1,5 @@
 gym==0.25.0
 matplotlib==3.3.2
-numpy==1.17.4
+numpy==1.18.5
 tqdm==4.64.0
 py-markdown-table==0.3.3

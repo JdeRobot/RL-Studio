@@ -4,6 +4,9 @@ settings:
   save_positions: True
   telemetry: False
   logging_level: info
+  mode: inference
+  agent: cartpole
+  algorithm: ppo
 
 # TODO make this section optional
 actions:
@@ -18,7 +21,6 @@ agent:
       height: 480
 
 environments:
-  simple:
     env_name: myCartpole-v0
     environment_folder: cartpole
 #    runs: 20000
@@ -37,10 +39,8 @@ environments:
     non_recoverable_angle: 0.3
 
 inference:
-  ppo:
-    inference_file: /home/ruben/Desktop/my-RL-Studio/rl_studio/logs/cartpole/ppo/checkpoints/20221110_0937_actor_avg_500.0.pkl
+  inference_file: /home/ruben/Desktop/my-RL-Studio/rl_studio/logs/cartpole/ppo/checkpoints/20221110_0937_actor_avg_500.0.pkl
 
 algorithm:
-    ppo:
-      gamma: 1
-      epsilon: 0.15
+  gamma: 1
+  epsilon: 0.15

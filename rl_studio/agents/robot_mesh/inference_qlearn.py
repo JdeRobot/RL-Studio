@@ -16,12 +16,9 @@ class QLearnRobotMeshInferencer:
         # TODO: Create a pydantic metaclass to simplify the way we extract the params
         # environment params
         self.params = params
-        self.environment_params = params.environment["params"]
-        self.env_name = params.environment["params"]["env_name"]
-        env_params = params.environment["params"]
-        actions = params.environment["actions"]
-        env_params["actions"] = actions
-        self.env = gym.make(self.env_name, **env_params)
+        self.environment_params = params["environments"]
+        self.env_name = self.environment_params["env_name"]
+        self.env = gym.make(self.env_name, **params)
         # algorithm param
         self.stats = {}  # epoch: steps
         self.states_counter = {}
@@ -29,14 +26,14 @@ class QLearnRobotMeshInferencer:
         self.last_time_steps = np.ndarray(0)
         self.total_episodes = 20000
 
-        self.outdir = "./logs/robot_mesh_experiments/"
+        self.outdir = "./logs/robot_mesh/"
         self.env = gym.wrappers.Monitor(self.env, self.outdir, force=True)
 
-        inference_file = params.inference["params"]["inference_file"]
-        actions_file = params.inference["params"]["actions_file"]
+        inference_file = params["inference"]["inference_file"]
+        actions_file = params["inference"]["actions_file"]
         self.highest_reward = 0
 
-        self.inferencer = InferencerWrapper("qlearn", inference_file, actions_file)
+        self.inferencer = InferencerWrapper("qlearn_deprecated", inference_file, actions_file)
 
     def print_init_info(self):
         print(JDEROBOT)
