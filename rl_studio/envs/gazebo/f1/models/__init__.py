@@ -1,4 +1,6 @@
-from rl_studio.envs.gazebo.f1.env_type import EnvironmentType
+from rl_studio.agents.tasks_type import TasksType
+from rl_studio.agents.frameworks_type import FrameworksType
+from rl_studio.algorithms.algorithms_type import AlgorithmsType
 from rl_studio.envs.gazebo.f1.exceptions import NoValidEnvironmentType
 
 
@@ -14,16 +16,9 @@ class F1Env:
         cls.model_coordinates = None
         cls.position = None
 
-        # training_type = config.get("training_type")
-        # print(f"F1Env -> environment:{environment}")
-
-        agent = environment["agent"]
         algorithm = environment["algorithm"]
         task = environment["task"]
         framework = environment["framework"]
-        # print(
-        #    f"ens/gazebo/f1/models/__init__.py -> task:{task}, algorithm:{algorithm}, agent:{agent}, framework:{framework}"
-        # )
 
         # =============================
         # FollowLine - qlearn - (we are already in F1 - Gazebo)

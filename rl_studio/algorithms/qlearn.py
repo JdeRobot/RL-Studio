@@ -1,5 +1,7 @@
+import os
 import pickle
 import random
+import time
 
 import numpy as np
 
@@ -81,7 +83,31 @@ class QLearn:
             return action, q
         return action
 
-    def load_model(self, file_path, actions_path):
+    def load_model(self, file_path):
+
+        qlearn_file = open(file_path, "rb")
+        self.q = pickle.load(qlearn_file)
+
+    def save_model(
+        self, environment, outdir, qlearn, cumulated_reward, episode, step, epsilon
+    ):
+        # Tabular RL: Tabular Q-learning basically stores the policy (Q-values) of  the agent into a matrix of shape
+        # (S x A), where s are all states, a are all the possible actions. After the environment is solved, just save this
+        # matrix as a csv file. I have a quick implementation of this on my GitHub under Reinforcement Learning.
+
+        # outdir_models = f"{outdir}_models"
+        os.makedirs(f"{outdir}", exist_ok=True)
+
+        # Q TABLE
+        # base_file_name = "_actions_set:_{}_epsilon:_{}".format(settings.actions_set, round(qlearn.epsilon, 2))
+        base_file_name = f"_Circuit-{environment['circuit_name']}_States-{environment['states']}_Actions-{environment['action_space']}_epsilon-{round(epsilon,3)}_epoch-{episode}_step-{step}_reward-{cumulated_reward}"
+        file_dump = open(
+            f"{outdir}/{time.strftime('%Y%m%d-%H%M%S')}_{base_file_name}_QTABLE.pkl",
+            "wb",
+        )
+        pickle.dump(qlearn.q, file_dump)
+
+    def load_qmodel_actionsmodel(self, file_path, actions_path):
 
         qlearn_file = open(file_path, "rb")
         actions_file = open(actions_path, "rb")

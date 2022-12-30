@@ -1,15 +1,49 @@
-import datetime
+from datetime import datetime, timedelta
+import logging
 import os
 import pickle
+from pprint import pformat
+import time
 
 import cv2
 import numpy as np
 import pandas as pd
+from pygments import highlight
+from pygments.formatters import Terminal256Formatter
+from pygments.lexers import PythonLexer
 
 from rl_studio.agents.f1 import settings
 
 
+class LoggingHandler:
+    def __init__(self, log_file):
+        self.logger = logging.getLogger(__name__)
+        c_handler = logging.StreamHandler()
+        f_handler = logging.FileHandler(log_file)
+
+        c_handler.setLevel(logging.WARNING)
+        f_handler.setLevel(logging.INFO)
+
+        # Create formatters and add it to handlers
+        c_format = logging.Formatter("%(name)s - %(levelname)s - %(message)s")
+        f_format: Formatter = logging.Formatter(
+            "[%(levelname)s] - %(asctime)s, filename: %(filename)s, funcname: %(funcName)s, line: %(lineno)s\n messages ---->\n %(message)s"
+        )
+        c_handler.setFormatter(c_format)
+        f_handler.setFormatter(f_format)
+
+        # Add handlers to the logger
+        self.logger.addHandler(c_handler)
+        self.logger.addHandler(f_handler)
+
+    def get_logger(self):
+        return self.logger
+
+
 def load_model(qlearn, file_name):
+    """
+    Qlearn old version
+    """
 
     qlearn_file = open("./logs/qlearn_models/" + file_name)
     model = pickle.load(qlearn_file)
@@ -25,6 +59,32 @@ def load_model(qlearn, file_name):
     print(f"    - Action set: {settings.actions_set}")
     print(f"    - Epsilon:    {qlearn.epsilon}")
     print(f"    - Start:      {datetime.datetime.now()}")
+
+
+def save_qlearn_model(
+    environment,
+    outdir,
+    qlearn,
+    cumulated_reward,
+    episode,
+    step,
+    epsilon,
+):
+
+    # Tabular RL: Tabular Q-learning basically stores the policy (Q-values) of  the agent into a matrix of shape
+    # (S x A), where s are all states, a are all the possible actions. After the environment is solved, just save this
+    # matrix as a csv file. I have a quick implementation of this on my GitHub under Reinforcement Learning.
+
+    # outdir_models = f"{outdir}_models"
+    os.makedirs(f"{outdir}", exist_ok=True)
+
+    # Q TABLE
+    # base_file_name = "_actions_set:_{}_epsilon:_{}".format(settings.actions_set, round(qlearn.epsilon, 2))
+    base_file_name = f"_Circuit-{environment['circuit_name']}_States-{environment['states']}_Actions-{environment['action_space']}_epsilon-{round(epsilon,3)}_epoch-{episode}_step-{step}_reward-{cumulated_reward}"
+    file_dump = open(
+        f"{outdir}/{time.strftime('%Y%m%d-%H%M%S')}_{base_file_name}_QTABLE.pkl", "wb"
+    )
+    pickle.dump(qlearn.q, file_dump)
 
 
 def save_model(qlearn, current_time, states, states_counter, states_rewards):
@@ -102,6 +162,12 @@ def print_messages(*args, **kwargs):
     print("\n")
 
 
+def print_dictionary(dic):
+    # pp = pprint.PrettyPrinter(indent=4)
+    # pp.pprint(dic)
+    print(highlight(pformat(dic), PythonLexer(), Terminal256Formatter()), end="")
+
+
 def render_params(**kwargs):
     font = cv2.FONT_HERSHEY_SIMPLEX
     canvas = np.zeros((400, 400, 3), dtype="uint8")
@@ -128,75 +194,74 @@ def render_params(**kwargs):
     cv2.waitKey(100)
 
 
-def save_agent_npy(environment, outdir, physics, current_time):
-    """ """
-
-    outdir_episode = f"{outdir}_stats"
-    os.makedirs(f"{outdir_episode}", exist_ok=True)
-
-    file_npy = f"{outdir_episode}/{current_time}_Circuit-{environment['circuit_name']}_States-{environment['state_space']}_Actions-{environment['action_space']}_rewards-{environment['reward_function']}.npy"
-
-    np.save(file_npy, physics)
-
-
-def save_stats_episodes(environment, outdir, aggr_ep_rewards, current_time):
+def save_dataframe_episodes(environment, outdir, aggr_ep_rewards, actions_rewards=None):
     """
-    We save info of EPISODES in a dataframe to export or manage
+    We save info every certains epochs in a dataframe and .npy format to export or manage
     """
+    os.makedirs(f"{outdir}", exist_ok=True)
 
-    outdir_episode = f"{outdir}_stats"
-    os.makedirs(f"{outdir_episode}", exist_ok=True)
-
-    file_csv = f"{outdir_episode}/{current_time}_Circuit-{environment['circuit_name']}_States-{environment['state_space']}_Actions-{environment['action_space']}_rewards-{environment['reward_function']}.csv"
-    file_excel = f"{outdir_episode}/{current_time}_Circuit-{environment['circuit_name']}_States-{environment['state_space']}_Actions-{environment['action_space']}_rewards-{environment['reward_function']}.xlsx"
+    file_csv = f"{outdir}/{time.strftime('%Y%m%d-%H%M%S')}_Circuit-{environment['env']}_States-{environment['states']}_Actions-{environment['actions']}_rewards-{environment['rewards']}.csv"
+    file_excel = f"{outdir}/{time.strftime('%Y%m%d-%H%M%S')}_Circuit-{environment['env']}_States-{environment['states']}_Actions-{environment['actions']}_rewards-{environment['rewards']}.xlsx"
 
     df = pd.DataFrame(aggr_ep_rewards)
     df.to_csv(file_csv, mode="a", index=False, header=None)
     df.to_excel(file_excel)
 
+    if actions_rewards is not None:
+        file_npy = f"{outdir}/{time.strftime('%Y%m%d-%H%M%S')}_Circuit-{environment['env']}_States-{environment['states']}_Actions-{environment['actions']}_rewards-{environment['rewards']}.npy"
+        np.save(file_npy, actions_rewards)
 
-def save_model_qlearn(
-    environment,
-    outdir,
-    qlearn,
-    current_time,
-    steps_epochs,
-    states_counter,
-    states_rewards,
+
+def save_best_episode(
+    global_params,
+    cumulated_reward,
     episode,
     step,
-    epsilon,
+    start_time_epoch,
+    reward,
+    image_center,
 ):
-    # Tabular RL: Tabular Q-learning basically stores the policy (Q-values) of  the agent into a matrix of shape
-    # (S x A), where s are all states, a are all the possible actions. After the environment is solved, just save this
-    # matrix as a csv file. I have a quick implementation of this on my GitHub under Reinforcement Learning.
+    """
+    save best episode in training
+    """
 
-    outdir_models = f"{outdir}_models"
-    os.makedirs(f"{outdir_models}", exist_ok=True)
+    current_max_reward = cumulated_reward
+    best_epoch = episode
+    best_step = step
+    best_epoch_training_time = datetime.now() - start_time_epoch
+    # saving params to show
+    # self.actions_rewards["episode"].append(episode)
+    # self.actions_rewards["step"].append(step)
+    # self.actions_rewards["reward"].append(reward)
+    global_params.actions_rewards["episode"].append(episode)
+    global_params.actions_rewards["step"].append(step)
+    # For continuous actios
+    # self.actions_rewards["v"].append(action[0][0])
+    # self.actions_rewards["w"].append(action[0][1])
+    global_params.actions_rewards["reward"].append(reward)
+    global_params.actions_rewards["center"].append(image_center)
 
-    # Q TABLE
-    # base_file_name = "_actions_set:_{}_epsilon:_{}".format(settings.actions_set, round(qlearn.epsilon, 2))
-    base_file_name = f"_Circuit-{environment['circuit_name']}_States-{environment['state_space']}_Actions-{environment['action_space']}_epsilon-{round(epsilon,3)}_epoch-{episode}_step-{step}_reward-{states_rewards}"
-    file_dump = open(
-        f"{outdir_models}/1_" + current_time + base_file_name + "_QTABLE.pkl", "wb"
+    return current_max_reward, best_epoch, best_step, best_epoch_training_time
+
+
+def save_batch(episode, step, start_time_epoch, start_time, global_params, env_params):
+    """
+    save batch of n episodes
+    """
+    average_reward = sum(global_params.ep_rewards[-env_params.save_episodes :]) / len(
+        global_params.ep_rewards[-env_params.save_episodes :]
     )
-    pickle.dump(qlearn.q, file_dump)
+    min_reward = min(global_params.ep_rewards[-env_params.save_episodes :])
+    max_reward = max(global_params.ep_rewards[-env_params.save_episodes :])
 
-    # STATES COUNTER
-    states_counter_file_name = base_file_name + "_STATES_COUNTER.pkl"
-    file_dump = open(
-        f"{outdir_models}/2_" + current_time + states_counter_file_name, "wb"
+    global_params.aggr_ep_rewards["episode"].append(episode)
+    global_params.aggr_ep_rewards["step"].append(step)
+    global_params.aggr_ep_rewards["avg"].append(average_reward)
+    global_params.aggr_ep_rewards["max"].append(max_reward)
+    global_params.aggr_ep_rewards["min"].append(min_reward)
+    global_params.aggr_ep_rewards["epoch_training_time"].append(
+        (datetime.now() - start_time_epoch).total_seconds()
     )
-    pickle.dump(states_counter, file_dump)
-
-    # STATES CUMULATED REWARD
-    states_cum_reward_file_name = base_file_name + "_STATES_CUM_REWARD.pkl"
-    file_dump = open(
-        f"{outdir_models}/3_" + current_time + states_cum_reward_file_name, "wb"
+    global_params.aggr_ep_rewards["total_training_time"].append(
+        (datetime.now() - start_time).total_seconds()
     )
-    pickle.dump(states_rewards, file_dump)
-
-    # STATES
-    steps = base_file_name + "_STATES_STEPS.pkl"
-    file_dump = open(f"{outdir_models}/4_" + current_time + steps, "wb")
-    pickle.dump(steps_epochs, file_dump)
