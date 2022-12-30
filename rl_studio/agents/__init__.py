@@ -234,6 +234,18 @@ class TrainerFactory:
             )
 
             return CartpoleTrainer(config)
+        # =============================
+        # CartPole - PPO CONTINUOUS
+        # =============================
+        elif (
+            agent == AgentsType.CARTPOLE.value and algorithm == AlgorithmsType.PPO_CONTINIUOUS.value
+        ):
+            from rl_studio.agents.cartpole.train_ppo_continous import (
+                PPOCartpoleTrainer as CartpoleTrainer,
+            )
+
+            return CartpoleTrainer(config)
+
 
         # =============================
         # Autoparking - F1 - DDPG - Gazebo - TF
@@ -421,11 +433,14 @@ class InferencerFactory:
                 from rl_studio.agents.cartpole.inference_ppo import (
                     PPOCartpoleInferencer as CartpoleInferencer,
                 )
+            elif algorithm == AlgorithmsType.PPO_CONTINIUOUS.value:
+                from rl_studio.agents.cartpole.inference_ppo_continous import (
+                    PPOCartpoleInferencer as CartpoleInferencer,
+                )
             else:
                 from rl_studio.agents.cartpole.inference_qlearn import (
                     QLearnCartpoleInferencer as CartpoleInferencer,
                 )
-
             return CartpoleInferencer(config)
 
         # =============================

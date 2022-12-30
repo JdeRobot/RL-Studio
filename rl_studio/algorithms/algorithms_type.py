@@ -9,4 +9,5 @@ class AlgorithmsType(Enum):
     DDPG = "ddpg"
     DDPG_TORCH = "ddpg_torch"
     PPO = "ppo"
+    PPO_CONTINIUOUS = 'ppo_continous'
     MANUAL = "manual"
