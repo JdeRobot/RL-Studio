@@ -58,8 +58,16 @@ def save_dqn_model(dqn, current_time, average, params):
     pickle.dump(dqn.q_net, file_dump)
     file_dump.close()
 
+def save_ddpg_model(actor, current_time, average):
+    file_dump = open(
+        "./logs/cartpole/ddpg/checkpoints/" + current_time + "_actor_avg_" + str(
+            average) + ".pkl",
+        "wb",
+    )
+    pickle.dump(actor, file_dump)
+    file_dump.close()
 
-def save_ppo_model(actor, current_time, average, params):
+def save_ppo_model(actor, current_time, average):
     file_dump = open(
         "./logs/cartpole/ppo/checkpoints/" + current_time + "_actor_avg_" + str(
             average) + ".pkl",
@@ -68,18 +76,7 @@ def save_ppo_model(actor, current_time, average, params):
     pickle.dump(actor.model, file_dump)
     file_dump.close()
 
-def save_ppo_continuous_model(actor, current_time, average, params):
-    file_dump = open(
-        "./logs/cartpole/ppo_continuous/checkpoints/" + current_time + "_actor_avg_" + str(
-            average) + ".pkl",
-        "wb",
-    )
-    pickle.dump(actor.model, file_dump)
-    file_dump.close()
-
-
-
-def save_actions_qlearn(actions, start_time, params):
+def save_actions_qlearn(actions, start_time):
     file_dump = open("./logs/cartpole/qlearning/checkpoints/actions_set_" + start_time, "wb")
     pickle.dump(actions, file_dump)
     file_dump.close()

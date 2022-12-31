@@ -2,6 +2,7 @@ from rl_studio.algorithms.algorithms_type import AlgorithmsType
 from rl_studio.algorithms.exceptions import NoValidAlgorithmType
 import pickle
 
+
 class TrainerFactory:
     def __init__(self, **kwargs):
         self.algorithm = kwargs.get("algorithm")
@@ -69,7 +70,19 @@ class InferencerFactory:
 
             return brain
 
-        elif algorithm == AlgorithmsType.DDPG_TORCH.value:
+        elif algorithm == AlgorithmsType.PPO_CONTINIUOUS.value:
+            from rl_studio.algorithms.ppo_continuous import PPO
+
+            input_dim = config.env.observation_space.shape[0]
+            output_dim = config.env.action_space.shape[0]
+
+            brain = PPO(input_dim, output_dim, None, None, None, None, None,
+                        True, None)
+            brain.load(inference_file_name)
+
+            return brain
+
+        elif algorithm == AlgorithmsType.DDPG.value:
             from rl_studio.algorithms.ddpg_torch import Actor
 
             brain = Actor()

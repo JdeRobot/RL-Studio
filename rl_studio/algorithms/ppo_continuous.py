@@ -36,6 +36,7 @@ class RolloutBuffer:
 class ActorCritic(nn.Module):
     def __init__(self, state_dim, action_dim, has_continuous_action_space, action_std_init):
         super(ActorCritic, self).__init__()
+        action_std_init = 0.0001 if action_std_init is None else action_std_init
 
         self.has_continuous_action_space = has_continuous_action_space
 
@@ -117,9 +118,11 @@ class ActorCritic(nn.Module):
 
 
 class PPO:
-    def __init__(self, state_dim, action_dim, lr_actor, lr_critic, gamma, K_epochs, eps_clip,
-                 has_continuous_action_space, action_std_init=0.6):
-
+    def __init__(self, state_dim, action_dim, lr_actor=0.0003, lr_critic=0.001, gamma=None, K_epochs=80, eps_clip=None,
+                 has_continuous_action_space=True, action_std_init=None):
+        self.action_std_decay_rate = 0.05  # linearly decay action_std (action_std = action_std - action_std_decay_rate)
+        self.min_action_std = 0.1  # minimum action_std (stop decay after action_std <= min_action_std)
+        self.action_std_decay_freq = int(2.5e5)  # action_std decay frequency (in num timesteps)
         self.has_continuous_action_space = has_continuous_action_space
 
         if has_continuous_action_space:
@@ -241,7 +244,7 @@ class PPO:
         self.buffer.clear()
 
     def inference(self, state):
-        self.select_action(state)
+        return self.select_action(state)
     def save(self, checkpoint_path):
         torch.save(self.policy_old.state_dict(), checkpoint_path)
 

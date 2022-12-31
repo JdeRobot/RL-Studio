@@ -119,11 +119,10 @@ class CartPoleEnv(gym.Env):
         return np.array(self.state, dtype=np.float32), terminated, False, {}
 
     def step(self, action):
-        err_msg = f"{action!r} ({type(action)}) invalid"
-        assert self.action_space.contains(action), err_msg
+        action = np.clip(action, -1, 1)[0]
         assert self.state is not None, "Call reset before using step method."
         x, x_dot, theta, theta_dot = self.state
-        [force] = self.force_mag * action
+        force = self.force_mag * action
         costheta = math.cos(theta)
         sintheta = math.sin(theta)
 

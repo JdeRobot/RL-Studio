@@ -6,7 +6,8 @@ settings:
   logging_level: info
   mode: training
   agent: cartpole
-  algorithm: ppo_continuous
+  algorithm: ddpg
+  framework: Pytorch
 
 # TODO make this section optional
 actions:
@@ -33,15 +34,15 @@ environments:
     block_experience_batch: False
   #  random_start_level: 0.05
     random_start_level: 0 # Number between 0 and 1 that indicates the difficulty of the start position
-    random_perturbations_level: 0.8 # Number between 0 and 1 that indicates the frequency of the random perturbations
-    perturbations_intensity_std: 1 # Number between 0 and 1 that indicates the standard deviation of perturbations intensity
+    random_perturbations_level: 0 # Number between 0 and 1 that indicates the frequency of the random perturbations
+    perturbations_intensity_std: 0 # Number between 0 and 1 that indicates the standard deviation of perturbations intensity
     initial_pole_angle: 0
     non_recoverable_angle: 0.3
 
 inference:
-  inference_file: /home/ruben/Desktop/my-RL-Studio/rl_studio/logs/cartpole/ppo_continuous/checkpoints/20221231_1813_actor_avg_434.5
+  inference_file: /home/ruben/Desktop/my-RL-Studio/rl_studio/logs/cartpole/ddpg/checkpoints/20221231_1940_actor_avg_239.33.pkl
 
 algorithm:
-  gamma: 1
-  epsilon: 0.15
-  episodes_update: 1000
+    gamma: 0.99
+    hidden_size: 128
+    batch_size: 128
