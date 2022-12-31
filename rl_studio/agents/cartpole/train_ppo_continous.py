@@ -109,7 +109,7 @@ class PPOCartpoleTrainer:
     def main(self):
         epoch_start_time = datetime.datetime.now()
 
-        logs_dir = 'logs/cartpole/ppo/training/'
+        logs_dir = 'logs/cartpole/ppo_continuous/training/'
         logs_file_name = 'logs_file_' + str(self.RANDOM_START_LEVEL) + '_' + str(
             self.RANDOM_PERTURBATIONS_LEVEL) + '_' + str(epoch_start_time) \
                          + str(self.PERTURBATIONS_INTENSITY_STD) + '.log'
@@ -122,7 +122,6 @@ class PPOCartpoleTrainer:
 
         if self.config["save_model"]:
             save_metadata("ppo", start_time_format, self.params)
-
 
         logging.info(LETS_GO)
         total_reward_in_epoch = 0
@@ -185,7 +184,7 @@ class PPOCartpoleTrainer:
                 if self.config["save_model"] and last_average > self.max_avg:
                     self.max_avg = total_reward_in_epoch / self.UPDATE_EVERY
                     logging.info(f"Saving model . . .")
-                    utils.save_ppo_model(self.actor, start_time_format, last_average, self.params)
+                    utils.save_ppo_continuous_model(self.actor, start_time_format, last_average, self.params)
 
                 if last_average >= self.OBJECTIVE_REWARD:
                     logging.info("Training objective reached!!")

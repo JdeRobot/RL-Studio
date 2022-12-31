@@ -40,6 +40,7 @@ class PPOCartpoleTrainer:
         self.RANDOM_START_LEVEL = self.environment_params.get("random_start_level", 0)
         self.INITIAL_POLE_ANGLE = self.environment_params.get("initial_pole_angle", None)
 
+
         non_recoverable_angle = self.environment_params[
             "non_recoverable_angle"
         ]

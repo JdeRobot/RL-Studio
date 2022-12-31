@@ -128,7 +128,7 @@ class Actor(nn.Module):
         if explore:
             action = self.noise.get_action(action, step)
 
-        return action if isinstance(action, Sequence) else [action]
+        return action
 
     def forward(self, state):
         """
@@ -151,4 +151,4 @@ class Actor(nn.Module):
         print(f"\n\nMODEL LOADED.")
 
     def inference(self, state):
-        return self.get_action(state, explore=False)
+        return [self.get_action(state, explore=False)]

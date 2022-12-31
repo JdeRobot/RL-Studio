@@ -6,7 +6,7 @@ settings:
   logging_level: info
   mode: training
   agent: cartpole
-  algorithm: ppo_continous
+  algorithm: ppo_continuous
 
 # TODO make this section optional
 actions:
