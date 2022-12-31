@@ -38,7 +38,7 @@ environments:
     non_recoverable_angle: 0.3
 
 inference:
-    inference_file: /home/ruben/Desktop/my-RL-Studio/rl_studio/logs/pendulum/ddpg/checkpoints/20221219_0112_actor_avg_-381.2062594472542.pkl
+    inference_file: /home/ruben/Desktop/my-RL-Studio/rl_studio/logs/pendulum/ppo/checkpoints/20221231_0244_actor_avg_-803.8121022237663
 
 algorithm:
   gamma: 1

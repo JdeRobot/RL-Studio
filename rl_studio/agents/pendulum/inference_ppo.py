@@ -34,7 +34,7 @@ from rl_studio.wrappers.inference_rlstudio import InferencerWrapper
 #         return act_k_inv * (action - act_b)
 
 
-class PPOPendulumTrainer:
+class PPOPendulumInferencer:
     def __init__(self, params):
 
         self.now = datetime.datetime.now()
@@ -63,7 +63,7 @@ class PPOPendulumTrainer:
         #                                   # ,random_start_level=self.RANDOM_START_LEVEL, initial_pole_angle=self.INITIAL_POLE_ANGLE,
         #                                   # non_recoverable_angle=non_recoverable_angle
         #                                   ))
-        self.env = gym.make(self.env_name)
+        self.env = gym.make(self.env_name,  render_mode='human')
         self.RUNS = self.environment_params["runs"]
         self.UPDATE_EVERY = self.environment_params[
             "update_every"
@@ -83,11 +83,7 @@ class PPOPendulumTrainer:
         self.max_avg = -1000
 
         self.num_actions = self.env.action_space.shape[0]
-        input_dim = self.env.observation_space.shape[0]
-        lr_actor = 0.0003
-        lr_critic = 0.001
-        K_epochs = 80
-        action_std = 0.6  # starting std for action distribution (Multivariate Normal)
+
         self.action_std_decay_rate = 0.05  # linearly decay action_std (action_std = action_std - action_std_decay_rate)
         self.min_action_std = 0.1  # minimum action_std (stop decay after action_std <= min_action_std)
         self.action_std_decay_freq = int(2.5e5)  # action_std decay frequency (in num timesteps)
