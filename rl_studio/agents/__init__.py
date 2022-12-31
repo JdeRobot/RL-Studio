@@ -294,7 +294,13 @@ class TrainerFactory:
                 from rl_studio.agents.pendulum.train_ddpg import (
                     DDPGPendulumTrainer as PendulumTrainer,
                 )
-            return PendulumTrainer(config)
+                return PendulumTrainer(config)
+
+            elif algorithm == AlgorithmsType.PPO_CONTINIUOUS.value:
+                from rl_studio.agents.pendulum.train_ppo import (
+                    PPOPendulumTrainer as PendulumTrainer,
+                )
+                return PendulumTrainer(config)
 
         else:
             raise NoValidTrainingType(agent)
@@ -457,10 +463,18 @@ class InferencerFactory:
         # Pendulum - DDPG - Pytorch
         # =============================
         elif agent == AgentsType.PENDULUM.value:
-            from rl_studio.agents.pendulum.inference_ddpg import (
-                DDPGPendulumInferencer as PendulumInferencer,
-            )
+            if algorithm == AlgorithmsType.DDPG_TORCH.value:
+                from rl_studio.agents.pendulum.inference_ddpg import (
+                    DDPGPendulumInferencer as PendulumInferencer,
+                )
 
-            return PendulumInferencer(config)
+                return PendulumInferencer(config)
+
+            elif algorithm == AlgorithmsType.PPO_CONTINIUOUS.value:
+                from rl_studio.agents.pendulum.inference_ppo import (
+                    PPOPendulumInferencer as PendulumInferencer,
+                )
+
+                return PendulumInferencer(config)
         else:
             raise NoValidTrainingType(agent)
