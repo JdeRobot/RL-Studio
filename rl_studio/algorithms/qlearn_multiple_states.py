@@ -1,3 +1,4 @@
+import collections
 import pickle
 import random
 
@@ -13,10 +14,10 @@ class QLearn:
         self.actions = actions
 
     def getQValues(self, state, action):
+        state = state if isinstance(state, collections.abc.Sequence) else [state]
         return self.q.get(tuple(state) + (action,), 0.0)
 
     def selectAction(self, state, return_q=False):
-
         q = [self.getQValues(state, a) for a in self.actions]
         maxQ = max(q)
 
@@ -32,7 +33,7 @@ class QLearn:
         else:
             i = q.index(maxQ)
 
-        action = self.actions[i]
+        action = i
         if return_q:  # if they want it, give it!
             return action, q
         return action
@@ -57,21 +58,7 @@ class QLearn:
         return np.array(self.state)
 
     def inference(self, state, return_q=False):
-        q = [self.getQValues(state, a) for a in self.actions]
-        maxQ = max(q)
-        count = q.count(maxQ)
-        # In case there're several state-action max values
-        # we select a random one among them
-        if count > 1:
-            best = [i for i in range(len(self.actions)) if q[i] == maxQ]
-            i = random.choice(best)
-        else:
-            i = q.index(maxQ)
-
-        action = self.actions[i]
-        if return_q:  # if they want it, give it!
-            return action, q
-        return action
+        return self.selectAction(state, return_q)
 
     def load_model(self, file_path, actions):
 
@@ -80,7 +67,6 @@ class QLearn:
         self.q = pickle.load(qlearn_file)
         # TODO it may be possible to infer the actions from the model. I don know enough to assume that for every algorithm
         self.actions = actions
-
         print(f"\n\nMODEL LOADED.")
         print(f"    - Loading:    {file_path}")
         print(f"    - Model size: {len(self.q)}")

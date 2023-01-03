@@ -51,7 +51,7 @@ class QLearn:
         else:
             i = q.index(maxQ)
 
-        action = self.actions[i]
+        action = i
         if return_q:  # if they want it, give it!
             return action, q
         return action
