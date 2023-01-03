@@ -175,15 +175,17 @@ roslaunch simple_circuit.launch
 
 and you could see something similar to the screenshot
 
-![App Screenshot](https://github.com/JdeRobot/RL-Studio/tree/main/rl_studio/docs/gazebo_screenshot.png)
+![](./rl_studio/docs/gazebo_screenshot.png)
+
 
 # Work with RL-Studio
 
+
 Additional information on how to create, run and test reinforcement learning models, how to create a configuration file to launch the application and to begin training and inferencing, please go to [rl-studio](https://github.com/JdeRobot/RL-Studio/blob/main/rl_studio/README.md).
 
-Information about coding or naming classes and files, how the directory structure is designed and where to save models, metrics, logs and graphics, please go to [codig style file](https://github.com/JdeRobot/RL-Studio/blob/main/coding_style.md).
+Information about coding or naming classes and files, how the directory structure is designed and where to save models, metrics, logs and graphics, please go to [codig style file](https://github.com/JdeRobot/RL-Studio/blob/main/CODING.md).
 
-FAQ please go to [answering questions](https://github.com/JdeRobot/RL-Studio/blob/main/doubts_glossary.md).
+FAQ please go to [answering questions](https://github.com/JdeRobot/RL-Studio/blob/main/FAQ.md).
 
 # Reference
 
