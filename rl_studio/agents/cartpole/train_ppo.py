@@ -1,13 +1,10 @@
 import datetime
-import time
 import random
 
 import gym
 import matplotlib.pyplot as plt
 from torch.utils import tensorboard
 from tqdm import tqdm
-import numpy as np
-import torch
 
 import logging
 
@@ -24,10 +21,10 @@ class PPOCartpoleTrainer:
         self.now = datetime.datetime.now()
         # self.environment params
         self.params = params
-        self.environment_params = params.environment["params"]
-        self.env_name = params.environment["params"]["env_name"]
-        self.config = params.settings["params"]
-        self.agent_config = params.agent["params"]
+        self.environment_params = params.get("environments")
+        self.env_name = params.get("environments")["env_name"]
+        self.config = params.get("settings")
+        self.agent_config = params.get("agent")
 
         if self.config["logging_level"] == "debug":
             self.LOGGING_LEVEL = logging.DEBUG
@@ -74,8 +71,8 @@ class PPOCartpoleTrainer:
             [],
         )  # metrics
         # recorded for graph
-        self.epsilon = params.algorithm["params"]["epsilon"]
-        self.GAMMA = params.algorithm["params"]["gamma"]
+        self.epsilon = params.get("algorithm").get("epsilon")
+        self.GAMMA = params.get("algorithm").get("gamma")
         self.NUMBER_OF_EXPLORATION_STEPS = 128
 
         input_dim = self.env.observation_space.shape[0]

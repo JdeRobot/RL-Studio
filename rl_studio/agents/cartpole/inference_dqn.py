@@ -21,10 +21,10 @@ class DQNCartpoleInferencer:
         self.now = datetime.datetime.now()
         # self.environment params
         self.params = params
-        self.environment_params = params.environment["params"]
-        self.env_name = params.environment["params"]["env_name"]
-        self.config = params.settings["params"]
-        self.agent_config = params.agent["params"]
+        self.environment_params = params["environments"]
+        self.env_name = params["environments"]["env_name"]
+        self.config = params["settings"]
+        self.agent_config = params["agent"]
 
         if self.config["logging_level"] == "debug":
             self.LOGGING_LEVEL = logging.DEBUG
@@ -69,7 +69,7 @@ class DQNCartpoleInferencer:
         )  # metrics recorded for graph
         self.epsilon = 0
 
-        inference_file = params.inference["params"]["inference_file"]
+        inference_file = params["inference"]["inference_file"]
         # TODO the first parameter (algorithm) should come from configuration
         self.inferencer = InferencerWrapper("dqn", inference_file, env=self.env)
 

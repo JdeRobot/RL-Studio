@@ -4,6 +4,9 @@ settings:
   save_positions: True
   telemetry: False
   logging_level: info
+  mode: inference
+  agent: cartpole
+  algorithm: dqn
 
 # TODO make this section optional
 actions:
@@ -18,7 +21,6 @@ agent:
       height: 480
 
 environments:
-  simple:
     env_name: myCartpole-v0
     environment_folder: cartpole
 #    runs: 20000
@@ -37,11 +39,9 @@ environments:
     non_recoverable_angle: 0.7
 
 inference:
-  dqn:
     inference_file: /home/ruben/Desktop/my-RL-Studio/rl_studio/checkpoints/cartpole/dqn_models/20221017_2118_epsilon_1_DQN_WEIGHTS_avg_475.825.pkl
 
 algorithm:
-    dqn:
 #      gamma: 0.95
       gamma: 0.95
       epsilon_discount: 0.9997

@@ -17,8 +17,8 @@ class QLearnCartpoleInferencer:
         # TODO: Create a pydantic metaclass to simplify the way we extract the params
         # environment params
         self.params = params
-        self.environment_params = params.environment["params"]
-        self.env_name = params.environment["params"]["env_name"]
+        self.environment_params = params["environments"]
+        self.env_name = self.environment_params["env_name"]
         self.RANDOM_PERTURBATIONS_LEVEL = self.environment_params.get("random_perturbations_level", 0)
         self.PERTURBATIONS_INTENSITY_STD = self.environment_params.get("perturbations_intensity_std", 0)
         self.RANDOM_START_LEVEL = self.environment_params.get("random_start_level", 0)
@@ -35,8 +35,8 @@ class QLearnCartpoleInferencer:
         self.RUNS = self.environment_params[
             "runs"
         ]  # Number of iterations run TODO set this from config.yml
-        self.ANGLE_BINS = self.environment_params["angle_bins"]
-        self.POS_BINS = self.environment_params["pos_bins"]
+        self.ANGLE_BINS = self.environment_params.get("angle_bins", 100)
+        self.POS_BINS = self.environment_params.get("pos_bins", 20)
 
         self.SHOW_EVERY = self.environment_params[
             "show_every"
@@ -62,8 +62,8 @@ class QLearnCartpoleInferencer:
 
         self.actions = range(self.env.action_space.n)
         self.env.done = True
-        inference_file = params.inference["params"]["inference_file"]
-        actions_file = params.inference["params"]["actions_file"]
+        inference_file = params["inference"]["inference_file"]
+        actions_file = params["inference"].get("actions_file")
 
         self.total_episodes = 20000
 

@@ -14,7 +14,7 @@ class MountainCarEnv:
         cls.model_coordinates = None
         cls.position = None
 
-        training_type = config.get("training_type")
+        training_type = config["environments"]["training_type"]
         print(config.get("launchfile"))
         if training_type == TrainingType.qlearn_env_camera.value:
             from .mountain_car_env import MountainCarEnv

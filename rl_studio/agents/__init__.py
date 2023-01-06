@@ -41,9 +41,9 @@ class TrainerFactory:
 
         agent = config["settings"]["agent"]
         algorithm = config["settings"]["algorithm"]
-        task = config["settings"]["task"]
-        simulator = config["settings"]["simulator"]
-        framework = config["settings"]["framework"]
+        task = config["settings"].get("task")
+        simulator = config["settings"].get("simulator")
+        framework = config["settings"].get("framework")
 
         print_messages(
             "TrainerFactory",
@@ -293,9 +293,9 @@ class InferencerFactory:
 
         agent = config["settings"]["agent"]
         algorithm = config["settings"]["algorithm"]
-        task = config["settings"]["task"]
-        simulator = config["settings"]["simulator"]
-        framework = config["settings"]["framework"]
+        task = config["settings"].get("task")
+        simulator = config["settings"].get("simulator")
+        framework = config["settings"].get("framework")
         print_messages(
             "InferenceExecutorFactory",
             task=task,
@@ -417,6 +417,10 @@ class InferencerFactory:
                 from rl_studio.agents.cartpole.inference_dqn import (
                     DQNCartpoleInferencer as CartpoleInferencer,
                 )
+            elif algorithm == AlgorithmsType.PPO.value:
+                from rl_studio.agents.cartpole.inference_ppo import (
+                    PPOCartpoleInferencer as CartpoleInferencer,
+                )
             else:
                 from rl_studio.agents.cartpole.inference_qlearn import (
                     QLearnCartpoleInferencer as CartpoleInferencer,
@@ -429,10 +433,10 @@ class InferencerFactory:
         # =============================
         elif agent == AgentsType.MOUNTAIN_CAR.value:
             from rl_studio.agents.mountain_car.inference_qlearn import (
-                MountainCarInferencer,
+                QLearnMountainCarInferencer,
             )
 
-            return MountainCarInferencer(config)
+            return QLearnMountainCarInferencer(config)
 
         # =============================
         # Pendulum - DDPG - Pytorch
