@@ -21,7 +21,7 @@ class LoggingHandler:
         c_handler = logging.StreamHandler()
         f_handler = logging.FileHandler(log_file)
 
-        c_handler.setLevel(logging.WARNING)
+        c_handler.setLevel(logging.INFO)
         f_handler.setLevel(logging.INFO)
 
         # Create formatters and add it to handlers
@@ -38,84 +38,6 @@ class LoggingHandler:
 
     def get_logger(self):
         return self.logger
-
-
-def load_model(qlearn, file_name):
-    """
-    Qlearn old version
-    """
-
-    qlearn_file = open("./logs/qlearn_models/" + file_name)
-    model = pickle.load(qlearn_file)
-
-    qlearn.q = model
-    qlearn.ALPHA = settings.algorithm_params["alpha"]
-    qlearn.GAMMA = settings.algorithm_params["gamma"]
-    qlearn.epsilon = settings.algorithm_params["epsilon"]
-
-    print(f"\n\nMODEL LOADED. Number of (action, state): {len(model)}")
-    print(f"    - Loading:    {file_name}")
-    print(f"    - Model size: {len(qlearn.q)}")
-    print(f"    - Action set: {settings.actions_set}")
-    print(f"    - Epsilon:    {qlearn.epsilon}")
-    print(f"    - Start:      {datetime.datetime.now()}")
-
-
-def save_qlearn_model(
-    environment,
-    outdir,
-    qlearn,
-    cumulated_reward,
-    episode,
-    step,
-    epsilon,
-):
-
-    # Tabular RL: Tabular Q-learning basically stores the policy (Q-values) of  the agent into a matrix of shape
-    # (S x A), where s are all states, a are all the possible actions. After the environment is solved, just save this
-    # matrix as a csv file. I have a quick implementation of this on my GitHub under Reinforcement Learning.
-
-    # outdir_models = f"{outdir}_models"
-    os.makedirs(f"{outdir}", exist_ok=True)
-
-    # Q TABLE
-    # base_file_name = "_actions_set:_{}_epsilon:_{}".format(settings.actions_set, round(qlearn.epsilon, 2))
-    base_file_name = f"_Circuit-{environment['circuit_name']}_States-{environment['states']}_Actions-{environment['action_space']}_epsilon-{round(epsilon,3)}_epoch-{episode}_step-{step}_reward-{cumulated_reward}"
-    file_dump = open(
-        f"{outdir}/{time.strftime('%Y%m%d-%H%M%S')}_{base_file_name}_QTABLE.pkl", "wb"
-    )
-    pickle.dump(qlearn.q, file_dump)
-
-
-def save_model(qlearn, current_time, states, states_counter, states_rewards):
-    # Tabular RL: Tabular Q-learning basically stores the policy (Q-values) of  the agent into a matrix of shape
-    # (S x A), where s are all states, a are all the possible actions. After the environment is solved, just save this
-    # matrix as a csv file. I have a quick implementation of this on my GitHub under Reinforcement Learning.
-
-    # Q TABLE
-    base_file_name = "_act_set_{}_epsilon_{}".format(
-        settings.actions_set, round(qlearn.epsilon, 2)
-    )
-    file_dump = open(
-        "./logs/qlearn_models/1_" + current_time + base_file_name + "_QTABLE.pkl", "wb"
-    )
-    pickle.dump(qlearn.q, file_dump)
-    # STATES COUNTER
-    states_counter_file_name = base_file_name + "_STATES_COUNTER.pkl"
-    file_dump = open(
-        "./logs/qlearn_models/2_" + current_time + states_counter_file_name, "wb"
-    )
-    pickle.dump(states_counter, file_dump)
-    # STATES CUMULATED REWARD
-    states_cum_reward_file_name = base_file_name + "_STATES_CUM_REWARD.pkl"
-    file_dump = open(
-        "./logs/qlearn_models/3_" + current_time + states_cum_reward_file_name, "wb"
-    )
-    pickle.dump(states_rewards, file_dump)
-    # STATES
-    steps = base_file_name + "_STATES_STEPS.pkl"
-    file_dump = open("./logs/qlearn_models/4_" + current_time + steps, "wb")
-    pickle.dump(states, file_dump)
 
 
 def save_times(checkpoints):
@@ -200,15 +122,15 @@ def save_dataframe_episodes(environment, outdir, aggr_ep_rewards, actions_reward
     """
     os.makedirs(f"{outdir}", exist_ok=True)
 
-    file_csv = f"{outdir}/{time.strftime('%Y%m%d-%H%M%S')}_Circuit-{environment['env']}_States-{environment['states']}_Actions-{environment['actions']}_rewards-{environment['rewards']}.csv"
-    file_excel = f"{outdir}/{time.strftime('%Y%m%d-%H%M%S')}_Circuit-{environment['env']}_States-{environment['states']}_Actions-{environment['actions']}_rewards-{environment['rewards']}.xlsx"
+    file_csv = f"{outdir}/{time.strftime('%Y%m%d-%H%M%S')}_Circuit-{environment['circuit_name']}_States-{environment['states']}_Actions-{environment['action_space']}_Rewards-{environment['reward_function']}.csv"
+    file_excel = f"{outdir}/{time.strftime('%Y%m%d-%H%M%S')}_Circuit-{environment['circuit_name']}_States-{environment['states']}_Actions-{environment['action_space']}_Rewards-{environment['reward_function']}.xlsx"
 
     df = pd.DataFrame(aggr_ep_rewards)
     df.to_csv(file_csv, mode="a", index=False, header=None)
     df.to_excel(file_excel)
 
     if actions_rewards is not None:
-        file_npy = f"{outdir}/{time.strftime('%Y%m%d-%H%M%S')}_Circuit-{environment['env']}_States-{environment['states']}_Actions-{environment['actions']}_rewards-{environment['rewards']}.npy"
+        file_npy = f"{outdir}/{time.strftime('%Y%m%d-%H%M%S')}_Circuit-{environment['circuit_name']}_States-{environment['states']}_Actions-{environment['action_space']}_Rewards-{environment['reward_function']}.npy"
         np.save(file_npy, actions_rewards)
 
 
@@ -265,3 +187,57 @@ def save_batch(episode, step, start_time_epoch, start_time, global_params, env_p
     global_params.aggr_ep_rewards["total_training_time"].append(
         (datetime.now() - start_time).total_seconds()
     )
+
+    return global_params.aggr_ep_rewards
+
+
+def load_model(qlearn, file_name):
+    """
+    Qlearn old version
+    """
+
+    qlearn_file = open("./logs/qlearn_models/" + file_name)
+    model = pickle.load(qlearn_file)
+
+    qlearn.q = model
+    qlearn.ALPHA = settings.algorithm_params["alpha"]
+    qlearn.GAMMA = settings.algorithm_params["gamma"]
+    qlearn.epsilon = settings.algorithm_params["epsilon"]
+
+    print(f"\n\nMODEL LOADED. Number of (action, state): {len(model)}")
+    print(f"    - Loading:    {file_name}")
+    print(f"    - Model size: {len(qlearn.q)}")
+    print(f"    - Action set: {settings.actions_set}")
+    print(f"    - Epsilon:    {qlearn.epsilon}")
+    print(f"    - Start:      {datetime.datetime.now()}")
+
+
+def save_model(qlearn, current_time, states, states_counter, states_rewards):
+    # Tabular RL: Tabular Q-learning basically stores the policy (Q-values) of  the agent into a matrix of shape
+    # (S x A), where s are all states, a are all the possible actions. After the environment is solved, just save this
+    # matrix as a csv file. I have a quick implementation of this on my GitHub under Reinforcement Learning.
+
+    # Q TABLE
+    base_file_name = "_act_set_{}_epsilon_{}".format(
+        settings.actions_set, round(qlearn.epsilon, 2)
+    )
+    file_dump = open(
+        "./logs/qlearn_models/1_" + current_time + base_file_name + "_QTABLE.pkl", "wb"
+    )
+    pickle.dump(qlearn.q, file_dump)
+    # STATES COUNTER
+    states_counter_file_name = base_file_name + "_STATES_COUNTER.pkl"
+    file_dump = open(
+        "./logs/qlearn_models/2_" + current_time + states_counter_file_name, "wb"
+    )
+    pickle.dump(states_counter, file_dump)
+    # STATES CUMULATED REWARD
+    states_cum_reward_file_name = base_file_name + "_STATES_CUM_REWARD.pkl"
+    file_dump = open(
+        "./logs/qlearn_models/3_" + current_time + states_cum_reward_file_name, "wb"
+    )
+    pickle.dump(states_rewards, file_dump)
+    # STATES
+    steps = base_file_name + "_STATES_STEPS.pkl"
+    file_dump = open("./logs/qlearn_models/4_" + current_time + steps, "wb")
+    pickle.dump(states, file_dump)

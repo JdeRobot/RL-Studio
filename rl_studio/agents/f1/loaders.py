@@ -73,6 +73,9 @@ class LoadGlobalParams:
     """
 
     def __init__(self, config):
+        self.stats = {}  # epoch: steps
+        self.states_counter = {}
+        self.states_reward = {}
         self.ep_rewards = []
         self.actions_rewards = {
             "episode": [],
@@ -112,6 +115,7 @@ class LoadGlobalParams:
         self.training_time = config["settings"]["training_time"]
         ####### States
         self.states = config["settings"]["states"]
+        self.states_set = config["states"][self.states]
         ####### Actions
         self.actions = config["settings"]["actions"]
         self.actions_set = config["actions"][self.actions]

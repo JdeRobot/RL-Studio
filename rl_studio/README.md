@@ -36,7 +36,7 @@ The file must be saved in the directory
 /PATH/TO/RL-Studio/rl_studio/config/
 ```
 
-There are several config files to take as example. If you need more information about coding style, please refer to [coding](./CODING_STYLE.md.md) file.
+There are several config files to take as example. If you need more information about coding style, please refer to [coding](./CODING.md) file.
 
 ## Project diagram
 
@@ -69,6 +69,7 @@ Pip:
 python rl-studio.py -f config/<config.yaml>
 ```
 
+## Config.yaml
 The config.yaml contains all project hyperparams and configuration needed to execute correctly. In case you want to train a Formula 1 agent in a Follow Lane task in Gazebo, with a PPO algorithm and Tensorflow Deep Learning framework, you can use next example from a config.yaml example file:
 
 ```yaml
@@ -87,3 +88,5 @@ Remaining params should be adjusted too. There are many working yaml files in co
 > :warning: If you want to use inferencing in a program language other than python, you will
 > need extend the rl-studio.py to listen for inputs in a port and execute the loaded brain/algorithm to provide
 > outputs in the desired way.
+
+More info about how to config and launch any task, please go to [agents](.agents/README.md) section.
