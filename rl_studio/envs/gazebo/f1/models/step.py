@@ -81,8 +81,8 @@ class StepFollowLine(F1Env):
 
         ##==== get Rewards
         if self.reward_function == "followline_center":
-            reward, done = self.f1gazeborewards.rewards_followlane_v_centerline_step(
-                vel_cmd, center, step, self.rewards
+            reward, done = self.f1gazeborewards.rewards_followline_center(
+                center, self.rewards
             )
 
         return state, reward, done, {}

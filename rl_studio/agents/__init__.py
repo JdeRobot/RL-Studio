@@ -314,7 +314,7 @@ class InferencerFactory:
             and algorithm == AlgorithmsType.QLEARN.value
             and simulator == EnvsType.GAZEBO.value
         ):
-            from rl_studio.agents.f1.inference_qlearn import (
+            from rl_studio.agents.f1.inference_followline_qlearn_f1_gazebo import (
                 InferencerFollowLineQlearnF1Gazebo,
             )
 

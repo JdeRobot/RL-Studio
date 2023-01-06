@@ -1,17 +1,17 @@
 settings:
-  mode: retraining # training, retraining
-  task: follow_line_gazebo # follow_line_gazebo
-  algorithm: qlearn # qlearn
+  mode: inference # training, retraining, inference
+  task: follow_line_gazebo # follow_line_gazebo, follow_lane_gazebo, autoparking_gazebo
+  algorithm: qlearn # qlearn, dqn, ddpg, ppo
   simulator: gazebo # openai, carla, gazebo, sumo
   environment_set: gazebo_environments # gazebo_environments, carla_environments
   env: simple # simple, nurburgring, montreal, curves, simple_laser, manual, autoparking
   agent: f1 # f1, autoparkingRL, auto_carla, mountain_car, robot_mesh, cartpole, turtlebot
-  actions: simple # simple, medium, hard, test, autoparking_simple
-  states: sp1 # sp1 (simplified perception with 1 point), sp3 (simplified perception with 3 points), spn (simplified perception with n points)
-  rewards: followline_center #
+  actions: simple # simple, medium, hard, test
+  states: sp1 #image, sp1 (simplified perception with 1 point), sp3 (simplified perception with 3 points), spn (simplified perception with n points)
+  rewards: followline_center # rewards_followline_center
   framework: _
-  total_episodes: 10
-  training_time: 10
+  total_episodes: 5
+  training_time: 6
   models_dir: "./checkpoints"
   logs_dir: "./logs"
   metrics_dir: "./metrics"
@@ -22,11 +22,11 @@ ros:
 
 retraining:
   qlearn:
-    retrain_qlearn_model_name: "20230105-174932_Circuit-simple_States-sp1_Actions-simple_Rewards-followline_center_epsilon-0.05_epoch-10_step-15001_reward-134200-qtable.npy"
+    retrain_qlearn_model_name:
 
 inference:
   qlearn:
-    inference_qlearn_model_name:
+    inference_qlearn_model_name: "20230105-174932_Circuit-simple_States-sp1_Actions-simple_Rewards-followline_center_epsilon-0.05_epoch-10_step-15001_reward-134200-qtable.npy"
 
 algorithm:
   qlearn:
@@ -46,7 +46,6 @@ agents:
       new_image_size: 32
       num_regions: 16
       lower_limit: 220
-
 states:
   sp1:
     0: [10]
@@ -95,13 +94,13 @@ gazebo_environments:
     launchfile: simple_circuit.launch
     environment_folder: f1
     robot_name: f1_renault
-    model_state_name: f1_renault #
+    model_state_name: f1_renault # autoparking
     start_pose: 0 # 0, 1, 2, 3, 4
     alternate_pose: False
-    estimated_steps: 15000
+    estimated_steps: 100
     sensor: camera
-    save_episodes: 1
-    save_every_step: 1000
+    save_episodes: 5
+    save_every_step: 10
     lap_completed: False
     save_model: True
     save_positions: True
@@ -111,7 +110,7 @@ gazebo_environments:
     plotter_graphic: False
     circuit_positions_set:
       0: [53.462, -41.988, 0.004, 0, 0, 1.57, -1.57]
-      1: [53.462, -8.734, 0.004, 0, 0, 1.57, -1.57] #finish line
+      1: [53.462, -8.734, 0.004, 0, 0, 1.57, -1.57]
       2: [39.712, -30.741, 0.004, 0, 0, 1.56, 1.56]
       3: [-6.861, -36.481, 0.004, 0, 0.01, -0.858, 0.613]
       4: [20.043, 37.130, 0.003, 0, 0.103, -1.4383, -1.4383]
