@@ -89,6 +89,7 @@ class CartPoleEnv(gym.Env[np.ndarray, Union[int, np.ndarray]]):
 
     def __init__(self, random_start_level, initial_pole_angle=None, render_mode: Optional[str] = None,
                  non_recoverable_angle=0.3, punish=0, reward_value=1, reward_shaping=0):
+        self.last_step_time = None
         self.random_start_level = random_start_level
 
         self.gravity = 9.8
@@ -179,8 +180,8 @@ class CartPoleEnv(gym.Env[np.ndarray, Union[int, np.ndarray]]):
 
         self.renderer.render_step()
         return np.array(self.state, dtype=np.float32), terminated, False, {}
-
-    def step(self, action):
+    def step(self, action, elapsed_time=None):
+        tau = elapsed_time or self.tau
         err_msg = f"{action!r} ({type(action)}) invalid"
         assert self.action_space.contains(action), err_msg
         assert self.state is not None, "Call reset before using step method."
@@ -200,15 +201,15 @@ class CartPoleEnv(gym.Env[np.ndarray, Union[int, np.ndarray]]):
         xacc = temp - self.polemass_length * thetaacc * costheta / self.total_mass
 
         if self.kinematics_integrator == "euler":
-            x = x + self.tau * x_dot
-            x_dot = x_dot + self.tau * xacc
-            theta = theta + self.tau * theta_dot
-            theta_dot = theta_dot + self.tau * thetaacc
+            x = x + tau * x_dot
+            x_dot = x_dot + tau * xacc
+            theta = theta + tau * theta_dot
+            theta_dot = theta_dot + tau * thetaacc
         else:  # semi-implicit euler
-            x_dot = x_dot + self.tau * xacc
-            x = x + self.tau * x_dot
-            theta_dot = theta_dot + self.tau * thetaacc
-            theta = theta + self.tau * theta_dot
+            x_dot = x_dot + tau * xacc
+            x = x + tau * x_dot
+            theta_dot = theta_dot + tau * thetaacc
+            theta = theta + tau * theta_dot
 
         self.state = (x, x_dot, theta, theta_dot)
 
@@ -246,7 +247,7 @@ class CartPoleEnv(gym.Env[np.ndarray, Union[int, np.ndarray]]):
             reward = self.punish
 
         self.renderer.render_step()
-        return np.array(self.state, dtype=np.float32), reward, terminated, False, {}
+        return np.array(self.state, dtype=np.float32), reward, terminated, False, {"time":  self.tau}
 
     def reset(
             self,

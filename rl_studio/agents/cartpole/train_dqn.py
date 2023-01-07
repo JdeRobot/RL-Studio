@@ -116,10 +116,10 @@ class DQNCartpoleTrainer:
 
     def evaluate_and_collect(self, state):
         A = self.deepq.get_action(state, self.env.action_space.n, self.epsilon)
-        next_state, reward, done, _ = self.env.step(A.item())
+        next_state, reward, done, info = self.env.step(A.item())
         self.deepq.collect_experience([state, A.item(), reward, next_state])
 
-        return next_state, reward, done
+        return next_state, reward, done, info["time"]
 
     def train_in_batches(self, trainings, batch_size):
         losses = 0
@@ -166,6 +166,7 @@ class DQNCartpoleTrainer:
         logging.info(LETS_GO)
         number_of_steps = 128
         total_reward_in_epoch = 0
+        total_secs = 0
         for run in tqdm(range(self.RUNS)):
             state, done, losses, ep_len, episode_rew = self.env.reset(), False, 0, 0, 0
             while not done:
@@ -175,7 +176,8 @@ class DQNCartpoleTrainer:
                     perturbation_action = random.randrange(self.env.action_space.n)
                     state, done, _, _ = self.env.perturbate(perturbation_action, self.PERTURBATIONS_INTENSITY_STD)
                     logging.debug("perturbated in step {} with action {}".format(episode_rew, perturbation_action))
-                next_state, reward, done = self.evaluate_and_collect(state)
+                next_state, reward, done, secs = self.evaluate_and_collect(state)
+                total_secs+=secs
                 state = next_state
                 episode_rew += reward
                 total_reward_in_epoch += reward
@@ -195,8 +197,10 @@ class DQNCartpoleTrainer:
             if (run+1) % self.UPDATE_EVERY == 0:
                 time_spent = datetime.datetime.now() - epoch_start_time
                 epoch_start_time = datetime.datetime.now()
-                updates_message = 'Run: {0} Average: {1} epsilon {2} time spent {3}'.format(run, total_reward_in_epoch / self.UPDATE_EVERY,
-                                                                                     self.epsilon, str(time_spent))
+                avgsecs = total_secs / total_reward_in_epoch
+                total_secs = 0
+                updates_message = 'Run: {0} Average: {1} epsilon {2} time_spent {3} avg_time_iter {4}'.format(run, total_reward_in_epoch / self.UPDATE_EVERY,
+                                                                                     self.epsilon, str(time_spent), avgsecs)
                 logging.info(updates_message)
                 print(updates_message)
                 if self.config["save_model"] and total_reward_in_epoch / self.UPDATE_EVERY > self.max_avg:

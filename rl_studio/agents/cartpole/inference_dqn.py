@@ -96,6 +96,7 @@ class DQNCartpoleInferencer:
 
         logging.info(LETS_GO)
         total_reward_in_epoch = 0
+        total_secs=0
         for run in tqdm(range(self.RUNS)):
             obs, done, rew = self.env.reset(), False, 0
             while not done:
@@ -106,6 +107,7 @@ class DQNCartpoleInferencer:
 
                 A = self.inferencer.inference(obs)
                 obs, reward, done, info = self.env.step(A.item())
+                total_secs+=info["time"]
 
                 rew += reward
                 total_reward_in_epoch += reward
@@ -119,9 +121,11 @@ class DQNCartpoleInferencer:
             if (run+1) % self.UPDATE_EVERY == 0:
                 time_spent = datetime.datetime.now() - epoch_start_time
                 epoch_start_time = datetime.datetime.now()
-                updates_message = 'Run: {0} Average: {1} time spent {2}'.format(run,
+                avgsecs = total_secs / total_reward_in_epoch
+                total_secs = 0
+                updates_message = 'Run: {0} Average: {1} time spent {2} avg_time_iter {3}'.format(run,
                                                                                 total_reward_in_epoch / self.UPDATE_EVERY,
-                                                                                str(time_spent))
+                                                                                str(time_spent), avgsecs)
                 logging.info(updates_message)
                 print(updates_message)
                 total_reward_in_epoch = 0
