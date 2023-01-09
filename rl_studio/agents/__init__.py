@@ -110,7 +110,9 @@ class TrainerFactory:
             and algorithm == AlgorithmsType.QLEARN.value
             and simulator == EnvsType.GAZEBO.value
         ):
-            from rl_studio.agents.f1.train_dqn import TrainerFollowLaneQlearnF1Gazebo
+            from rl_studio.agents.f1.train_followlane_qlearn_f1_gazebo import (
+                TrainerFollowLaneQlearnF1Gazebo,
+            )
 
             return TrainerFollowLaneQlearnF1Gazebo(config)
 
@@ -361,7 +363,7 @@ class InferencerFactory:
             and algorithm == AlgorithmsType.QLEARN.value
             and simulator == EnvsType.GAZEBO.value
         ):
-            from rl_studio.agents.f1.inference_dqn import (
+            from rl_studio.agents.f1.inference_followlane_qlearn_f1_gazebo import (
                 InferencerFollowLaneQlearnF1Gazebo,
             )
 
