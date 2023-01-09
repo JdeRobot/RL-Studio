@@ -41,10 +41,10 @@ class F1Env:
             and algorithm == AlgorithmsType.QLEARN.value
         ):
             from rl_studio.envs.gazebo.f1.models.followlane_qlearn import (
-                FollowlaneQlearnF1Gazebo,
+                FollowLaneQlearnF1Gazebo,
             )
 
-            return FollowlaneQlearnF1Gazebo(**environment)
+            return FollowLaneQlearnF1Gazebo(**environment)
 
         # =============================
         # FollowLine - DQN - TensorFlow

@@ -4,28 +4,6 @@ import numpy as np
 
 
 class F1GazeboRewards:
-    def calculate_reward(self, error: float) -> float:
-        d = np.true_divide(error, self.center_image)
-        reward = np.round(np.exp(-d), 4)
-        return reward
-
-    def rewards_followline_center(self, center, rewards):
-        """
-        original for Following Line
-        """
-        done = False
-        if center > 0.9:
-            done = True
-            reward = rewards["penal"]
-        elif 0 <= center <= 0.2:
-            reward = rewards["from_10"]
-        elif 0.2 < center <= 0.4:
-            reward = rewards["from_02"]
-        else:
-            reward = rewards["from_01"]
-
-        return reward, done
-
     @staticmethod
     def rewards_followlane_centerline(center, rewards):
         """
@@ -87,6 +65,28 @@ class F1GazeboRewards:
 
         return reward, done
 
+    def calculate_reward(self, error: float) -> float:
+        d = np.true_divide(error, self.center_image)
+        reward = np.round(np.exp(-d), 4)
+        return reward
+
+    def rewards_followline_center(self, center, rewards):
+        """
+        original for Following Line
+        """
+        done = False
+        if center > 0.9:
+            done = True
+            reward = rewards["penal"]
+        elif 0 <= center <= 0.2:
+            reward = rewards["from_10"]
+        elif 0.2 < center <= 0.4:
+            reward = rewards["from_02"]
+        else:
+            reward = rewards["from_01"]
+
+        return reward, done
+
     def rewards_followline_v_w_centerline(
         self, vel_cmd, center, rewards, beta_1, beta_0
     ):
@@ -133,40 +133,3 @@ class F1GazeboRewards:
             reward = (1 / math.exp(w_error)) + (math.exp(center))
 
         return reward, done
-
-    def reward_v_w_center_linear_first_formula(self, vel_cmd, center):
-        """
-        Applies a linear regression between v and w
-        Supposing there is a lineal relationship V and W. So, formula w = B_0 + x*v.
-
-        Data for Formula1:
-        Max W = 5 r/s we take max abs value. Correctly it is w left or right
-        Max V = 100 m/s
-        Min V = 20 m/s
-        B_0 = B_1 * Max V
-        B_1 = (W Max / (V Max - V Min))
-
-        w target = B_0 - B_1 * v
-        error = w_actual - w_target
-        reward = 1/exp(reward)/sqrt(center^2+0.001)
-
-        Args:
-            linear and angular velocity
-            center
-
-        Returns: reward
-        """
-        done = False
-        if center > 0.9:
-            done = True
-            reward = self.rewards["penal"]
-        else:
-            num = 0.001
-            w_target = self.beta_0 + (self.beta_1 * abs(vel_cmd.linear.x))
-            error = abs(w_target - abs(vel_cmd.angular.z))
-            reward = 1 / math.exp(error)
-            reward = reward / math.sqrt(
-                pow(center, 2) + num
-            )  # Maximize near center and avoid zero in denominator
-
-        return round(reward, 3)
