@@ -23,12 +23,26 @@ register(
 )
 
 register(
+    id="myCartpole-v1",
+    entry_point="rl_studio.envs.openai_gym.cartpole.cartpole_env_improved:CartPoleEnv",
+    max_episode_steps=500,
+    kwargs={'random_start_level': 0.05}
+)
+
+
+register(
     id="myCartpole-continuous-v0",
     entry_point="rl_studio.envs.openai_gym.cartpole.cartpole_env_continuous:CartPoleEnv",
     max_episode_steps=500,
     kwargs={'random_start_level': 0.05}
 )
 
+register(
+    id="myCartpole-continuous-v1",
+    entry_point="rl_studio.envs.openai_gym.cartpole.cartpole_env_continuous_improved:CartPoleEnv",
+    max_episode_steps=500,
+    kwargs={'random_start_level': 0.05}
+)
 
 # MountainCar envs
 register(

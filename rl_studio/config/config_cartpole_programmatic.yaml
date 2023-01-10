@@ -4,6 +4,9 @@ settings:
   save_positions: True
   telemetry: False
   logging_level: info
+  mode: inference
+  agent: cartpole
+  algorithm: programmatic
 
 # TODO make this section optional
 actions:
@@ -18,24 +21,21 @@ agent:
       height: 480
 
 environments:
-  simple:
-    env_name: myCartpole-v0
-    environment_folder: cartpole
+  env_name: myCartpole-v1
+  environment_folder: cartpole
 #    runs: 20000
-    runs: 100
-    full_experimentation_runs: 0
-    update_every: 100
-    show_every: 100
-    random_start_level: 0 # Number between 0 and 1 that indicates the difficulty of the start position
-    random_perturbations_level: 0 # Number between 0 and 1 that indicates the frequency of the random perturbations
-    perturbations_intensity_std: 0 # Number between 0 and 1 that indicates the standard deviation of perturbations intensity
-    initial_pole_angle: 0.5
-    non_recoverable_angle: 0.7
+  runs: 100
+  full_experimentation_runs: 0
+  update_every: 1
+  show_every: 1
+  random_start_level: 0 # Number between 0 and 1 that indicates the difficulty of the start position
+  random_perturbations_level: 0 # Number between 0 and 1 that indicates the frequency of the random perturbations
+  perturbations_intensity_std: 0 # Number between 0 and 1 that indicates the standard deviation of perturbations intensity
+  initial_pole_angle: 0
+  non_recoverable_angle: 0.3
 
 algorithm:
-  programmatic:
     # TODO make it complaining just if the relevant parameter for this algorithm is not found
 
 inference:
-  programmatic:
   # TODO make it complaining just if the relevant parameter for this algorithm is not found

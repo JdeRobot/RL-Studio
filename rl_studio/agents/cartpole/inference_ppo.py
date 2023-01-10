@@ -121,6 +121,7 @@ class PPOCartpoleInferencer:
         episode_rewards = []
         global_steps = 0
         w = tensorboard.SummaryWriter(log_dir=f"{logs_dir}/tensorboard/{start_time_format}")
+        total_secs=0
 
         for run in tqdm(range(self.RUNS)):
             state, done, prev_prob_act, ep_len, episode_rew = self.env.reset(), False, None, 0, 0
@@ -136,6 +137,7 @@ class PPOCartpoleInferencer:
 
                 action = self.inferencer.inference(state)
                 next_state, reward, done, info = self.env.step(action.detach().data.numpy())
+                total_secs+=info["time"]
 
                 episode_rew += reward
                 total_reward_in_epoch += reward
@@ -153,8 +155,10 @@ class PPOCartpoleInferencer:
             if (run+1) % self.UPDATE_EVERY == 0:
                 time_spent = datetime.datetime.now() - epoch_start_time
                 epoch_start_time = datetime.datetime.now()
-                updates_message = 'Run: {0} Average: {1} time spent {2}'.format(run, total_reward_in_epoch / self.UPDATE_EVERY,
-                                                                                     str(time_spent))
+                avgsecs = total_secs / total_reward_in_epoch
+                total_secs = 0
+                updates_message = 'Run: {0} Average: {1} time spent {2} avg_iter {3}'.format(run, total_reward_in_epoch / self.UPDATE_EVERY,
+                                                                                     str(time_spent), avgsecs)
                 logging.info(updates_message)
                 print(updates_message)
 

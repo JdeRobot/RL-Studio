@@ -15,8 +15,8 @@ class NoRLCartpoleInferencer:
         # TODO: Create a pydantic metaclass to simplify the way we extract the params
         # environment params
         self.params = params
-        self.environment_params = params.environment["params"]
-        self.env_name = params.environment["params"]["env_name"]
+        self.environment_params = params["environments"]
+        self.env_name = params["environments"]["env_name"]
         self.RANDOM_PERTURBATIONS_LEVEL = self.environment_params.get("random_perturbations_level", 0)
         self.PERTURBATIONS_INTENSITY_STD = self.environment_params.get("perturbations_intensity_std", 0)
         self.RANDOM_START_LEVEL = self.environment_params.get("random_start_level", 0)

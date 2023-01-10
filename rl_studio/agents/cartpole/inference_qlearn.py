@@ -16,6 +16,7 @@ class QLearnCartpoleInferencer:
     def __init__(self, params):
         # TODO: Create a pydantic metaclass to simplify the way we extract the params
         # environment params
+        self.now = datetime.datetime.now()
         self.params = params
         self.environment_params = params["environments"]
         self.env_name = self.environment_params["env_name"]
@@ -88,7 +89,7 @@ class QLearnCartpoleInferencer:
         nextState, reward, done, info = self.env.step(action)
         nextState = utils.get_discrete_state(nextState, self.bins, self.obsSpaceSize)
 
-        return nextState, done
+        return nextState, done, info["time"]
 
     def main(self):
 
@@ -98,7 +99,7 @@ class QLearnCartpoleInferencer:
         start_time_format = start_time.strftime("%Y%m%d_%H%M")
 
         print(LETS_GO)
-
+        total_secs=0
         for run in range(self.RUNS):
             state = utils.get_discrete_state(
                 self.env.reset(), self.bins, self.obsSpaceSize
@@ -114,11 +115,42 @@ class QLearnCartpoleInferencer:
                 if random.uniform(0, 1) < self.RANDOM_PERTURBATIONS_LEVEL:
                     perturbation_action = random.randrange(self.env.action_space.n)
                     obs, done, _, _ = self.env.perturbate(perturbation_action, self.PERTURBATIONS_INTENSITY_STD)
-                next_state, done = self.evaluate_from_step(state)
+                next_state, done, secs = self.evaluate_from_step(state)
+                total_secs += secs
 
                 if not done:
                     state = next_state
 
+            self.previousCnt.append(cnt)
+
+            if run % self.UPDATE_EVERY == 0:
+                latestRuns = self.previousCnt[-self.UPDATE_EVERY:]
+                averageCnt = sum(latestRuns) / len(latestRuns)
+                avgsecs = total_secs / sum(latestRuns)
+                total_secs = 0
+                self.metrics["ep"].append(run)
+                self.metrics["avg"].append(averageCnt)
+                self.metrics["min"].append(min(latestRuns))
+                self.metrics["max"].append(max(latestRuns))
+
+                time_spent = datetime.datetime.now() - self.now
+                self.now = datetime.datetime.now()
+                print(
+                    "Run:",
+                    run,
+                    "Average:",
+                    averageCnt,
+                    "Min:",
+                    min(latestRuns),
+                    "Max:",
+                    max(latestRuns),
+                    "time spent",
+                    time_spent,
+                    "time",
+                    self.now,
+                    "avg_iter_time",
+                    avgsecs,
+                )
             # Add new metrics for graph
             self.metrics["ep"].append(run)
             self.metrics["avg"].append(cnt)

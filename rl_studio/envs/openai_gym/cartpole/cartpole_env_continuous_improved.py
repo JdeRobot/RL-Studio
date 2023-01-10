@@ -5,6 +5,7 @@ permalink: https://perma.cc/C9ZM-652R
 """
 import math
 from typing import Optional, Union
+import datetime
 
 # Note that this environment needs gym==0.25.0 to work
 import gym
@@ -22,6 +23,7 @@ class CartPoleEnv(gym.Env):
 
     def __init__(self, random_start_level, initial_pole_angle=None, render_mode: Optional[str] = None,
                  non_recoverable_angle=0.3, punish=0, reward_value=1, reward_shaping=0):
+        self.last_step_time = None
         self.random_start_level = random_start_level
 
         self.gravity = 9.8
@@ -117,8 +119,18 @@ class CartPoleEnv(gym.Env):
 
         self.renderer.render_step()
         return np.array(self.state, dtype=np.float32), terminated, False, {}
-
     def step(self, action):
+        """
+        This step function is considering the effect of time-to-inference or control iteration duration
+        """
+        now = datetime.datetime.now()
+        decision_duration = now - self.last_step_time
+        self.last_step_time = now
+        return self.tick_step(action, decision_duration)
+
+    def tick_step(self, action, elapsed_time=None):
+        timedelta = elapsed_time or self.tau
+        tau = timedelta.total_seconds()
         action = np.clip(action, -1, 1)[0]
         assert self.state is not None, "Call reset before using step method."
         x, x_dot, theta, theta_dot = self.state
@@ -137,15 +149,15 @@ class CartPoleEnv(gym.Env):
         xacc = temp - self.polemass_length * thetaacc * costheta / self.total_mass
 
         if self.kinematics_integrator == "euler":
-            x = x + self.tau * x_dot
-            x_dot = x_dot + self.tau * xacc
-            theta = theta + self.tau * theta_dot
-            theta_dot = theta_dot + self.tau * thetaacc
+            x = x + tau * x_dot
+            x_dot = x_dot + tau * xacc
+            theta = theta + tau * theta_dot
+            theta_dot = theta_dot + tau * thetaacc
         else:  # semi-implicit euler
-            x_dot = x_dot + self.tau * xacc
-            x = x + self.tau * x_dot
-            theta_dot = theta_dot + self.tau * thetaacc
-            theta = theta + self.tau * theta_dot
+            x_dot = x_dot + tau * xacc
+            x = x + tau * x_dot
+            theta_dot = theta_dot + tau * thetaacc
+            theta = theta + tau * theta_dot
 
         self.state = (x, x_dot, theta, theta_dot)
 
@@ -183,7 +195,7 @@ class CartPoleEnv(gym.Env):
             reward = self.punish
 
         self.renderer.render_step()
-        return np.array(self.state, dtype=np.float32), reward, terminated, False, {"time":  self.tau}
+        return np.array(self.state, dtype=np.float32), reward, terminated, False, {"time":  tau}
 
     def reset(
             self,
@@ -205,6 +217,7 @@ class CartPoleEnv(gym.Env):
         self.steps_beyond_terminated = None
         self.renderer.reset()
         self.renderer.render_step()
+        self.last_step_time=datetime.datetime.now()
         if not return_info:
             return np.array(self.state, dtype=np.float32)
         else:
