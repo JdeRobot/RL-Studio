@@ -15,7 +15,7 @@ from rl_studio.agents.cartpole.utils import store_rewards, show_fails_success_co
 from rl_studio.wrappers.inference_rlstudio import InferencerWrapper
 
 
-class PPOCartpoleInferencer:
+class DDPGCartpoleInferencer:
     def __init__(self, params):
 
         self.now = datetime.datetime.now()
@@ -68,11 +68,10 @@ class PPOCartpoleInferencer:
             [],
         )  # metrics
         # recorded for graph
-        self.epsilon = params["algorithm"]["epsilon"]
 
         inference_file = params["inference"]["inference_file"]
         # TODO the first parameter (algorithm) should come from configuration
-        self.inferencer = InferencerWrapper("ppo_continuous", inference_file, env=self.env)
+        self.inferencer = InferencerWrapper("ddpg", inference_file, env=self.env)
 
     def print_init_info(self):
         logging.info(JDEROBOT)
@@ -85,7 +84,6 @@ class PPOCartpoleInferencer:
             self.losses_list.append(losses / ep_len)
         self.reward_list.append(episode_rew)
         self.episode_len_list.append(ep_len)
-        self.epsilon_list.append(self.epsilon)
 
     # def final_demonstration(self):
     #     for i in tqdm(range(2)):
@@ -102,7 +100,7 @@ class PPOCartpoleInferencer:
     def main(self):
         epoch_start_time = datetime.datetime.now()
 
-        logs_dir = 'logs/cartpole/ppo_continuous/inference/'
+        logs_dir = 'logs/cartpole/ddpg/inference/'
         logs_file_name = 'logs_file_' + str(self.RANDOM_START_LEVEL) + '_' + str(
             self.RANDOM_PERTURBATIONS_LEVEL) + '_' + str(epoch_start_time) \
                          + str(self.PERTURBATIONS_INTENSITY_STD) + '.log'

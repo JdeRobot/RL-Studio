@@ -248,6 +248,20 @@ class TrainerFactory:
 
             return CartpoleTrainer(config)
 
+        # =============================
+        # CartPole - DDPG
+        # =============================
+        elif (
+            agent == AgentsType.CARTPOLE.value and algorithm == AlgorithmsType.DDPG.value and
+            framework == FrameworksType.PYTORCH.value
+        ):
+            from rl_studio.agents.cartpole.train_ddpg import (
+                DDPGCartpoleTrainer as CartpoleTrainer,
+            )
+
+            return CartpoleTrainer(config)
+
+
 
         # =============================
         # Autoparking - F1 - DDPG - Gazebo - TF
@@ -430,7 +444,7 @@ class InferencerFactory:
             return QLearnRobotMeshInferencer(config)
 
         # =============================
-        # CartPole - DQN
+        # CartPole
         # =============================
         elif agent == AgentsType.CARTPOLE.value:
             if algorithm == AlgorithmsType.DQN.value:
@@ -442,8 +456,12 @@ class InferencerFactory:
                     PPOCartpoleInferencer as CartpoleInferencer,
                 )
             elif algorithm == AlgorithmsType.PPO_CONTINIUOUS.value:
-                from rl_studio.agents.cartpole.inference_ppo_continous import (
+                from rl_studio.agents.cartpole.inference_ppo_continuous import (
                     PPOCartpoleInferencer as CartpoleInferencer,
+                )
+            elif algorithm == AlgorithmsType.DDPG.value and framework == FrameworksType.PYTORCH.value:
+                from rl_studio.agents.cartpole.inference_ddpg import (
+                    DDPGCartpoleInferencer as CartpoleInferencer,
                 )
             else:
                 from rl_studio.agents.cartpole.inference_qlearn import (
