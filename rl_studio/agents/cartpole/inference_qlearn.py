@@ -156,7 +156,7 @@ class QLearnCartpoleInferencer:
             self.metrics["avg"].append(cnt)
 
         self.env.close()
-        base_file_name = f'_rewards_rsl-{self.RANDOM_START_LEVEL}_rpl-{self.RANDOM_PERTURBATIONS_LEVEL}_pi-{self.PERTURBATIONS_INTENSITY_STD}'
+        base_file_name = f'_rewards_rsl-{self.RANDOM_START_LEVEL}_rpl-{self.RANDOM_PERTURBATIONS_LEVEL}_pi-{self.PERTURBATIONS_INTENSITY_STD}_in-{self.INITIAL_POLE_ANGLE}'
         file_path = f'./logs/cartpole/qlearning/inference/{datetime.datetime.now()}_{base_file_name}.pkl'
         store_rewards(self.metrics["avg"], file_path)
 

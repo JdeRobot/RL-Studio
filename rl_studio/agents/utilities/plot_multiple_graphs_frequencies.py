@@ -8,11 +8,11 @@ from statsmodels.distributions.empirical_distribution import ECDF
 RUNS = 100
 max_episode_steps = 500
 
-intensities = [0, 0.1, 0.2, 0.4, 0.6, 0.8]
+intensities = [0, 0.1, 0.2, 0.4, 0.6, 0.8, 1]
 
 yticks = []
 
-def plot_intensities(ax, file_0, file_1, file_2, file_3, file_4, file_5, label, color):
+def plot_frequencies(ax, file_0, file_1, file_2, file_3, file_4, file_5, file_6, label, color):
 
     rewards_file = open(
         file_0,
@@ -56,7 +56,14 @@ def plot_intensities(ax, file_0, file_1, file_2, file_3, file_4, file_5, label, 
     rewards = np.asarray(rewards)
     ecdf_5 = ECDF(rewards)
 
-    ninety_rewards = [1- ecdf_0(499), 1 - ecdf_1(499), 1 - ecdf_2(499), 1 - ecdf_3(499), 1 - ecdf_4(499), 1-  ecdf_5(499)]
+    rewards_file = open(
+        file_6,
+        "rb")
+    rewards = pickle.load(rewards_file)
+    rewards = np.asarray(rewards)
+    ecdf_6 = ECDF(rewards)
+
+    ninety_rewards = [1- ecdf_0(499), 1 - ecdf_1(499), 1 - ecdf_2(499), 1 - ecdf_3(499), 1 - ecdf_4(499), 1-  ecdf_5(499), 1-  ecdf_6(499)]
 
     yticks.append(ninety_rewards)
 
@@ -78,47 +85,73 @@ if __name__ == "__main__":
     fig, ax1 = plt.subplots()
 
     #PPO
-    plot_intensities(ax1,
+    plot_frequencies(ax1,
                      "/home/ruben/Desktop/my-RL-Studio/rl_studio/logs/cartpole/qlearning/inference/2022-11-21 23:16:16.550832__rewards_rsl-0_rpl-0_pi-0.pkl",
                      "/home/ruben/Desktop/my-RL-Studio/rl_studio/logs/cartpole/ppo/inference/2022-11-16 19:58:16.130830__rewards_rsl-0_rpl-0.1_pi-1.pkl",
                      "/home/ruben/Desktop/my-RL-Studio/rl_studio/logs/cartpole/ppo/inference/2022-11-16 20:03:12.387811__rewards_rsl-0_rpl-0.1_pi-7.pkl",
                      "/home/ruben/Desktop/my-RL-Studio/rl_studio/logs/cartpole/ppo/inference/2022-11-16 20:03:12.387811__rewards_rsl-0_rpl-0.1_pi-7.pkl",
                      "/home/ruben/Desktop/my-RL-Studio/rl_studio/logs/cartpole/ppo/inference/2022-11-22 00:18:21.530321__rewards_rsl-0_rpl-0.6_pi-1_init_0.pkl",
                      "/home/ruben/Desktop/my-RL-Studio/rl_studio/logs/cartpole/ppo/inference/2022-11-22 00:18:29.673944__rewards_rsl-0_rpl-0.8_pi-1_init_0.pkl",
+                     "/home/ruben/Desktop/my-RL-Studio/rl_studio/logs/cartpole/ppo/inference/2023-01-10 23:19:46.903895__rewards_rsl-0_rpl-1_pi-1_init_0.pkl",
                      "ppo",
                      "green")
     #DQN
-    plot_intensities(ax1,
+    plot_frequencies(ax1,
                      "/home/ruben/Desktop/my-RL-Studio/rl_studio/logs/cartpole/qlearning/inference/2022-11-21 23:16:16.550832__rewards_rsl-0_rpl-0_pi-0.pkl",
                      "/home/ruben/Desktop/my-RL-Studio/rl_studio/logs/cartpole/dqn/inference/2022-11-22 00:15:24.492958__rewards_rsl-0_rpl-0.1_pi-1_init_0.pkl",
                      "/home/ruben/Desktop/my-RL-Studio/rl_studio/logs/cartpole/dqn/inference/2022-11-22 00:16:01.716049__rewards_rsl-0_rpl-0.2_pi-1_init_0.pkl",
                      "/home/ruben/Desktop/my-RL-Studio/rl_studio/logs/cartpole/dqn/inference/2022-11-22 00:16:02.753516__rewards_rsl-0_rpl-0.4_pi-1_init_0.pkl",
                      "/home/ruben/Desktop/my-RL-Studio/rl_studio/logs/cartpole/dqn/inference/2022-11-22 00:16:08.270695__rewards_rsl-0_rpl-0.6_pi-1_init_0.pkl",
                      "/home/ruben/Desktop/my-RL-Studio/rl_studio/logs/cartpole/dqn/inference/2022-11-22 00:16:20.325513__rewards_rsl-0_rpl-0.8_pi-1_init_0.pkl",
+                     "/home/ruben/Desktop/my-RL-Studio/rl_studio/logs/cartpole/dqn/inference/2023-01-10 23:22:19.776067__rewards_rsl-0_rpl-1_pi-1_init_0.pkl",
                      "DQN",
                      "red")
 
     #MANUAL
-    plot_intensities(ax1,
+    plot_frequencies(ax1,
                      "/home/ruben/Desktop/my-RL-Studio/rl_studio/logs/cartpole/qlearning/inference/2022-11-21 23:16:16.550832__rewards_rsl-0_rpl-0_pi-0.pkl",
                      "/home/ruben/Desktop/my-RL-Studio/rl_studio/logs/cartpole/no_rl/inference/2022-11-22 00:18:57.234844__rewards_rsl-0_rpl-0.1_pi-1.pkl",
                      "/home/ruben/Desktop/my-RL-Studio/rl_studio/logs/cartpole/no_rl/inference/2022-11-22 00:19:00.746120__rewards_rsl-0_rpl-0.2_pi-1.pkl",
                      "/home/ruben/Desktop/my-RL-Studio/rl_studio/logs/cartpole/no_rl/inference/2022-11-22 00:19:12.534704__rewards_rsl-0_rpl-0.4_pi-1.pkl",
                      "/home/ruben/Desktop/my-RL-Studio/rl_studio/logs/cartpole/no_rl/inference/2022-11-22 00:19:18.254783__rewards_rsl-0_rpl-0.6_pi-1.pkl",
                      "/home/ruben/Desktop/my-RL-Studio/rl_studio/logs/cartpole/no_rl/inference/2022-11-22 00:19:23.058775__rewards_rsl-0_rpl-0.8_pi-1.pkl",
+                     "/home/ruben/Desktop/my-RL-Studio/rl_studio/logs/cartpole/no_rl/inference/2023-01-10 23:20:41.584262__rewards_rsl-0_rpl-1_pi-1.pkl",
                      "programmatic",
                      "blue")
 
     #QLEAN
-    plot_intensities(ax1,
+    plot_frequencies(ax1,
                      "/home/ruben/Desktop/my-RL-Studio/rl_studio/logs/cartpole/qlearning/inference/2022-11-21 23:16:16.550832__rewards_rsl-0_rpl-0_pi-0.pkl",
                      "/home/ruben/Desktop/my-RL-Studio/rl_studio/logs/cartpole/qlearning/inference/2022-11-22 00:17:05.210740__rewards_rsl-0_rpl-0.1_pi-1.pkl",
                      "/home/ruben/Desktop/my-RL-Studio/rl_studio/logs/cartpole/qlearning/inference/2022-11-22 00:17:25.785325__rewards_rsl-0_rpl-0.2_pi-1.pkl",
                      "/home/ruben/Desktop/my-RL-Studio/rl_studio/logs/cartpole/qlearning/inference/2022-11-22 00:26:55.906779__rewards_rsl-0_rpl-0.5_pi-1.pkl",
                      "/home/ruben/Desktop/my-RL-Studio/rl_studio/logs/cartpole/qlearning/inference/2022-11-22 00:27:30.106815__rewards_rsl-0_rpl-0.8_pi-1.pkl",
                      "/home/ruben/Desktop/my-RL-Studio/rl_studio/logs/cartpole/qlearning/inference/2022-11-21 23:17:27.826748__rewards_rsl-0_rpl-0.1_pi-7.pkl",
+                     "/home/ruben/Desktop/my-RL-Studio/rl_studio/logs/cartpole/qlearning/inference/2023-01-10 23:22:31.996310__rewards_rsl-0_rpl-1_pi-1.pkl",
                      "QLearning",
                      "purple")
+
+    plot_frequencies(ax1,
+                     "/home/ruben/Desktop/my-RL-Studio/rl_studio/logs/cartpole/ppo_continuous/inference/2023-01-10 23:07:56.980168__rewards_rsl-0_rpl-0.1_pi-1_init_0.pkl",
+                     "/home/ruben/Desktop/my-RL-Studio/rl_studio/logs/cartpole/ppo_continuous/inference/2023-01-10 23:07:56.980168__rewards_rsl-0_rpl-0.1_pi-1_init_0.pkl",
+                     "/home/ruben/Desktop/my-RL-Studio/rl_studio/logs/cartpole/ppo_continuous/inference/2023-01-10 23:26:46.634493__rewards_rsl-0_rpl-0.2_pi-1_init_0.pkl",
+                     "/home/ruben/Desktop/my-RL-Studio/rl_studio/logs/cartpole/ppo_continuous/inference/2023-01-10 23:26:45.830716__rewards_rsl-0_rpl-0.4_pi-1_init_0.pkl",
+                     "/home/ruben/Desktop/my-RL-Studio/rl_studio/logs/cartpole/ppo_continuous/inference/2023-01-10 23:26:37.749305__rewards_rsl-0_rpl-0.6_pi-1_init_0.pkl",
+                     "/home/ruben/Desktop/my-RL-Studio/rl_studio/logs/cartpole/ppo_continuous/inference/2023-01-10 23:26:11.370025__rewards_rsl-0_rpl-0.8_pi-1_init_0.pkl",
+                     "/home/ruben/Desktop/my-RL-Studio/rl_studio/logs/cartpole/ppo_continuous/inference/2023-01-10 23:24:14.004576__rewards_rsl-0_rpl-1_pi-1_init_0.pkl",
+                     "PPO_Continuous",
+                     "black")
+
+    plot_frequencies(ax1,
+                     "/home/ruben/Desktop/my-RL-Studio/rl_studio/logs/cartpole/ddpg/inference/2023-01-10 23:04:28.025431__rewards_rsl-0_rpl-0.1_pi-1_init_0.pkl",
+                     "/home/ruben/Desktop/my-RL-Studio/rl_studio/logs/cartpole/ddpg/inference/2023-01-10 23:22:57.895054__rewards_rsl-0_rpl-0.1_pi-1_init_0.pkl",
+                     "/home/ruben/Desktop/my-RL-Studio/rl_studio/logs/cartpole/ddpg/inference/2023-01-10 23:23:12.990897__rewards_rsl-0_rpl-0.2_pi-1_init_0.pkl",
+                     "/home/ruben/Desktop/my-RL-Studio/rl_studio/logs/cartpole/ddpg/inference/2023-01-10 23:23:24.445366__rewards_rsl-0_rpl-0.4_pi-1_init_0.pkl",
+                     "/home/ruben/Desktop/my-RL-Studio/rl_studio/logs/cartpole/ddpg/inference/2023-01-10 23:23:37.013785__rewards_rsl-0_rpl-0.6_pi-1_init_0.pkl",
+                     "/home/ruben/Desktop/my-RL-Studio/rl_studio/logs/cartpole/ddpg/inference/2023-01-10 23:23:46.132016__rewards_rsl-0_rpl-0.8_pi-1_init_0.pkl",
+                     "/home/ruben/Desktop/my-RL-Studio/rl_studio/logs/cartpole/ddpg/inference/2023-01-10 23:24:03.382754__rewards_rsl-0_rpl-1_pi-1_init_0.pkl",
+                     "DDPG",
+                     "grey")
 
     plt.xticks(intensities)
     yticks = np.array(yticks)
