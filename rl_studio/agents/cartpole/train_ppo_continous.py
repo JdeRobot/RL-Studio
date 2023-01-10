@@ -9,7 +9,7 @@ from tqdm import tqdm
 import logging
 
 from rl_studio.agents.cartpole import utils
-from rl_studio.algorithms.ppo import Actor, Critic, Mish, t, get_dist
+from rl_studio.algorithms.ppo_continuous import Actor, Critic, Mish, t, get_dist
 from rl_studio.visual.ascii.images import JDEROBOT_LOGO
 from rl_studio.visual.ascii.text import JDEROBOT, LETS_GO
 from rl_studio.agents.cartpole.utils import store_rewards, save_metadata
@@ -40,7 +40,6 @@ class PPOCartpoleTrainer:
         self.RANDOM_START_LEVEL = self.environment_params.get("random_start_level", 0)
         self.INITIAL_POLE_ANGLE = self.environment_params.get("initial_pole_angle", None)
 
-
         non_recoverable_angle = self.environment_params[
             "non_recoverable_angle"
         ]
@@ -63,7 +62,7 @@ class PPOCartpoleTrainer:
             "block_experience_batch"
         ]
 
-        self.actions = self.env.action_space.n
+        self.actions = self.env.action_space.shape[0]
 
         self.losses_list, self.reward_list, self.episode_len_list, self.epsilon_list = (
             [],
@@ -74,11 +73,10 @@ class PPOCartpoleTrainer:
         # recorded for graph
         self.epsilon = params.get("algorithm").get("epsilon")
         self.GAMMA = params.get("algorithm").get("gamma")
-        self.NUMBER_OF_EXPLORATION_STEPS = 128
 
         input_dim = self.env.observation_space.shape[0]
 
-        self.actor = Actor(input_dim, self.actions, activation=Mish)
+        self.actor = Actor(input_dim, self.actions, 0.2, activation=Mish)
         self.critic = Critic(input_dim, activation=Mish)
 
         self.max_avg = 0
@@ -111,7 +109,7 @@ class PPOCartpoleTrainer:
     def main(self):
         epoch_start_time = datetime.datetime.now()
 
-        logs_dir = 'logs/cartpole/ppo/training/'
+        logs_dir = 'logs/cartpole/ppo_continuous/training/'
         logs_file_name = 'logs_file_' + str(self.RANDOM_START_LEVEL) + '_' + str(
             self.RANDOM_PERTURBATIONS_LEVEL) + '_' + str(epoch_start_time) \
                          + str(self.PERTURBATIONS_INTENSITY_STD) + '.log'
@@ -124,7 +122,6 @@ class PPOCartpoleTrainer:
 
         if self.config["save_model"]:
             save_metadata("ppo", start_time_format, self.params)
-
 
         logging.info(LETS_GO)
         total_reward_in_epoch = 0
@@ -140,21 +137,22 @@ class PPOCartpoleTrainer:
                 ep_len += 1
                 global_steps += 1
                 if random.uniform(0, 1) < self.RANDOM_PERTURBATIONS_LEVEL:
-                    perturbation_action = random.randrange(self.env.action_space.n)
+                    perturbation_action = random.randrange(2)
                     state, done, _, _ = self.env.perturbate(perturbation_action, self.PERTURBATIONS_INTENSITY_STD)
                     logging.debug("perturbated in step {} with action {}".format(episode_rew, perturbation_action))
 
-                probs = self.actor(t(state))
-                dist = get_dist(probs)
-                action = dist.sample()
-                prob_act = dist.log_prob(action)
+                action_mean = self.actor(t(state))
+                dist = get_dist(action_mean, self.actor.action_var)
 
-                next_state, reward, done, info = self.env.step(action.detach().data.numpy())
+                action = dist.sample()
+                prob_act = dist.log_prob(action, )
+                converted_action = action.detach().numpy().clip(-1, 1).ravel()
+
+                next_state, reward, done, info = self.env.step(converted_action)
                 advantage = reward + (1 - done) * self.GAMMA * self.critic(t(next_state)) - self.critic(t(state))
 
                 w.add_scalar("loss/advantage", advantage, global_step=global_steps)
-                w.add_scalar("actions/action_0_prob", dist.probs[0], global_step=global_steps)
-                w.add_scalar("actions/action_1_prob", dist.probs[1], global_step=global_steps)
+                # w.add_scalar("actions/action_prob", dist.probs, global_step=global_steps)
 
                 episode_rew += reward
                 total_reward_in_epoch += reward
@@ -186,7 +184,7 @@ class PPOCartpoleTrainer:
                 if self.config["save_model"] and last_average > self.max_avg:
                     self.max_avg = total_reward_in_epoch / self.UPDATE_EVERY
                     logging.info(f"Saving model . . .")
-                    utils.save_ppo_model(self.actor, start_time_format, last_average, self.params)
+                    utils.save_ppo_continuous_model(self.actor, start_time_format, last_average, self.params)
 
                 if last_average >= self.OBJECTIVE_REWARD:
                     logging.info("Training objective reached!!")

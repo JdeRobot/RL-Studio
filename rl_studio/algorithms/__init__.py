@@ -47,9 +47,20 @@ class InferencerFactory:
 
             return brain
 
-        elif algorithm == AlgorithmsType.PPO.value:
-            from rl_studio.algorithms.ppo import Actor
-            from rl_studio.algorithms.ppo import Mish
+        # TODO
+        # elif algorithm == AlgorithmsType.PPO.value:
+        #     from rl_studio.algorithms.ppo import Actor
+        #     from rl_studio.algorithms.ppo import Mish
+        #
+        #     input_dim = config.env.observation_space.shape[0]
+        #     output_dim = config.env.action_space.n
+        #     brain = Actor(input_dim, output_dim, activation=Mish)
+        #     brain.load_model(inference_file_name)
+        #
+        #     return brain
+
+        elif algorithm == AlgorithmsType.PPO_CONTINIUOUS.value:
+            from rl_studio.algorithms.ppo_continuous import PPO
 
             input_dim = config.env.observation_space.shape[0]
             output_dim = config.env.action_space.n

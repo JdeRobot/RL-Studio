@@ -1,0 +1,46 @@
+settings:
+  output_dir: "./logs/"
+  save_model: True
+  save_positions: True
+  telemetry: False
+  logging_level: info
+  mode: training
+  agent: cartpole
+  algorithm: ppo_continuous
+
+# TODO make this section optional
+actions:
+    available_actions:
+      simple:
+
+agent:
+  cartpole:
+    # TODO To be removed
+    camera_params:
+      witdh: 640
+      height: 480
+
+environments:
+    env_name: myCartpole-continuous-v0
+    environment_folder: cartpole
+#    runs: 20000
+    runs: 20000
+    full_experimentation_runs: 0
+    update_every: 100
+    show_every: 10000
+    objective_reward: 500
+#    block_experience_batch: False
+    block_experience_batch: False
+  #  random_start_level: 0.05
+    random_start_level: 0 # Number between 0 and 1 that indicates the difficulty of the start position
+    random_perturbations_level: 0.8 # Number between 0 and 1 that indicates the frequency of the random perturbations
+    perturbations_intensity_std: 1 # Number between 0 and 1 that indicates the standard deviation of perturbations intensity
+    initial_pole_angle: 0
+    non_recoverable_angle: 0.3
+
+inference:
+  inference_file: /home/ruben/Desktop/my-RL-Studio/rl_studio/logs/cartpole/ppo/checkpoints/20221110_0937_actor_avg_500.0.pkl
+
+algorithm:
+  gamma: 1
+  epsilon: 0.15

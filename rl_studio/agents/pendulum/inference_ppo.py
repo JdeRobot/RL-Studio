@@ -12,7 +12,7 @@ import torch
 import logging
 
 from rl_studio.agents.pendulum import utils
-from rl_studio.algorithms.ddpg_torch import Actor, Critic, Memory
+from rl_studio.algorithms.ppo_continuous import PPO
 from rl_studio.visual.ascii.images import JDEROBOT_LOGO
 from rl_studio.visual.ascii.text import JDEROBOT, LETS_GO
 from rl_studio.agents.pendulum.utils import store_rewards, save_metadata
@@ -34,7 +34,7 @@ from rl_studio.wrappers.inference_rlstudio import InferencerWrapper
 #         return act_k_inv * (action - act_b)
 
 
-class DDPGPendulumInferencer:
+class PPOPendulumInferencer:
     def __init__(self, params):
 
         self.now = datetime.datetime.now()
@@ -63,7 +63,7 @@ class DDPGPendulumInferencer:
         #                                   # ,random_start_level=self.RANDOM_START_LEVEL, initial_pole_angle=self.INITIAL_POLE_ANGLE,
         #                                   # non_recoverable_angle=non_recoverable_angle
         #                                   ))
-        self.env = gym.make(self.env_name, render_mode="human")
+        self.env = gym.make(self.env_name,  render_mode='human')
         self.RUNS = self.environment_params["runs"]
         self.UPDATE_EVERY = self.environment_params[
             "update_every"
@@ -78,15 +78,18 @@ class DDPGPendulumInferencer:
             [],
         )  # metrics
         # recorded for graph
-        self.batch_size = params["algorithm"]["batch_size"]
-        self.tau = 1e-2
+        self.episodes_update = params.get("algorithm").get("episodes_update")
 
         self.max_avg = -1000
 
         self.num_actions = self.env.action_space.shape[0]
 
+        self.action_std_decay_rate = 0.05  # linearly decay action_std (action_std = action_std - action_std_decay_rate)
+        self.min_action_std = 0.1  # minimum action_std (stop decay after action_std <= min_action_std)
+        self.action_std_decay_freq = int(2.5e5)  # action_std decay frequency (in num timesteps)
+
         inference_file = params["inference"]["inference_file"]
-        self.inferencer = InferencerWrapper("ddpg_torch", inference_file, env=self.env)
+        self.inferencer = InferencerWrapper("ppo_continuous", inference_file, env=self.env)
 
     def print_init_info(self):
         logging.info(JDEROBOT)
@@ -94,14 +97,16 @@ class DDPGPendulumInferencer:
         logging.info(f"\t- Start hour: {datetime.datetime.now()}\n")
         logging.info(f"\t- self.environment params:\n{self.environment_params}")
 
-    def gather_statistics(self, ep_len, episode_rew):
+    def gather_statistics(self, losses, ep_len, episode_rew):
+        if losses is not None:
+            self.losses_list.append(losses / ep_len)
         self.reward_list.append(episode_rew)
         self.episode_len_list.append(ep_len)
 
     def main(self):
         epoch_start_time = datetime.datetime.now()
 
-        logs_dir = 'logs/pendulum/ddpg/training/'
+        logs_dir = 'logs/pendulum/ppo/inference/'
         logs_file_name = 'logs_file_' + str(
             self.RANDOM_PERTURBATIONS_LEVEL) + '_' + str(epoch_start_time) \
                          + str(self.PERTURBATIONS_INTENSITY_STD) + '.log'
@@ -115,7 +120,10 @@ class DDPGPendulumInferencer:
         logging.info(LETS_GO)
         w = tensorboard.SummaryWriter(log_dir=f"{logs_dir}/tensorboard/{start_time_format}")
 
+        actor_loss = 0
+        critic_loss = 0
         total_reward_in_epoch = 0
+        global_steps = 0
 
         for episode in tqdm(range(self.RUNS)):
             state, _ = self.env.reset()
@@ -124,6 +132,7 @@ class DDPGPendulumInferencer:
             step = 0
             while not done:
                 step += 1
+                global_steps += 1
                 # if random.uniform(0, 1) < self.RANDOM_PERTURBATIONS_LEVEL:
                 #     perturbation_action = random.randrange(self.env.action_space.n)
                 #     state, done, _, _ = self.env.perturbate(perturbation_action, self.PERTURBATIONS_INTENSITY_STD)
@@ -131,13 +140,14 @@ class DDPGPendulumInferencer:
 
                 action = self.inferencer.inference(state)
                 new_state, reward, _, done, _ = self.env.step(action)
+
                 state = new_state
                 episode_reward += reward
                 total_reward_in_epoch += reward
 
                 w.add_scalar("reward/episode_reward", episode_reward, global_step=episode)
 
-            self.gather_statistics(step, episode_reward)
+            self.gather_statistics(actor_loss, step, episode_reward)
 
             # monitor progress
             if (episode + 1) % self.UPDATE_EVERY == 0:
@@ -148,7 +158,13 @@ class DDPGPendulumInferencer:
                                                                                 str(time_spent))
                 logging.info(updates_message)
                 print(updates_message)
-                total_reward_in_epoch=0
+                last_average = total_reward_in_epoch / self.UPDATE_EVERY;
+
+                if last_average >= self.OBJECTIVE_REWARD:
+                    logging.info("Training objective reached!!")
+                    break
+                total_reward_in_epoch = 0
+
         base_file_name = f'_rewards_rpl-{self.RANDOM_PERTURBATIONS_LEVEL}_pi-{self.PERTURBATIONS_INTENSITY_STD}'
         file_path = f'{logs_dir}{datetime.datetime.now()}_{base_file_name}.pkl'
         store_rewards(self.reward_list, file_path)
