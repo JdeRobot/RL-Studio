@@ -348,7 +348,7 @@ class InferencerFactory:
             and simulator == EnvsType.GAZEBO.value
             and framework == FrameworksType.TF.value
         ):
-            from rl_studio.agents.f1.inference_followline_dqn_f1_gazebo import (
+            from rl_studio.agents.f1.inference_followline_dqn_f1_gazebo_tf import (
                 InferencerFollowLineDQNF1GazeboTF,
             )
 
@@ -395,7 +395,7 @@ class InferencerFactory:
             and simulator == EnvsType.GAZEBO.value
             and framework == FrameworksType.TF.value
         ):
-            from rl_studio.agents.f1.inference_dqn import (
+            from rl_studio.agents.f1.inference_followlane_dqn_f1_gazebo_tf import (
                 InferencerFollowLaneDQNF1GazeboTF,
             )
 
