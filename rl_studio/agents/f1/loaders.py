@@ -158,9 +158,9 @@ class LoadEnvVariablesDQNGazebo:
 
         # Env
         self.environment["env"] = config["settings"]["env"]
-        # self.environment["training_type"] = config[self.environment_set][self.env][
-        #    "training_type"
-        # ]
+        self.environment["circuit_name"] = config[self.environment_set][self.env][
+            "circuit_name"
+        ]
         self.environment["launchfile"] = config[self.environment_set][self.env][
             "launchfile"
         ]
@@ -276,6 +276,9 @@ class LoadEnvVariablesDDPGGazebo:
 
         # Env
         self.environment["env"] = config["settings"]["env"]
+        self.environment["circuit_name"] = config[self.environment_set][self.env][
+            "circuit_name"
+        ]
         self.environment["training_type"] = config[self.environment_set][self.env][
             "training_type"
         ]
