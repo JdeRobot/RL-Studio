@@ -75,6 +75,9 @@ class NoRLCartpoleInferencer:
         # Execute the action and get feedback
         next_state, reward, done, info = self.env.step(action)
 
+        updates_message = 'avg control iter time = {0}'.format(info["time"])
+        print(updates_message)
+
         return next_state, done
 
     def main(self):
@@ -100,6 +103,7 @@ class NoRLCartpoleInferencer:
                     perturbation_action = random.randrange(self.env.action_space.n)
                     obs, done, _, _ = self.env.perturbate(perturbation_action, self.PERTURBATIONS_INTENSITY_STD)
                 next_state, done = self.evaluate_from_step(state)
+
 
                 if not done:
                     state = next_state

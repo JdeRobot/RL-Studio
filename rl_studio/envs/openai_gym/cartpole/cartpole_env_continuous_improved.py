@@ -97,16 +97,21 @@ class CartPoleEnv(gym.Env):
         )
         xacc = temp - self.polemass_length * thetaacc * costheta / self.total_mass
 
+        now = datetime.datetime.now()
+        decision_duration = now - self.last_step_time
+        decision_duration = decision_duration.total_seconds()
+        decision_duration += 0.01
+
         if self.kinematics_integrator == "euler":
-            x = x + self.tau * x_dot
-            x_dot = x_dot + self.tau * xacc
-            theta = theta + self.tau * theta_dot
-            theta_dot = theta_dot + self.tau * thetaacc
+            x = x + decision_duration * x_dot
+            x_dot = x_dot + decision_duration * xacc
+            theta = theta + decision_duration * theta_dot
+            theta_dot = theta_dot + decision_duration * thetaacc
         else:  # semi-implicit euler
-            x_dot = x_dot + self.tau * xacc
-            x = x + self.tau * x_dot
-            theta_dot = theta_dot + self.tau * thetaacc
-            theta = theta + self.tau * theta_dot
+            x_dot = x_dot + decision_duration * xacc
+            x = x + decision_duration * x_dot
+            theta_dot = theta_dot + decision_duration * thetaacc
+            theta = theta + decision_duration * theta_dot
 
         self.state = (x, x_dot, theta, theta_dot)
 
@@ -131,6 +136,7 @@ class CartPoleEnv(gym.Env):
     def tick_step(self, action, elapsed_time=None):
         timedelta = elapsed_time or self.tau
         tau = timedelta.total_seconds()
+        tau += 0.01
         action = np.clip(action, -1, 1)[0]
         assert self.state is not None, "Call reset before using step method."
         x, x_dot, theta, theta_dot = self.state
@@ -195,7 +201,7 @@ class CartPoleEnv(gym.Env):
             reward = self.punish
 
         self.renderer.render_step()
-        return np.array(self.state, dtype=np.float32), reward, terminated, False, {"time":  tau}
+        return np.array(self.state, dtype=np.float32), reward, terminated, False, {"time":  tau - 0.01}
 
     def reset(
             self,
