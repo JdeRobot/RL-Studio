@@ -166,6 +166,42 @@ def save_best_episode(
     return current_max_reward, best_epoch, best_step, best_epoch_training_time
 
 
+def save_best_episode_dqn(
+    global_params,
+    cumulated_reward,
+    episode,
+    step,
+    start_time_epoch,
+    reward,
+):
+    """
+    save best episode in training
+    """
+
+    current_max_reward = cumulated_reward
+    best_epoch = episode
+    best_step = step
+    best_epoch_training_time = datetime.now() - start_time_epoch
+    # saving params to show
+    # self.actions_rewards["episode"].append(episode)
+    # self.actions_rewards["step"].append(step)
+    # self.actions_rewards["reward"].append(reward)
+    global_params.best_current_epoch["best_epoch"].append(episode)
+    global_params.best_current_epoch["best_step"].append(step)
+    # For continuous actios
+    # self.actions_rewards["v"].append(action[0][0])
+    # self.actions_rewards["w"].append(action[0][1])
+    global_params.best_current_epoch["highest_reward"].append(reward)
+    global_params.best_current_epoch["best_epoch_training_time"].append(
+        best_epoch_training_time
+    )
+    global_params.best_current_epoch["current_total_training_time"].append(
+        start_time_epoch
+    )
+
+    return current_max_reward, best_epoch, best_step, best_epoch_training_time
+
+
 def save_batch(episode, step, start_time_epoch, start_time, global_params, env_params):
     """
     save batch of n episodes
