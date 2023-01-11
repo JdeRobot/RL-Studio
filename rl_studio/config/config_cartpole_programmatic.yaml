@@ -21,12 +21,12 @@ agent:
       height: 480
 
 environments:
-  env_name: myCartpole-v0
+  env_name: myCartpole-v1
   environment_folder: cartpole
 #    runs: 20000
   runs: 100
   full_experimentation_runs: 0
-  update_every: 1000
+  update_every: 10
   show_every: 1000
   random_start_level: 0 # Number between 0 and 1 that indicates the difficulty of the start position
   random_perturbations_level: 0 # Number between 0 and 1 that indicates the frequency of the random perturbations

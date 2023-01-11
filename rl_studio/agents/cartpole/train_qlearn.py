@@ -124,7 +124,7 @@ class QLearnCartpoleTrainer:
 
         if self.config["save_model"]:
             print(f"\nSaving actions . . .\n")
-            utils.save_actions_qlearn(self.actions, start_time_format, self.params)
+            utils.save_actions_qlearn(self.actions, start_time_format)
             save_metadata("qlearning", start_time_format, self.params)
 
         print(LETS_GO)

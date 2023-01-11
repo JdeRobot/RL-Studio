@@ -21,13 +21,13 @@ agent:
       height: 480
 
 environments:
-    env_name: myCartpole-v0
+    env_name: myCartpole-v1
     environment_folder: cartpole
 #    runs: 20000
-    runs: 100
+    runs: 10000
     full_experimentation_runs: 0
-    update_every: 1000
-    show_every: 1000
+    update_every: 100
+    show_every: 10000
     objective_reward: 500
 #    block_experience_batch: False
     block_experience_batch: False
@@ -35,11 +35,11 @@ environments:
     random_start_level: 0 # Number between 0 and 1 that indicates the difficulty of the start position
     random_perturbations_level: 0 # Number between 0 and 1 that indicates the frequency of the random perturbations
     perturbations_intensity_std: 0 # Number between 0 and 1 that indicates the standard deviation of perturbations intensity
-    initial_pole_angle: 0.5
-    non_recoverable_angle: 0.7
+    initial_pole_angle: 0
+    non_recoverable_angle: 0.3
 
 inference:
-    inference_file: /home/ruben/Desktop/my-RL-Studio/rl_studio/checkpoints/cartpole/dqn/20221017_2118_epsilon_1_DQN_WEIGHTS_avg_475.825.pkl
+    inference_file: /home/ruben/Desktop/my-RL-Studio/rl_studio/logs/cartpole/dqn/checkpoints/20230111_2329_epsilon_1_DQN_WEIGHTS_avg_500.0.pkl
 
 algorithm:
 #      gamma: 0.95

@@ -138,7 +138,7 @@ if __name__ == "__main__":
                      "/home/ruben/Desktop/my-RL-Studio/rl_studio/logs/cartpole/ppo_continuous/inference/2023-01-10 23:26:45.830716__rewards_rsl-0_rpl-0.4_pi-1_init_0.pkl",
                      "/home/ruben/Desktop/my-RL-Studio/rl_studio/logs/cartpole/ppo_continuous/inference/2023-01-10 23:26:37.749305__rewards_rsl-0_rpl-0.6_pi-1_init_0.pkl",
                      "/home/ruben/Desktop/my-RL-Studio/rl_studio/logs/cartpole/ppo_continuous/inference/2023-01-10 23:26:11.370025__rewards_rsl-0_rpl-0.8_pi-1_init_0.pkl",
-                     "/home/ruben/Desktop/my-RL-Studio/rl_studio/logs/cartpole/ppo_continuous/inference/2023-01-10 23:24:14.004576__rewards_rsl-0_rpl-1_pi-1_init_0.pkl",
+                     "/home/ruben/Desktop/my-RL-Studio/rl_studio/logs/cartpole/ppo_continuous/inference/2023-01-11 23:17:01.079220__rewards_rsl-0_rpl-1_pi-1_init_0.pkl",
                      "PPO_Continuous",
                      "black")
 
