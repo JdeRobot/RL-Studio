@@ -139,7 +139,7 @@ if __name__ == "__main__":
 
     #QLEAN
     plot_init_pos(ax1,
-                     "/home/ruben/Desktop/my-RL-Studio/rl_studio/logs/cartpole/qlearning/inference/2022-11-21 23:30:57.818809__rewards_rsl-0_rpl-0_pi-0.pkl",
+                     "/home/ruben/Desktop/my-RL-Studio/rl_studio/logs/cartpole/qlearning/inference/2022-11-21 23:16:16.550832__rewards_rsl-0_rpl-0_pi-0.pkl",
                      "/home/ruben/Desktop/my-RL-Studio/rl_studio/logs/cartpole/qlearning/inference/2022-11-21 23:30:57.818809__rewards_rsl-0_rpl-0_pi-0.pkl",
                      "/home/ruben/Desktop/my-RL-Studio/rl_studio/logs/cartpole/qlearning/inference/2022-11-22 00:00:02.418770__rewards_rsl-0_rpl-0_pi-0.pkl",
                      "/home/ruben/Desktop/my-RL-Studio/rl_studio/logs/cartpole/qlearning/inference/2022-11-22 00:30:10.278754__rewards_rsl-0_rpl-0_pi-0.pkl",

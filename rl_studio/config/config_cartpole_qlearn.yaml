@@ -21,14 +21,14 @@ agent:
     height: 480
 
 environments:
-    env_name: myCartpole-v1
+    env_name: myCartpole-v0
     environment_folder: cartpole
 #    runs: 20000
     angle_bins: 100
     pos_bins: 100
     runs: 10000
     full_experimentation_runs: 0
-    update_every: 100
+    update_every: 1
     save_every: 133434
     show_every: 10000
     objective_reward: 500
