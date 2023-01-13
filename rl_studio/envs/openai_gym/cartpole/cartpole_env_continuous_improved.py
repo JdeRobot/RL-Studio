@@ -100,7 +100,7 @@ class CartPoleEnv(gym.Env):
         now = datetime.datetime.now()
         decision_duration = now - self.last_step_time
         decision_duration = decision_duration.total_seconds()
-        decision_duration += 0.01
+        decision_duration += 0.02
 
         if self.kinematics_integrator == "euler":
             x = x + decision_duration * x_dot
@@ -136,7 +136,7 @@ class CartPoleEnv(gym.Env):
     def tick_step(self, action, elapsed_time=None):
         timedelta = elapsed_time or self.tau
         tau = timedelta.total_seconds()
-        tau += 0.01
+        tau += 0.02
         action = np.clip(action, -1, 1)[0]
         assert self.state is not None, "Call reset before using step method."
         x, x_dot, theta, theta_dot = self.state
@@ -201,7 +201,7 @@ class CartPoleEnv(gym.Env):
             reward = self.punish
 
         self.renderer.render_step()
-        return np.array(self.state, dtype=np.float32), reward, terminated, False, {"time":  tau - 0.01}
+        return np.array(self.state, dtype=np.float32), reward, terminated, False, {"time":  tau - 0.02}
 
     def reset(
             self,

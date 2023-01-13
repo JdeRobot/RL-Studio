@@ -4,71 +4,69 @@ import matplotlib as pltlib
 import matplotlib.pyplot as plt
 import numpy as np
 from statsmodels.distributions.empirical_distribution import ECDF
+import os
+import re
 
 RUNS = 100
 max_episode_steps = 500
 
-intensities = [0, 0.1, 0.2, 0.4, 0.6, 0.8, 1]
+min_pert_freq = 0.1
+
+intensities = []
 
 yticks = []
 
-def plot_frequencies(ax, file_0, file_1, file_2, file_3, file_4, file_5, file_6, label, color):
 
-    rewards_file = open(
-        file_0,
-        "rb")
-    rewards = pickle.load(rewards_file)
-    rewards = np.asarray(rewards)
-    ecdf_0 = ECDF(rewards)
+def plot_freq(ax, folder_path, color):
+    # Use a regular expression to extract the part between "cartpole" and "inference"
+    match = re.search(r'cartpole/(.*?)/inference', folder_path)
+    if match:
+        extracted_part = match.group(1)
+        label = extracted_part
+    else:
+        label = "unknown"
+        print("No match found")
 
-    rewards_file = open(
-        file_1,
-        "rb")
-    rewards = pickle.load(rewards_file)
-    rewards = np.asarray(rewards)
-    ecdf_1 = ECDF(rewards)
+    file_dict = {}
+    ecdf_dict = {}
 
-    rewards_file = open(
-        file_2,
-        "rb")
-    rewards = pickle.load(rewards_file)
-    rewards = np.asarray(rewards)
-    ecdf_2 = ECDF(rewards)
+    # Iterate through all the files in the folder
+    for file_name in os.listdir(folder_path):
+        # Use a regular expression to extract the part between "pi" and "_in"
+        match = re.search(r'rpl-(.*?)_pi', file_name)
+        match2 = re.search(r'pi-(.*?)_in', file_name)
+        match3 = re.search(r'init_(.*?).pkl', file_name)
 
-    rewards_file = open(
-        file_3,
-        "rb")
-    rewards = pickle.load(rewards_file)
-    rewards = np.asarray(rewards)
-    ecdf_3 = ECDF(rewards)
+        if match:
+            extracted_part = float(match.group(1))
 
-    rewards_file = open(
-        file_4,
-        "rb")
-    rewards = pickle.load(rewards_file)
-    rewards = np.asarray(rewards)
-    ecdf_4 = ECDF(rewards)
+            if match2 and match3:
+                extracted_part2 = float(match2.group(1))
+                extracted_part3 = float(match3.group(1))
+                if extracted_part == 0 and extracted_part2 == 0 and extracted_part3 == 0:
+                    # Add the extracted part and filename to the list
+                    rewards_file = open(folder_path+file_name, "rb")
+                    rewards = pickle.load(rewards_file)
+                    rewards = np.asarray(rewards)
+                    ecdf = ECDF(rewards)
+                    ecdf_dict[float(extracted_part)] = 1 - ecdf(499)
+            if extracted_part > min_pert_freq:
+                rewards_file = open(folder_path+file_name, "rb")
+                rewards = pickle.load(rewards_file)
+                rewards = np.asarray(rewards)
+                ecdf = ECDF(rewards)
+                ecdf_dict[float(extracted_part)] = 1 - ecdf(499)
 
-    rewards_file = open(
-        file_5,
-        "rb")
-    rewards = pickle.load(rewards_file)
-    rewards = np.asarray(rewards)
-    ecdf_5 = ECDF(rewards)
+    print(label)
+    sorted_dict = dict(sorted(ecdf_dict.items(), key=lambda item: item[0]))
+    print(sorted_dict)
+    extracted_intensities = list(sorted_dict.keys())
+    success_percentage = list(sorted_dict.values())
 
-    rewards_file = open(
-        file_6,
-        "rb")
-    rewards = pickle.load(rewards_file)
-    rewards = np.asarray(rewards)
-    ecdf_6 = ECDF(rewards)
+    yticks.extend(success_percentage)
+    intensities.extend(extracted_intensities)
 
-    ninety_rewards = [1- ecdf_0(499), 1 - ecdf_1(499), 1 - ecdf_2(499), 1 - ecdf_3(499), 1 - ecdf_4(499), 1-  ecdf_5(499), 1-  ecdf_6(499)]
-
-    yticks.append(ninety_rewards)
-
-    ax.plot(intensities, ninety_rewards, color=color, label=label)
-
+    ax.plot(extracted_intensities, success_percentage, color=color, label=label)
 
 def cleanticks(ticks):
     clear_ticks = []
@@ -77,90 +75,36 @@ def cleanticks(ticks):
     for element2 in ticks:
         if element1 != element2 and abs(element1 - element2) > 0.02:
             clear_ticks.append(element2)
+            element1 = element2
     return clear_ticks
+
 
 if __name__ == "__main__":
     pltlib.rcParams.update({'font.size': 15})
 
     fig, ax1 = plt.subplots()
 
-    #PPO
-    plot_frequencies(ax1,
-                     "/home/ruben/Desktop/my-RL-Studio/rl_studio/logs/cartpole/qlearning/inference/2022-11-21 23:16:16.550832__rewards_rsl-0_rpl-0_pi-0.pkl",
-                     "/home/ruben/Desktop/my-RL-Studio/rl_studio/logs/cartpole/ppo/inference/2022-11-16 19:58:16.130830__rewards_rsl-0_rpl-0.1_pi-1.pkl",
-                     "/home/ruben/Desktop/my-RL-Studio/rl_studio/logs/cartpole/ppo/inference/2022-11-16 20:03:12.387811__rewards_rsl-0_rpl-0.1_pi-7.pkl",
-                     "/home/ruben/Desktop/my-RL-Studio/rl_studio/logs/cartpole/ppo/inference/2022-11-16 20:03:12.387811__rewards_rsl-0_rpl-0.1_pi-7.pkl",
-                     "/home/ruben/Desktop/my-RL-Studio/rl_studio/logs/cartpole/ppo/inference/2022-11-22 00:18:21.530321__rewards_rsl-0_rpl-0.6_pi-1_init_0.pkl",
-                     "/home/ruben/Desktop/my-RL-Studio/rl_studio/logs/cartpole/ppo/inference/2022-11-22 00:18:29.673944__rewards_rsl-0_rpl-0.8_pi-1_init_0.pkl",
-                     "/home/ruben/Desktop/my-RL-Studio/rl_studio/logs/cartpole/ppo/inference/2023-01-10 23:19:46.903895__rewards_rsl-0_rpl-1_pi-1_init_0.pkl",
-                     "ppo",
-                     "green")
-    #DQN
-    plot_frequencies(ax1,
-                     "/home/ruben/Desktop/my-RL-Studio/rl_studio/logs/cartpole/qlearning/inference/2022-11-21 23:16:16.550832__rewards_rsl-0_rpl-0_pi-0.pkl",
-                     "/home/ruben/Desktop/my-RL-Studio/rl_studio/logs/cartpole/dqn/inference/2022-11-22 00:15:24.492958__rewards_rsl-0_rpl-0.1_pi-1_init_0.pkl",
-                     "/home/ruben/Desktop/my-RL-Studio/rl_studio/logs/cartpole/dqn/inference/2022-11-22 00:16:01.716049__rewards_rsl-0_rpl-0.2_pi-1_init_0.pkl",
-                     "/home/ruben/Desktop/my-RL-Studio/rl_studio/logs/cartpole/dqn/inference/2022-11-22 00:16:02.753516__rewards_rsl-0_rpl-0.4_pi-1_init_0.pkl",
-                     "/home/ruben/Desktop/my-RL-Studio/rl_studio/logs/cartpole/dqn/inference/2022-11-22 00:16:08.270695__rewards_rsl-0_rpl-0.6_pi-1_init_0.pkl",
-                     "/home/ruben/Desktop/my-RL-Studio/rl_studio/logs/cartpole/dqn/inference/2022-11-22 00:16:20.325513__rewards_rsl-0_rpl-0.8_pi-1_init_0.pkl",
-                     "/home/ruben/Desktop/my-RL-Studio/rl_studio/logs/cartpole/dqn/inference/2023-01-10 23:22:19.776067__rewards_rsl-0_rpl-1_pi-1_init_0.pkl",
-                     "DQN",
-                     "red")
-
-    #MANUAL
-    plot_frequencies(ax1,
-                     "/home/ruben/Desktop/my-RL-Studio/rl_studio/logs/cartpole/qlearning/inference/2022-11-21 23:16:16.550832__rewards_rsl-0_rpl-0_pi-0.pkl",
-                     "/home/ruben/Desktop/my-RL-Studio/rl_studio/logs/cartpole/no_rl/inference/2022-11-22 00:18:57.234844__rewards_rsl-0_rpl-0.1_pi-1.pkl",
-                     "/home/ruben/Desktop/my-RL-Studio/rl_studio/logs/cartpole/no_rl/inference/2022-11-22 00:19:00.746120__rewards_rsl-0_rpl-0.2_pi-1.pkl",
-                     "/home/ruben/Desktop/my-RL-Studio/rl_studio/logs/cartpole/no_rl/inference/2022-11-22 00:19:12.534704__rewards_rsl-0_rpl-0.4_pi-1.pkl",
-                     "/home/ruben/Desktop/my-RL-Studio/rl_studio/logs/cartpole/no_rl/inference/2022-11-22 00:19:18.254783__rewards_rsl-0_rpl-0.6_pi-1.pkl",
-                     "/home/ruben/Desktop/my-RL-Studio/rl_studio/logs/cartpole/no_rl/inference/2022-11-22 00:19:23.058775__rewards_rsl-0_rpl-0.8_pi-1.pkl",
-                     "/home/ruben/Desktop/my-RL-Studio/rl_studio/logs/cartpole/no_rl/inference/2023-01-10 23:20:41.584262__rewards_rsl-0_rpl-1_pi-1.pkl",
-                     "programmatic",
-                     "blue")
-
-    #QLEAN
-    plot_frequencies(ax1,
-                     "/home/ruben/Desktop/my-RL-Studio/rl_studio/logs/cartpole/qlearning/inference/2022-11-21 23:16:16.550832__rewards_rsl-0_rpl-0_pi-0.pkl",
-                     "/home/ruben/Desktop/my-RL-Studio/rl_studio/logs/cartpole/qlearning/inference/2022-11-22 00:17:05.210740__rewards_rsl-0_rpl-0.1_pi-1.pkl",
-                     "/home/ruben/Desktop/my-RL-Studio/rl_studio/logs/cartpole/qlearning/inference/2022-11-22 00:17:25.785325__rewards_rsl-0_rpl-0.2_pi-1.pkl",
-                     "/home/ruben/Desktop/my-RL-Studio/rl_studio/logs/cartpole/qlearning/inference/2022-11-22 00:26:55.906779__rewards_rsl-0_rpl-0.5_pi-1.pkl",
-                     "/home/ruben/Desktop/my-RL-Studio/rl_studio/logs/cartpole/qlearning/inference/2022-11-22 00:27:30.106815__rewards_rsl-0_rpl-0.8_pi-1.pkl",
-                     "/home/ruben/Desktop/my-RL-Studio/rl_studio/logs/cartpole/qlearning/inference/2022-11-21 23:17:27.826748__rewards_rsl-0_rpl-0.1_pi-7.pkl",
-                     "/home/ruben/Desktop/my-RL-Studio/rl_studio/logs/cartpole/qlearning/inference/2023-01-10 23:22:31.996310__rewards_rsl-0_rpl-1_pi-1.pkl",
-                     "QLearning",
-                     "purple")
-
-    plot_frequencies(ax1,
-                     "/home/ruben/Desktop/my-RL-Studio/rl_studio/logs/cartpole/ppo_continuous/inference/2023-01-10 23:07:56.980168__rewards_rsl-0_rpl-0.1_pi-1_init_0.pkl",
-                     "/home/ruben/Desktop/my-RL-Studio/rl_studio/logs/cartpole/ppo_continuous/inference/2023-01-10 23:07:56.980168__rewards_rsl-0_rpl-0.1_pi-1_init_0.pkl",
-                     "/home/ruben/Desktop/my-RL-Studio/rl_studio/logs/cartpole/ppo_continuous/inference/2023-01-10 23:26:46.634493__rewards_rsl-0_rpl-0.2_pi-1_init_0.pkl",
-                     "/home/ruben/Desktop/my-RL-Studio/rl_studio/logs/cartpole/ppo_continuous/inference/2023-01-10 23:26:45.830716__rewards_rsl-0_rpl-0.4_pi-1_init_0.pkl",
-                     "/home/ruben/Desktop/my-RL-Studio/rl_studio/logs/cartpole/ppo_continuous/inference/2023-01-10 23:26:37.749305__rewards_rsl-0_rpl-0.6_pi-1_init_0.pkl",
-                     "/home/ruben/Desktop/my-RL-Studio/rl_studio/logs/cartpole/ppo_continuous/inference/2023-01-10 23:26:11.370025__rewards_rsl-0_rpl-0.8_pi-1_init_0.pkl",
-                     "/home/ruben/Desktop/my-RL-Studio/rl_studio/logs/cartpole/ppo_continuous/inference/2023-01-11 23:17:01.079220__rewards_rsl-0_rpl-1_pi-1_init_0.pkl",
-                     "PPO_Continuous",
-                     "black")
-
-    plot_frequencies(ax1,
-                     "/home/ruben/Desktop/my-RL-Studio/rl_studio/logs/cartpole/ddpg/inference/2023-01-10 23:04:28.025431__rewards_rsl-0_rpl-0.1_pi-1_init_0.pkl",
-                     "/home/ruben/Desktop/my-RL-Studio/rl_studio/logs/cartpole/ddpg/inference/2023-01-10 23:22:57.895054__rewards_rsl-0_rpl-0.1_pi-1_init_0.pkl",
-                     "/home/ruben/Desktop/my-RL-Studio/rl_studio/logs/cartpole/ddpg/inference/2023-01-10 23:23:12.990897__rewards_rsl-0_rpl-0.2_pi-1_init_0.pkl",
-                     "/home/ruben/Desktop/my-RL-Studio/rl_studio/logs/cartpole/ddpg/inference/2023-01-10 23:23:24.445366__rewards_rsl-0_rpl-0.4_pi-1_init_0.pkl",
-                     "/home/ruben/Desktop/my-RL-Studio/rl_studio/logs/cartpole/ddpg/inference/2023-01-10 23:23:37.013785__rewards_rsl-0_rpl-0.6_pi-1_init_0.pkl",
-                     "/home/ruben/Desktop/my-RL-Studio/rl_studio/logs/cartpole/ddpg/inference/2023-01-10 23:23:46.132016__rewards_rsl-0_rpl-0.8_pi-1_init_0.pkl",
-                     "/home/ruben/Desktop/my-RL-Studio/rl_studio/logs/cartpole/ddpg/inference/2023-01-10 23:24:03.382754__rewards_rsl-0_rpl-1_pi-1_init_0.pkl",
-                     "DDPG",
-                     "grey")
+    # PPO
+    plot_freq(ax1, "/home/ruben/Desktop/my-RL-Studio/rl_studio/logs/cartpole/ppo/inference/", "green")
+    # DQN
+    plot_freq(ax1, "/home/ruben/Desktop/my-RL-Studio/rl_studio/logs/cartpole/dqn/inference/", "red")
+    # MANUAL
+    plot_freq(ax1, "/home/ruben/Desktop/my-RL-Studio/rl_studio/logs/cartpole/no_rl/inference/", "blue")
+    # QLEAN
+    plot_freq(ax1, "/home/ruben/Desktop/my-RL-Studio/rl_studio/logs/cartpole/qlearning/inference/", "purple")
+    # PPO CONTINUOUS
+    plot_freq(ax1, "/home/ruben/Desktop/my-RL-Studio/rl_studio/logs/cartpole/ppo_continuous/inference/", "black")
+    # DDPG
+    plot_freq(ax1, "/home/ruben/Desktop/my-RL-Studio/rl_studio/logs/cartpole/ddpg/inference/", "brown")
 
     plt.xticks(intensities)
     yticks = np.array(yticks)
     flatten_ticks = yticks.flatten()
-    clear_ticks = cleanticks(flatten_ticks)
+    clear_ticks = cleanticks(sorted(flatten_ticks, reverse=True))
     plt.yticks(clear_ticks)
     plt.setp(ax1.get_yticklabels(), horizontalalignment='right', fontsize='xx-small')
     plt.setp(ax1.get_xticklabels(), horizontalalignment='right', fontsize='x-small')
-    plt.xlabel("frequency of perturbations with fixed intensity")
+    plt.xlabel("intensity of perturbations with fixed frequency")
     plt.ylabel("percentage of successful episodes")
     plt.grid()
     plt.legend()

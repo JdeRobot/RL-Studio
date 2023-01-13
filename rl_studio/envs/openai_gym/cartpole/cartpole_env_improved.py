@@ -162,7 +162,7 @@ class CartPoleEnv(gym.Env[np.ndarray, Union[int, np.ndarray]]):
         now = datetime.datetime.now()
         decision_duration = now - self.last_step_time
         decision_duration = decision_duration.total_seconds()
-        decision_duration += 0.01
+        decision_duration += 0.02
 
         if self.kinematics_integrator == "euler":
             x = x + decision_duration * x_dot
@@ -201,7 +201,7 @@ class CartPoleEnv(gym.Env[np.ndarray, Union[int, np.ndarray]]):
         tau = timedelta.total_seconds()
         # we simulated a lapse of time so the value is not hat low that python can't calculate the physics due
         # to lack of precision and to give time to the pole to fall
-        tau += 0.01
+        tau += 0.02
         err_msg = f"{action!r} ({type(action)}) invalid"
         assert self.action_space.contains(action), err_msg
         assert self.state is not None, "Call reset before using step method."
@@ -267,7 +267,7 @@ class CartPoleEnv(gym.Env[np.ndarray, Union[int, np.ndarray]]):
             reward = self.punish
 
         self.renderer.render_step()
-        return np.array(self.state, dtype=np.float32), reward, terminated, False, {"time":  tau-0.01}
+        return np.array(self.state, dtype=np.float32), reward, terminated, False, {"time":  tau-0.02}
 
     def reset(
             self,
