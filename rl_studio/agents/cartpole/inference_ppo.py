@@ -12,6 +12,7 @@ import torch
 import logging
 
 from rl_studio.agents.cartpole import utils
+from rl_studio.agents.cartpole.cartpole_Inferencer import CartpoleInferencer
 from rl_studio.algorithms.ppo import Actor, Critic, Mish, t, get_dist
 from rl_studio.visual.ascii.images import JDEROBOT_LOGO
 from rl_studio.visual.ascii.text import JDEROBOT, LETS_GO
@@ -19,46 +20,9 @@ from rl_studio.agents.cartpole.utils import store_rewards, show_fails_success_co
 from rl_studio.wrappers.inference_rlstudio import InferencerWrapper
 
 
-class PPOCartpoleInferencer:
+class PPOCartpoleInferencer(CartpoleInferencer):
     def __init__(self, params):
-
-        self.now = datetime.datetime.now()
-        # self.environment params
-        self.params = params
-        self.environment_params = params["environments"]
-        self.env_name = self.environment_params["env_name"]
-        self.config = params["settings"]
-        self.agent_config = params["agent"]
-
-        if self.config["logging_level"] == "debug":
-            self.LOGGING_LEVEL = logging.DEBUG
-        elif self.config["logging_level"] == "error":
-            self.LOGGING_LEVEL = logging.ERROR
-        elif self.config["logging_level"] == "critical":
-            self.LOGGING_LEVEL = logging.CRITICAL
-        else:
-            self.LOGGING_LEVEL = logging.INFO
-
-        self.RANDOM_PERTURBATIONS_LEVEL = self.environment_params.get("random_perturbations_level", 0)
-        self.PERTURBATIONS_INTENSITY_STD = self.environment_params.get("perturbations_intensity_std", 0)
-        self.RANDOM_START_LEVEL = self.environment_params.get("random_start_level", 0)
-        self.INITIAL_POLE_ANGLE = self.environment_params.get("initial_pole_angle", None)
-
-        non_recoverable_angle = self.environment_params[
-            "non_recoverable_angle"
-        ]
-        # Unfortunately, max_steps is not working with new_step_api=True and it is not giving any benefit.
-        # self.env = gym.make(self.env_name, new_step_api=True, random_start_level=random_start_level)
-        self.env = gym.make(self.env_name, random_start_level=self.RANDOM_START_LEVEL, initial_pole_angle=self.INITIAL_POLE_ANGLE,
-                            non_recoverable_angle=non_recoverable_angle)
-
-        self.RUNS = self.environment_params["runs"]
-        self.SHOW_EVERY = self.environment_params[
-            "show_every"
-        ]
-        self.UPDATE_EVERY = self.environment_params[
-            "update_every"
-        ]  # How often the current progress is recorded
+        super().__init__(params);
         self.BLOCKED_EXPERIENCE_BATCH = self.environment_params[
             "block_experience_batch"
         ]
@@ -103,7 +67,7 @@ class PPOCartpoleInferencer:
     #             self.env.render()
     #         logging.info("\ndemonstration episode : {}, reward : {}".format(i, rew))
 
-    def main(self):
+    def run_experiment(self):
         epoch_start_time = datetime.datetime.now()
 
         logs_dir = 'logs/cartpole/ppo/inference/'
@@ -122,6 +86,7 @@ class PPOCartpoleInferencer:
         global_steps = 0
         w = tensorboard.SummaryWriter(log_dir=f"{logs_dir}/tensorboard/{start_time_format}")
         total_secs=0
+        self.reward_list = []
 
         for run in tqdm(range(self.RUNS)):
             state, done, prev_prob_act, ep_len, episode_rew = self.env.reset(), False, None, 0, 0
@@ -134,6 +99,9 @@ class PPOCartpoleInferencer:
                     perturbation_action = random.randrange(self.env.action_space.n)
                     state, done, _, _ = self.env.perturbate(perturbation_action, self.PERTURBATIONS_INTENSITY_STD)
                     logging.debug("perturbated in step {} with action {}".format(episode_rew, perturbation_action))
+                if self.RANDOM_PERTURBATIONS_LEVEL > 1 and  random.uniform(0, 1) < self.RANDOM_PERTURBATIONS_LEVEL - 1:
+                    perturbation_action = random.randrange(2)
+                    state, done, _, _ = self.env.perturbate(perturbation_action, self.PERTURBATIONS_INTENSITY_STD)
 
                 action = self.inferencer.inference(state)
                 next_state, reward, done, info = self.env.step(action.detach().data.numpy())
@@ -146,7 +114,7 @@ class PPOCartpoleInferencer:
                 w.add_scalar("reward/episode_reward", episode_rew, global_step=run)
                 episode_rewards.append(episode_rew)
 
-                if run % self.SHOW_EVERY == 0:
+                if run % self.SHOW_EVERY == 0 and run != 0:
                     self.env.render()
 
             self.gather_statistics(actor_loss, ep_len, episode_rew)
@@ -168,8 +136,7 @@ class PPOCartpoleInferencer:
         base_file_name = f'_rewards_rsl-{self.RANDOM_START_LEVEL}_rpl-{self.RANDOM_PERTURBATIONS_LEVEL}_pi-{self.PERTURBATIONS_INTENSITY_STD}_init_{self.INITIAL_POLE_ANGLE}'
         file_path = f'{logs_dir}{datetime.datetime.now()}_{base_file_name}.pkl'
         store_rewards(self.reward_list, file_path)
-        plt.plot(self.reward_list)
-        plt.legend("reward per episode")
-        plt.show()
-
+        # plt.plot(self.reward_list)
+        # plt.legend("reward per episode")
+        # plt.show()
 

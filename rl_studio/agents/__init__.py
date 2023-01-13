@@ -463,7 +463,6 @@ class InferencerFactory:
                 from rl_studio.agents.cartpole.inference_ddpg import (
                     DDPGCartpoleInferencer as CartpoleInferencer,
                 )
-
             elif algorithm == AlgorithmsType.PROGRAMMATIC.value:
                 from rl_studio.agents.cartpole.inference_no_rl import (
                     NoRLCartpoleInferencer as CartpoleInferencer,

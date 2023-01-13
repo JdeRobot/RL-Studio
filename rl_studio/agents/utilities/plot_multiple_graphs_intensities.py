@@ -4,64 +4,69 @@ import matplotlib as pltlib
 import matplotlib.pyplot as plt
 import numpy as np
 from statsmodels.distributions.empirical_distribution import ECDF
+import os
+import re
 
 RUNS = 100
 max_episode_steps = 500
 
-intensities = [0, 1, 7, 12, 18, 25]
+min_pert_intensity = 1
+
+intensities = []
 
 yticks = []
 
-def plot_intensities(ax, file_0, file_1, file_2, file_3, file_4, file_5, label, color):
 
-    rewards_file = open(
-        file_0,
-        "rb")
-    rewards = pickle.load(rewards_file)
-    rewards = np.asarray(rewards)
-    ecdf_0 = ECDF(rewards)
+def plot_intensities(ax, folder_path, color):
+    # Use a regular expression to extract the part between "cartpole" and "inference"
+    match = re.search(r'cartpole/(.*?)/inference', folder_path)
+    if match:
+        extracted_part = match.group(1)
+        label = extracted_part
+    else:
+        label = "unknown"
+        print("No match found")
 
-    rewards_file = open(
-        file_1,
-        "rb")
-    rewards = pickle.load(rewards_file)
-    rewards = np.asarray(rewards)
-    ecdf_1 = ECDF(rewards)
+    file_dict = {}
+    ecdf_dict = {}
 
-    rewards_file = open(
-        file_2,
-        "rb")
-    rewards = pickle.load(rewards_file)
-    rewards = np.asarray(rewards)
-    ecdf_2 = ECDF(rewards)
+    # Iterate through all the files in the folder
+    for file_name in os.listdir(folder_path):
+        # Use a regular expression to extract the part between "pi" and "_in"
+        match = re.search(r'pi-(.*?)_in', file_name)
+        match2 = re.search(r'rpl-(.*?)_pi', file_name)
+        match3 = re.search(r'init_(.*?).pkl', file_name)
 
-    rewards_file = open(
-        file_3,
-        "rb")
-    rewards = pickle.load(rewards_file)
-    rewards = np.asarray(rewards)
-    ecdf_3 = ECDF(rewards)
+        if match:
+            extracted_part = float(match.group(1))
 
-    rewards_file = open(
-        file_4,
-        "rb")
-    rewards = pickle.load(rewards_file)
-    rewards = np.asarray(rewards)
-    ecdf_4 = ECDF(rewards)
+            if match2 and match3:
+                extracted_part2 = float(match2.group(1))
+                extracted_part3 = float(match3.group(1))
+                if extracted_part == 0 and extracted_part2 == 0 and extracted_part3 == 0:
+                    # Add the extracted part and filename to the list
+                    rewards_file = open(folder_path+file_name, "rb")
+                    rewards = pickle.load(rewards_file)
+                    rewards = np.asarray(rewards)
+                    ecdf = ECDF(rewards)
+                    ecdf_dict[float(extracted_part)/10] = 1 - ecdf(499)
+            if extracted_part > min_pert_intensity:
+                rewards_file = open(folder_path+file_name, "rb")
+                rewards = pickle.load(rewards_file)
+                rewards = np.asarray(rewards)
+                ecdf = ECDF(rewards)
+                ecdf_dict[float(extracted_part)/10] = 1 - ecdf(499)
 
-    rewards_file = open(
-        file_5,
-        "rb")
-    rewards = pickle.load(rewards_file)
-    rewards = np.asarray(rewards)
-    ecdf_5 = ECDF(rewards)
+    print(label)
+    sorted_dict = dict(sorted(ecdf_dict.items(), key=lambda item: item[0]))
+    print(sorted_dict)
+    extracted_intensities = list(sorted_dict.keys())
+    success_percentage = list(sorted_dict.values())
 
-    ninety_rewards = [1- ecdf_0(499), 1 - ecdf_1(499), 1 - ecdf_2(499), 1 - ecdf_3(499), 1 - ecdf_4(499), 1 - ecdf_5(499)]
+    yticks.extend(success_percentage)
+    intensities.extend(extracted_intensities)
 
-    yticks.append(ninety_rewards)
-
-    ax.plot(intensities, ninety_rewards, color=color, label=label)
-
+    ax.plot(extracted_intensities, success_percentage, color=color, label=label)
 
 def cleanticks(ticks):
     clear_ticks = []
@@ -70,82 +75,32 @@ def cleanticks(ticks):
     for element2 in ticks:
         if element1 != element2 and abs(element1 - element2) > 0.02:
             clear_ticks.append(element2)
+            element1 = element2
     return clear_ticks
+
 
 if __name__ == "__main__":
     pltlib.rcParams.update({'font.size': 15})
 
     fig, ax1 = plt.subplots()
 
-    #PPO
-    plot_intensities(ax1,
-                     "/home/ruben/Desktop/my-RL-Studio/rl_studio/logs/cartpole/qlearning/inference/2022-11-21 23:16:16.550832__rewards_rsl-0_rpl-0_pi-0.pkl",
-                     "/home/ruben/Desktop/my-RL-Studio/rl_studio/logs/cartpole/ppo/inference/2022-11-16 19:58:16.130830__rewards_rsl-0_rpl-0.1_pi-1.pkl",
-                     "/home/ruben/Desktop/my-RL-Studio/rl_studio/logs/cartpole/ppo/inference/2022-11-16 20:03:12.387811__rewards_rsl-0_rpl-0.1_pi-7.pkl",
-                     "/home/ruben/Desktop/my-RL-Studio/rl_studio/logs/cartpole/ppo/inference/2022-11-16 20:03:18.660196__rewards_rsl-0_rpl-0.1_pi-12.pkl",
-                     "/home/ruben/Desktop/my-RL-Studio/rl_studio/logs/cartpole/ppo/inference/2022-11-16 20:03:43.891839__rewards_rsl-0_rpl-0.1_pi-18.pkl",
-                     "/home/ruben/Desktop/my-RL-Studio/rl_studio/logs/cartpole/ppo/inference/2023-01-10 22:47:29.781389__rewards_rsl-0_rpl-0.1_pi-25_init_0.pkl",
-                     "ppo",
-                     "green")
-    #DQN
-    plot_intensities(ax1,
-                     "/home/ruben/Desktop/my-RL-Studio/rl_studio/logs/cartpole/qlearning/inference/2022-11-21 23:16:16.550832__rewards_rsl-0_rpl-0_pi-0.pkl",
-                     "/home/ruben/Desktop/my-RL-Studio/rl_studio/logs/cartpole/dqn/inference/2022-11-16 20:35:59.222709__rewards_rsl-0_rpl-0.1_pi-1.pkl",
-                     "/home/ruben/Desktop/my-RL-Studio/rl_studio/logs/cartpole/dqn/inference/2022-11-16 20:36:33.282602__rewards_rsl-0_rpl-0.1_pi-7.pkl",
-                     "/home/ruben/Desktop/my-RL-Studio/rl_studio/logs/cartpole/dqn/inference/2022-11-16 20:36:51.443741__rewards_rsl-0_rpl-0.1_pi-12.pkl",
-                     "/home/ruben/Desktop/my-RL-Studio/rl_studio/logs/cartpole/dqn/inference/2022-11-16 20:37:33.130595__rewards_rsl-0_rpl-0.1_pi-18.pkl",
-                     "/home/ruben/Desktop/my-RL-Studio/rl_studio/logs/cartpole/dqn/inference/2023-01-10 23:08:21.563209__rewards_rsl-0_rpl-0.1_pi-25_init_0.pkl",
-                     "DQN",
-                     "red")
-
-    #MANUAL
-    plot_intensities(ax1,
-                     "/home/ruben/Desktop/my-RL-Studio/rl_studio/logs/cartpole/qlearning/inference/2022-11-21 23:16:16.550832__rewards_rsl-0_rpl-0_pi-0.pkl",
-                     "/home/ruben/Desktop/my-RL-Studio/rl_studio/logs/cartpole/no_rl/inference/2022-11-16 20:40:06.485079__rewards_rsl-0_rpl-0.1_pi-1.pkl",
-                     "/home/ruben/Desktop/my-RL-Studio/rl_studio/logs/cartpole/no_rl/inference/2022-11-16 20:40:44.833057__rewards_rsl-0_rpl-0.1_pi-7.pkl",
-                     "/home/ruben/Desktop/my-RL-Studio/rl_studio/logs/cartpole/no_rl/inference/2022-11-16 20:40:51.609087__rewards_rsl-0_rpl-0.1_pi-12.pkl",
-                     "/home/ruben/Desktop/my-RL-Studio/rl_studio/logs/cartpole/no_rl/inference/2022-11-16 20:41:02.009116__rewards_rsl-0_rpl-0.1_pi-18.pkl",
-                     "/home/ruben/Desktop/my-RL-Studio/rl_studio/logs/cartpole/no_rl/inference/2023-01-10 23:10:18.836212__rewards_rsl-0_rpl-0.1_pi-25.pkl",
-                     "programmatic",
-                     "blue")
-
-    #QLEAN
-    plot_intensities(ax1,
-                     "/home/ruben/Desktop/my-RL-Studio/rl_studio/logs/cartpole/qlearning/inference/2022-11-21 23:16:16.550832__rewards_rsl-0_rpl-0_pi-0.pkl",
-                     "/home/ruben/Desktop/my-RL-Studio/rl_studio/logs/cartpole/qlearning/inference/2022-11-21 23:16:49.854808__rewards_rsl-0_rpl-0.1_pi-1.pkl",
-                     "/home/ruben/Desktop/my-RL-Studio/rl_studio/logs/cartpole/qlearning/inference/2022-11-21 23:17:27.826748__rewards_rsl-0_rpl-0.1_pi-7.pkl",
-                     "/home/ruben/Desktop/my-RL-Studio/rl_studio/logs/cartpole/qlearning/inference/2022-11-21 23:17:27.826748__rewards_rsl-0_rpl-0.1_pi-7.pkl",
-                     "/home/ruben/Desktop/my-RL-Studio/rl_studio/logs/cartpole/qlearning/inference/2022-11-21 23:17:27.826748__rewards_rsl-0_rpl-0.1_pi-7.pkl",
-                     "/home/ruben/Desktop/my-RL-Studio/rl_studio/logs/cartpole/qlearning/inference/2023-01-10 23:12:21.304273__rewards_rsl-0_rpl-0.1_pi-25.pkl",
-                     "QLearning",
-                     "purple")
-
-    plot_intensities(ax1,
-                     "/home/ruben/Desktop/my-RL-Studio/rl_studio/logs/cartpole/ppo_continuous/inference/2023-01-10 23:07:56.980168__rewards_rsl-0_rpl-0.1_pi-1_init_0.pkl",
-                     "/home/ruben/Desktop/my-RL-Studio/rl_studio/logs/cartpole/ppo_continuous/inference/2023-01-10 23:07:56.980168__rewards_rsl-0_rpl-0.1_pi-1_init_0.pkl",
-                     "/home/ruben/Desktop/my-RL-Studio/rl_studio/logs/cartpole/ppo_continuous/inference/2023-01-10 23:07:54.979448__rewards_rsl-0_rpl-0.1_pi-7_init_0.pkl",
-                     "/home/ruben/Desktop/my-RL-Studio/rl_studio/logs/cartpole/ppo_continuous/inference/2023-01-10 23:07:29.977585__rewards_rsl-0_rpl-0.1_pi-12_init_0.pkl",
-                     "/home/ruben/Desktop/my-RL-Studio/rl_studio/logs/cartpole/ppo_continuous/inference/2023-01-10 23:01:48.338400__rewards_rsl-0_rpl-0.1_pi-18_init_0.pkl",
-                     "/home/ruben/Desktop/my-RL-Studio/rl_studio/logs/cartpole/ppo_continuous/inference/2023-01-10 22:53:51.210122__rewards_rsl-0_rpl-0.1_pi-25_init_0.pkl",
-                     "PPO_Continuous",
-                     "black")
-
-    plot_intensities(ax1,
-                     "/home/ruben/Desktop/my-RL-Studio/rl_studio/logs/cartpole/ddpg/inference/2023-01-10 23:04:28.025431__rewards_rsl-0_rpl-0.1_pi-1_init_0.pkl",
-                     "/home/ruben/Desktop/my-RL-Studio/rl_studio/logs/cartpole/ddpg/inference/2023-01-10 23:04:28.025431__rewards_rsl-0_rpl-0.1_pi-1_init_0.pkl",
-                     "/home/ruben/Desktop/my-RL-Studio/rl_studio/logs/cartpole/ddpg/inference/2023-01-10 23:04:13.459880__rewards_rsl-0_rpl-0.1_pi-7_init_0.pkl",
-                     "/home/ruben/Desktop/my-RL-Studio/rl_studio/logs/cartpole/ddpg/inference/2023-01-10 23:03:59.562169__rewards_rsl-0_rpl-0.1_pi-12_init_0.pkl",
-                     "/home/ruben/Desktop/my-RL-Studio/rl_studio/logs/cartpole/ddpg/inference/2023-01-10 23:00:33.116335__rewards_rsl-0_rpl-0.1_pi-18_init_0.pkl",
-                     "/home/ruben/Desktop/my-RL-Studio/rl_studio/logs/cartpole/ddpg/inference/2023-01-10 22:56:13.336239__rewards_rsl-0_rpl-0.1_pi-25_init_0.pkl",
-                     "DDPG",
-                     "grey")
-
-
+    # PPO
+    plot_intensities(ax1, "/home/ruben/Desktop/my-RL-Studio/rl_studio/logs/cartpole/ppo/inference/", "green")
+    # DQN
+    plot_intensities(ax1, "/home/ruben/Desktop/my-RL-Studio/rl_studio/logs/cartpole/dqn/inference/", "red")
+    # MANUAL
+    plot_intensities(ax1, "/home/ruben/Desktop/my-RL-Studio/rl_studio/logs/cartpole/no_rl/inference/", "blue")
+    # QLEAN
+    plot_intensities(ax1, "/home/ruben/Desktop/my-RL-Studio/rl_studio/logs/cartpole/qlearning/inference/", "purple")
+    # PPO CONTINUOUS
+    plot_intensities(ax1, "/home/ruben/Desktop/my-RL-Studio/rl_studio/logs/cartpole/ppo_continuous/inference/", "black")
+    # DDPG
+    plot_intensities(ax1, "/home/ruben/Desktop/my-RL-Studio/rl_studio/logs/cartpole/ddpg/inference/", "brown")
 
     plt.xticks(intensities)
     yticks = np.array(yticks)
     flatten_ticks = yticks.flatten()
-    clear_ticks = cleanticks(flatten_ticks)
+    clear_ticks = cleanticks(sorted(flatten_ticks, reverse=True))
     plt.yticks(clear_ticks)
     plt.setp(ax1.get_yticklabels(), horizontalalignment='right', fontsize='xx-small')
     plt.setp(ax1.get_xticklabels(), horizontalalignment='right', fontsize='x-small')

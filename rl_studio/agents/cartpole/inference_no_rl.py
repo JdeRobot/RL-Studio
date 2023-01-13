@@ -4,42 +4,16 @@ import gym
 import matplotlib.pyplot as plt
 import numpy as np
 
+from rl_studio.agents.cartpole.cartpole_Inferencer import CartpoleInferencer
 from rl_studio.visual.ascii.images import JDEROBOT_LOGO
 from rl_studio.visual.ascii.text import JDEROBOT, QLEARN_CAMERA, LETS_GO
 from rl_studio.agents.cartpole.utils import store_rewards
 import random
 
 
-class NoRLCartpoleInferencer:
+class NoRLCartpoleInferencer(CartpoleInferencer):
     def __init__(self, params):
-        # TODO: Create a pydantic metaclass to simplify the way we extract the params
-        # environment params
-        self.params = params
-        self.environment_params = params["environments"]
-        self.env_name = params["environments"]["env_name"]
-        self.RANDOM_PERTURBATIONS_LEVEL = self.environment_params.get("random_perturbations_level", 0)
-        self.PERTURBATIONS_INTENSITY_STD = self.environment_params.get("perturbations_intensity_std", 0)
-        self.RANDOM_START_LEVEL = self.environment_params.get("random_start_level", 0)
-        self.INITIAL_POLE_ANGLE = self.environment_params.get("initial_pole_angle", None)
-
-        # Unfortunately, max_steps is not working with new_step_api=True and it is not giving any benefit.
-        # self.env = gym.make(self.env_name, new_step_api=True, random_start_level=random_start_level)
-        non_recoverable_angle = self.environment_params[
-            "non_recoverable_angle"
-        ]
-        self.env = gym.make(self.env_name, random_start_level=self.RANDOM_START_LEVEL,
-                            initial_pole_angle=self.INITIAL_POLE_ANGLE,
-                            non_recoverable_angle=non_recoverable_angle)
-        self.RUNS = self.environment_params[
-            "runs"
-        ]  # Number of iterations run TODO set this from config.yml
-        self.SHOW_EVERY = self.environment_params[
-            "show_every"
-        ]  # How oftern the current solution is rendered TODO set this from config.yml
-        self.UPDATE_EVERY = self.environment_params[
-            "update_every"
-        ]  # How oftern the current progress is recorded TODO set this from config.yml
-
+        super().__init__(params);
         self.previousCnt = []  # array of all scores over runs
         self.metrics = {
             "ep": [],
@@ -75,12 +49,12 @@ class NoRLCartpoleInferencer:
         # Execute the action and get feedback
         next_state, reward, done, info = self.env.step(action)
 
-        updates_message = 'avg control iter time = {0}'.format(info["time"])
-        print(updates_message)
+        # updates_message = 'avg control iter time = {0}'.format(info["time"])
+        # print(updates_message)
 
         return next_state, done
 
-    def main(self):
+    def run_experiment(self):
 
         self.print_init_info()
 
@@ -88,6 +62,7 @@ class NoRLCartpoleInferencer:
         start_time_format = start_time.strftime("%Y%m%d_%H%M")
 
         print(LETS_GO)
+        episodes_rewards = []
 
         for run in range(self.RUNS):
             state = self.env.reset()
@@ -97,12 +72,16 @@ class NoRLCartpoleInferencer:
             while not done:
                 cnt += 1
 
-                if run % self.SHOW_EVERY == 0:
+                if run % self.SHOW_EVERY == 0 and run != 0:
                     self.env.render()  # if running RL comment this oustatst
                 if random.uniform(0, 1) < self.RANDOM_PERTURBATIONS_LEVEL:
                     perturbation_action = random.randrange(self.env.action_space.n)
                     obs, done, _, _ = self.env.perturbate(perturbation_action, self.PERTURBATIONS_INTENSITY_STD)
+                if self.RANDOM_PERTURBATIONS_LEVEL > 1 and  random.uniform(0, 1) < self.RANDOM_PERTURBATIONS_LEVEL - 1:
+                    perturbation_action = random.randrange(2)
+                    state, done, _, _ = self.env.perturbate(perturbation_action, self.PERTURBATIONS_INTENSITY_STD)
                 next_state, done = self.evaluate_from_step(state)
+
 
 
                 if not done:
@@ -111,13 +90,14 @@ class NoRLCartpoleInferencer:
             # Add new metrics for graph
             self.metrics["ep"].append(run)
             self.metrics["avg"].append(cnt)
+            episodes_rewards.append(cnt)
 
         self.env.close()
-        base_file_name = f'_rewards_rsl-{self.RANDOM_START_LEVEL}_rpl-{self.RANDOM_PERTURBATIONS_LEVEL}_pi-{self.PERTURBATIONS_INTENSITY_STD}'
+        base_file_name = f'_rewards_rsl-{self.RANDOM_START_LEVEL}_rpl-{self.RANDOM_PERTURBATIONS_LEVEL}_pi-{self.PERTURBATIONS_INTENSITY_STD}_init_{self.INITIAL_POLE_ANGLE}'
         file_path = f'./logs/cartpole/no_rl/inference/{datetime.datetime.now()}_{base_file_name}.pkl'
-        store_rewards(self.metrics["avg"], file_path)
+        store_rewards(episodes_rewards, file_path)
 
         # Plot graph
-        plt.plot(self.metrics["ep"], self.metrics["avg"], label="average rewards")
-        plt.legend(loc=4)
-        plt.show()
+        # plt.plot(self.metrics["ep"], self.metrics["avg"], label="average rewards")
+        # plt.legend(loc=4)
+        # plt.show()
