@@ -1,5 +1,5 @@
 settings:
-  mode: retraining # training, retraining, inference
+  mode: training # training, retraining, inference
   task: follow_lane_gazebo # follow_line_gazebo, follow_lane_gazebo, autoparking_gazebo
   algorithm: ddpg # qlearn, dqn, ddpg, ppo
   simulator: gazebo # openai, carla, gazebo, sumo
@@ -8,7 +8,7 @@ settings:
   agent: f1 # f1, autoparkingRL, auto_carla, mountain_car, robot_mesh, cartpole, turtlebot
   actions: continuous # continuous, simple, medium, hard, test, autoparking_simple
   states: image #image, sp1 (simplified perception with 1 point), sp3 (simplified perception with 3 points), spn (simplified perception with n points)
-  rewards: follow_right_lane_center_v_w_linear # follow_right_lane_only_center, follow_right_lane_center_v_step, follow_right_lane_center_v_w_linear
+  rewards: follow_right_lane_only_center # follow_right_lane_only_center, follow_right_lane_center_v_step, follow_right_lane_center_v_w_linear
   framework: TensorFlow # TensorFlow, Pytorch
   total_episodes: 5
   training_time: 6

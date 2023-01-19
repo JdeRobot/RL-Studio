@@ -83,6 +83,7 @@ class TrainerFollowLaneDDPGF1GazeboTF:
             f"actions_range = {range(len(self.global_params.actions_set))}\n"
             f"batch_size = {self.algoritmhs_params.batch_size}\n"
             f"logs_tensorboard_dir = {self.global_params.logs_tensorboard_dir}\n"
+            f"rewards = {self.environment.environment['rewards']}"
         )
         ## --------------------- Deep Nets ------------------
         ou_noise = OUActionNoise(
