@@ -89,4 +89,4 @@ Remaining params should be adjusted too. There are many working yaml files in co
 > need extend the rl-studio.py to listen for inputs in a port and execute the loaded brain/algorithm to provide
 > outputs in the desired way.
 
-More info about how to config and launch any task, please go to [agents](.agents/README.md) section.
+More info about how to config and launch any task, please go to [agents](agents/README.md) section.
