@@ -4,7 +4,7 @@
 
 ## [![forthebadge](https://forthebadge.com/images/badges/for-robots.svg)](https://forthebadge.com) [![forthebadge](https://forthebadge.com/images/badges/made-with-python.svg)](https://forthebadge.com)
 
-## [![Dependencies Status](https://img.shields.io/badge/dependencies-up%20to%20date-brightgreen.svg) ](https://github.com/TezRomacH/python-package-template/pulls?utf8=%E2%9C%93&q=is%3Apr%20author%3Aapp%2Fdependabot)[![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg) ](https://github.com/psf/black) [![Pre-commit](https://img.shields.io/badge/pre--commit-enabled-brightgreen?logo=pre-commit&logoColor=white)](https://github.com/TezRomacH/python-package-template/blob/master/.pre-commit-config.yaml) [![License](https://img.shields.io/badge/license-GNU-orange)](https://github.com/JdeRobot/RL-Studio/blob/main/LICENSE) ![](https://img.shields.io/badge/Dependencies-Poetry-blue)
+## [![Dependencies Status](https://img.shields.io/badge/dependencies-up%20to%20date-brightgreen.svg) ](https://github.com/TezRomacH/python-package-template/pulls?utf8=%E2%9C%93&q=is%3Apr%20author%3Aapp%2Fdependabot)[![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg) ](https://github.com/psf/black) [![Pre-commit](https://img.shields.io/badge/pre--commit-enabled-brightgreen?logo=pre-commit&logoColor=white)](https://github.com/TezRomacH/python-package-template/blob/master/.pre-commit-config.yaml) [![License](https://img.shields.io/badge/license-GNU-orange)](https://github.com/JdeRobot/RL-Studio/blob/main/LICENSE) 
 
 ![](https://img.shields.io/badge/Gazebo-11-orange) ![](https://img.shields.io/badge/ROS-Noetic-blue) ![](https://img.shields.io/badge/Python-3.8-yellowInstall) ![](https://img.shields.io/badge/Carla-0.9.13-yellow) ![](https://img.shields.io/badge/TensorFlow-2.9.11-brightgreen) ![](https://img.shields.io/badge/PyTorch-1.13-yellowgreen)
 
@@ -59,22 +59,7 @@ or
 git clone https://github.com/JdeRobot/RL-Studio.git
 ```
 
-## Install dependencies with Poetry (recommended):
-
-```bash
-curl -sSL https://install.python-poetry.org | python3 -
-export PATH="/root/.local/bin:$PATH"
-```
-
-Install dependencies:
-
-```bash
-poetry install
-```
-
 ## Install dependencies using pip:
-
-_Note: In case you don't want to use Poetry as a dependency manager, you can install it with pip as follows (previously it is highly recommended to create a virtual environment):_
 
 ```bash
 cd RL-Studio
