@@ -101,7 +101,7 @@ def configure_intensities_graph(ax1, clear_ticks, intensities):
     ax1.grid()
     ax1.legend()
 
-    ax1.set_xlabel("intensity of perturbations with fixed frequency")
+    ax1.set_xlabel("initial pole angle in radians")
     ax1.set_ylabel("percentage of successful episodes")
 
 
