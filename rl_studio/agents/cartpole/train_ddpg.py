@@ -13,7 +13,7 @@ from rl_studio.agents.cartpole import utils
 from rl_studio.algorithms.ddpg_torch import Actor, Critic, Memory
 from rl_studio.visual.ascii.images import JDEROBOT_LOGO
 from rl_studio.visual.ascii.text import JDEROBOT, LETS_GO
-from rl_studio.agents.cartpole.utils import store_rewards, save_metadata
+from rl_studio.agents.cartpole.utils import store_array, save_metadata
 
 
 class DDPGCartpoleTrainer:
@@ -178,6 +178,8 @@ class DDPGCartpoleTrainer:
         episode_rewards = []
         w = tensorboard.SummaryWriter(log_dir=f"{logs_dir}/tensorboard/{start_time_format}")
         total_secs=0
+        total_eps=0
+
         for run in tqdm(range(self.RUNS)):
             state, done, ep_len, episode_rew = self.env.reset(), False, 0, 0
             self.actor.reset_noise()
@@ -185,6 +187,7 @@ class DDPGCartpoleTrainer:
                 actor_loss = None
 
                 ep_len += 1
+                total_eps+=1
                 self.global_step += 1
                 if random.uniform(0, 1) < self.RANDOM_PERTURBATIONS_LEVEL:
                     perturbation_action = random.randrange(2)
@@ -239,7 +242,7 @@ class DDPGCartpoleTrainer:
         # self.final_demonstration()
         base_file_name = f'_rewards_rsl-{self.RANDOM_START_LEVEL}_rpl-{self.RANDOM_PERTURBATIONS_LEVEL}_pi-{self.PERTURBATIONS_INTENSITY_STD}'
         file_path = f'{logs_dir}{datetime.datetime.now()}_{base_file_name}.pkl'
-        store_rewards(self.reward_list, file_path)
+        store_array(self.reward_list, file_path)
         plt.plot(self.reward_list)
         plt.legend("reward per episode")
         plt.show()

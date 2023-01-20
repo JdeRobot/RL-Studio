@@ -8,7 +8,7 @@ from rl_studio.agents.cartpole import utils
 from rl_studio.algorithms.qlearn_multiple_states import QLearn
 from rl_studio.visual.ascii.images import JDEROBOT_LOGO
 from rl_studio.visual.ascii.text import JDEROBOT, QLEARN_CAMERA, LETS_GO
-from rl_studio.agents.cartpole.utils import store_rewards, save_metadata
+from rl_studio.agents.cartpole.utils import store_array, save_metadata
 
 
 class QLearnCartpoleTrainer:
@@ -129,6 +129,7 @@ class QLearnCartpoleTrainer:
 
         print(LETS_GO)
         total_secs = 0
+        episode_rewards = []
 
         for run in range(self.RUNS):
             state = utils.get_discrete_state(
@@ -149,6 +150,7 @@ class QLearnCartpoleTrainer:
                     state = next_state
 
             self.previousCnt.append(cnt)
+            episode_rewards.append(cnt)
 
             # Add new metrics for graph
             if run % self.UPDATE_EVERY == 0:
@@ -157,9 +159,9 @@ class QLearnCartpoleTrainer:
                 avgsecs = total_secs / sum(latestRuns)
                 total_secs = 0
                 self.metrics["ep"].append(run)
-                self.metrics["avg"].append(averageCnt)
                 self.metrics["min"].append(min(latestRuns))
                 self.metrics["max"].append(max(latestRuns))
+                self.metrics["avg"].append(averageCnt)
 
                 time_spent = datetime.datetime.now() - self.now
                 self.now = datetime.datetime.now()
@@ -193,7 +195,7 @@ class QLearnCartpoleTrainer:
 
         base_file_name = f'_rewards_'
         file_path = f'./logs/cartpole/qlearning/training/{datetime.datetime.now()}_{base_file_name}.pkl'
-        store_rewards(self.metrics["avg"], file_path)
+        store_array(episode_rewards, file_path)
 
         # Plot graph
         plt.plot(self.metrics["ep"], self.metrics["avg"], label="average rewards")

@@ -16,7 +16,7 @@ from rl_studio.agents.cartpole.cartpole_Inferencer import CartpoleInferencer
 from rl_studio.algorithms.ppo import Actor, Critic, Mish, t, get_dist
 from rl_studio.visual.ascii.images import JDEROBOT_LOGO
 from rl_studio.visual.ascii.text import JDEROBOT, LETS_GO
-from rl_studio.agents.cartpole.utils import store_rewards, show_fails_success_comparisson
+from rl_studio.agents.cartpole.utils import store_array, show_fails_success_comparisson
 from rl_studio.wrappers.inference_rlstudio import InferencerWrapper
 
 
@@ -29,12 +29,13 @@ class PPOCartpoleInferencer(CartpoleInferencer):
 
         self.actions = self.env.action_space
 
-        self.losses_list, self.reward_list, self.episode_len_list, self.epsilon_list = (
+        self.losses_list, self.reward_list, self.states_list, self.episode_len_list, self.epsilon_list = (
             [],
             [],
             [],
             [],
-        )  # metrics
+            [],
+        )  # metrics recorded for graph
         # recorded for graph
         self.epsilon = params["algorithm"]["epsilon"]
 
@@ -48,13 +49,13 @@ class PPOCartpoleInferencer(CartpoleInferencer):
         logging.info(f"\t- Start hour: {datetime.datetime.now()}\n")
         logging.info(f"\t- self.environment params:\n{self.environment_params}")
 
-    def gather_statistics(self, losses, ep_len, episode_rew):
+    def gather_statistics(self, losses, ep_len, episode_rew, state):
         if losses is not None:
             self.losses_list.append(losses / ep_len)
         self.reward_list.append(episode_rew)
         self.episode_len_list.append(ep_len)
         self.epsilon_list.append(self.epsilon)
-
+        self.states_list.append(state)
     # def final_demonstration(self):
     #     for i in tqdm(range(2)):
     #         obs, done, rew = self.env.reset(), False, 0
@@ -69,6 +70,8 @@ class PPOCartpoleInferencer(CartpoleInferencer):
 
     def run_experiment(self):
         epoch_start_time = datetime.datetime.now()
+        self.reward_list = []
+        self.reward_list = []
 
         logs_dir = 'logs/cartpole/ppo/inference/'
         logs_file_name = 'logs_file_' + str(self.RANDOM_START_LEVEL) + '_' + str(
@@ -89,9 +92,11 @@ class PPOCartpoleInferencer(CartpoleInferencer):
         self.reward_list = []
 
         for run in tqdm(range(self.RUNS)):
+            states = []
             state, done, prev_prob_act, ep_len, episode_rew = self.env.reset(), False, None, 0, 0
             while not done:
                 actor_loss = None
+                states.append(state[2])
 
                 ep_len += 1
                 global_steps += 1
@@ -117,7 +122,7 @@ class PPOCartpoleInferencer(CartpoleInferencer):
                 if run % self.SHOW_EVERY == 0 and run != 0:
                     self.env.render()
 
-            self.gather_statistics(actor_loss, ep_len, episode_rew)
+            self.gather_statistics(actor_loss, ep_len, episode_rew, states)
 
             # monitor progress
             if (run+1) % self.UPDATE_EVERY == 0:
@@ -135,7 +140,10 @@ class PPOCartpoleInferencer(CartpoleInferencer):
         # self.final_demonstration()
         base_file_name = f'_rewards_rsl-{self.RANDOM_START_LEVEL}_rpl-{self.RANDOM_PERTURBATIONS_LEVEL}_pi-{self.PERTURBATIONS_INTENSITY_STD}_init_{self.INITIAL_POLE_ANGLE}'
         file_path = f'{logs_dir}{datetime.datetime.now()}_{base_file_name}.pkl'
-        store_rewards(self.reward_list, file_path)
+        store_array(self.reward_list, file_path)
+        base_file_name = f'_states_rsl-{self.RANDOM_START_LEVEL}_rpl-{self.RANDOM_PERTURBATIONS_LEVEL}_pi-{self.PERTURBATIONS_INTENSITY_STD}_init_{self.INITIAL_POLE_ANGLE}'
+        file_path = f'{logs_dir}{datetime.datetime.now()}_{base_file_name}.pkl'
+        store_array(self.states_list, file_path)
         # plt.plot(self.reward_list)
         # plt.legend("reward per episode")
         # plt.show()

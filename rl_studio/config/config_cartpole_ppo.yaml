@@ -32,14 +32,14 @@ environments:
 #    block_experience_batch: False
     block_experience_batch: False
   #  random_start_level: 0.05
-    experiments: 20
+    experiments: 29
     random_start_level: 0 # Number between 0 and 1 that indicates the difficulty of the start position
     random_perturbations_level: 0.1 # Number between 0 and 1 that indicates the frequency of the random perturbations
-    random_perturbations_level_step: 0.1 # Number between 0 and 1 that indicates the frequency of the random perturbations
-    perturbations_intensity_std: 1 # Number between 0 and 1 that indicates the standard deviation of perturbations intensity
-    perturbations_intensity_std_step: 2
+    random_perturbations_level_step: 0.1
+    perturbations_intensity_std: 21 #Number between 0 and 1 that indicates the standard deviation of perturbations intensity
+    perturbations_intensity_std_step: 1
     initial_pole_angle: 0
-    initial_pole_angle_steps: 0.1
+    initial_pole_angle_steps: 0.05
     non_recoverable_angle: 0.3 # not applicable when making experiments with init_pole_angle (always 0.2 over the initial)
 
 inference:
