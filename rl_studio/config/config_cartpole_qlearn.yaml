@@ -4,7 +4,7 @@ settings:
   save_positions: True
   telemetry: False
   logging_level: info
-  mode: inference
+  mode: training
   agent: cartpole
   algorithm: qlearn
 
@@ -26,24 +26,25 @@ environments:
 #    runs: 20000
     angle_bins: 100
     pos_bins: 100
-    runs: 100
+    runs: 4000000
     full_experimentation_runs: 0
-    update_every: 99
-    save_every: 133434
+    update_every: 10000
+    save_every: 10000000
     show_every: 10000
     objective_reward: 500
 #    block_experience_batch: False
     block_experience_batch: False
   #  random_start_level: 0.05
-    experiments: 20
+    experiments: 1
     random_start_level: 0 # Number between 0 and 1 that indicates the difficulty of the start position
-    random_perturbations_level: 0.1 # Number between 0 and 1 that indicates the frequency of the random perturbations
-    random_perturbations_level_step: 0.1 # Number between 0 and 1 that indicates the frequency of the random perturbations
-    perturbations_intensity_std: 1 # Number between 0 and 1 that indicates the standard deviation of perturbations intensity
-    perturbations_intensity_std_step: 2
+    random_perturbations_level: 0 # Number between 0 and 1 that indicates the frequency of the random perturbations
+    random_perturbations_level_step: 0
+    perturbations_intensity_std: 0 #Number between 0 and 1 that indicates the standard deviation of perturbations intensity
+    perturbations_intensity_std_step: 0
     initial_pole_angle: 0
-    initial_pole_angle_steps: 0.1
+    initial_pole_angle_steps: 0
     non_recoverable_angle: 0.3 # not applicable when making experiments with init_pole_angle (always 0.2 over the initial)
+
 #    previously_trained_agent: /home/ruben/Desktop/my-RL-Studio/rl_studio/logs/cartpole/qlearning/checkpoints/20221116_2001_epsilon_0.01_QTABLE_avg_ 179.357.pkl
     reward_value: 1
     punish: 0
@@ -55,6 +56,6 @@ inference:
 
 algorithm:
     alpha: 0.9
-    epsilon: 0.5
+    epsilon: 0.99
     gamma: 0.9
-    epsilon_discount: 0.9999995
+    epsilon_discount: 0.99999997

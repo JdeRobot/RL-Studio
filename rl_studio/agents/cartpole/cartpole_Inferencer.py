@@ -1,10 +1,12 @@
 import datetime
+import gc
+
 import gym
 
 import logging
 from tqdm import tqdm
 
-
+import torch
 class CartpoleInferencer:
     def __init__(self, params):
         self.now = datetime.datetime.now()
@@ -34,7 +36,7 @@ class CartpoleInferencer:
         self.RANDOM_START_LEVEL = self.environment_params.get("random_start_level", 0)
         self.INITIAL_POLE_ANGLE = self.environment_params.get("initial_pole_angle", None)
         self.FIRST_INITIAL_POLE_ANGLE = self.environment_params.get("initial_pole_angle", None)
-        self.INITIAL_POLE_ANGLE_STEP = self.environment_params.get("initial_pole_angle_STEP", 0.1)
+        self.INITIAL_POLE_ANGLE_STEP = self.environment_params.get("initial_pole_angle_steps", 0.1)
 
         self.non_recoverable_angle = self.environment_params[
             "non_recoverable_angle"
@@ -47,54 +49,59 @@ class CartpoleInferencer:
         self.UPDATE_EVERY = self.environment_params[
             "update_every"
         ]  # How often the current progress is recorded
+        torch.no_grad()
 
         # Unfortunately, max_steps is not working with new_step_api=True and it is not giving any benefit.
         # self.env = gym.make(self.env_name, new_step_api=True, random_start_level=random_start_level)
         self.env = gym.make(self.env_name, random_start_level=self.RANDOM_START_LEVEL,
                             initial_pole_angle=self.INITIAL_POLE_ANGLE,
                             non_recoverable_angle=self.non_recoverable_angle)
-
     def main(self):
 
         if self.experiments > 1:
-            self.PERTURBATIONS_INTENSITY_STD = 0
-            self.RANDOM_PERTURBATIONS_LEVEL = 0
-            self.INITIAL_POLE_ANGLE = 0
-            self.run_experiment()
+            # self.PERTURBATIONS_INTENSITY_STD = 0
+            # self.RANDOM_PERTURBATIONS_LEVEL = 0
+            # self.INITIAL_POLE_ANGLE = 0
+            # self.run_experiment()
             self.PERTURBATIONS_INTENSITY_STD = self.FIRST_PERTURBATIONS_INTENSITY_STD
             self.RANDOM_PERTURBATIONS_LEVEL = self.FIRST_RANDOM_PERTURBATIONS_LEVEL
             self.INITIAL_POLE_ANGLE = self.FIRST_INITIAL_POLE_ANGLE
-
+            self.run_experiment()
             # First base experiment, then perturbation experiments, then frequency and then initial angle
             for experiment in tqdm(range(self.experiments)):
                 self.PERTURBATIONS_INTENSITY_STD += self.PERTURBATIONS_INTENSITY_STD_STEP
                 self.RANDOM_PERTURBATIONS_LEVEL = self.FIRST_RANDOM_PERTURBATIONS_LEVEL
                 self.INITIAL_POLE_ANGLE = self.FIRST_INITIAL_POLE_ANGLE
                 self.run_experiment()
+                torch.cuda.empty_cache()
+
                 print(f"finished intensity experiment {experiment}")
-            for experiment in tqdm(range(self.experiments)):
-                self.PERTURBATIONS_INTENSITY_STD = self.FIRST_PERTURBATIONS_INTENSITY_STD
-                self.RANDOM_PERTURBATIONS_LEVEL += self.RANDOM_PERTURBATIONS_LEVEL_STEP
-                self.INITIAL_POLE_ANGLE = self.FIRST_INITIAL_POLE_ANGLE
-                self.run_experiment()
-                print(f"finished frequency experiment {experiment}")
-            for experiment in tqdm(range(self.experiments)):
-                self.PERTURBATIONS_INTENSITY_STD = 0
-                self.RANDOM_PERTURBATIONS_LEVEL = 0
-                self.INITIAL_POLE_ANGLE += self.INITIAL_POLE_ANGLE_STEP
-
-                if self.INITIAL_POLE_ANGLE > 0.9:
-                    exit(0)
-                # Unfortunately, max_steps is not working with new_step_api=True and it is not giving any benefit.
-                # self.env = gym.make(self.env_name, new_step_api=True, random_start_level=random_start_level)
-                self.env = gym.make(self.env_name, random_start_level=self.RANDOM_START_LEVEL,
-                                    initial_pole_angle=self.INITIAL_POLE_ANGLE,
-                                    non_recoverable_angle=0.9)
-
-                self.run_experiment()
-                print(f"finished init angle experiment {experiment}")
-
-        else:
+        #     for experiment in tqdm(range(self.experiments)):
+        #         self.PERTURBATIONS_INTENSITY_STD = self.FIRST_PERTURBATIONS_INTENSITY_STD
+        #         self.RANDOM_PERTURBATIONS_LEVEL += self.RANDOM_PERTURBATIONS_LEVEL_STEP
+        #         self.INITIAL_POLE_ANGLE = self.FIRST_INITIAL_POLE_ANGLE
+        #         self.run_experiment()
+        #         torch.cuda.empty_cache()
+        #
+        #         print(f"finished frequency experiment {experiment}")
+        #     for experiment in tqdm(range(self.experiments)):
+        #         self.PERTURBATIONS_INTENSITY_STD = 0
+        #         self.RANDOM_PERTURBATIONS_LEVEL = 0
+        #         self.INITIAL_POLE_ANGLE += self.INITIAL_POLE_ANGLE_STEP
+        #         self.RUNS = 10
+        #
+        #         if self.INITIAL_POLE_ANGLE > 0.9:
+        #             exit(0)
+        #         # Unfortunately, max_steps is not working with new_step_api=True and it is not giving any benefit.
+        #         self.env = gym.make(self.env_name, random_start_level=self.RANDOM_START_LEVEL,
+        #                             initial_pole_angle=self.INITIAL_POLE_ANGLE,
+        #                             non_recoverable_angle=0.9)
+        #
+        #         self.run_experiment()
+        #         torch.cuda.empty_cache()
+        #
+        #         print(f"finished init angle experiment {experiment}")
+        # else:
             self.run_experiment()
 
 

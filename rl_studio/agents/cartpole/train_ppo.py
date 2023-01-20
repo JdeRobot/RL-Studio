@@ -12,7 +12,7 @@ from rl_studio.agents.cartpole import utils
 from rl_studio.algorithms.ppo import Actor, Critic, Mish, t, get_dist
 from rl_studio.visual.ascii.images import JDEROBOT_LOGO
 from rl_studio.visual.ascii.text import JDEROBOT, LETS_GO
-from rl_studio.agents.cartpole.utils import store_rewards, save_metadata
+from rl_studio.agents.cartpole.utils import store_array, save_metadata
 
 
 class PPOCartpoleTrainer:
@@ -199,7 +199,7 @@ class PPOCartpoleTrainer:
         # self.final_demonstration()
         base_file_name = f'_rewards_rsl-{self.RANDOM_START_LEVEL}_rpl-{self.RANDOM_PERTURBATIONS_LEVEL}_pi-{self.PERTURBATIONS_INTENSITY_STD}'
         file_path = f'{logs_dir}{datetime.datetime.now()}_{base_file_name}.pkl'
-        store_rewards(self.reward_list, file_path)
+        store_array(self.reward_list, file_path)
         plt.plot(self.reward_list)
         plt.legend("reward per episode")
         plt.show()

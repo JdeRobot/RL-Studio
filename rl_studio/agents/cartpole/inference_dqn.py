@@ -8,7 +8,7 @@ import logging
 import numpy as np
 
 from rl_studio.agents.cartpole.cartpole_Inferencer import CartpoleInferencer
-from rl_studio.agents.cartpole.utils import store_rewards, show_fails_success_comparisson
+from rl_studio.agents.cartpole.utils import store_array, show_fails_success_comparisson
 from rl_studio.wrappers.inference_rlstudio import InferencerWrapper
 from tqdm import tqdm
 
@@ -25,7 +25,8 @@ class DQNCartpoleInferencer(CartpoleInferencer):
 
         self.actions = self.env.action_space.n
 
-        self.losses_list, self.reward_list, self.episode_len_list, self.epsilon_list = (
+        self.losses_list, self.reward_list, self.states_list, self.episode_len_list, self.epsilon_list = (
+            [],
             [],
             [],
             [],
@@ -57,20 +58,23 @@ class DQNCartpoleInferencer(CartpoleInferencer):
 
         unsuccessful_episodes_count = 0
         episodes_rewards = []
+        self.states_list = []
 
         logging.info(LETS_GO)
         total_reward_in_epoch = 0
         total_secs=0
         for run in tqdm(range(self.RUNS)):
             obs, done, rew = self.env.reset(), False, 0
+            states = []
             while not done:
+                states.append(obs[2])
                 if random.uniform(0, 1) < self.RANDOM_PERTURBATIONS_LEVEL:
                     perturbation_action = random.randrange(self.env.action_space.n)
                     obs, done, _, _ = self.env.perturbate(perturbation_action, self.PERTURBATIONS_INTENSITY_STD)
                     logging.info("perturbated in step {} with action {}".format(rew, perturbation_action))
                 if self.RANDOM_PERTURBATIONS_LEVEL > 1 and  random.uniform(0, 1) < self.RANDOM_PERTURBATIONS_LEVEL - 1:
                     perturbation_action = random.randrange(2)
-                    state, done, _, _ = self.env.perturbate(perturbation_action, self.PERTURBATIONS_INTENSITY_STD)
+                    obs, done, _, _ = self.env.perturbate(perturbation_action, self.PERTURBATIONS_INTENSITY_STD)
                     logging.debug("perturbated in step {} with action {}".format(rew, perturbation_action))
 
 
@@ -86,7 +90,7 @@ class DQNCartpoleInferencer(CartpoleInferencer):
 
             # monitor progress
             episodes_rewards.append(rew)
-
+            self.states_list.append(states)
             if (run+1) % self.UPDATE_EVERY == 0:
                 time_spent = datetime.datetime.now() - epoch_start_time
                 epoch_start_time = datetime.datetime.now()
@@ -105,7 +109,10 @@ class DQNCartpoleInferencer(CartpoleInferencer):
         logging.info(f'unsuccessful episodes => {unsuccessful_episodes_count}')
         base_file_name = f'_rewards_rsl-{self.RANDOM_START_LEVEL}_rpl-{self.RANDOM_PERTURBATIONS_LEVEL}_pi-{self.PERTURBATIONS_INTENSITY_STD}_init_{self.INITIAL_POLE_ANGLE}'
         file_path = f'./logs/cartpole/dqn/inference/{datetime.datetime.now()}_{base_file_name}.pkl'
-        store_rewards(episodes_rewards, file_path)
+        store_array(episodes_rewards, file_path)
+        base_file_name = f'_states_rsl-{self.RANDOM_START_LEVEL}_rpl-{self.RANDOM_PERTURBATIONS_LEVEL}_pi-{self.PERTURBATIONS_INTENSITY_STD}_init_{self.INITIAL_POLE_ANGLE}'
+        file_path = f'{logs_dir}{datetime.datetime.now()}_{base_file_name}.pkl'
+        store_array(self.states_list, file_path)
         # show_fails_success_comparisson(self.RUNS, self.OBJECTIVE, episodes_rewards,
         #                                          self.RANDOM_START_LEVEL, self.RANDOM_PERTURBATIONS_LEVEL,
         #                                          self.PERTURBATIONS_INTENSITY_STD, self.INITIAL_POLE_ANGLE);
