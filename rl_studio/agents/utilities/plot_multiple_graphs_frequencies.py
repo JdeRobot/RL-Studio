@@ -162,7 +162,7 @@ def configure_frequencies_graph(ax1, frequencies):
     ax1.grid()
     ax1.legend()
 
-    ax1.set_xlabel("intensity of perturbations with fixed frequency")
+    ax1.set_xlabel("frequency of perturbations with fixed intensity")
     ax1.set_ylabel("percentage of successful episodes")
 
 def configure_boxplot_graph(ax1, frequencies):
