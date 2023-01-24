@@ -187,34 +187,43 @@ class StepFollowLane(F1Env):
         self._gazebo_pause()
 
         ##==== get center
-        points_in_red_line, _ = self.simplifiedperception.processed_image(
+        centrals_in_lane, centrals_in_lane_normalized = self.simplifiedperception.processed_image(
             f1_image_camera.data, self.height, self.width, self.x_row, self.center_image
         )
         if self.state_space == "spn":
-            self.point = points_in_red_line[self.poi]
+            self.point = centrals_in_lane[self.poi]
         else:
-            self.point = points_in_red_line[0]
+            self.point = centrals_in_lane[0]
 
         # center = abs(float(self.center_image - self.point) / (float(self.width) // 2))
-        center = float(self.center_image - self.point) / (float(self.width) // 2)
+        #center = float(self.center_image - self.point) / (float(self.width) // 2)
+
+        #print(f"\n{centrals_in_lane = }")
+        #print(f"\n{centrals_in_lane_normalized = }")
+        #print(f"\n{self.point = }")
+        #print(f"\n{center = }")
 
         ##==== get State
         ##==== simplified perception as observation
         state = self.simplifiedperception.calculate_observation(
-            points_in_red_line, self.center_image, self.pixel_region
+            centrals_in_lane, self.center_image, self.pixel_region
         )
 
         ##==== get Rewards
         if self.reward_function == "follow_right_lane_center_v_step":
             reward, done = self.f1gazeborewards.rewards_followlane_v_centerline_step(
-                vel_cmd, center, step, self.rewards
+                vel_cmd, centrals_in_lane_normalized[0], step, self.rewards
             )
         else:
             reward, done = self.f1gazeborewards.rewards_followlane_centerline(
-                center, self.rewards
+                centrals_in_lane_normalized[0], self.rewards
             )
 
         return state, reward, done, {}
+
+
+
+
 
     def step_followlane_state_image_actions_discretes(self, action, step):
         self._gazebo_unpause()

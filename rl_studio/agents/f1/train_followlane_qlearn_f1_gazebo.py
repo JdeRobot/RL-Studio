@@ -65,7 +65,7 @@ class TrainerFollowLaneQlearnF1Gazebo:
         epsilon_decay = epsilon / (self.env_params.total_episodes // 2)
         # states_counter = {}
 
-        log.logger.info(
+        log.logger.debug(
             f"\nstates = {self.global_params.states}\n"
             f"states_set = {self.global_params.states_set}\n"
             f"states_len = {len(self.global_params.states_set)}\n"
@@ -94,6 +94,8 @@ class TrainerFollowLaneQlearnF1Gazebo:
             qlearn.load_table(
                 f"{self.global_params.models_dir}/{self.environment.environment['retrain_qlearn_model_name']}"
             )
+            # using epsilon reduced
+            epsilon = epsilon / 2
 
         ## -------------    START TRAINING --------------------
         for episode in tqdm(
@@ -127,6 +129,7 @@ class TrainerFollowLaneQlearnF1Gazebo:
                     f"new_observation = {type(new_observation)}\n"
                     f"action = {action}\n"
                     f"actions type = {type(action)}\n"
+                    f"current_max_reward = {current_max_reward}\n"
                 )
 
                 qlearn.learn(observation, action, reward, new_observation)
@@ -147,6 +150,7 @@ class TrainerFollowLaneQlearnF1Gazebo:
                     observation=observation,
                     reward_in_step=reward,
                     cumulated_reward=cumulated_reward,
+                    current_max_reward=current_max_reward,
                     done=done,
                 )
 
@@ -163,31 +167,25 @@ class TrainerFollowLaneQlearnF1Gazebo:
                     f"observation = {observation}\n"
                     f"reward_in_step = {reward}\n"
                     f"cumulated_reward = {cumulated_reward}\n"
+                    f"current_max_reward = {current_max_reward}\n"
                     f"done = {done}\n"
                 )
 
                 # best episode and step's stats
                 if current_max_reward <= cumulated_reward and episode > 1:
-                    (
-                        current_max_reward,
-                        best_epoch,
-                        best_step,
-                        best_epoch_training_time,
-                    ) = save_best_episode(
-                        self.global_params,
-                        cumulated_reward,
-                        episode,
-                        step,
-                        start_time_epoch,
-                        reward,
-                        env.image_center,
-                    )
-
+                    current_max_reward = cumulated_reward
+                    best_epoch = episode
+                    best_step = step
+                    best_epoch_training_time = datetime.now() - start_time_epoch
+                    self.global_params.actions_rewards["episode"].append(episode)
+                    self.global_params.actions_rewards["step"].append(step)
+                    self.global_params.actions_rewards["reward"].append(reward)
                 # Showing stats in screen for monitoring. Showing every 'save_every_step' value
                 if not step % self.env_params.save_every_step:
-                    log.logger.debug(
+                    log.logger.info(
                         f"SHOWING BATCH OF STEPS\n"
-                        f"current_max_reward = {cumulated_reward}\n"
+                        f"current_max_reward = {current_max_reward}\n"
+                        f"cumulated_reward = {cumulated_reward}\n"
                         f"current epoch = {episode}\n"
                         f"current step = {step}\n"
                         f"best epoch so far = {best_epoch}\n"
@@ -220,7 +218,7 @@ class TrainerFollowLaneQlearnF1Gazebo:
                     )
 
             # Save best lap
-            if cumulated_reward >= current_max_reward:
+            if (cumulated_reward - self.environment.environment['rewards']['penal']) >= current_max_reward:
                 self.global_params.best_current_epoch["best_epoch"].append(best_epoch)
                 self.global_params.best_current_epoch["highest_reward"].append(
                     cumulated_reward
@@ -247,14 +245,15 @@ class TrainerFollowLaneQlearnF1Gazebo:
                     epsilon,
                 )
                 np.save(
-                    f"{self.global_params.models_dir}/{time.strftime('%Y%m%d-%H%M%S')}_Circuit-{self.environment.environment['circuit_name']}_States-{self.environment.environment['states']}_Actions-{self.environment.environment['action_space']}_Rewards-{self.environment.environment['reward_function']}_epsilon-{round(epsilon,3)}_epoch-{episode}_step-{step}_reward-{int(cumulated_reward)}-qtable.npy",
+                    f"{self.global_params.models_dir}/{time.strftime('%Y%m%d-%H%M%S')}_Circuit-{self.environment.environment['circuit_name']}_States-{self.environment.environment['states']}_Actions-{self.environment.environment['action_space']}_Rewards-{self.environment.environment['reward_function']}_epsilon-{round(epsilon,3)}_epoch-{episode}_step-{step}_reward-{int(cumulated_reward - self.environment.environment['rewards']['penal'])}-qtable.npy",
                     qlearn.q_table,
                 )
 
                 log.logger.info(
                     f"\nsaving best lap\n"
                     f"in episode = {episode}\n"
-                    f"current_max_reward = {cumulated_reward}\n"
+                    f"cumulated_reward = {cumulated_reward}\n"
+                    f"current_max_reward = {current_max_reward}\n"
                     f"steps = {step}\n"
                     f"epsilon = {epsilon}\n"
                 )
@@ -283,7 +282,7 @@ class TrainerFollowLaneQlearnF1Gazebo:
                     )
                     log.logger.info(
                         f"\nTraining Time over\n"
-                        f"current_max_reward = {cumulated_reward}\n"
+                        f"current_max_reward = {current_max_reward}\n"
                         f"epoch = {episode}\n"
                         f"step = {step}\n"
                         f"epsilon = {epsilon}\n"
@@ -308,7 +307,7 @@ class TrainerFollowLaneQlearnF1Gazebo:
                 )
                 log.logger.info(
                     f"\nsaving BATCH\n"
-                    f"current_max_reward = {cumulated_reward}\n"
+                    f"current_max_reward = {current_max_reward}\n"
                     f"best_epoch = {best_epoch}\n"
                     f"best_step = {best_step}\n"
                     f"best_epoch_training_time = {best_epoch_training_time}\n"
@@ -321,6 +320,10 @@ class TrainerFollowLaneQlearnF1Gazebo:
                 )
 
         env.close()
+
+
+
+
 
     ##################
     def main_____(self):

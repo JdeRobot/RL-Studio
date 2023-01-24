@@ -10,8 +10,8 @@ settings:
   states: sp1 # sp1 (simplified perception with 1 point), sp3 (simplified perception with 3 points), spn (simplified perception with n points)
   rewards: follow_right_lane_only_center #
   framework: _
-  total_episodes: 10
-  training_time: 10
+  total_episodes: 1_000
+  training_time: 5
   models_dir: "./checkpoints"
   logs_dir: "./logs"
   metrics_dir: "./metrics"
@@ -22,7 +22,7 @@ ros:
 
 retraining:
   qlearn:
-    retrain_qlearn_model_name: "20230109-154549_Circuit-simple_States-sp1_Actions-simple_Rewards-follow_right_lane_only_center_epsilon-0.76_epoch-2_step-101_reward-919-qtable.npy"
+    retrain_qlearn_model_name: "20230123-161229_Circuit-simple_States-sp1_Actions-simple_Rewards-follow_right_lane_only_center_epsilon-0.399_epoch-291_step-15001_reward-136707-qtable.npy"
 
 inference:
   qlearn:
@@ -49,7 +49,7 @@ agents:
 
 states:
   sp1:
-    0: [10]
+    0: [50]
   sp3:
     0: [5, 15, 22]
   sp5:
@@ -105,10 +105,10 @@ gazebo_environments:
     model_state_name: f1_renault_multicamera_multilaser # f1_renault,
     start_pose: 0 # 0, 1, 2, 3, 4
     alternate_pose: False
-    estimated_steps: 100
+    estimated_steps: 15_000
     sensor: camera
-    save_episodes: 1
-    save_every_step: 10
+    save_episodes: 10
+    save_every_step: 1000
     lap_completed: False
     save_model: True
     save_positions: True
@@ -119,7 +119,7 @@ gazebo_environments:
     circuit_positions_set:
       0: [52.462, -41.988, 0.004, 0, 0, 1.57, -1.57]
       #0: [52.800, -12.734, 0.004, 0, 0, 1.57, -1.57] # near to first curve
-      #0: [52.800, -8.734, 0.004, 0, 0, 1.57, -1.57] # Finish line
+      #0: [52.460, -8.734, 0.004, 0, 0, 1.57, -1.57] # Finish line
       #0: [53.462, -41.988, 0.004, 0, 0, 1.57, -1.57]
       1: [52.97, -42.06, 0.004, 0, 0, 1.57, -1.57]
       #1: [53.462, -8.734, 0.004, 0, 0, 1.57, -1.57]

@@ -29,29 +29,37 @@ class F1GazeboSimplifiedPerception:
             for _, x in enumerate(centrals)
         ]
 
-        # F1GazeboUtils.show_image_with_centrals(
-        #    "centrals", mask, 5, int(centrals[0]), centrals_normalized, self.x_row
-        # )
+        F1GazeboUtils.show_image_with_centrals(
+           "centrals", mask, 5, centrals, centrals_normalized, x_row
+        )
 
         return centrals, centrals_normalized
 
+
     @staticmethod
     def get_center(lines):
+        ''' 
+        takes center line and returns position regarding to it
+        '''
         try:
             point = np.divide(np.max(np.nonzero(lines)) - np.min(np.nonzero(lines)), 2)
             return np.min(np.nonzero(lines)) + point
         except ValueError:
             return 0
 
+
     def calculate_observation(self, state, center_image, pixel_region: list) -> list:
         """
-        returns list of states in range [1,17]
+        returns list of states in range [-7,9] if self.num_regions = 16 => pixel_regions = 40
+        state = -7 corresponds to center line far right
+        state = 9 is far left
         """
         final_state = []
         for _, x in enumerate(state):
             final_state.append(int((center_image - x) / pixel_region) + 1)
 
         return final_state
+
 
     def calculate_centrals_lane(
         self, img, height, width, x_row, lower_limit, center_image

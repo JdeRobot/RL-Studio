@@ -7,7 +7,7 @@ class F1GazeboUtils:
 
     @staticmethod
     def show_image_with_centrals(
-        name, img, waitkey, centrals_normalized, centrals_in_pixels, x_row
+        name, img, waitkey, centrals_in_pixels, centrals_normalized, x_row
     ):
         window_name = f"{name}"
 
@@ -15,9 +15,21 @@ class F1GazeboUtils:
             cv2.putText(
                 img,
                 str(
-                    f"{int(centrals_in_pixels[index])} - [{int(centrals_normalized[index])}]"
+                    f"{int(centrals_in_pixels[index])}"
                 ),
-                (int(centrals_in_pixels[index]), int(x_row[index])),
+                (int(centrals_in_pixels[index])+20, int(x_row[index])),
+                cv2.FONT_HERSHEY_SIMPLEX,
+                0.3,
+                (255, 255, 255),
+                1,
+                cv2.LINE_AA,
+            )
+            cv2.putText(
+                img,
+                str(
+                    f"[{centrals_normalized[index]}]"
+                ),
+                (320, int(x_row[index])),
                 cv2.FONT_HERSHEY_SIMPLEX,
                 0.3,
                 (255, 255, 255),
