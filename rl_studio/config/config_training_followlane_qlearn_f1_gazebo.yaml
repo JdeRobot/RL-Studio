@@ -11,7 +11,7 @@ settings:
   rewards: follow_right_lane_only_center #
   framework: _
   total_episodes: 1_000
-  training_time: 5
+  training_time: 6
   models_dir: "./checkpoints"
   logs_dir: "./logs"
   metrics_dir: "./metrics"

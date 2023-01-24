@@ -139,7 +139,7 @@ class TrainerFollowLaneDQNF1GazeboTF:
                     f"\nobservation = {observation}\n"
                     f"observation type = {type(observation)}\n"
                     f"new_observation = {new_observation}\n"
-                    f"new_observation = {type(new_observation)}\n"
+                    f"new_observation type = {type(new_observation)}\n"
                     f"action = {action}\n"
                     f"actions type = {type(action)}\n"
                 )
@@ -147,7 +147,16 @@ class TrainerFollowLaneDQNF1GazeboTF:
                     task=self.global_params.task,
                     episode=episode,
                     step=step,
-                    state=state,
+                    observation=observation,
+                    new_observation=new_observation,
+                    action=action,
+                    v=self.global_params.actions_set[action][
+                        0
+                    ],  # this case for discrete
+                    w=self.global_params.actions_set[action][
+                        1
+                    ],  # this case for discrete
+                    epsilon=epsilon,
                     reward_in_step=reward,
                     cumulated_reward_in_this_episode=cumulated_reward,
                     _="--------------------------",
@@ -171,32 +180,27 @@ class TrainerFollowLaneDQNF1GazeboTF:
 
                 # best episode
                 if current_max_reward <= cumulated_reward and episode > 1:
-                    (
-                        current_max_reward,
-                        best_epoch,
-                        best_step,
-                        best_epoch_training_time,
-                    ) = save_best_episode_dqn(
-                        self.global_params,
-                        cumulated_reward,
-                        episode,
-                        step,
-                        start_time_epoch,
-                        reward,
-                    )
+                    current_max_reward = cumulated_reward
+                    best_epoch = episode
+                    best_step = step
+                    best_epoch_training_time = datetime.now() - start_time_epoch
+                    self.global_params.actions_rewards["episode"].append(episode)
+                    self.global_params.actions_rewards["step"].append(step)
+                    self.global_params.actions_rewards["reward"].append(reward)
 
                 # Showing stats in screen for monitoring. Showing every 'save_every_step' value
                 if not step % self.env_params.save_every_step:
-                    log.logger.debug(
+                    log.logger.info(
                         f"SHOWING BATCH OF STEPS\n"
-                        f"current_max_reward = {cumulated_reward}\n"
+                        f"current_max_reward = {current_max_reward}\n"
+                        f"cumulated_reward = {cumulated_reward}\n"
                         f"current epoch = {episode}\n"
                         f"current step = {step}\n"
                         f"best epoch so far = {best_epoch}\n"
                         f"best step so far = {best_step}\n"
                         f"best_epoch_training_time = {best_epoch_training_time}\n"
                     )
-                #####################################################
+                
                 ### save in case of completed steps in one episode
                 if step >= self.env_params.estimated_steps:
                     done = True
@@ -208,9 +212,9 @@ class TrainerFollowLaneDQNF1GazeboTF:
                         f"epsilon = {epsilon}\n"
                     )
                     dqn_agent.model.save(
-                        f"{self.global_params.models_dir}/{self.algoritmhs_params.model_name}_LAPCOMPLETED_Max{int(cumulated_reward)}_Epoch{episode}_inTime{time.strftime('%Y%m%d-%H%M%S')}.model"
+                        f"{self.global_params.models_dir}/{time.strftime('%Y%m%d-%H%M%S')}_Circuit-{self.environment.environment['circuit_name']}_States-{self.environment.environment['states']}_Actions-{self.environment.environment['action_space']}_EPOCHCOMPLETED_Rewards-{self.environment.environment['reward_function']}_epsilon-{round(epsilon,3)}_epoch-{episode}_step-{step}_reward-{int(cumulated_reward)}_{self.algoritmhs_params.model_name}.model",
                     )
-            #####################################################
+            
             #### save best lap in episode
             if (
                 cumulated_reward - self.environment.environment["rewards"]["penal"]
@@ -234,36 +238,37 @@ class TrainerFollowLaneDQNF1GazeboTF:
                     self.global_params.best_current_epoch,
                 )
                 dqn_agent.model.save(
-                    f"{self.global_params.models_dir}/{self.algoritmhs_params.model_name}_LAPCOMPLETED_Max{int(cumulated_reward)}_Epoch{episode}_inTime{time.strftime('%Y%m%d-%H%M%S')}.model"
+                        f"{self.global_params.models_dir}/{time.strftime('%Y%m%d-%H%M%S')}_Circuit-{self.environment.environment['circuit_name']}_States-{self.environment.environment['states']}_Actions-{self.environment.environment['action_space']}_BESTLAP_Rewards-{self.environment.environment['reward_function']}_epsilon-{round(epsilon,3)}_epoch-{episode}_step-{step}_reward-{int(cumulated_reward)}_{self.algoritmhs_params.model_name}.model",
                 )
                 log.logger.info(
                     f"\nsaving best lap\n"
                     f"in episode = {episode}\n"
-                    f"current_max_reward = {cumulated_reward}\n"
+                    f"cumulated_reward = {cumulated_reward}\n"
+                    f"current_max_reward = {current_max_reward}\n"
                     f"steps = {step}\n"
                     f"epsilon = {epsilon}\n"
                 )
-            #####################################################
-            ### end episode in time settings: 2 hours, 15 hours...
+            # end episode in time settings: 2 hours, 15 hours...
+            # or epochs over
             if (
                 datetime.now() - timedelta(hours=self.global_params.training_time)
                 > start_time
             ) or (episode > self.env_params.total_episodes):
                 log.logger.info(
-                    f"\nTraining Time over\n"
-                    f"current_max_reward = {cumulated_reward}\n"
+                    f"\nTraining Time over or num epochs reached\n"
+                    f"current_max_reward = {current_max_reward}\n"
+                    f"cumulated_reward = {cumulated_reward}\n"
                     f"epoch = {episode}\n"
                     f"step = {step}\n"
                     f"epsilon = {epsilon}\n"
                 )
-                if cumulated_reward > current_max_reward:
+                if (cumulated_reward  - self.environment.environment['rewards']['penal'])>= current_max_reward:
                     dqn_agent.model.save(
-                        f"{self.global_params.models_dir}/{self.algoritmhs_params.model_name}_LAPCOMPLETED_Max{int(cumulated_reward)}_Epoch{episode}_inTime{time.strftime('%Y%m%d-%H%M%S')}.model"
+                        f"{self.global_params.models_dir}/{time.strftime('%Y%m%d-%H%M%S')}_Circuit-{self.environment.environment['circuit_name']}_States-{self.environment.environment['states']}_Actions-{self.environment.environment['action_space']}_LAPCOMPLETED_Rewards-{self.environment.environment['reward_function']}_epsilon-{round(epsilon,3)}_epoch-{episode}_step-{step}_reward-{int(cumulated_reward)}_{self.algoritmhs_params.model_name}.model",
                     )
 
                 break
 
-            #####################################################
             ### save every save_episode times
             self.global_params.ep_rewards.append(cumulated_reward)
             if not episode % self.env_params.save_episodes:
@@ -296,7 +301,7 @@ class TrainerFollowLaneDQNF1GazeboTF:
                 )
                 if max_reward > current_max_reward:
                     dqn_agent.model.save(
-                        f"{self.global_params.models_dir}/{self.algoritmhs_params.model_name}_LAPCOMPLETED_Max{int(cumulated_reward)}_Epoch{episode}_inTime{time.strftime('%Y%m%d-%H%M%S')}.model"
+                        f"{self.global_params.models_dir}/{time.strftime('%Y%m%d-%H%M%S')}_Circuit-{self.environment.environment['circuit_name']}_States-{self.environment.environment['states']}_Actions-{self.environment.environment['action_space']}_BATCH_Rewards-{self.environment.environment['reward_function']}_epsilon-{round(epsilon,3)}_epoch-{episode}_step-{step}_reward-{int(cumulated_reward)}_{self.algoritmhs_params.model_name}.model",
                     )
 
                     save_dataframe_episodes(
@@ -306,7 +311,7 @@ class TrainerFollowLaneDQNF1GazeboTF:
                     )
                 log.logger.info(
                     f"\nsaving BATCH\n"
-                    f"current_max_reward = {cumulated_reward}\n"
+                    f"current_max_reward = {current_max_reward}\n"
                     f"best_epoch = {best_epoch}\n"
                     f"best_step = {best_step}\n"
                     f"best_epoch_training_time = {best_epoch_training_time}\n"
@@ -314,7 +319,7 @@ class TrainerFollowLaneDQNF1GazeboTF:
             # reducing exploration
             if epsilon > epsilon_min:
                 epsilon *= epsilon_discount
-        #####################################################
+        
         ### save last episode, not neccesarily the best one
         save_dataframe_episodes(
             self.environment.environment,

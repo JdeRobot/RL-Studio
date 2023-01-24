@@ -265,7 +265,7 @@ class TrainerFollowLaneQlearnF1Gazebo:
                 datetime.now() - timedelta(hours=self.global_params.training_time)
                 > start_time
             ) or (episode > self.env_params.total_episodes):
-                if cumulated_reward >= current_max_reward:
+                if (cumulated_reward  - self.environment.environment['rewards']['penal']) >= current_max_reward:
                     qlearn.save_numpytable(
                         qlearn.q_table,
                         self.environment.environment,

@@ -165,12 +165,12 @@ class TrainerFollowLaneDDPGF1GazeboTF:
                     episode=episode,
                     step=step,
                     state=state,
-                    # v=self.global_params.actions_set[action][
-                    #    0
-                    # ],  # this case for discrete
-                    # w=self.global_params.actions_set[action][
-                    #    1
-                    # ],  # this case for discrete
+                    v=self.global_params.actions_set[action][
+                       0
+                    ],  # this case for discrete
+                    w=self.global_params.actions_set[action][
+                       1
+                    ],  # this case for discrete
                     reward_in_step=reward,
                     cumulated_reward_in_this_episode=cumulated_reward,
                     _="--------------------------",
@@ -190,7 +190,7 @@ class TrainerFollowLaneDDPGF1GazeboTF:
                     f"done = {done}\n"
                 )
                 # best episode
-                if current_max_reward <= cumulated_reward:
+                if current_max_reward <= cumulated_reward and episode > 1:
                     current_max_reward = cumulated_reward
                     best_epoch = episode
                     best_step = step
@@ -202,9 +202,9 @@ class TrainerFollowLaneDDPGF1GazeboTF:
                     # self.actions_rewards["v"].append(action[0][0])
                     # self.actions_rewards["w"].append(action[0][1])
                     self.global_params.actions_rewards["reward"].append(reward)
-                    self.global_params.actions_rewards["center"].append(
-                        env.image_center
-                    )
+                    #self.global_params.actions_rewards["center"].append(
+                    #    env.image_center
+                    #)
 
                 # Showing stats in screen for monitoring. Showing every 'save_every_step' value
                 if not step % self.env_params.save_every_step:
@@ -214,9 +214,10 @@ class TrainerFollowLaneDDPGF1GazeboTF:
                         self.global_params.aggr_ep_rewards,
                         self.global_params.actions_rewards,
                     )
-                    log.logger.debug(
+                    log.logger.info(
                         f"SHOWING BATCH OF STEPS\n"
-                        f"current_max_reward = {cumulated_reward}\n"
+                        f"cumulated_reward = {cumulated_reward}\n"
+                        f"current_max_reward = {current_max_reward}\n"
                         f"current epoch = {episode}\n"
                         f"current step = {step}\n"
                         f"best epoch so far = {best_epoch}\n"
@@ -224,7 +225,6 @@ class TrainerFollowLaneDDPGF1GazeboTF:
                         f"best_epoch_training_time = {best_epoch_training_time}\n"
                     )
 
-                #####################################################
                 ### save in case of completed steps in one episode
                 if step >= self.env_params.estimated_steps:
                     done = True
@@ -238,11 +238,11 @@ class TrainerFollowLaneDDPGF1GazeboTF:
                         ac_agent,
                         self.global_params,
                         self.algoritmhs_params,
+                        self.environment.environment,
                         cumulated_reward,
                         episode,
                         "LAPCOMPLETED",
                     )
-            #####################################################
             #### save best lap in episode
             if (
                 cumulated_reward - self.environment.environment["rewards"]["penal"]
@@ -269,33 +269,38 @@ class TrainerFollowLaneDDPGF1GazeboTF:
                     ac_agent,
                     self.global_params,
                     self.algoritmhs_params,
+                    self.environment.environment,
                     cumulated_reward,
                     episode,
                     "BESTLAP",
                 )
+                
                 log.logger.info(
                     f"\nsaving best lap\n"
                     f"in episode = {episode}\n"
-                    f"current_max_reward = {cumulated_reward}\n"
+                    f"cumulated_reward = {cumulated_reward}\n"
+                    f"current_max_reward = {current_max_reward}\n"
                     f"steps = {step}\n"
                 )
-            #####################################################
             ### end episode in time settings: 2 hours, 15 hours...
+            # or epochs over
             if (
                 datetime.now() - timedelta(hours=self.global_params.training_time)
                 > start_time
             ) or (episode > self.env_params.total_episodes):
                 log.logger.info(
-                    f"\nTraining Time over\n"
-                    f"current_max_reward = {cumulated_reward}\n"
+                    f"\nTraining Time over or num epochs reached\n"
+                    f"current_max_reward = {current_max_reward}\n"
+                    f"cumulated_reward = {cumulated_reward}\n"
                     f"epoch = {episode}\n"
                     f"step = {step}\n"
                 )
-                if cumulated_reward > current_max_reward:
+                if (cumulated_reward  - self.environment.environment['rewards']['penal'])>= current_max_reward:
                     save_actorcritic_model(
                         ac_agent,
                         self.global_params,
                         self.algoritmhs_params,
+                        self.environment.environment,
                         cumulated_reward,
                         episode,
                         "FINISHTIME",
@@ -332,23 +337,25 @@ class TrainerFollowLaneDDPGF1GazeboTF:
                 self.global_params.aggr_ep_rewards["total_training_time"].append(
                     (datetime.now() - start_time).total_seconds()
                 )
-                save_actorcritic_model(
-                    ac_agent,
-                    self.global_params,
-                    self.algoritmhs_params,
-                    cumulated_reward,
-                    episode,
-                    "BATCH",
-                )
+                if max_reward > current_max_reward:
+                    save_actorcritic_model(
+                        ac_agent,
+                        self.global_params,
+                        self.algoritmhs_params,
+                        self.environment.environment,
+                        cumulated_reward,
+                        episode,
+                        "BATCH",
+                    )
 
-                save_dataframe_episodes(
-                    self.environment.environment,
-                    self.global_params.metrics_data_dir,
-                    self.global_params.aggr_ep_rewards,
-                )
+                    save_dataframe_episodes(
+                        self.environment.environment,
+                        self.global_params.metrics_data_dir,
+                        self.global_params.aggr_ep_rewards,
+                    )
                 log.logger.info(
                     f"\nsaving BATCH\n"
-                    f"current_max_reward = {cumulated_reward}\n"
+                    f"current_max_reward = {current_max_reward}\n"
                     f"best_epoch = {best_epoch}\n"
                     f"best_step = {best_step}\n"
                     f"best_epoch_training_time = {best_epoch_training_time}\n"
