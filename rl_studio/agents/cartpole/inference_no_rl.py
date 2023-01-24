@@ -7,7 +7,7 @@ import numpy as np
 from rl_studio.agents.cartpole.cartpole_Inferencer import CartpoleInferencer
 from rl_studio.visual.ascii.images import JDEROBOT_LOGO
 from rl_studio.visual.ascii.text import JDEROBOT, QLEARN_CAMERA, LETS_GO
-from rl_studio.agents.cartpole.utils import store_rewards
+from rl_studio.agents.cartpole.utils import store_array
 import random
 
 
@@ -30,7 +30,13 @@ class NoRLCartpoleInferencer(CartpoleInferencer):
         self.env.done = True
 
         self.total_episodes = 20000
-
+        self.losses_list, self.reward_list, self.states_list, self.episode_len_list, self.epsilon_list = (
+            [],
+            [],
+            [],
+            [],
+            [],
+        )  # metrics recorded for graph
     def print_init_info(self):
         print(JDEROBOT)
         print(JDEROBOT_LOGO)
@@ -57,20 +63,23 @@ class NoRLCartpoleInferencer(CartpoleInferencer):
     def run_experiment(self):
 
         self.print_init_info()
+        self.reward_list = []
+        self.states_list = []
 
         start_time = datetime.datetime.now()
         start_time_format = start_time.strftime("%Y%m%d_%H%M")
 
         print(LETS_GO)
-        episodes_rewards = []
 
         for run in range(self.RUNS):
             state = self.env.reset()
             done = False  # has the enviroment finished?
             cnt = 0  # how may movements cart has made
+            states = []
 
             while not done:
                 cnt += 1
+                states.append(state[2])
 
                 if run % self.SHOW_EVERY == 0 and run != 0:
                     self.env.render()  # if running RL comment this oustatst
@@ -88,16 +97,20 @@ class NoRLCartpoleInferencer(CartpoleInferencer):
                     state = next_state
 
             # Add new metrics for graph
-            self.metrics["ep"].append(run)
-            self.metrics["avg"].append(cnt)
-            episodes_rewards.append(cnt)
-
+            self.episode_len_list.append(run)
+            self.reward_list.append(cnt)
+            self.states_list.append(states)
         self.env.close()
-        base_file_name = f'_rewards_rsl-{self.RANDOM_START_LEVEL}_rpl-{self.RANDOM_PERTURBATIONS_LEVEL}_pi-{self.PERTURBATIONS_INTENSITY_STD}_init_{self.INITIAL_POLE_ANGLE}'
-        file_path = f'./logs/cartpole/no_rl/inference/{datetime.datetime.now()}_{base_file_name}.pkl'
-        store_rewards(episodes_rewards, file_path)
 
+        logs_dir = './logs/cartpole/no_rl/inference/'
+
+        base_file_name = f'_rewards_rsl-{self.RANDOM_START_LEVEL}_rpl-{self.RANDOM_PERTURBATIONS_LEVEL}_pi-{self.PERTURBATIONS_INTENSITY_STD}_init_{self.INITIAL_POLE_ANGLE}'
+        file_path = f'{logs_dir}{datetime.datetime.now()}_{base_file_name}.pkl'
+        store_array(self.reward_list, file_path)
+        base_file_name = f'_states_rsl-{self.RANDOM_START_LEVEL}_rpl-{self.RANDOM_PERTURBATIONS_LEVEL}_pi-{self.PERTURBATIONS_INTENSITY_STD}_init_{self.INITIAL_POLE_ANGLE}'
+        file_path = f'{logs_dir}{datetime.datetime.now()}_{base_file_name}.pkl'
+        store_array(self.states_list, file_path)
         # Plot graph
-        # plt.plot(self.metrics["ep"], self.metrics["avg"], label="average rewards")
+        # plt.plot(self.episode_len_list, self.reward_list, label="average rewards")
         # plt.legend(loc=4)
         # plt.show()

@@ -9,7 +9,7 @@ from rl_studio.agents.cartpole.cartpole_Inferencer import CartpoleInferencer
 from rl_studio.visual.ascii.images import JDEROBOT_LOGO
 from rl_studio.visual.ascii.text import JDEROBOT, QLEARN_CAMERA, LETS_GO
 from rl_studio.wrappers.inference_rlstudio import InferencerWrapper
-from rl_studio.agents.cartpole.utils import store_rewards, show_fails_success_comparisson
+from rl_studio.agents.cartpole.utils import store_array, show_fails_success_comparisson
 import random
 
 
@@ -30,6 +30,13 @@ class QLearnCartpoleInferencer(CartpoleInferencer):
             "min": [],
             "max": [],
         }  # metrics recorded for graph
+        self.reward_list, self.states_list, self.episode_len_list, self.min, self.max = (
+            [],
+            [],
+            [],
+            [],
+            [],
+        )  # metrics recorded for graph
         # algorithm params
         self.states_counter = {}
         self.states_reward = {}
@@ -68,14 +75,17 @@ class QLearnCartpoleInferencer(CartpoleInferencer):
     def run_experiment(self):
 
         self.print_init_info()
+        self.states_list = []
+        self.reward_list = []
 
         start_time = datetime.datetime.now()
         start_time_format = start_time.strftime("%Y%m%d_%H%M")
-        episodes_rewards = []
 
         print(LETS_GO)
         total_secs=0
         for run in range(self.RUNS):
+            states = []
+
             state = utils.get_discrete_state(
                 self.env.reset(), self.bins, self.obsSpaceSize
             )
@@ -84,15 +94,18 @@ class QLearnCartpoleInferencer(CartpoleInferencer):
 
             while not done:
                 cnt += 1
-
+                states.append(state[2])
                 if run % self.SHOW_EVERY == 0 and run != 0:
                     self.env.render()  # if running RL comment this oustatst
                 if random.uniform(0, 1) < self.RANDOM_PERTURBATIONS_LEVEL:
                     perturbation_action = random.randrange(self.env.action_space.n)
-                    obs, done, _, _ = self.env.perturbate(perturbation_action, self.PERTURBATIONS_INTENSITY_STD)
-                if self.RANDOM_PERTURBATIONS_LEVEL > 1 and random.uniform(0, 1) < self.RANDOM_PERTURBATIONS_LEVEL - 1:
-                    perturbation_action = random.randrange(2)
                     state, done, _, _ = self.env.perturbate(perturbation_action, self.PERTURBATIONS_INTENSITY_STD)
+                    state = utils.get_discrete_state(state, self.bins, self.obsSpaceSize)
+                if self.RANDOM_PERTURBATIONS_LEVEL > 1 and random.uniform(0, 1) < self.RANDOM_PERTURBATIONS_LEVEL - 1:
+                    perturbation_action = random.randrange(self.env.action_space.n)
+                    state, done, _, _ = self.env.perturbate(perturbation_action, self.PERTURBATIONS_INTENSITY_STD)
+                    state = utils.get_discrete_state(state, self.bins, self.obsSpaceSize)
+
                 next_state, done, secs = self.evaluate_from_step(state)
                 total_secs += secs
 
@@ -106,10 +119,8 @@ class QLearnCartpoleInferencer(CartpoleInferencer):
                 averageCnt = sum(latestRuns) / len(latestRuns)
                 avgsecs = total_secs / sum(latestRuns)
                 total_secs = 0
-                self.metrics["ep"].append(run)
-                self.metrics["avg"].append(averageCnt)
-                self.metrics["min"].append(min(latestRuns))
-                self.metrics["max"].append(max(latestRuns))
+                self.min.append(min(latestRuns))
+                self.max.append(max(latestRuns))
 
                 time_spent = datetime.datetime.now() - self.now
                 self.now = datetime.datetime.now()
@@ -130,15 +141,21 @@ class QLearnCartpoleInferencer(CartpoleInferencer):
                     avgsecs,
                 )
             # Add new metrics for graph
-            self.metrics["ep"].append(run)
-            self.metrics["avg"].append(cnt)
-            episodes_rewards.append(cnt)
-        self.env.close()
-        base_file_name = f'_rewards_rsl-{self.RANDOM_START_LEVEL}_rpl-{self.RANDOM_PERTURBATIONS_LEVEL}_pi-{self.PERTURBATIONS_INTENSITY_STD}_init_{self.INITIAL_POLE_ANGLE}'
-        file_path = f'./logs/cartpole/qlearning/inference/{datetime.datetime.now()}_{base_file_name}.pkl'
-        store_rewards(episodes_rewards, file_path)
+            self.episode_len_list.append(run)
+            self.reward_list.append(cnt)
+            self.states_list.append(states)
 
+        self.env.close()
+
+        logs_dir = './logs/cartpole/qlearning/inference/'
+
+        base_file_name = f'_rewards_rsl-{self.RANDOM_START_LEVEL}_rpl-{self.RANDOM_PERTURBATIONS_LEVEL}_pi-{self.PERTURBATIONS_INTENSITY_STD}_init_{self.INITIAL_POLE_ANGLE}'
+        file_path = f'{logs_dir}{datetime.datetime.now()}_{base_file_name}.pkl'
+        store_array(self.reward_list, file_path)
+        base_file_name = f'_states_rsl-{self.RANDOM_START_LEVEL}_rpl-{self.RANDOM_PERTURBATIONS_LEVEL}_pi-{self.PERTURBATIONS_INTENSITY_STD}_init_{self.INITIAL_POLE_ANGLE}'
+        file_path = f'{logs_dir}{datetime.datetime.now()}_{base_file_name}.pkl'
+        store_array(self.states_list, file_path)
         # Plot graph
-        # plt.plot(self.metrics["ep"], self.metrics["avg"], label="average rewards")
+        # plt.plot(self.episode_len_list, self.reward_list, label="average rewards")
         # plt.legend(loc=4)
         # plt.show()

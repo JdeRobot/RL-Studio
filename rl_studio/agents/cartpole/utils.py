@@ -177,7 +177,7 @@ def plot_detail_random_perturbations_monitoring(unsuccessful_episodes_count, suc
     ax16.set(ylabel="Rewards")
 
 
-def store_rewards(rewards, file_path):
+def store_array(rewards, file_path):
     file_dump = open(file_path, "wb")
     pickle.dump(rewards, file_dump)
 
