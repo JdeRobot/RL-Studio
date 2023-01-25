@@ -69,6 +69,13 @@ cd RL-Studio
 pip install -r requirements.txt
 ```
 
+Add the project to `PYTHONPATH`:
+
+```bash
+echo "export PYTHONPATH=$PYTHONPATH:~/PATH/TO/RL-Studio" >> ~/.bashrc
+source ~/.bashrc
+```
+
 The commits follow the [gitmoji](https://gitmoji.dev/) convention and the code is formatted with [Black](https://black.readthedocs.io/en/stable/).
 
 
