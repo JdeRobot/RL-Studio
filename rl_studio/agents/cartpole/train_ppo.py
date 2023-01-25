@@ -1,13 +1,10 @@
 import datetime
-import time
 import random
 
 import gym
 import matplotlib.pyplot as plt
 from torch.utils import tensorboard
 from tqdm import tqdm
-import numpy as np
-import torch
 
 import logging
 
@@ -15,7 +12,7 @@ from rl_studio.agents.cartpole import utils
 from rl_studio.algorithms.ppo import Actor, Critic, Mish, t, get_dist
 from rl_studio.visual.ascii.images import JDEROBOT_LOGO
 from rl_studio.visual.ascii.text import JDEROBOT, LETS_GO
-from rl_studio.agents.cartpole.utils import store_rewards, save_metadata
+from rl_studio.agents.cartpole.utils import store_array, save_metadata
 
 
 class PPOCartpoleTrainer:
@@ -24,10 +21,10 @@ class PPOCartpoleTrainer:
         self.now = datetime.datetime.now()
         # self.environment params
         self.params = params
-        self.environment_params = params.environment["params"]
-        self.env_name = params.environment["params"]["env_name"]
-        self.config = params.settings["params"]
-        self.agent_config = params.agent["params"]
+        self.environment_params = params.get("environments")
+        self.env_name = params.get("environments")["env_name"]
+        self.config = params.get("settings")
+        self.agent_config = params.get("agent")
 
         if self.config["logging_level"] == "debug":
             self.LOGGING_LEVEL = logging.DEBUG
@@ -42,6 +39,7 @@ class PPOCartpoleTrainer:
         self.PERTURBATIONS_INTENSITY_STD = self.environment_params.get("perturbations_intensity_std", 0)
         self.RANDOM_START_LEVEL = self.environment_params.get("random_start_level", 0)
         self.INITIAL_POLE_ANGLE = self.environment_params.get("initial_pole_angle", None)
+
 
         non_recoverable_angle = self.environment_params[
             "non_recoverable_angle"
@@ -74,8 +72,8 @@ class PPOCartpoleTrainer:
             [],
         )  # metrics
         # recorded for graph
-        self.epsilon = params.algorithm["params"]["epsilon"]
-        self.GAMMA = params.algorithm["params"]["gamma"]
+        self.epsilon = params.get("algorithm").get("epsilon")
+        self.GAMMA = params.get("algorithm").get("gamma")
         self.NUMBER_OF_EXPLORATION_STEPS = 128
 
         input_dim = self.env.observation_space.shape[0]
@@ -133,7 +131,7 @@ class PPOCartpoleTrainer:
         episode_rewards = []
         global_steps = 0
         w = tensorboard.SummaryWriter(log_dir=f"{logs_dir}/tensorboard/{start_time_format}")
-
+        total_secs=0
         for run in tqdm(range(self.RUNS)):
             state, done, prev_prob_act, ep_len, episode_rew = self.env.reset(), False, None, 0, 0
             while not done:
@@ -152,6 +150,7 @@ class PPOCartpoleTrainer:
                 prob_act = dist.log_prob(action)
 
                 next_state, reward, done, info = self.env.step(action.detach().data.numpy())
+                total_secs+=info["time"]
                 advantage = reward + (1 - done) * self.GAMMA * self.critic(t(next_state)) - self.critic(t(state))
 
                 w.add_scalar("loss/advantage", advantage, global_step=global_steps)
@@ -180,15 +179,17 @@ class PPOCartpoleTrainer:
             if (run+1) % self.UPDATE_EVERY == 0:
                 time_spent = datetime.datetime.now() - epoch_start_time
                 epoch_start_time = datetime.datetime.now()
-                updates_message = 'Run: {0} Average: {1} time spent {2}'.format(run, total_reward_in_epoch / self.UPDATE_EVERY,
-                                                                                     str(time_spent))
+                avgsecs = total_secs / total_reward_in_epoch
+                total_secs = 0
+                updates_message = 'Run: {0} Average: {1} time spent {2} avg_iter {3}'.format(run, total_reward_in_epoch / self.UPDATE_EVERY,
+                                                                                     str(time_spent), avgsecs)
                 logging.info(updates_message)
                 print(updates_message)
                 last_average = total_reward_in_epoch / self.UPDATE_EVERY;
                 if self.config["save_model"] and last_average > self.max_avg:
                     self.max_avg = total_reward_in_epoch / self.UPDATE_EVERY
                     logging.info(f"Saving model . . .")
-                    utils.save_ppo_model(self.actor, start_time_format, last_average, self.params)
+                    utils.save_ppo_model(self.actor, start_time_format, last_average)
 
                 if last_average >= self.OBJECTIVE_REWARD:
                     logging.info("Training objective reached!!")
@@ -198,7 +199,7 @@ class PPOCartpoleTrainer:
         # self.final_demonstration()
         base_file_name = f'_rewards_rsl-{self.RANDOM_START_LEVEL}_rpl-{self.RANDOM_PERTURBATIONS_LEVEL}_pi-{self.PERTURBATIONS_INTENSITY_STD}'
         file_path = f'{logs_dir}{datetime.datetime.now()}_{base_file_name}.pkl'
-        store_rewards(self.reward_list, file_path)
+        store_array(self.reward_list, file_path)
         plt.plot(self.reward_list)
         plt.legend("reward per episode")
         plt.show()

@@ -11,7 +11,7 @@ import gym
 import numpy as np
 from rosgraph_msgs.msg import Clock
 import rospy
-from tf.transformations import quaternion_from_euler
+#from tf.transformations import quaternion_from_euler
 
 from agents.utils import print_messages
 
@@ -51,9 +51,9 @@ class GazeboEnv(gym.Env):
                 Path(
                     Path(__file__).resolve().parents[2]
                     / "CustomRobots"
-                    / config.get("environment_folder")
+                    / config["environment_folder"]
                     / "launch"
-                    / config.get("launchfile")
+                    / config["launchfile"]
                 )
             )
             # print(f"-----> {fullpath}")
@@ -70,7 +70,6 @@ class GazeboEnv(gym.Env):
             ]
         )
         # print("Gazebo launched!")
-
         self.gzclient_pid = 0
 
         # Launch the simulation with the given launchfile name
@@ -179,6 +178,13 @@ class GazeboEnv(gym.Env):
         except rospy.ServiceException as e:
             print(f"Service call failed: {e}")
         return pos_number
+
+    def get_position(self):
+        object_coordinates = self.model_coordinates(self.robot_name, "")
+        x_position = round(object_coordinates.pose.position.x, 2)
+        y_position = round(object_coordinates.pose.position.y, 2)
+
+        return x_position, y_position
 
     def _gazebo_set_new_pose_robot(self):
         """
@@ -394,6 +400,57 @@ class GazeboEnv(gym.Env):
         #    state_pose_orientation=state.pose.orientation,
         #    model_state_name=self.model_state_name,
         # )
+
+        rospy.wait_for_service("/gazebo/set_model_state")
+        try:
+            set_state = rospy.ServiceProxy("/gazebo/set_model_state", SetModelState)
+            set_state(state)
+        except rospy.ServiceException as e:
+            print(f"Service call failed: {e}")
+        return pos_number
+
+    def _gazebo_set_fix_pose_f1_followline(self):
+        pos_number = self.start_pose
+        state = ModelState()
+        state.model_name = self.model_state_name
+        # Pose Position
+        state.pose.position.x = self.start_pose[0][0]
+        state.pose.position.y = self.start_pose[0][1]
+        state.pose.position.z = self.start_pose[0][2]
+
+        # Pose orientation
+        state.pose.orientation.x = self.start_pose[0][3]
+        state.pose.orientation.y = self.start_pose[0][4]
+        state.pose.orientation.z = self.start_pose[0][5]
+        state.pose.orientation.w = self.start_pose[0][6]
+
+        rospy.wait_for_service("/gazebo/set_model_state")
+        try:
+            set_state = rospy.ServiceProxy("/gazebo/set_model_state", SetModelState)
+            set_state(state)
+        except rospy.ServiceException as e:
+            print(f"Service call failed: {e}")
+        return pos_number
+
+    def _gazebo_set_random_pose_f1_followline(self):
+        """
+        (pos_number, pose_x, pose_y, pose_z, or_x, or_y, or_z, or_z)
+        """
+        random_init = np.random.randint(0, high=len(self.start_random_pose))
+        # pos_number = self.start_random_pose[posit][0]
+        pos_number = self.start_random_pose[random_init][0]
+
+        state = ModelState()
+        state.model_name = self.model_state_name
+        # Pose Position
+        state.pose.position.x = self.start_random_pose[random_init][0]
+        state.pose.position.y = self.start_random_pose[random_init][1]
+        state.pose.position.z = self.start_random_pose[random_init][2]
+        # Pose orientation
+        state.pose.orientation.x = self.start_random_pose[random_init][3]
+        state.pose.orientation.y = self.start_random_pose[random_init][4]
+        state.pose.orientation.z = self.start_random_pose[random_init][5]
+        state.pose.orientation.w = self.start_random_pose[random_init][6]
 
         rospy.wait_for_service("/gazebo/set_model_state")
         try:

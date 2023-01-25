@@ -13,7 +13,7 @@ from rl_studio.agents.cartpole import utils
 from rl_studio.algorithms.dqn_torch import DQN_Agent
 from rl_studio.visual.ascii.images import JDEROBOT_LOGO
 from rl_studio.visual.ascii.text import JDEROBOT, LETS_GO
-from rl_studio.agents.cartpole.utils import store_rewards, save_metadata
+from rl_studio.agents.cartpole.utils import store_array, save_metadata
 
 
 class DQNCartpoleTrainer:
@@ -22,10 +22,10 @@ class DQNCartpoleTrainer:
         self.now = datetime.datetime.now()
         # self.environment params
         self.params = params
-        self.environment_params = params.environment["params"]
-        self.env_name = params.environment["params"]["env_name"]
-        self.config = params.settings["params"]
-        self.agent_config = params.agent["params"]
+        self.environment_params = params["environments"]
+        self.env_name = self.environment_params["env_name"]
+        self.config = params["settings"]
+        self.agent_config = params["agent"]
 
         if self.config["logging_level"] == "debug":
             self.LOGGING_LEVEL = logging.DEBUG
@@ -75,13 +75,13 @@ class DQNCartpoleTrainer:
         )  # metrics
         # recorded for graph
         self.epsilon = 1
-        self.EPSILON_DISCOUNT = params.algorithm["params"]["epsilon_discount"]
-        self.GAMMA = params.algorithm["params"]["gamma"]
+        self.EPSILON_DISCOUNT = params["algorithm"]["epsilon_discount"]
+        self.GAMMA = params["algorithm"]["gamma"]
         self.NUMBER_OF_EXPLORATION_STEPS = 128
 
         input_dim = self.env.observation_space.shape[0]
         output_dim = self.env.action_space.n
-        self.exp_replay_size = params.algorithm["params"]["batch_size"]
+        self.exp_replay_size = params["algorithm"]["batch_size"]
         self.deepq = DQN_Agent(
             layer_sizes=[input_dim, 64, output_dim],
             lr=1e-3,
@@ -116,10 +116,10 @@ class DQNCartpoleTrainer:
 
     def evaluate_and_collect(self, state):
         A = self.deepq.get_action(state, self.env.action_space.n, self.epsilon)
-        next_state, reward, done, _ = self.env.step(A.item())
+        next_state, reward, done, info = self.env.step(A.item())
         self.deepq.collect_experience([state, A.item(), reward, next_state])
 
-        return next_state, reward, done
+        return next_state, reward, done, info["time"]
 
     def train_in_batches(self, trainings, batch_size):
         losses = 0
@@ -166,6 +166,7 @@ class DQNCartpoleTrainer:
         logging.info(LETS_GO)
         number_of_steps = 128
         total_reward_in_epoch = 0
+        total_secs = 0
         for run in tqdm(range(self.RUNS)):
             state, done, losses, ep_len, episode_rew = self.env.reset(), False, 0, 0, 0
             while not done:
@@ -175,7 +176,8 @@ class DQNCartpoleTrainer:
                     perturbation_action = random.randrange(self.env.action_space.n)
                     state, done, _, _ = self.env.perturbate(perturbation_action, self.PERTURBATIONS_INTENSITY_STD)
                     logging.debug("perturbated in step {} with action {}".format(episode_rew, perturbation_action))
-                next_state, reward, done = self.evaluate_and_collect(state)
+                next_state, reward, done, secs = self.evaluate_and_collect(state)
+                total_secs+=secs
                 state = next_state
                 episode_rew += reward
                 total_reward_in_epoch += reward
@@ -195,8 +197,10 @@ class DQNCartpoleTrainer:
             if (run+1) % self.UPDATE_EVERY == 0:
                 time_spent = datetime.datetime.now() - epoch_start_time
                 epoch_start_time = datetime.datetime.now()
-                updates_message = 'Run: {0} Average: {1} epsilon {2} time spent {3}'.format(run, total_reward_in_epoch / self.UPDATE_EVERY,
-                                                                                     self.epsilon, str(time_spent))
+                avgsecs = total_secs / total_reward_in_epoch
+                total_secs = 0
+                updates_message = 'Run: {0} Average: {1} epsilon {2} time_spent {3} avg_time_iter {4}'.format(run, total_reward_in_epoch / self.UPDATE_EVERY,
+                                                                                     self.epsilon, str(time_spent), avgsecs)
                 logging.info(updates_message)
                 print(updates_message)
                 if self.config["save_model"] and total_reward_in_epoch / self.UPDATE_EVERY > self.max_avg:
@@ -211,7 +215,7 @@ class DQNCartpoleTrainer:
         # self.final_demonstration()
         base_file_name = f'_rewards_rsl-{self.RANDOM_START_LEVEL}_rpl-{self.RANDOM_PERTURBATIONS_LEVEL}_pi-{self.PERTURBATIONS_INTENSITY_STD}'
         file_path = f'./logs/cartpole/dqn/training/{datetime.datetime.now()}_{base_file_name}.pkl'
-        store_rewards(self.reward_list, file_path)
+        store_array(self.reward_list, file_path)
         plt.plot(self.reward_list)
         plt.legend("reward per episode")
         plt.show()

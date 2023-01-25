@@ -32,21 +32,21 @@ def save_model_qlearn(qlearn, current_time, avg):
 
 def params_to_markdown_list(dictionary):
     md_list = []
-    for item in dictionary["params"]:
-        md_list.append({"parameter": item, "value": dictionary["params"][item]})
+    for item in dictionary:
+        md_list.append({"parameter": item, "value": dictionary.get(item)})
     return md_list
 
 def save_metadata(algorithm, current_time, params):
     metadata = open("./logs/cartpole/" + algorithm + "/checkpoints/" + current_time + "_metadata.md",
                     "a")
     metadata.write("AGENT PARAMETERS\n")
-    metadata.write(markdownTable(params_to_markdown_list(params.agent)).setParams(row_sep='always').getMarkdown())
+    metadata.write(markdownTable(params_to_markdown_list(params.get("agent"))).setParams(row_sep='always').getMarkdown())
     metadata.write("\n```\n\nSETTINGS PARAMETERS\n")
-    metadata.write(markdownTable(params_to_markdown_list(params.settings)).setParams(row_sep='always').getMarkdown())
+    metadata.write(markdownTable(params_to_markdown_list(params.get("settings"))).setParams(row_sep='always').getMarkdown())
     metadata.write("\n```\n\nENVIRONMENT PARAMETERS\n")
-    metadata.write(markdownTable(params_to_markdown_list(params.environment)).setParams(row_sep='always').getMarkdown())
+    metadata.write(markdownTable(params_to_markdown_list(params.get("environments"))).setParams(row_sep='always').getMarkdown())
     metadata.write("\n```\n\nALGORITHM PARAMETERS\n")
-    metadata.write(markdownTable(params_to_markdown_list(params.algorithm)).setParams(row_sep='always').getMarkdown())
+    metadata.write(markdownTable(params_to_markdown_list(params.get("algorithm"))).setParams(row_sep='always').getMarkdown())
     metadata.close()
 def save_dqn_model(dqn, current_time, average, params):
     base_file_name = "_epsilon_{}".format(round(epsilon, 2))
@@ -58,8 +58,16 @@ def save_dqn_model(dqn, current_time, average, params):
     pickle.dump(dqn.q_net, file_dump)
     file_dump.close()
 
+def save_ddpg_model(actor, current_time, average):
+    file_dump = open(
+        "./logs/cartpole/ddpg/checkpoints/" + current_time + "_actor_avg_" + str(
+            average) + ".pkl",
+        "wb",
+    )
+    pickle.dump(actor, file_dump)
+    file_dump.close()
 
-def save_ppo_model(actor, current_time, average, params):
+def save_ppo_model(actor, current_time, average):
     file_dump = open(
         "./logs/cartpole/ppo/checkpoints/" + current_time + "_actor_avg_" + str(
             average) + ".pkl",
@@ -68,8 +76,7 @@ def save_ppo_model(actor, current_time, average, params):
     pickle.dump(actor.model, file_dump)
     file_dump.close()
 
-
-def save_actions_qlearn(actions, start_time, params):
+def save_actions_qlearn(actions, start_time):
     file_dump = open("./logs/cartpole/qlearning/checkpoints/actions_set_" + start_time, "wb")
     pickle.dump(actions, file_dump)
     file_dump.close()
@@ -170,7 +177,7 @@ def plot_detail_random_perturbations_monitoring(unsuccessful_episodes_count, suc
     ax16.set(ylabel="Rewards")
 
 
-def store_rewards(rewards, file_path):
+def store_array(rewards, file_path):
     file_dump = open(file_path, "wb")
     pickle.dump(rewards, file_dump)
 

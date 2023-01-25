@@ -13,8 +13,14 @@ from tensorflow.keras.layers import (
     Flatten,
     Rescaling,
 )
-from tensorflow.keras.models import Sequential
+from tensorflow.keras.models import Sequential, load_model
 from tensorflow.keras.optimizers import Adam
+
+
+# Sharing GPU
+gpus = tf.config.experimental.list_physical_devices("GPU")
+for gpu in gpus:
+    tf.config.experimental.set_memory_growth(gpu, True)
 
 
 # Own Tensorboard class
@@ -260,7 +266,7 @@ class DDPGAgent:
 
         self.ACTION_SPACE_SIZE = action_space_size
         self.OBSERVATION_SPACE_VALUES = observation_space_values
-        if config["state_space"] == "image":
+        if config["states"] == "image":
             self.OBSERVATION_SPACE_VALUES_FLATTEN = (
                 observation_space_values[0]
                 * observation_space_values[1]
@@ -269,10 +275,10 @@ class DDPGAgent:
 
         # Continuous Actions
         if config["action_space"] == "continuous":
-            self.V_UPPER_BOUND = config["actions"]["v_max"]
-            self.V_LOWER_BOUND = config["actions"]["v_min"]
-            self.W_RIGHT_BOUND = config["actions"]["w_right"]
-            self.W_LEFT_BOUND = config["actions"]["w_left"]
+            self.V_UPPER_BOUND = config["actions"]["v"][1]
+            self.V_LOWER_BOUND = config["actions"]["v"][0]
+            self.W_RIGHT_BOUND = config["actions"]["w"][0]
+            self.W_LEFT_BOUND = config["actions"]["w"][1]
 
         # NN settings
         self.MODEL_NAME = config["model_name"]
@@ -283,54 +289,104 @@ class DDPGAgent:
 
         # Custom tensorboard object
         self.tensorboard = ModifiedTensorBoard(
-            log_dir=f"{outdir}/logs_TensorBoard/{self.MODEL_NAME}-{time.strftime('%Y%m%d-%H%M%S')}"
+            log_dir=f"{outdir}/{self.MODEL_NAME}-{time.strftime('%Y%m%d-%H%M%S')}"
         )
 
         # Used to count when to update target network with main network's weights
         self.target_update_counter = 0
 
-        # Actor & Critic main models  # gets trained every step
-        if config["action_space"] == "continuous" and config["state_space"] != "image":
-            self.actor_model = self.get_actor_model_sp_continuous_actions()
-            self.critic_model = self.get_critic_model_sp_continuous_actions()
-            # Actor Target model this is what we .predict against every step
-            self.target_actor = self.get_actor_model_sp_continuous_actions()
-            self.target_actor.set_weights(self.actor_model.get_weights())
-            # Critic Target model this is what we .predict against every step
-            self.target_critic = self.get_critic_model_sp_continuous_actions()
-            self.target_critic.set_weights(self.critic_model.get_weights())
+        # load pretrained model for continuing training (not inference)
+        if config["mode"] == "retraining":
+            print("---------------------- entry load retrained model")
+            print(f"{outdir}/{config['retrain_ddpg_tf_actor_model_name']}")
+            print(f"{outdir}/{config['retrain_ddpg_tf_critic_model_name']}")
+            # load pretrained actor and critic models
+            actor_retrained_model = (
+                f"{outdir}/{config['retrain_ddpg_tf_actor_model_name']}"
+            )
+            critic_retrained_model = (
+                f"{outdir}/{config['retrain_ddpg_tf_critic_model_name']}"
+            )
+            self.actor_model = load_model(actor_retrained_model, compile=False)
+            self.critic_model = load_model(critic_retrained_model, compile=False)
+            self.target_actor = load_model(actor_retrained_model, compile=False)
+            self.target_critic = load_model(critic_retrained_model, compile=False)
 
-        elif (
-            config["action_space"] != "continuous" and config["state_space"] != "image"
-        ):
-            self.actor_model = (
-                self.get_actor_model_simplified_perception_discrete_actions()
-            )
-            self.critic_model = (
-                self.get_critic_model_simplified_perception_discrete_actions()
-            )
-            # Actor Target model this is what we .predict against every step
-            self.target_actor = (
-                self.get_actor_model_simplified_perception_discrete_actions()
-            )
-            self.target_actor.set_weights(self.actor_model.get_weights())
-            # Critic Target model this is what we .predict against every step
-            self.target_critic = (
-                self.get_critic_model_simplified_perception_discrete_actions()
-            )
-            self.target_critic.set_weights(self.critic_model.get_weights())
+        else:  # training from scratch
+            # Actor & Critic main models  # gets trained every step
+            if config["action_space"] == "continuous" and config["states"] != "image":
+                self.actor_model = self.get_actor_model_sp_continuous_actions()
+                self.critic_model = self.get_critic_model_sp_continuous_actions()
+                # Actor Target model this is what we .predict against every step
+                self.target_actor = self.get_actor_model_sp_continuous_actions()
+                self.target_actor.set_weights(self.actor_model.get_weights())
+                # Critic Target model this is what we .predict against every step
+                self.target_critic = self.get_critic_model_sp_continuous_actions()
+                self.target_critic.set_weights(self.critic_model.get_weights())
 
-        elif (
-            config["action_space"] == "continuous" and config["state_space"] == "image"
-        ):
-            self.actor_model = self.get_actor_model_image_continuous_actions()
-            self.critic_model = self.get_critic_model_image_continuous_actions_conv()
-            # Actor Target model this is what we .predict against every step
-            self.target_actor = self.get_actor_model_image_continuous_actions()
-            self.target_actor.set_weights(self.actor_model.get_weights())
-            # Critic Target model this is what we .predict against every step
-            self.target_critic = self.get_critic_model_image_continuous_actions_conv()
-            self.target_critic.set_weights(self.critic_model.get_weights())
+            elif config["action_space"] != "continuous" and config["states"] != "image":
+                self.actor_model = (
+                    self.get_actor_model_simplified_perception_discrete_actions()
+                )
+                self.critic_model = (
+                    self.get_critic_model_simplified_perception_discrete_actions()
+                )
+                # Actor Target model this is what we .predict against every step
+                self.target_actor = (
+                    self.get_actor_model_simplified_perception_discrete_actions()
+                )
+                self.target_actor.set_weights(self.actor_model.get_weights())
+                # Critic Target model this is what we .predict against every step
+                self.target_critic = (
+                    self.get_critic_model_simplified_perception_discrete_actions()
+                )
+                self.target_critic.set_weights(self.critic_model.get_weights())
+
+            elif config["action_space"] == "continuous" and config["states"] == "image":
+                self.actor_model = self.get_actor_model_image_continuous_actions()
+                self.critic_model = (
+                    self.get_critic_model_image_continuous_actions_conv()
+                )
+                # Actor Target model this is what we .predict against every step
+                self.target_actor = self.get_actor_model_image_continuous_actions()
+                self.target_actor.set_weights(self.actor_model.get_weights())
+                # Critic Target model this is what we .predict against every step
+                self.target_critic = (
+                    self.get_critic_model_image_continuous_actions_conv()
+                )
+                self.target_critic.set_weights(self.critic_model.get_weights())
+
+            else:
+                ##############
+                # TODO: create specific models for State=image and actions=discrete
+                self.actor_model = (
+                    self.get_actor_model_simplified_perception_discrete_actions()
+                )
+                self.critic_model = (
+                    self.get_critic_model_simplified_perception_discrete_actions()
+                )
+                # Actor Target model this is what we .predict against every step
+                self.target_actor = (
+                    self.get_actor_model_simplified_perception_discrete_actions()
+                )
+                self.target_actor.set_weights(self.actor_model.get_weights())
+                # Critic Target model this is what we .predict against every step
+                self.target_critic = (
+                    self.get_critic_model_simplified_perception_discrete_actions()
+                )
+                self.target_critic.set_weights(self.critic_model.get_weights())
+
+    def load_inference_model(self, models_dir, config):
+        """
+        we work with actor_model. Try also target_actor
+        """
+        path_actor_inference_model = (
+            f"{models_dir}/{config['inference_ddpg_tf_actor_model_name']}"
+        )
+        actor_inference_model = load_model(path_actor_inference_model, compile=False)
+        # critic_inference_model = load_model(path_critic_inference_model, compile=False)
+
+        return actor_inference_model
 
     # This update target parameters slowly
     # Based on rate `tau`, which is much less than one.
@@ -409,6 +465,7 @@ class DDPGAgent:
         outputs = layers.Dense(self.ACTION_SPACE_SIZE)(out)
         # Outputs single value for give state-action
         model = tf.keras.Model([state_input, action_input], outputs)
+        model.compile(loss="mse", optimizer=Adam(0.005))
 
         return model
 
@@ -446,25 +503,29 @@ class DDPGAgent:
         model = Model(
             inputs=inputs, outputs=[v_branch, w_branch], name="continuous_two_actions"
         )
+        model.compile(loss="mse", optimizer=Adam(0.005))
+
         # return the constructed network architecture
         return model
 
     def build_branch_images(self, inputs, action_name):
+        neuron1 = 32  # 32, 64, 128
+        neuron2 = 64  # 64, 128, 256
         last_init = tf.random_uniform_initializer(minval=-0.01, maxval=0.01)
         x = Rescaling(1.0 / 255)(inputs)
-        x = Conv2D(32, (3, 3), padding="same")(x)
+        x = Conv2D(neuron1, (3, 3), padding="same")(x)
         # x = Conv2D(32, (3, 3), padding="same")(inputs)
         x = Activation("relu")(x)
         x = MaxPooling2D(pool_size=(3, 3))(x)
         x = Dropout(0.25)(x)
 
-        x = Conv2D(64, (3, 3), padding="same")(x)
+        x = Conv2D(neuron2, (3, 3), padding="same")(x)
         x = Activation("relu")(x)
         x = MaxPooling2D(pool_size=(2, 2))(x)
         x = Dropout(0.25)(x)
 
         x = Flatten()(x)
-        x = Dense(64)(x)
+        x = Dense(neuron2)(x)
 
         x = Dense(1, activation="tanh", kernel_initializer=last_init)(x)
         x = Activation("tanh", name=action_name)(x)
@@ -486,7 +547,8 @@ class DDPGAgent:
         state_out = Dropout(0.25)(state_out)
         state_out = Flatten()(state_out)
         """
-
+        neuron1 = 128  # 32, 64
+        neuron2 = 256  # 64, 128
         # Next NN is the same as actor net
         state_out = Rescaling(1.0 / 255)(state_input)
         state_out = Conv2D(32, (3, 3), padding="same")(state_out)
@@ -517,6 +579,7 @@ class DDPGAgent:
 
         # Outputs single value for give state-action
         model = tf.keras.Model([state_input, action_input_v, action_input_w], outputs)
+        model.compile(loss="mse", optimizer=Adam(0.005))
 
         return model
 
@@ -545,6 +608,7 @@ class DDPGAgent:
 
         # Outputs single value for give state-action
         model = tf.keras.Model([state_input, action_input_v, action_input_w], outputs)
+        model.compile(loss="mse", optimizer=Adam(0.005))
 
         return model
 
@@ -563,6 +627,8 @@ class DDPGAgent:
         model = Model(
             inputs=inputs, outputs=[v_branch, w_branch], name="continuous_two_actions"
         )
+        model.compile(loss="mse", optimizer=Adam(0.005))
+
         # return the constructed network architecture
         return model
 
@@ -601,5 +667,6 @@ class DDPGAgent:
 
         # Outputs single value for given state-action
         model = tf.keras.Model([state_input, action_input_v, action_input_w], outputs)
+        model.compile(loss="mse", optimizer=Adam(0.005))
 
         return model

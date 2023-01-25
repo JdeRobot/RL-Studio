@@ -1,4 +1,5 @@
 import datetime
+import multiprocessing
 import time
 
 import gym
@@ -15,19 +16,21 @@ class QLearnRobotMeshTrainer:
         # TODO: Create a pydantic metaclass to simplify the way we extract the params
         # environment params
         self.params = params
-        self.environment_params = params.environment["params"]
+        self.environment_params = params["environments"]
 
         # algorithm params
-        self.alpha = params.algorithm["params"]["alpha"]
-        self.epsilon = params.algorithm["params"]["epsilon"]
-        self.gamma = params.algorithm["params"]["gamma"]
-        self.config = params.settings["params"]
+        self.alpha = params["algorithm"]["alpha"]
+        self.epsilon = params["algorithm"]["epsilon"]
+        self.gamma = params["algorithm"]["gamma"]
+        self.config = params["settings"]
+        self.actions = params["actions"]
         self.stats = {}  # epoch: steps
         self.states_counter = {}
         self.states_reward = {}
         self.last_time_steps = np.ndarray(0)
 
-        self.outdir = "./logs/robot_mesh_experiments/"
+        self.outdir = "./logs/robot_mesh/"
+        self.init_environment()
 
     def print_init_info(self):
         print(JDEROBOT)
@@ -37,14 +40,11 @@ class QLearnRobotMeshTrainer:
         print(f"\t- Environment params:\n{self.environment_params}")
 
     def init_environment(self):
-        self.env_name = self.params.environment["params"]["env_name"]
-        env_params = self.params.environment["params"]
-        actions = self.params.environment["actions"]
-        env_params["actions"] = actions
-        self.env = gym.make(self.env_name, **env_params)
+        self.env_name = self.environment_params["env_name"]
+        self.env = gym.make(self.env_name, **self.params)
         self.env = gym.wrappers.Monitor(self.env, self.outdir, force=True)
-        self.actions = range(self.env.action_space.n)
 
+        self.highest_reward = 0
         self.cumulated_reward = 0
         self.total_episodes = 20000
         self.epsilon_discount = 0.999  # Default 0.9986
@@ -86,7 +86,6 @@ class QLearnRobotMeshTrainer:
 
         initial_epsilon = self.qlearn.epsilon
 
-        telemetry_start_time = time.time()
         start_time = datetime.datetime.now()
         start_time_format = start_time.strftime("%Y%m%d_%H%M")
 

@@ -1,0 +1,51 @@
+settings:
+  output_dir: "./logs/"
+  save_model: True
+  save_positions: True
+  telemetry: False
+  logging_level: info
+  mode: inference
+  agent: cartpole
+  algorithm: ppo_continuous
+
+# TODO make this section optional
+actions:
+    available_actions:
+      simple:
+
+agent:
+  cartpole:
+    # TODO To be removed
+    camera_params:
+      witdh: 640
+      height: 480
+
+environments:
+    env_name: myCartpole-continuous-v0
+    environment_folder: cartpole
+#    runs: 20000
+    runs: 100
+    full_experimentation_runs: 0
+    update_every: 100
+    show_every: 1000
+    objective_reward: 500
+#    block_experience_batch: False
+    block_experience_batch: False
+  #  random_start_level: 0.05
+    experiments: 29
+    random_start_level: 0 # Number between 0 and 1 that indicates the difficulty of the start position
+    random_perturbations_level: 0.1 # Number between 0 and 1 that indicates the frequency of the random perturbations
+    random_perturbations_level_step: 0.1
+    perturbations_intensity_std: 21 #Number between 0 and 1 that indicates the standard deviation of perturbations intensity
+    perturbations_intensity_std_step: 1
+    initial_pole_angle: 0
+    initial_pole_angle_steps: 0.05
+    non_recoverable_angle: 0.3 # not applicable when making experiments with init_pole_angle (always 0.2 over the initial)
+
+inference:
+  inference_file: /home/ruben/Desktop/my-RL-Studio/rl_studio/logs/cartpole/ppo_continuous/checkpoints/20221231_1813_actor_avg_422.44
+
+algorithm:
+  gamma: 1
+  epsilon: 0.15
+  episodes_update: 1000

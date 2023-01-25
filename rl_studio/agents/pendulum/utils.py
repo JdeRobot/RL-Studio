@@ -24,7 +24,7 @@ def save_model_qlearn(qlearn, current_time, avg):
     # Q TABLE
     base_file_name = "_epsilon_{}".format(round(qlearn.epsilon, 3))
     file_dump = open(
-        "./logs/pendulum/qlearning/checkpoints/" + current_time + base_file_name + "_QTABLE_avg_ " +  str(avg) + ".pkl",
+        "./logs/pendulum/qlearning/checkpoints/" + current_time + base_file_name + "_QTABLE_avg_ " + str(avg) + ".pkl",
         "wb"
     )
     pickle.dump(qlearn.q, file_dump)
@@ -32,23 +32,26 @@ def save_model_qlearn(qlearn, current_time, avg):
 
 def params_to_markdown_list(dictionary):
     md_list = []
-    for item in dictionary["params"]:
-        md_list.append({"parameter": item, "value": dictionary["params"][item]})
+    for item in dictionary:
+        md_list.append({"parameter": item, "value": dictionary[item]})
     return md_list
+
 
 def save_metadata(algorithm, current_time, params):
     metadata = open("./logs/pendulum/" + algorithm + "/checkpoints/" + current_time + "_metadata.md",
                     "a")
     metadata.write("AGENT PARAMETERS\n")
-    metadata.write(markdownTable(params_to_markdown_list(params.agent)).setParams(row_sep='always').getMarkdown())
+    metadata.write(markdownTable(params_to_markdown_list(params["agent"])).setParams(row_sep='always').getMarkdown())
     metadata.write("\n```\n\nSETTINGS PARAMETERS\n")
-    metadata.write(markdownTable(params_to_markdown_list(params.settings)).setParams(row_sep='always').getMarkdown())
+    metadata.write(markdownTable(params_to_markdown_list(params["settings"])).setParams(row_sep='always').getMarkdown())
     metadata.write("\n```\n\nENVIRONMENT PARAMETERS\n")
-    metadata.write(markdownTable(params_to_markdown_list(params.environment)).setParams(row_sep='always').getMarkdown())
+    metadata.write(markdownTable(params_to_markdown_list(params["environments"])).setParams(row_sep='always').getMarkdown())
     metadata.write("\n```\n\nALGORITHM PARAMETERS\n")
-    metadata.write(markdownTable(params_to_markdown_list(params.algorithm)).setParams(row_sep='always').getMarkdown())
+    metadata.write(markdownTable(params_to_markdown_list(params["algorithm"])).setParams(row_sep='always').getMarkdown())
     metadata.close()
-def save_ddpg_model(dqn, current_time, average):
+
+
+def save_dqn_model(dqn, current_time, average):
     file_dump = open(
         "./logs/pendulum/dqn/checkpoints/" + current_time + "_DQN_WEIGHTS_avg_" + str(
             average) + ".pkl",
@@ -94,7 +97,9 @@ def create_bins_and_q_table(env, number_angle_bins, number_pos_bins):
     ]
 
     qTable = np.random.uniform(
-        low=-2, high=0, size=([number_pos_bins] * int(obsSpaceSize/2) + [number_angle_bins] * int(obsSpaceSize/2) + [env.action_space.n])
+        low=-2, high=0, size=(
+                [number_pos_bins] * int(obsSpaceSize / 2) + [number_angle_bins] * int(obsSpaceSize / 2) + [
+            env.action_space.n])
     )
 
     return bins, obsSpaceSize, qTable

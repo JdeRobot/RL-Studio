@@ -46,8 +46,8 @@ class Actor(nn.Module):
         self.adam_actor.zero_grad()
         actor_loss.backward()
         # clip_grad_norm_(adam_actor, max_grad_norm)
-        w.add_histogram("gradients/actor",
-                        torch.cat([p.grad.view(-1) for p in self.parameters()]), global_step=global_steps)
+        # w.add_histogram("gradients/actor",
+        #                 torch.cat([p.grad.view(-1) for p in self.parameters()]), global_step=global_steps)
         self.adam_actor.step()
         return actor_loss
 
@@ -99,8 +99,8 @@ class Critic(nn.Module):
         self.adam_critic.zero_grad()
         critic_loss.backward()
         # clip_grad_norm_(adam_critic, max_grad_norm)
-        w.add_histogram("gradients/critic",
-                            torch.cat([p.data.view(-1) for p in self.parameters()]), global_step=global_steps)
+        # w.add_histogram("gradients/critic",
+        #                     torch.cat([p.data.view(-1) for p in self.parameters()]), global_step=global_steps)
         self.adam_critic.step()
         return critic_loss
 

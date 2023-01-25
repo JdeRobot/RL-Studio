@@ -128,15 +128,15 @@ class Actor(nn.Module):
         if explore:
             action = self.noise.get_action(action, step)
 
-        return action if isinstance(action, Sequence) else [action]
+        return action
 
     def forward(self, state):
         """
         Param state is a torch tensor
         """
-        x = F.relu(self.linear1(state))
-        x = F.relu(self.linear2(x))
-        x = torch.tanh(self.linear3(x))
+        x = torch.tanh(self.linear1(state))
+        x = torch.tanh(self.linear2(x))
+        x = self.linear3(x)
 
         return x
 
@@ -151,4 +151,4 @@ class Actor(nn.Module):
         print(f"\n\nMODEL LOADED.")
 
     def inference(self, state):
-        return self.get_action(state, explore=False)
+        return [self.get_action(state, explore=False)]

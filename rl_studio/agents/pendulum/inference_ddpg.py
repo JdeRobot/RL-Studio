@@ -40,10 +40,10 @@ class DDPGPendulumInferencer:
         self.now = datetime.datetime.now()
         # self.environment params
         self.params = params
-        self.environment_params = params.environment["params"]
-        self.env_name = params.environment["params"]["env_name"]
-        self.config = params.settings["params"]
-        self.agent_config = params.agent["params"]
+        self.environment_params = params["environments"]
+        self.env_name = params["environments"]["env_name"]
+        self.config = params["settings"]
+        self.agent_config = params["agent"]
 
         if self.config["logging_level"] == "debug":
             self.LOGGING_LEVEL = logging.DEBUG
@@ -56,12 +56,7 @@ class DDPGPendulumInferencer:
 
         self.RANDOM_PERTURBATIONS_LEVEL = self.environment_params.get("random_perturbations_level", 0)
         self.PERTURBATIONS_INTENSITY_STD = self.environment_params.get("perturbations_intensity_std", 0)
-        self.RANDOM_START_LEVEL = self.environment_params.get("random_start_level", 0)
-        self.INITIAL_POLE_ANGLE = self.environment_params.get("initial_pole_angle", None)
 
-        non_recoverable_angle = self.environment_params[
-            "non_recoverable_angle"
-        ]
         # Unfortunately, max_steps is not working with new_step_api=True and it is not giving any benefit.
         # self.env = gym.make(self.env_name, new_step_api=True, random_start_level=random_start_level)
         # self.env = NormalizedEnv(gym.make(self.env_name
@@ -76,9 +71,6 @@ class DDPGPendulumInferencer:
         self.OBJECTIVE_REWARD = self.environment_params[
             "objective_reward"
         ]
-        self.BLOCKED_EXPERIENCE_BATCH = self.environment_params[
-            "block_experience_batch"
-        ]
 
         self.losses_list, self.reward_list, self.episode_len_list= (
             [],
@@ -86,14 +78,14 @@ class DDPGPendulumInferencer:
             [],
         )  # metrics
         # recorded for graph
-        self.batch_size = params.algorithm["params"]["batch_size"]
+        self.batch_size = params["algorithm"]["batch_size"]
         self.tau = 1e-2
 
         self.max_avg = -1000
 
         self.num_actions = self.env.action_space.shape[0]
 
-        inference_file = params.inference["params"]["inference_file"]
+        inference_file = params["inference"]["inference_file"]
         self.inferencer = InferencerWrapper("ddpg_torch", inference_file, env=self.env)
 
     def print_init_info(self):
@@ -110,7 +102,7 @@ class DDPGPendulumInferencer:
         epoch_start_time = datetime.datetime.now()
 
         logs_dir = 'logs/pendulum/ddpg/training/'
-        logs_file_name = 'logs_file_' + str(self.RANDOM_START_LEVEL) + '_' + str(
+        logs_file_name = 'logs_file_' + str(
             self.RANDOM_PERTURBATIONS_LEVEL) + '_' + str(epoch_start_time) \
                          + str(self.PERTURBATIONS_INTENSITY_STD) + '.log'
         logging.basicConfig(filename=logs_dir + logs_file_name, filemode='a',
@@ -157,7 +149,7 @@ class DDPGPendulumInferencer:
                 logging.info(updates_message)
                 print(updates_message)
                 total_reward_in_epoch=0
-        base_file_name = f'_rewards_rsl-{self.RANDOM_START_LEVEL}_rpl-{self.RANDOM_PERTURBATIONS_LEVEL}_pi-{self.PERTURBATIONS_INTENSITY_STD}'
+        base_file_name = f'_rewards_rpl-{self.RANDOM_PERTURBATIONS_LEVEL}_pi-{self.PERTURBATIONS_INTENSITY_STD}'
         file_path = f'{logs_dir}{datetime.datetime.now()}_{base_file_name}.pkl'
         store_rewards(self.reward_list, file_path)
         plt.plot(self.reward_list)
