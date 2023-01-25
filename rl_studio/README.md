@@ -64,6 +64,12 @@ python rl-studio.py -f config/<config.yaml>
 ```
 where <config.yaml> can be any config you can create or previosly existed.
 
+When launching Gazebo, if you found and error, try killing all possible previous ROS-Gazebo processes:
+
+```
+killall gzserver
+killall gzclient
+```
 
 ## Config.yaml
 The config.yaml contains all project hyperparams and configuration needed to execute correctly. In case you want to train a Formula 1 agent in a Follow Lane task in Gazebo, with a PPO algorithm and Tensorflow Deep Learning framework, you can use next example from a config.yaml example file:
