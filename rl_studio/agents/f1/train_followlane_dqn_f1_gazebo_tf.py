@@ -200,7 +200,7 @@ class TrainerFollowLaneDQNF1GazeboTF:
                         f"best step so far = {best_step}\n"
                         f"best_epoch_training_time = {best_epoch_training_time}\n"
                     )
-                
+
                 ### save in case of completed steps in one episode
                 if step >= self.env_params.estimated_steps:
                     done = True
@@ -214,7 +214,9 @@ class TrainerFollowLaneDQNF1GazeboTF:
                     dqn_agent.model.save(
                         f"{self.global_params.models_dir}/{time.strftime('%Y%m%d-%H%M%S')}_Circuit-{self.environment.environment['circuit_name']}_States-{self.environment.environment['states']}_Actions-{self.environment.environment['action_space']}_EPOCHCOMPLETED_Rewards-{self.environment.environment['reward_function']}_epsilon-{round(epsilon,3)}_epoch-{episode}_step-{step}_reward-{int(cumulated_reward)}_{self.algoritmhs_params.model_name}.model",
                     )
-            
+                    dqn_agent.model.save(
+                        f"{self.global_params.models_dir}/{time.strftime('%Y%m%d-%H%M%S')}_Circuit-{self.environment.environment['circuit_name']}_States-{self.environment.environment['states']}_Actions-{self.environment.environment['action_space']}_EPOCHCOMPLETED_Rewards-{self.environment.environment['reward_function']}_epsilon-{round(epsilon,3)}_epoch-{episode}_step-{step}_reward-{int(cumulated_reward)}_{self.algoritmhs_params.model_name}.h5",
+                    )
             #### save best lap in episode
             if (
                 cumulated_reward - self.environment.environment["rewards"]["penal"]
@@ -238,7 +240,10 @@ class TrainerFollowLaneDQNF1GazeboTF:
                     self.global_params.best_current_epoch,
                 )
                 dqn_agent.model.save(
-                        f"{self.global_params.models_dir}/{time.strftime('%Y%m%d-%H%M%S')}_Circuit-{self.environment.environment['circuit_name']}_States-{self.environment.environment['states']}_Actions-{self.environment.environment['action_space']}_BESTLAP_Rewards-{self.environment.environment['reward_function']}_epsilon-{round(epsilon,3)}_epoch-{episode}_step-{step}_reward-{int(cumulated_reward)}_{self.algoritmhs_params.model_name}.model",
+                    f"{self.global_params.models_dir}/{time.strftime('%Y%m%d-%H%M%S')}_Circuit-{self.environment.environment['circuit_name']}_States-{self.environment.environment['states']}_Actions-{self.environment.environment['action_space']}_BESTLAP_Rewards-{self.environment.environment['reward_function']}_epsilon-{round(epsilon,3)}_epoch-{episode}_step-{step}_reward-{int(cumulated_reward)}_{self.algoritmhs_params.model_name}.model",
+                )
+                dqn_agent.model.save(
+                    f"{self.global_params.models_dir}/{time.strftime('%Y%m%d-%H%M%S')}_Circuit-{self.environment.environment['circuit_name']}_States-{self.environment.environment['states']}_Actions-{self.environment.environment['action_space']}_BESTLAP_Rewards-{self.environment.environment['reward_function']}_epsilon-{round(epsilon,3)}_epoch-{episode}_step-{step}_reward-{int(cumulated_reward)}_{self.algoritmhs_params.model_name}.h5",
                 )
                 log.logger.info(
                     f"\nsaving best lap\n"
@@ -262,11 +267,15 @@ class TrainerFollowLaneDQNF1GazeboTF:
                     f"step = {step}\n"
                     f"epsilon = {epsilon}\n"
                 )
-                if (cumulated_reward  - self.environment.environment['rewards']['penal'])>= current_max_reward:
+                if (
+                    cumulated_reward - self.environment.environment["rewards"]["penal"]
+                ) >= current_max_reward:
                     dqn_agent.model.save(
                         f"{self.global_params.models_dir}/{time.strftime('%Y%m%d-%H%M%S')}_Circuit-{self.environment.environment['circuit_name']}_States-{self.environment.environment['states']}_Actions-{self.environment.environment['action_space']}_LAPCOMPLETED_Rewards-{self.environment.environment['reward_function']}_epsilon-{round(epsilon,3)}_epoch-{episode}_step-{step}_reward-{int(cumulated_reward)}_{self.algoritmhs_params.model_name}.model",
                     )
-
+                    dqn_agent.model.save(
+                        f"{self.global_params.models_dir}/{time.strftime('%Y%m%d-%H%M%S')}_Circuit-{self.environment.environment['circuit_name']}_States-{self.environment.environment['states']}_Actions-{self.environment.environment['action_space']}_LAPCOMPLETED_Rewards-{self.environment.environment['reward_function']}_epsilon-{round(epsilon,3)}_epoch-{episode}_step-{step}_reward-{int(cumulated_reward)}_{self.algoritmhs_params.model_name}.h5",
+                    )
                 break
 
             ### save every save_episode times
@@ -303,7 +312,9 @@ class TrainerFollowLaneDQNF1GazeboTF:
                     dqn_agent.model.save(
                         f"{self.global_params.models_dir}/{time.strftime('%Y%m%d-%H%M%S')}_Circuit-{self.environment.environment['circuit_name']}_States-{self.environment.environment['states']}_Actions-{self.environment.environment['action_space']}_BATCH_Rewards-{self.environment.environment['reward_function']}_epsilon-{round(epsilon,3)}_epoch-{episode}_step-{step}_reward-{int(cumulated_reward)}_{self.algoritmhs_params.model_name}.model",
                     )
-
+                    dqn_agent.model.save(
+                        f"{self.global_params.models_dir}/{time.strftime('%Y%m%d-%H%M%S')}_Circuit-{self.environment.environment['circuit_name']}_States-{self.environment.environment['states']}_Actions-{self.environment.environment['action_space']}_BATCH_Rewards-{self.environment.environment['reward_function']}_epsilon-{round(epsilon,3)}_epoch-{episode}_step-{step}_reward-{int(cumulated_reward)}_{self.algoritmhs_params.model_name}.h5",
+                    )
                     save_dataframe_episodes(
                         self.environment.environment,
                         self.global_params.metrics_data_dir,
@@ -319,7 +330,7 @@ class TrainerFollowLaneDQNF1GazeboTF:
             # reducing exploration
             if epsilon > epsilon_min:
                 epsilon *= epsilon_discount
-        
+
         ### save last episode, not neccesarily the best one
         save_dataframe_episodes(
             self.environment.environment,
