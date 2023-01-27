@@ -54,19 +54,19 @@ class TrainerFactory:
             framework=framework,
         )
         # =============================
-        # FollowLine - F1 - qlearn - Gazebo
+        # FollowLine - F1 - qlearn - Carla
         # =============================
         if (
             task == TasksType.FOLLOWLANECARLA.value
             and agent == AgentsType.AUTOCARLA.value
             and algorithm == AlgorithmsType.QLEARN.value
-            and simulator == EnvsType.GAZEBO.value
+            and simulator == EnvsType.CARLA.value
         ):
-            from rl_studio.agents.f1.train_followline_qlearn_f1_gazebo import (
-                TrainerFollowLineQlearnF1Gazebo,
+            from rl_studio.agents.auto_carla.train_followlane_qlearn_carla import (
+                TrainerFollowLaneQlearnAutoCarla,
             )
 
-            return TrainerFollowLineQlearnF1Gazebo(config)
+            return TrainerFollowLaneQlearnAutoCarla(config)
 
         # =============================
         # FollowLine - F1 - qlearn - Gazebo

@@ -10,7 +10,7 @@ from tqdm import tqdm
 from rl_studio.agents.f1.loaders import (
     LoadAlgorithmParams,
     LoadEnvParams,
-    LoadEnvVariablesQlearnGazebo,
+    LoadEnvVariablesQlearnCarla,
     LoadGlobalParams,
 )
 from rl_studio.agents.utils import (
@@ -24,19 +24,19 @@ from rl_studio.algorithms.qlearn import QLearn, QLearnF1
 from rl_studio.envs.gazebo.gazebo_envs import *
 
 
-class TrainerFollowLaneQlearnF1Gazebo:
+class TrainerFollowLaneQlearnAutoCarla:
     """
     Mode: training
     Task: Follow Lane
     Algorithm: Qlearn
-    Agent: F1
-    Simulator: Gazebo
+    Agent: Auto
+    Simulator: Carla
     """
 
     def __init__(self, config):
         self.algoritmhs_params = LoadAlgorithmParams(config)
         self.env_params = LoadEnvParams(config)
-        self.environment = LoadEnvVariablesQlearnGazebo(config)
+        self.environment = LoadEnvVariablesQlearnCarla(config)
         self.global_params = LoadGlobalParams(config)
 
         os.makedirs(f"{self.global_params.models_dir}", exist_ok=True)

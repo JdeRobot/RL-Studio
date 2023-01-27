@@ -56,3 +56,9 @@ register(
     id="AutoparkingEnv-v0",
     entry_point="rl_studio.envs.gazebo.autoparking.models:AutoparkingEnv",
 )
+
+# Carla
+register(
+    id="CarlaEnv-v0",
+    entry_point="rl_studio.envs.carla:CarlaEnv",
+)
