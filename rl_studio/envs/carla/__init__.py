@@ -14,7 +14,7 @@ class CarlaEnv:
 
 
         # =============================
-        # FollowLane - qlearn
+        # FollowLane - qlearn - (No framework)
         # =============================
         if (
             task == TasksType.FOLLOWLANECARLA.value

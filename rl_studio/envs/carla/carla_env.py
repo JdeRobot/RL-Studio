@@ -17,7 +17,7 @@ import rosbag
 import rospy
 import shlex
 
-from logger import logger
+from rl_studio.envs.carla.utils.logger import logger
 
 
 class CarlaEnv(gym.Env):
@@ -26,15 +26,25 @@ class CarlaEnv(gym.Env):
         """ Constructor of the class. """
         # close previous instances of ROS and simulators if hanged.
         self.close_ros_and_simulators()
+        #print(f"{os.environ=}\n")
+        try:
+            carla_root = os.environ["CARLA_ROOT"]
+            #print(f"{carla_root = }\n")
+            carla_exec = f"{carla_root}/CarlaUE4.sh"
+        except KeyError as oe:
+            logger.error("CarlaEnv: exception raised searching CARLA_ROOT env variable. {}".format(oe))
+                
+
         try:
             with open("/tmp/.carlalaunch_stdout.log", "w") as out, open("/tmp/.carlalaunch_stderr.log", "w") as err:
-                    subprocess.Popen(["/home/jderobot/Documents/Projects/carla_simulator_0_9_13/CarlaUE4.sh", "-RenderOffScreen"], stdout=out, stderr=err)
+                    subprocess.Popen([carla_exec, "-prefernvidia"], stdout=out, stderr=err)
+                    #subprocess.Popen(["/home/jderobot/Documents/Projects/carla_simulator_0_9_13/CarlaUE4.sh", "-RenderOffScreen"], stdout=out, stderr=err)
                     #subprocess.Popen(["/home/jderobot/Documents/Projects/carla_simulator_0_9_13/CarlaUE4.sh", "-RenderOffScreen", "-quality-level=Low"], stdout=out, stderr=err)
             logger.info("SimulatorEnv: launching simulator server.")
             time.sleep(5)
-            with open("/tmp/.roslaunch_stdout.log", "w") as out, open("/tmp/.roslaunch_stderr.log", "w") as err:
-                child = subprocess.Popen(["roslaunch", launch_file], stdout=out, stderr=err)
-            logger.info("SimulatorEnv: launching simulator server.")
+            #with open("/tmp/.roslaunch_stdout.log", "w") as out, open("/tmp/.roslaunch_stderr.log", "w") as err:
+            #    child = subprocess.Popen(["roslaunch", launch_file], stdout=out, stderr=err)
+            #logger.info("SimulatorEnv: launching simulator server.")
         except OSError as oe:
             logger.error("SimulatorEnv: exception raised launching simulator server. {}".format(oe))
             self.close_ros_and_simulators()
@@ -44,7 +54,7 @@ class CarlaEnv(gym.Env):
         time.sleep(5)
 
 
-    def close_ros_and_simulators():
+    def close_ros_and_simulators(self):
         """Kill all the simulators and ROS processes."""
         try:
             ps_output = subprocess.check_output(["ps", "-Af"]).decode('utf-8').strip("\n")

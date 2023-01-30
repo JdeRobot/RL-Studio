@@ -526,14 +526,25 @@ class LoadEnvVariablesQlearnCarla:
 
         # Env
         self.environment["env"] = config["settings"]["env"]
+        self.environment["town"] = config[self.environment_set][self.env][
+            "town"
+        ]
+        self.environment["car"] = config[self.environment_set][self.env][
+            "car"
+        ]
         self.environment["estimated_steps"] = config[self.environment_set][self.env][
             "estimated_steps"
         ]
         self.environment["alternate_pose"] = config[self.environment_set][self.env][
             "alternate_pose"
         ]
-
-        # Image
+        self.environment["save_episodes"] = config[self.environment_set][self.env][
+            "save_episodes"
+        ]
+        self.environment["save_every_step"] = config[self.environment_set][self.env][
+            "save_every_step"
+        ]
+                # Image
         self.environment["height_image"] = config["agents"][self.agent][
             "camera_params"
         ]["height"]

@@ -1,9 +1,11 @@
 from datetime import datetime, timedelta
+import glob
 import os
 import time
 
 import gymnasium as gym
 import numpy as np
+import pygame
 from reloading import reloading
 from tqdm import tqdm
 
@@ -22,6 +24,18 @@ from rl_studio.agents.utils import (
 )
 from rl_studio.algorithms.qlearn import QLearn, QLearnF1
 from rl_studio.envs.gazebo.gazebo_envs import *
+
+
+
+try:
+    sys.path.append(glob.glob('../carla/dist/carla-*%d.%d-%s.egg' % (
+        sys.version_info.major,
+        sys.version_info.minor,
+        'win-amd64' if os.name == 'nt' else 'linux-x86_64'))[0])
+except IndexError:
+    pass
+
+
 
 
 class TrainerFollowLaneQlearnAutoCarla:
@@ -50,6 +64,7 @@ class TrainerFollowLaneQlearnAutoCarla:
         """
         Implementation of QlearnF1, a table based algorithm
         """
+        pygame.init()
 
         log = LoggingHandler(self.log_file)
 
@@ -97,6 +112,9 @@ class TrainerFollowLaneQlearnAutoCarla:
             # using epsilon reduced
             epsilon = epsilon / 2
 
+        # PYgame
+        self.display = pygame.display.set_mode((VIEW_WIDTH, VIEW_HEIGHT), pygame.HWSURFACE | pygame.DOUBLEBUF)
+        pygame_clock = pygame.time.Clock()
         ## -------------    START TRAINING --------------------
         for episode in tqdm(
             range(1, self.env_params.total_episodes + 1),
@@ -112,6 +130,8 @@ class TrainerFollowLaneQlearnAutoCarla:
             observation, _ = env.reset()
 
             while not done:
+                pygame_clock.tick_busy_loop(20)
+
                 step += 1
                 # Pick an action based on the current state
                 action = qlearn.select_action(observation)
@@ -120,198 +140,10 @@ class TrainerFollowLaneQlearnAutoCarla:
                 new_observation, reward, done, _ = env.step(action, step)
                 cumulated_reward += reward
 
-                log.logger.debug(
-                    f"\nobservation = {observation}\n"
-                    f"observation[0]= {observation[0]}\n"
-                    f"observation type = {type(observation)}\n"
-                    f"observation[0] type = {type(observation[0])}\n"
-                    f"new_observation = {new_observation}\n"
-                    f"new_observation = {type(new_observation)}\n"
-                    f"action = {action}\n"
-                    f"actions type = {type(action)}\n"
-                    f"current_max_reward = {current_max_reward}\n"
-                )
-
                 qlearn.learn(observation, action, reward, new_observation)
                 observation = new_observation
 
-                # render params
-                render_params(
-                    action=action,
-                    episode=episode,
-                    step=step,
-                    v=self.global_params.actions_set[action][
-                        0
-                    ],  # this case for discrete
-                    w=self.global_params.actions_set[action][
-                        1
-                    ],  # this case for discrete
-                    epsilon=epsilon,
-                    observation=observation,
-                    reward_in_step=reward,
-                    cumulated_reward=cumulated_reward,
-                    current_max_reward=current_max_reward,
-                    done=done,
-                )
 
-                log.logger.debug(
-                    f"\nepisode = {episode}\n"
-                    f"step = {step}\n"
-                    f"actions_len = {len(self.global_params.actions_set)}\n"
-                    f"actions_range = {range(len(self.global_params.actions_set))}\n"
-                    f"actions = {self.global_params.actions_set}\n"
-                    f"epsilon = {epsilon}\n"
-                    f"epsilon_decay = {epsilon_decay}\n"
-                    f"v = {self.global_params.actions_set[action][0]}\n"
-                    f"w = {self.global_params.actions_set[action][1]}\n"
-                    f"observation = {observation}\n"
-                    f"reward_in_step = {reward}\n"
-                    f"cumulated_reward = {cumulated_reward}\n"
-                    f"current_max_reward = {current_max_reward}\n"
-                    f"done = {done}\n"
-                )
-
-                # best episode and step's stats
-                if current_max_reward <= cumulated_reward and episode > 1:
-                    current_max_reward = cumulated_reward
-                    best_epoch = episode
-                    best_step = step
-                    best_epoch_training_time = datetime.now() - start_time_epoch
-                    self.global_params.actions_rewards["episode"].append(episode)
-                    self.global_params.actions_rewards["step"].append(step)
-                    self.global_params.actions_rewards["reward"].append(reward)
-                # Showing stats in screen for monitoring. Showing every 'save_every_step' value
-                if not step % self.env_params.save_every_step:
-                    log.logger.info(
-                        f"SHOWING BATCH OF STEPS\n"
-                        f"current_max_reward = {current_max_reward}\n"
-                        f"cumulated_reward = {cumulated_reward}\n"
-                        f"current epoch = {episode}\n"
-                        f"current step = {step}\n"
-                        f"best epoch so far = {best_epoch}\n"
-                        f"best step so far = {best_step}\n"
-                        f"best_epoch_training_time = {best_epoch_training_time}\n"
-                    )
-
-                # End epoch
-                if step > self.env_params.estimated_steps:
-                    done = True
-                    qlearn.save_numpytable(
-                        qlearn.q_table,
-                        self.environment.environment,
-                        self.global_params.models_dir,
-                        cumulated_reward,
-                        episode,
-                        step,
-                        epsilon,
-                    )
-                    np.save(
-                        f"{self.global_params.models_dir}/{time.strftime('%Y%m%d-%H%M%S')}_Circuit-{self.environment.environment['circuit_name']}_States-{self.environment.environment['states']}_Actions-{self.environment.environment['action_space']}_Rewards-{self.environment.environment['reward_function']}_epsilon-{round(epsilon,3)}_epoch-{episode}_step-{step}_reward-{int(cumulated_reward)}-qtable.npy",
-                        qlearn.q_table,
-                    )
-                    log.logger.info(
-                        f"\nEPISODE COMPLETED\n"
-                        f"in episode = {episode}\n"
-                        f"steps = {step}\n"
-                        f"cumulated_reward = {cumulated_reward}\n"
-                        f"epsilon = {epsilon}\n"
-                    )
-
-            # Save best lap
-            if (cumulated_reward - self.environment.environment['rewards']['penal']) >= current_max_reward:
-                self.global_params.best_current_epoch["best_epoch"].append(best_epoch)
-                self.global_params.best_current_epoch["highest_reward"].append(
-                    cumulated_reward
-                )
-                self.global_params.best_current_epoch["best_step"].append(best_step)
-                self.global_params.best_current_epoch[
-                    "best_epoch_training_time"
-                ].append(best_epoch_training_time)
-                self.global_params.best_current_epoch[
-                    "current_total_training_time"
-                ].append(datetime.now() - start_time)
-                save_dataframe_episodes(
-                    self.environment.environment,
-                    self.global_params.metrics_data_dir,
-                    self.global_params.best_current_epoch,
-                )
-                qlearn.save_numpytable(
-                    qlearn.q_table,
-                    self.environment.environment,
-                    self.global_params.models_dir,
-                    cumulated_reward,
-                    episode,
-                    step,
-                    epsilon,
-                )
-                np.save(
-                    f"{self.global_params.models_dir}/{time.strftime('%Y%m%d-%H%M%S')}_Circuit-{self.environment.environment['circuit_name']}_States-{self.environment.environment['states']}_Actions-{self.environment.environment['action_space']}_Rewards-{self.environment.environment['reward_function']}_epsilon-{round(epsilon,3)}_epoch-{episode}_step-{step}_reward-{int(cumulated_reward - self.environment.environment['rewards']['penal'])}-qtable.npy",
-                    qlearn.q_table,
-                )
-
-                log.logger.info(
-                    f"\nsaving best lap\n"
-                    f"in episode = {episode}\n"
-                    f"cumulated_reward = {cumulated_reward}\n"
-                    f"current_max_reward = {current_max_reward}\n"
-                    f"steps = {step}\n"
-                    f"epsilon = {epsilon}\n"
-                )
-            # end of training by:
-            # training time setting: 2 hours, 15 hours...
-            # num epochs
-
-            if (
-                datetime.now() - timedelta(hours=self.global_params.training_time)
-                > start_time
-            ) or (episode > self.env_params.total_episodes):
-                if (cumulated_reward  - self.environment.environment['rewards']['penal']) >= current_max_reward:
-                    qlearn.save_numpytable(
-                        qlearn.q_table,
-                        self.environment.environment,
-                        self.global_params.models_dir,
-                        qlearn,
-                        cumulated_reward,
-                        episode,
-                        step,
-                        epsilon,
-                    )
-                    np.save(
-                        f"{self.global_params.models_dir}/{time.strftime('%Y%m%d-%H%M%S')}_Circuit-{self.environment.environment['circuit_name']}_States-{self.environment.environment['states']}_Actions-{self.environment.environment['action_space']}_Rewards-{self.environment.environment['reward_function']}_epsilon-{round(epsilon,3)}_epoch-{episode}_step-{step}_reward-{int(cumulated_reward)}-qtable.npy",
-                        qlearn.q_table,
-                    )
-                    log.logger.info(
-                        f"\nTraining Time over\n"
-                        f"current_max_reward = {current_max_reward}\n"
-                        f"epoch = {episode}\n"
-                        f"step = {step}\n"
-                        f"epsilon = {epsilon}\n"
-                    )
-                break
-
-            # save best values every save_episode times
-            self.global_params.ep_rewards.append(cumulated_reward)
-            if not episode % self.env_params.save_episodes:
-                self.global_params.aggr_ep_rewards = save_batch(
-                    episode,
-                    step,
-                    start_time_epoch,
-                    start_time,
-                    self.global_params,
-                    self.env_params,
-                )
-                save_dataframe_episodes(
-                    self.environment.environment,
-                    self.global_params.metrics_data_dir,
-                    self.global_params.aggr_ep_rewards,
-                )
-                log.logger.info(
-                    f"\nsaving BATCH\n"
-                    f"current_max_reward = {current_max_reward}\n"
-                    f"best_epoch = {best_epoch}\n"
-                    f"best_step = {best_step}\n"
-                    f"best_epoch_training_time = {best_epoch_training_time}\n"
-                )
             # updating epsilon for exploration
             if epsilon > self.environment.environment["epsilon_min"]:
                 epsilon -= epsilon_decay
@@ -319,12 +151,36 @@ class TrainerFollowLaneQlearnAutoCarla:
                     max(self.environment.environment["epsilon_min"], epsilon)
                 )
 
+
+
+            pygame.display.flip()
+            pygame.event.pump()
+        # close 
+        self.set_synchronous_mode(False)
+        #self.camera.destroy()
+        #self.car.destroy()
+        pygame.quit()
+        for actor in actor_list:
+            print(f"actor:{actor}")
+            actor.destroy()
+
         env.close()
 
 
 
 
 
+    #########################################################################33
+    #########################################################################33
+    #########################################################################33
+    #########################################################################33
+    #########################################################################33
+    #########################################################################33
+    #########################################################################33
+    ##################
+    ##################
+    ##################
+    ##################
     ##################
     def main_____(self):
         """

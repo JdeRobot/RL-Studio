@@ -4,7 +4,7 @@ settings:
   algorithm: qlearn # qlearn
   simulator: carla # openai, carla, gazebo, sumo
   environment_set: carla_environments # gazebo_environments, carla_environments
-  env: fix_weather # Town01, simple, nurburgring, montreal, curves, simple_laser, manual, autoparking
+  env: follow_lane # Town01, simple, nurburgring, montreal, curves, simple_laser, manual, autoparking
   agent: auto_carla # f1, autoparkingRL, auto_carla, mountain_car, robot_mesh, cartpole, turtlebot
   actions: simple # simple, medium, hard, test, autoparking_simple
   states: sp1 # sp1 (simplified perception with 1 point), sp3 (simplified perception with 3 points), spn (simplified perception with n points)
@@ -101,7 +101,7 @@ carla_server:
 carla_client:
 
 carla_environments:
-  fix_weather:
+  follow_lane:
     env_name: CarlaEnv-v0
     town: Town01
     car: tesla

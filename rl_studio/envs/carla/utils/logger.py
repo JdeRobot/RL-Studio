@@ -2,8 +2,8 @@
 import logging
 import sys
 
-from utils.colors import Colors
-from utils.constants import ROOT_PATH
+from rl_studio.envs.carla.utils.colors import Colors
+from rl_studio.envs.carla.utils.constants import ROOT_PATH
 
 
 class ColorLogger(logging.Formatter):
