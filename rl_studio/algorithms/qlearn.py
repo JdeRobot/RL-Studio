@@ -294,3 +294,67 @@ class QLearn:
     def updateEpsilon(self, epsilon):
         self.epsilon = epsilon
         return self.epsilon
+
+
+
+class QLearnCarla:
+    def __init__(
+        self, states_len, actions, actions_len, epsilon, alpha, gamma, num_regions
+    ):
+        self.q_table = np.random.uniform(
+            low=0, high=0, size=([num_regions + 1] * states_len + [actions_len])
+        )
+        self.epsilon = epsilon  # exploration constant
+        self.alpha = alpha  # learning rate
+        self.gamma = gamma  # discount factor
+        self.actions = actions
+        self.actions_len = actions_len
+
+    def select_action(self, state):
+        state = state[0]
+
+        if np.random.random() > self.epsilon:
+            action = np.argmax(self.q_table[state])
+        else:
+            action = np.random.randint(0, self.actions_len)
+
+        return action
+
+    def learn(self, state, action, reward, next_state):
+        state = tuple(state)
+        next_state = next_state[0]
+
+        max_future_q = np.max(self.q_table[next_state])
+        current_q = self.q_table[state + (action,)]
+        new_q = (1 - self.alpha) * current_q + self.alpha * (
+            reward + self.gamma * max_future_q
+        )
+
+        # Update Q table with new Q value
+        self.q_table[state + (action,)] = new_q
+
+    def inference(self, state):
+        return np.argmax(self.q_table[state])
+
+    def update_epsilon(self, epsilon):
+        self.epsilon = epsilon
+        return self.epsilon
+
+    def load_table(self, file):
+        self.q_table = np.load(file)
+
+    def save_numpytable(
+        self,
+        qtable,
+        environment,
+        outdir,
+        cumulated_reward,
+        episode,
+        step,
+        epsilon,
+    ):
+        np.save(
+            f"{outdir}/{time.strftime('%Y%m%d-%H%M%S')}_Circuit-{environment['circuit_name']}_States-{environment['states']}_Actions-{environment['action_space']}_Rewards-{environment['reward_function']}_epsilon-{round(epsilon,3)}_epoch-{episode}_step-{step}_reward-{int(cumulated_reward)}-qtable.npy",
+            qtable,
+        )
+

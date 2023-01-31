@@ -24,9 +24,10 @@ class CarlaEnv(gym.Env):
 
     def __init__(self, **config):
         """ Constructor of the class. """
-        # close previous instances of ROS and simulators if hanged.
-        self.close_ros_and_simulators()
-        #print(f"{os.environ=}\n")
+        
+        #TODO: remove comments in below line
+        #self.close_ros_and_simulators()
+        
         try:
             carla_root = os.environ["CARLA_ROOT"]
             #print(f"{carla_root = }\n")

@@ -22,10 +22,8 @@ from rl_studio.agents.utils import (
     save_best_episode,
     LoggingHandler,
 )
-from rl_studio.algorithms.qlearn import QLearn, QLearnF1
+from rl_studio.algorithms.qlearn import QLearnCarla
 from rl_studio.envs.gazebo.gazebo_envs import *
-
-
 
 try:
     sys.path.append(glob.glob('../carla/dist/carla-*%d.%d-%s.egg' % (
@@ -57,6 +55,7 @@ class TrainerFollowLaneQlearnAutoCarla:
         os.makedirs(f"{self.global_params.logs_dir}", exist_ok=True)
         os.makedirs(f"{self.global_params.metrics_data_dir}", exist_ok=True)
         os.makedirs(f"{self.global_params.metrics_graphics_dir}", exist_ok=True)
+        os.makedirs(f"{self.global_params.recorders_carla_dir}", exist_ok=True)
 
         self.log_file = f"{self.global_params.logs_dir}/{time.strftime('%Y%m%d-%H%M%S')}_{self.global_params.mode}_{self.global_params.task}_{self.global_params.algorithm}_{self.global_params.agent}_{self.global_params.framework}.log"
 
@@ -64,7 +63,10 @@ class TrainerFollowLaneQlearnAutoCarla:
         """
         Implementation of QlearnF1, a table based algorithm
         """
-        pygame.init()
+        #TODO: Pytgame
+        #pygame.init()
+
+        #TODO: env.recorder_file() to save trainings
 
         log = LoggingHandler(self.log_file)
 
@@ -94,7 +96,7 @@ class TrainerFollowLaneQlearnAutoCarla:
             f"gamma = {self.environment.environment['gamma']}\n"
         )
         ## --- init Qlearn
-        qlearn = QLearnF1(
+        qlearn = QLearnCarla(
             len(self.global_params.states_set),
             self.global_params.actions,
             len(self.global_params.actions_set),
@@ -104,17 +106,21 @@ class TrainerFollowLaneQlearnAutoCarla:
             self.environment.environment["num_regions"],
         )
 
-        ## retraining q model
+        ## --- retraining q model
         if self.environment.environment["mode"] == "retraining":
             qlearn.load_table(
                 f"{self.global_params.models_dir}/{self.environment.environment['retrain_qlearn_model_name']}"
             )
-            # using epsilon reduced
+            ## --- using epsilon reduced
             epsilon = epsilon / 2
 
         # PYgame
-        self.display = pygame.display.set_mode((VIEW_WIDTH, VIEW_HEIGHT), pygame.HWSURFACE | pygame.DOUBLEBUF)
-        pygame_clock = pygame.time.Clock()
+        #self.display = pygame.display.set_mode((VIEW_WIDTH, VIEW_HEIGHT), pygame.HWSURFACE | pygame.DOUBLEBUF)
+        #pygame_clock = pygame.time.Clock()
+ 
+        #TODO: if weather is dynamic, set time variable to control weather
+
+
         ## -------------    START TRAINING --------------------
         for episode in tqdm(
             range(1, self.env_params.total_episodes + 1),
@@ -125,21 +131,15 @@ class TrainerFollowLaneQlearnAutoCarla:
             cumulated_reward = 0
             step = 0
             start_time_epoch = datetime.now()
-
-            ## reset env()
             observation, _ = env.reset()
 
             while not done:
-                pygame_clock.tick_busy_loop(20)
+                #pygame_clock.tick_busy_loop(20)
 
                 step += 1
-                # Pick an action based on the current state
                 action = qlearn.select_action(observation)
-
-                # Execute the action and get feedback
                 new_observation, reward, done, _ = env.step(action, step)
                 cumulated_reward += reward
-
                 qlearn.learn(observation, action, reward, new_observation)
                 observation = new_observation
 
@@ -152,18 +152,16 @@ class TrainerFollowLaneQlearnAutoCarla:
                 )
 
 
-
-            pygame.display.flip()
-            pygame.event.pump()
+            #TODO:
+            #pygame.display.flip()
+            #pygame.event.pump()
         # close 
-        self.set_synchronous_mode(False)
+        env.set_synchronous_mode(False)
         #self.camera.destroy()
         #self.car.destroy()
-        pygame.quit()
-        for actor in actor_list:
-            print(f"actor:{actor}")
-            actor.destroy()
-
+        #TODO:
+        #pygame.quit()
+        env.destroy_all_actors()
         env.close()
 
 

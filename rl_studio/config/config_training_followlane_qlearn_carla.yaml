@@ -15,6 +15,7 @@ settings:
   models_dir: "./checkpoints"
   logs_dir: "./logs"
   metrics_dir: "./metrics"
+  recorder_carla_dir: "./recorders"
 
 ros:
   ros_master_uri: "11311"
@@ -104,8 +105,8 @@ carla_environments:
   follow_lane:
     env_name: CarlaEnv-v0
     town: Town01
-    car: tesla
-    dynamic_weather: False 
+    car: model1
+    weather: fix #dynamic, argparse
     position: 
     traffic_signals:
     pedestrians:

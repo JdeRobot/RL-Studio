@@ -5,7 +5,8 @@ import carla
 
 from rl_studio.envs.carla.carla_env import CarlaEnv
 from rl_studio.envs.carla.utils.logger import logger
-
+from rl_studio.envs.carla.utils.weather import Weather
+from rl_studio.envs.carla.utils.environment import apply_sun_presets, apply_weather_presets, apply_weather_values, apply_lights_to_cars, apply_lights_manager, get_args
 
 import glob
 import os
@@ -19,44 +20,53 @@ except ImportError:
     raise RuntimeError('cannot import pygame, make sure pygame package is installed')
 
 
-
-
-
 class FollowLaneEnv(CarlaEnv):
 
     def __init__(self, **config):
         """ Constructor of the class. """
-
-        print(f"in FollowLaneEnv\n")   
-        print(f"launching CarlaEnv\n ")         
-        # init F1env
+        
         CarlaEnv.__init__(self, **config)
-        print(f"leaving CarlaEnv\n ")   
+        print(f"{config}\n")
+        #self.actor_list = []
+        self.camera = None
+        self.car = None
+        self.carla_map = None
+        self.client = None
+        self.world = None
 
-        print(f"launch world, vehicles...\n")
-        print(f"\n{config=}\n")
+        #-- weather    
+        self.set_carlaclient_world_map(config)
+        if config["weather"] == "dynamic":
+            self.weather = Weather(self.world.get_weather())
+        elif config["weather"] == "argparse":
+            self.set_arg_weather()
+        else:
+            self.set_fix_weather()
 
-        self.actor_list = []
-        self.data = {}
-        self.pose3D_data = None
-        self.recording = False
-        self.cvbridge = CvBridge()
+        #TODO: lights: street and cars
+        self.set_street_lights()
+        self.set_car_lights()
 
-        #pygame.init()
+        #TODO: get snapshots for a particular actor
+        self.get_snapshot()
 
-        self.client = carla.Client('localhost', 2000)
-        self.client.set_timeout(5.0) # seconds
-        #self.world = client.get_world()
-        self.world = self.client.load_world(config['town'])
-        #time.sleep(5)
+        #TODO: Debugging mode: draw boxes
+        self.set_synchronous_mode(True)
 
-        self.carla_map = self.world.get_map()
-        #while len(self.world.get_actors().filter('vehicle.*')) == 0:
-        #    logger.info("Waiting for vehicles!")
-        #    time.sleep(1)
-        self.ego_vehicle = self.world.get_actors().filter('vehicle.*')[0]
+        #TODO: recorder from TrainerFollowLane...
+        #self.recorder_file(config[], record=True)
+
+        self.blueprint_library = self.get_blueprint_library()
+        #self.vehicle = self.blueprint_library.filter(config["car"])[0]
+        self.car_model = random.choice(self.blueprint_library.filter("vehicle.*.*"))
+
+        #---------- hasta aqui ----------
+
+
+
+        #self.ego_vehicle = self.world.get_actors().filter('vehicle.*')[0]
         self.map_waypoints = self.carla_map.generate_waypoints(0.5)
-        self.weather = self.world.get_weather()
+        #self.weather = self.world.get_weather()
 
         ###### Waypoints
         waypoints = self.world.get_map().generate_waypoints(distance=2.0)
@@ -77,9 +87,197 @@ class FollowLaneEnv(CarlaEnv):
         #self.display = pygame.display.set_mode((VIEW_WIDTH, VIEW_HEIGHT), pygame.HWSURFACE | pygame.DOUBLEBUF)
         #pygame_clock = pygame.time.Clock()
             
-        # syncronous mode
-        self.set_synchronous_mode(True)
         #vehicles = self.world.get_actors().filter('vehicle.*')
+
+
+    def reset(self):
+        print(self._vehicle.get_transform())
+        if len(self._actors) > 0:
+            self.destroy_all_actors()
+
+        time.sleep(0.5)
+
+        self.collision_hist = []
+        self.actor_list = []
+
+        ##### Waypoints
+        waypoints = self.world.get_map().generate_waypoints(distance=2.0)
+        waypoints_list = self.get_waypoints(waypoints, road_id=3, life_time=200)
+
+        ###### Waypoint Target
+        self.get_target_waypoint(waypoints_list[50], life_time=200)
+
+        ###### Car
+        self.setup_car(waypoints_list[0])
+        actor_list.append(self.car)
+
+        # Camera
+        self.setup_camera()
+        actor_list.append(self.setup_camera())
+        #blueprint_library: carla.BlueprintLibrary = self.get_blueprint_library()
+        #model = blueprint_library.filter("model3")[0]
+        #cam = blueprint_library.find("sensor.camera.rgb")
+        #colsensor = blueprint_library.find('sensor.other.collision')
+        #self.spawn_vehicle(model, cam, colsensor)
+
+
+    def get_waypoints(self, waypoints, road_id=None, life_time=100.0):
+        '''
+        Retrieve waypoints from server in a desirable road and drawing them
+        '''
+        filtered_waypoints = []
+        for waypoint in waypoints:
+
+            if(waypoint.road_id == road_id):
+                # added
+                filtered_waypoints.append(waypoint)
+                # draw them
+                self.world.debug.draw_string(waypoint.transform.location, 'O', draw_shadow=False,
+                    color=carla.Color(r=0, g=255, b=0), life_time=life_time,
+                    persistent_lines=True)
+
+        return filtered_waypoints
+
+    def get_target_waypoint(self, target_waypoint, life_time=100.0):
+        '''
+        draw target point
+        '''
+        self.world.debug.draw_string(target_waypoint.transform.location, 'O', draw_shadow=False,
+                    color=carla.Color(r=255, g=0, b=0), life_time=life_time,
+                    persistent_lines=True)
+
+
+
+    def setup_random_pose_and_car(self):
+        """
+        Spawns a random actor-vehicle to be controled in a random position inside town.
+        """
+
+        car_bp = self.world.get_blueprint_library().filter('vehicle.*')[0]
+        location = random.choice(self.world.get_map().get_spawn_points())
+        self.car = self.world.spawn_actor(car_bp, location)
+
+    def setup_fix_pose_car(self):
+        """
+        Spawns an actor-vehicle in always a fix position
+        """
+
+        car_bp = self.world.get_blueprint_library().filter('vehicle.*')[0]
+        location = carla.Transform(carla.Location(x=-14.130021, y=69.766624, z=4), carla.Rotation(pitch=360.000000, yaw=0.073273, roll=0.000000))
+        self.car = self.world.spawn_actor(car_bp, location)
+
+    def setup_waypoint_related_pose_car(self, waypoints_list):
+        """
+        Spawns actor-vehicle to be controled in a certain waypoint.
+        """
+
+        #car_bp = self.world.get_blueprint_library().filter('vehicle.*')[0]
+        #car_bp = self.world.get_blueprint_library().filter('mini2021')[0]
+        #car_bp = self.world.get_blueprint_library().filter('vehicle.citroen.c3')[0]
+        car_bp = self.world.get_blueprint_library().filter('vehicle.jeep.wrangler_rubicon')[0]
+
+        spawn_point = waypoints_list.transform
+        spawn_point.location.z += 2
+        #vehicle = client.get_world().spawn_actor(vehicle_blueprint, spawn_point)
+
+        #location = random.choice(self.world.get_map().get_spawn_points())
+        #location = self.world.get_map().get_spawn_points()
+        #location = carla.Transform(carla.Location(x=-14.130021, y=69.766624, z=4), carla.Rotation(pitch=360.000000, yaw=0.073273, roll=0.000000))
+        #print(f"location:{location}")
+        self.car = self.world.spawn_actor(car_bp, spawn_point)
+
+        # Retrieve the closest waypoint.
+        #waypoint = self.world.get_map().get_waypoint(self.car.get_location())
+        #print(f"waypoint:{waypoint}")
+
+        '''
+        waypoint:Waypoint(Transform(Location(x=14.130021, y=69.766624, z=0.000000), Rotation(pitch=360.000000, yaw=0.073273, roll=0.000000)))
+        waypoint:Waypoint(Transform(Location(x=-0.036634, y=13.183878, z=0.000000), Rotation(pitch=360.000000, yaw=180.159195, roll=0.000000)))
+        '''
+        # Disable physics, in this example we're just teleporting the vehicle.
+        #self.car.set_simulate_physics(False)
+        # Find next waypoint 2 meters ahead.
+        #waypoint = random.choice(waypoint.next(2.0))
+        # Teleport the vehicle.
+        #self.car.set_transform(waypoint.transform)
+
+        #waypoint_list = self.world.get_map().generate_waypoints(2.0)
+        #waypoint_tuple_list = self.world.get_map().get_topology()
+        #print(f"waypoint_list:{waypoint_list[0]}")
+        #print(f"waypoint_tuple_list:{waypoint_tuple_list[0]}")
+
+        # returns car to add in destroy list
+        
+        
+        #return self.car
+
+
+    def set_carlaclient_world_map(self, config):
+        self.client = carla.Client('localhost', 2000)
+        self.client.set_timeout(5.0) # seconds
+        self.world = self.client.load_world(config['town'])
+        self.carla_map = self.world.get_map()        
+        
+    def destroy_all_actors(self):
+        for actor in self._actors:
+            actor.destroy()
+        self._actors = []
+  
+    def set_synchronous_mode(self, synchronous_mode):
+        settings = self.world.get_settings()
+        settings.synchronous_mode = synchronous_mode
+        settings.fixed_delta_seconds = 0.05 #simulator takes 1/0.1 steps, i.e. 10 steps
+        settings.max_substep_delta_time = 0.01
+        settings.max_substeps = 10
+        self.world.apply_settings(settings)
+
+    def set_fix_weather(self):
+        '''
+        ClearNoon, CloudyNoon, WetNoon, WetCloudyNoon, SoftRainNoon, 
+        MidRainyNoon, HardRainNoon, ClearSunset, CloudySunset, 
+        WetSunset, WetCloudySunset, SoftRainSunset, MidRainSunset, 
+        HardRainSunset.
+        '''
+        #TODO: carla.WeatherParameters is a enum. Every time weather is changing
+        # for i in enum(carla.WeatherParameters )
+        #     weather.tick(speed_factor * elapsed_time)
+        #     world.set_weather(weather.weather)
+
+        self.world.set_weather(carla.WeatherParameters.ClearNoon)
+
+    def set_arg_weather(self, dynamic=None):
+        """
+        setting weather through params in utils.get_args()
+        """
+        self.weather = self.world.get_weather()
+        args = get_args()
+        # apply presets
+        apply_sun_presets(args, self.weather)
+        apply_weather_presets(args, self.weather)
+        # apply weather values individually
+        apply_weather_values(args, self.weather)
+
+        self.world.set_weather(self.weather)
+
+    def set_street_lights(self):
+        pass
+
+    def set_car_lights(self):
+        pass
+
+    def get_snapshot(self):
+        pass
+
+    def recorder_file(self, path, name, recorder=False):
+        if recorder is True:
+            file_name = f"{path}/{name}"
+            self.client.start_recorder(file_name, True)
+
+    def get_blueprint_library(self):
+        return self.world.get_blueprint_library()
+
+
+
 
 
     def run_simulation(self):
@@ -144,21 +342,6 @@ class FollowLaneEnv(CarlaEnv):
                 print(f"actor:{actor}")
                 actor.destroy()
             #self.client.apply_batch([carla.command.DestroyActor(x) for x in actor_list])
-
-
-    def set_weather(self, dynamic=None):
-        '''
-        ClearNoon, CloudyNoon, WetNoon, WetCloudyNoon, SoftRainNoon, 
-        MidRainyNoon, HardRainNoon, ClearSunset, CloudySunset, 
-        WetSunset, WetCloudySunset, SoftRainSunset, MidRainSunset, 
-        HardRainSunset.
-        '''
-        world.set_weather(carla.WeatherParameters.WetCloudySunset)
-
-
-
-    def set_lights(self):
-        pass
 
 
     def get_waypoints(self, waypoints, road_id=None, life_time=100.0):
@@ -261,14 +444,7 @@ class FollowLaneEnv(CarlaEnv):
         camera_bp.set_attribute('fov', str(VIEW_FOV))
         return camera_bp
 
-    def set_synchronous_mode(self, synchronous_mode):
-        """
-        Sets synchronous mode.
-        """
 
-        settings = self.world.get_settings()
-        settings.synchronous_mode = synchronous_mode
-        self.world.apply_settings(settings)
 
     def setup_camera(self):
         """
@@ -315,7 +491,4 @@ class FollowLaneEnv(CarlaEnv):
             surface = pygame.surfarray.make_surface(array.swapaxes(0, 1))
             display.blit(surface, (0, 0))
 
-    def destroy_all_actors(self):
-        for actor in self._actors:
-            actor.destroy()
-        self._actors = []            
+         

@@ -123,6 +123,7 @@ class LoadGlobalParams:
         self.logs_dir = f"{config['settings']['logs_dir']}/{config['settings']['mode']}/{config['settings']['task']}_{config['settings']['algorithm']}_{config['settings']['agent']}_{config['settings']['framework']}/logs"
         self.metrics_data_dir = f"{config['settings']['metrics_dir']}/{config['settings']['mode']}/{config['settings']['task']}_{config['settings']['algorithm']}_{config['settings']['agent']}_{config['settings']['framework']}/data"
         self.metrics_graphics_dir = f"{config['settings']['metrics_dir']}/{config['settings']['mode']}/{config['settings']['task']}_{config['settings']['algorithm']}_{config['settings']['agent']}_{config['settings']['framework']}/graphics"
+        self.recorders_carla_dir = f"{config['settings']['recorder_carla_dir']}/{config['settings']['mode']}/{config['settings']['task']}_{config['settings']['algorithm']}_{config['settings']['agent']}_{config['settings']['framework']}"
         self.training_time = config["settings"]["training_time"]
         ####### States
         self.states = config["settings"]["states"]
@@ -531,6 +532,9 @@ class LoadEnvVariablesQlearnCarla:
         ]
         self.environment["car"] = config[self.environment_set][self.env][
             "car"
+        ]
+        self.environment["weather"] = config[self.environment_set][self.env][
+            "weather"
         ]
         self.environment["estimated_steps"] = config[self.environment_set][self.env][
             "estimated_steps"
