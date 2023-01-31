@@ -166,11 +166,13 @@ def configure_frequencies_graph(ax1, frequencies):
     ax1.set_ylabel("percentage of successful episodes")
 
 def configure_boxplot_graph(ax1, frequencies):
-    boxplot_y = np.linspace(0, 500, 27)
+    boxplot_y = np.linspace(0, 500, 26)
     ax1.set_yticks(boxplot_y)
     ax1.set_xticks(frequencies)
     ax1.set_xlim(frequencies[0]-0.1, frequencies[len(frequencies)-1]+0.1)
     ax1.grid()
+    ax1.set_xlabel("frequency of perturbations with fixed intensity")
+    ax1.set_ylabel("number of steps")
 
 # def configure_intensities_graph(ax1, clear_ticks, intensities):
 def configure_deviation_graph(ax1, intensities):
@@ -192,7 +194,7 @@ def configure_deviation_graph(ax1, intensities):
     ax1.grid()
     ax1.legend()
 
-    ax1.set_xlabel("intensity of perturbations with fixed frequency")
+    ax1.set_xlabel("frequency of perturbations with fixed intensity")
     ax1.set_ylabel("average pole angle")
 
 if __name__ == "__main__":

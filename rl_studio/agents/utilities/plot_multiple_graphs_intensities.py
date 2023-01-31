@@ -176,7 +176,8 @@ def configure_boxplot_graph(ax1, intensities):
         xtick.set_horizontalalignment('right')
         xtick.set_fontsize('xx-small')
     ax1.grid()
-
+    ax1.set_xlabel("intensity of perturbations with fixed frequency")
+    ax1.set_ylabel("number of steps")
 
 # def configure_intensities_graph(ax1, clear_ticks, intensities):
 def configure_deviation_graph(ax1, intensities):
