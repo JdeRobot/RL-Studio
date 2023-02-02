@@ -69,6 +69,7 @@ class TrainerFollowLaneDQNF1GazeboTF:
         epsilon = self.algoritmhs_params.epsilon
         epsilon_discount = self.algoritmhs_params.epsilon_discount
         epsilon_min = self.algoritmhs_params.epsilon_min
+        epsilon_decay = epsilon / (self.env_params.total_episodes // 2)
 
         ## Reset env
         state, state_size = env.reset()
@@ -329,7 +330,8 @@ class TrainerFollowLaneDQNF1GazeboTF:
                 )
             # reducing exploration
             if epsilon > epsilon_min:
-                epsilon *= epsilon_discount
+                # epsilon *= epsilon_discount
+                epsilon -= epsilon_decay
 
         ### save last episode, not neccesarily the best one
         save_dataframe_episodes(

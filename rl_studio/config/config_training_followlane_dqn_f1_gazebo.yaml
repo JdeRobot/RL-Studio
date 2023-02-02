@@ -10,8 +10,8 @@ settings:
   states: sp1 #image, sp1 (simplified perception with 1 point), sp3 (simplified perception with 3 points), spn (simplified perception with n points)
   rewards: follow_right_lane_only_center # follow_right_lane_only_center, follow_right_lane_center_v_step
   framework: TensorFlow # TensorFlow, Pytorch
-  total_episodes: 100_000
-  training_time: 12
+  total_episodes: 10_000
+  training_time: 120
   models_dir: "./checkpoints"
   logs_dir: "./logs"
   metrics_dir: "./metrics"
@@ -22,7 +22,7 @@ ros:
 
 retraining:
   dqn:
-    retrain_dqn_tf_model_name: "20230125-185757_Circuit-simple_States-sp1_Actions-simple_BESTLAP_Rewards-follow_right_lane_only_center_epsilon-0.596_epoch-334_step-2917_reward-4870_DQN_sp_16x16.model"
+    retrain_dqn_tf_model_name: "20230131-212216_Circuit-simple_States-sp1_Actions-simple_BESTLAP_Rewards-follow_right_lane_only_center_epsilon-0.459_epoch-2585_step-943_reward-4700_DQN_sp_16x16.h5"
 
 inference:
   dqn:
@@ -32,7 +32,7 @@ algorithm:
   dqn:
     alpha: 0.8
     gamma: 0.9
-    epsilon: 0.55 # in Retraining mode is convenient to reduce, i.e. 0.45
+    epsilon: 0.6 # in Retraining mode is convenient to reduce, i.e. 0.45
     epsilon_discount: 0.9986
     epsilon_min: 0.05
     model_name: DQN_sp_16x16 #DQN_im_32x64
@@ -115,7 +115,7 @@ gazebo_environments:
     robot_name: f1_renault
     model_state_name: f1_renault_multicamera_multilaser # f1_renault_multicamera_multilaser, f1_renault
     start_pose: 0 # 0, 1, 2, 3, 4
-    alternate_pose: True
+    alternate_pose: False
     estimated_steps: 15_000
     sensor: camera
     save_episodes: 10
