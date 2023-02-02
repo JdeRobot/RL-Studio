@@ -2,7 +2,7 @@ from datetime import datetime, timedelta
 import glob
 import os
 import time
-
+import cv2
 import gymnasium as gym
 import numpy as np
 import pygame
@@ -24,6 +24,8 @@ from rl_studio.agents.utils import (
 )
 from rl_studio.algorithms.qlearn import QLearnCarla
 from rl_studio.envs.gazebo.gazebo_envs import *
+from rl_studio.envs.carla.utils.bounding_boxes import ClientSideBoundingBoxes
+from rl_studio.envs.carla.utils.logger import logger
 
 try:
     sys.path.append(glob.glob('../carla/dist/carla-*%d.%d-%s.egg' % (
@@ -33,7 +35,11 @@ try:
 except IndexError:
     pass
 
+VIEW_WIDTH = 1920//2
+VIEW_HEIGHT = 1080//2
+VIEW_FOV = 90
 
+BB_COLOR = (248, 64, 24)
 
 
 class TrainerFollowLaneQlearnAutoCarla:
@@ -82,7 +88,7 @@ class TrainerFollowLaneQlearnAutoCarla:
         epsilon_decay = epsilon / (self.env_params.total_episodes // 2)
         # states_counter = {}
 
-        log.logger.debug(
+        logger.debug(
             f"\nstates = {self.global_params.states}\n"
             f"states_set = {self.global_params.states_set}\n"
             f"states_len = {len(self.global_params.states_set)}\n"
@@ -114,8 +120,8 @@ class TrainerFollowLaneQlearnAutoCarla:
             ## --- using epsilon reduced
             epsilon = epsilon / 2
 
-        # PYgame
-        #self.display = pygame.display.set_mode((VIEW_WIDTH, VIEW_HEIGHT), pygame.HWSURFACE | pygame.DOUBLEBUF)
+        ## --- PYgame
+        #display = pygame.display.set_mode((VIEW_WIDTH, VIEW_HEIGHT), pygame.HWSURFACE | pygame.DOUBLEBUF)
         #pygame_clock = pygame.time.Clock()
  
         #TODO: if weather is dynamic, set time variable to control weather
@@ -131,37 +137,48 @@ class TrainerFollowLaneQlearnAutoCarla:
             cumulated_reward = 0
             step = 0
             start_time_epoch = datetime.now()
-            observation, _ = env.reset()
+            observation = env.reset()
+            print(f"\n{observation=}\n")
 
-            while not done:
+            #while not done:
+                #self.world.tick()
                 #pygame_clock.tick_busy_loop(20)
+                #self.render(display)
+                #bounding_boxes = ClientSideBoundingBoxes.get_bounding_boxes(vehicles, self.camera)
+                #ClientSideBoundingBoxes.draw_bounding_boxes(self.display, bounding_boxes)
 
-                step += 1
-                action = qlearn.select_action(observation)
-                new_observation, reward, done, _ = env.step(action, step)
-                cumulated_reward += reward
-                qlearn.learn(observation, action, reward, new_observation)
-                observation = new_observation
+                #pygame.display.flip()
+
+                #pygame.event.pump()
+                #cv2.imshow("Agent", observation)
+                #cv2.waitKey(1)
+                #step += 1
+                #action = qlearn.select_action(observation)
+                #new_observation, reward, done, _ = env.step(action, step)
+                #cumulated_reward += reward
+                #qlearn.learn(observation, action, reward, new_observation)
+                #observation = new_observation
 
 
             # updating epsilon for exploration
-            if epsilon > self.environment.environment["epsilon_min"]:
-                epsilon -= epsilon_decay
-                epsilon = qlearn.update_epsilon(
-                    max(self.environment.environment["epsilon_min"], epsilon)
-                )
+            #if epsilon > self.environment.environment["epsilon_min"]:
+            #    epsilon -= epsilon_decay
+            #    epsilon = qlearn.update_epsilon(
+            #        max(self.environment.environment["epsilon_min"], epsilon)
+            #    )
 
 
             #TODO:
             #pygame.display.flip()
             #pygame.event.pump()
+            env.destroy_all_actors()
+
         # close 
         env.set_synchronous_mode(False)
         #self.camera.destroy()
         #self.car.destroy()
         #TODO:
         #pygame.quit()
-        env.destroy_all_actors()
         env.close()
 
 

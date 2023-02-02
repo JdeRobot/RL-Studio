@@ -28,20 +28,15 @@ class FollowLaneQlearn(FollowLaneEnv):
         FollowLaneCarlaConfig.__init__(self, **config)
 
     def reset(self):
-        from rl_studio.envs.gazebo.f1.models.reset import (
-            Reset,
+        from rl_studio.envs.carla.followlane.followlane_env import (
+            FollowLaneEnv,
         )
-
-        if self.state_space == "image":
-            return Reset.reset_f1_state_image(self)
-        else:
-            return Reset.reset_f1_state_sp(self)
+        return FollowLaneEnv.reset(self)
 
     def step(self, action, step):
-        from rl_studio.envs.gazebo.f1.models.step import (
-            StepFollowLane,
+        from rl_studio.envs.carla.followlane.followlane_env import (
+            FollowLaneEnv,
         )
-
-        return StepFollowLane.step_followlane_state_sp_actions_discretes(
+        return FollowLaneEnv.step(
             self, action, step
         )

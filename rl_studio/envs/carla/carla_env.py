@@ -18,15 +18,19 @@ import rospy
 import shlex
 
 from rl_studio.envs.carla.utils.logger import logger
+from rl_studio.envs.carla.utils.weather import Weather
+from rl_studio.envs.carla.utils.environment import apply_sun_presets, apply_weather_presets, apply_weather_values, apply_lights_to_cars, apply_lights_manager, get_args
 
 
 class CarlaEnv(gym.Env):
 
     def __init__(self, **config):
         """ Constructor of the class. """
-        
+        self.carla_map = None
+        self.client = None
+        self.world = None       
         #TODO: remove comments in below line
-        #self.close_ros_and_simulators()
+        self.close_ros_and_simulators()
         
         try:
             carla_root = os.environ["CARLA_ROOT"]
@@ -51,8 +55,9 @@ class CarlaEnv(gym.Env):
             self.close_ros_and_simulators()
             sys.exit(-1)
 
-        # give simulator some time to initialize
         time.sleep(5)
+
+
 
 
     def close_ros_and_simulators(self):

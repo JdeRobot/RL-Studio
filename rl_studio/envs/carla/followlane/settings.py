@@ -18,8 +18,8 @@ class FollowLaneCarlaConfig(BaseModel):
         #self.image = ImageF1()
         #self.image = ListenerCamera("/F1ROS/cameraL/image_raw")
         self.image_raw_from_topic = None
-        self.f1_image_camera = None
-        self.sensor = config["sensor"]
+        self.image_camera = None
+        #self.sensor = config["sensor"]
 
         # Image
         self.image_resizing = config["image_resizing"] / 100
@@ -30,7 +30,7 @@ class FollowLaneCarlaConfig(BaseModel):
         self.center_image = int(config["center_image"] * self.image_resizing)
         self.num_regions = config["num_regions"]
         self.pixel_region = int(self.center_image / self.num_regions) * 2
-        self.telemetry_mask = config["telemetry_mask"]
+        #self.telemetry_mask = config["telemetry_mask"]
         self.poi = config["x_row"][0]
         self.image_center = None
         self.right_lane_center_image = config["center_image"] + (
@@ -55,4 +55,4 @@ class FollowLaneCarlaConfig(BaseModel):
         self.min_reward = config["min_reward"]
 
         # Others
-        self.telemetry = config["telemetry"]
+        #self.telemetry = config["telemetry"]
