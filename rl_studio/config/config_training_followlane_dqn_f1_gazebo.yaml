@@ -1,5 +1,5 @@
 settings:
-  mode: training # training, retraining, inference
+  mode: retraining # training, retraining, inference
   task: follow_lane_gazebo # follow_line_gazebo, follow_lane_gazebo, autoparking_gazebo
   algorithm: dqn # qlearn, dqn, ddpg, ppo
   simulator: gazebo # openai, carla, gazebo, sumo
@@ -10,8 +10,8 @@ settings:
   states: sp1 #image, sp1 (simplified perception with 1 point), sp3 (simplified perception with 3 points), spn (simplified perception with n points)
   rewards: follow_right_lane_only_center # follow_right_lane_only_center, follow_right_lane_center_v_step
   framework: TensorFlow # TensorFlow, Pytorch
-  total_episodes: 1_000
-  training_time: 5
+  total_episodes: 10_000
+  training_time: 120
   models_dir: "./checkpoints"
   logs_dir: "./logs"
   metrics_dir: "./metrics"
@@ -22,7 +22,7 @@ ros:
 
 retraining:
   dqn:
-    retrain_dqn_tf_model_name: "DQN_sp_16x16_LAPCOMPLETED_Max165_Epoch1_inTime20221222-171814.model"
+    retrain_dqn_tf_model_name: "20230131-212216_Circuit-simple_States-sp1_Actions-simple_BESTLAP_Rewards-follow_right_lane_only_center_epsilon-0.459_epoch-2585_step-943_reward-4700_DQN_sp_16x16.h5"
 
 inference:
   dqn:
@@ -32,7 +32,7 @@ algorithm:
   dqn:
     alpha: 0.8
     gamma: 0.9
-    epsilon: 0.95 # in Retraining mode is convenient to reduce, i.e. 0.45
+    epsilon: 0.6 # in Retraining mode is convenient to reduce, i.e. 0.45
     epsilon_discount: 0.9986
     epsilon_min: 0.05
     model_name: DQN_sp_16x16 #DQN_im_32x64
