@@ -106,11 +106,13 @@ def configure_intensities_graph(ax1, clear_ticks, intensities):
 
 
 def configure_boxplot_graph(ax1, intensities):
-    boxplot_y = np.linspace(0, 500, 27)
+    boxplot_y = np.linspace(0, 500, 26)
     ax1.set_yticks(boxplot_y)
     ax1.set_xticks(intensities)
     ax1.set_xlim(intensities[0]-0.1, intensities[len(intensities)-1]+0.1)
     ax1.grid()
+    ax1.set_xlabel("initial pole angle in radians")
+    ax1.set_ylabel("number of steps")
 
 
 if __name__ == "__main__":
