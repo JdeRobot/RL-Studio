@@ -15,28 +15,28 @@ from rl_studio.envs.carla.followlane.followlane_env import FollowLaneEnv
 from rl_studio.envs.carla.followlane.settings import FollowLaneCarlaConfig
 
 
-class FollowLaneQlearn(FollowLaneEnv):
+class FollowLaneQlearnStaticWeatherNoTraffic(FollowLaneEnv):
     def __init__(self, **config):
 
-        print(f"in FollowLaneQlearn\n")   
-        print(f"launching FollowLaneEnv\n ")   
+        print(f"in FollowLaneQlearnStaticWeatherNoTraffic\n")
+        print(f"launching FollowLaneEnv\n ")
         ###### init F1env
         FollowLaneEnv.__init__(self, **config)
         ###### init class variables
-        print(f"leaving FollowLaneEnv\n ")   
-        print(f"launching FollowLaneCarlaConfig\n ")   
+        print(f"leaving FollowLaneEnv\n ")
+        print(f"launching FollowLaneCarlaConfig\n ")
         FollowLaneCarlaConfig.__init__(self, **config)
 
     def reset(self):
         from rl_studio.envs.carla.followlane.followlane_env import (
             FollowLaneEnv,
         )
+
         return FollowLaneEnv.reset(self)
 
     def step(self, action, step):
         from rl_studio.envs.carla.followlane.followlane_env import (
             FollowLaneEnv,
         )
-        return FollowLaneEnv.step(
-            self, action, step
-        )
+
+        return FollowLaneEnv.step(self, action, step)

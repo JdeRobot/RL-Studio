@@ -54,7 +54,7 @@ class TrainerFactory:
             framework=framework,
         )
         # =============================
-        # FollowLine - F1 - qlearn - Carla
+        # FollowLane - F1 - qlearn - Carla
         # =============================
         if (
             task == TasksType.FOLLOWLANECARLA.value
@@ -254,7 +254,8 @@ class TrainerFactory:
         # CartPole - PPO CONTINUOUS
         # =============================
         elif (
-            agent == AgentsType.CARTPOLE.value and algorithm == AlgorithmsType.PPO_CONTINIUOUS.value
+            agent == AgentsType.CARTPOLE.value
+            and algorithm == AlgorithmsType.PPO_CONTINIUOUS.value
         ):
             from rl_studio.agents.cartpole.train_ppo_continous import (
                 PPOCartpoleTrainer as CartpoleTrainer,
@@ -266,16 +267,15 @@ class TrainerFactory:
         # CartPole - DDPG
         # =============================
         elif (
-            agent == AgentsType.CARTPOLE.value and algorithm == AlgorithmsType.DDPG.value and
-            framework == FrameworksType.PYTORCH.value
+            agent == AgentsType.CARTPOLE.value
+            and algorithm == AlgorithmsType.DDPG.value
+            and framework == FrameworksType.PYTORCH.value
         ):
             from rl_studio.agents.cartpole.train_ddpg import (
                 DDPGCartpoleTrainer as CartpoleTrainer,
             )
 
             return CartpoleTrainer(config)
-
-
 
         # =============================
         # Autoparking - F1 - DDPG - Gazebo - TF
@@ -324,12 +324,14 @@ class TrainerFactory:
                 from rl_studio.agents.pendulum.train_ddpg import (
                     DDPGPendulumTrainer as PendulumTrainer,
                 )
+
                 return PendulumTrainer(config)
 
             elif algorithm == AlgorithmsType.PPO_CONTINIUOUS.value:
                 from rl_studio.agents.pendulum.train_ppo import (
                     PPOPendulumTrainer as PendulumTrainer,
                 )
+
                 return PendulumTrainer(config)
 
         else:
@@ -473,7 +475,10 @@ class InferencerFactory:
                 from rl_studio.agents.cartpole.inference_ppo_continuous import (
                     PPOCartpoleInferencer as CartpoleInferencer,
                 )
-            elif algorithm == AlgorithmsType.DDPG.value and framework == FrameworksType.PYTORCH.value:
+            elif (
+                algorithm == AlgorithmsType.DDPG.value
+                and framework == FrameworksType.PYTORCH.value
+            ):
                 from rl_studio.agents.cartpole.inference_ddpg import (
                     DDPGCartpoleInferencer as CartpoleInferencer,
                 )

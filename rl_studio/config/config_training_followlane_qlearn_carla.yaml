@@ -10,7 +10,7 @@ settings:
   states: sp1 # sp1 (simplified perception with 1 point), sp3 (simplified perception with 3 points), spn (simplified perception with n points)
   rewards: follow_right_lane_only_center #
   framework: _
-  total_episodes: 4
+  total_episodes: 1
   training_time: 6
   models_dir: "./checkpoints"
   logs_dir: "./logs"
@@ -20,6 +20,10 @@ settings:
 ros:
   ros_master_uri: "11311"
   gazebo_master_uri: "11345"
+
+carla:
+  carla_server: localhost
+  carla_client: 2000
 
 retraining:
   qlearn:
@@ -96,21 +100,24 @@ rewards:
     min_reward: 5_000
     highest_reward: 100
 
-
-carla_server:
-
-carla_client:
-
 carla_environments:
   follow_lane:
     env_name: CarlaEnv-v0
     town: Town01
     car: model1
-    weather: fix #dynamic, argparse
-    position: 
-    traffic_signals:
-    pedestrians:
+    #sync_mode: True
+    weather: ClearNoon #dynamic, argparse
+    traffic_pedestrians: False
+    city_lights: False
+    car_lights: False
     alternate_pose: False
-    estimated_steps: 200
+    estimated_steps: 2
     save_episodes: 10
-    save_every_step: 1000  
+    save_every_step: 1000
+    init_pose:
+    goal_pose:
+    filter: vehicle.*
+    generation: "2"
+    rolename: "hero" #name
+    gamma: 2.2 #for camera
+    sync: True #syncronous mode or async

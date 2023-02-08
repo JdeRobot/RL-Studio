@@ -7,26 +7,26 @@ from rl_studio.envs.gazebo.f1.exceptions import NoValidEnvironmentType
 class CarlaEnv:
     def __new__(cls, **environment):
 
-
         algorithm = environment["algorithm"]
         task = environment["task"]
         framework = environment["framework"]
-
+        weather = environment["weather"]
+        traffic_pedestrians = environment["traffic_pedestrians"]
 
         # =============================
-        # FollowLane - qlearn - (No framework)
+        # FollowLane - qlearn - weather: static - traffic and pedestrians: No - (No framework)
         # =============================
         if (
             task == TasksType.FOLLOWLANECARLA.value
             and algorithm == AlgorithmsType.QLEARN.value
+            and weather != "dynamic"
+            and traffic_pedestrians is False
         ):
-            from rl_studio.envs.carla.followlane.followlane_algorithms import (
-                FollowLaneQlearn,
+            from rl_studio.envs.carla.followlane.followlane_qlearn import (
+                FollowLaneQlearnStaticWeatherNoTraffic,
             )
 
-            return FollowLaneQlearn(**environment)
-
-
+            return FollowLaneQlearnStaticWeatherNoTraffic(**environment)
 
         else:
             raise NoValidEnvironmentType(task)

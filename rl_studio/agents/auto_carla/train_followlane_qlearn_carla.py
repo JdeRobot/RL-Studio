@@ -2,6 +2,8 @@ from datetime import datetime, timedelta
 import glob
 import os
 import time
+
+import carla
 import cv2
 import gymnasium as gym
 import numpy as np
@@ -26,20 +28,37 @@ from rl_studio.algorithms.qlearn import QLearnCarla
 from rl_studio.envs.gazebo.gazebo_envs import *
 from rl_studio.envs.carla.utils.bounding_boxes import ClientSideBoundingBoxes
 from rl_studio.envs.carla.utils.logger import logger
+from rl_studio.envs.carla.utils.manual_control import HUD, World
 
 try:
-    sys.path.append(glob.glob('../carla/dist/carla-*%d.%d-%s.egg' % (
-        sys.version_info.major,
-        sys.version_info.minor,
-        'win-amd64' if os.name == 'nt' else 'linux-x86_64'))[0])
+    sys.path.append(
+        glob.glob(
+            "../carla/dist/carla-*%d.%d-%s.egg"
+            % (
+                sys.version_info.major,
+                sys.version_info.minor,
+                "win-amd64" if os.name == "nt" else "linux-x86_64",
+            )
+        )[0]
+    )
 except IndexError:
     pass
 
-VIEW_WIDTH = 1920//2
-VIEW_HEIGHT = 1080//2
-VIEW_FOV = 90
 
-BB_COLOR = (248, 64, 24)
+# class TrainerFollowLaneQlearnAutoCarla:
+# def __init__(self, config_file):
+# print(f"\n{config_file=}")
+# weather = config_file["carla_environments"]["follow_lane"]["weather"]
+# traffic = config_file["carla_environments"]["follow_lane"][
+#    "traffic_pedestrians"
+# ]
+# ----------------------------
+# Weather: Static
+# Traffic and pedestrians: No
+# ----------------------------
+# if weather != "dynamic" and traffic is False:
+#    TrainerFollowLaneQlearnAutoCarlaStaticWeatherNoTraffic(config_file)
+#    return TrainerFollowLaneQlearnAutoCarlaStaticWeatherNoTraffic.main(self)
 
 
 class TrainerFollowLaneQlearnAutoCarla:
@@ -49,6 +68,10 @@ class TrainerFollowLaneQlearnAutoCarla:
     Algorithm: Qlearn
     Agent: Auto
     Simulator: Carla
+    Weather: Static
+    Traffic: No
+
+    The most simple environment
     """
 
     def __init__(self, config):
@@ -65,19 +88,107 @@ class TrainerFollowLaneQlearnAutoCarla:
 
         self.log_file = f"{self.global_params.logs_dir}/{time.strftime('%Y%m%d-%H%M%S')}_{self.global_params.mode}_{self.global_params.task}_{self.global_params.algorithm}_{self.global_params.agent}_{self.global_params.framework}.log"
 
+        print(f"\n{config=}")
+        print(f"\n{self.environment=}\n")
+        print(f"\n{self.environment.environment=}\n")
+
+        # self.weather = config["carla_environments"]["follow_lane"]["weather"]
+        # self.traffic = config["carla_environments"]["follow_lane"][
+        #    "traffic_pedestrians"
+        # ]
+
+        # ----------------------------
+        # launch client and world
+        # ----------------------------
+        # self.client = carla.Client(config["carla_server"], config["carla_client"])
+        # self.client.set_timeout(2.0)
+        # self.world = self.client.get_world()
+        # self.blueprint_library = self.world.get_blueprint_library()
+        # self.car_model = random.choice(self.blueprint_library.filter("vehicle.*.*"))
+
+        # ----------------------------
+        # Weather: Static
+        # Traffic and pedestrians: No
+        # ----------------------------
+        # if self.weather != "dynamic" and self.traffic is False:
+        #    pass
+
     def main(self):
         """
         Implementation of QlearnF1, a table based algorithm
         """
-        #TODO: Pytgame
-        #pygame.init()
+        env = gym.make(self.env_params.env_name, **self.environment.environment)
 
-        #TODO: env.recorder_file() to save trainings
+        # TODO: Pygame
+        pygame.init()
+        pygame.font.init()
+        world = None
+
+        # ----------------------------
+        # launch client and world (sync or async)
+        # ----------------------------
+        client = carla.Client(
+            self.environment.environment["carla_server"],
+            self.environment.environment["carla_client"],
+        )
+        client.set_timeout(2.0)
+        sim_world = client.get_world()
+
+        if self.environment.environment["sync"]:
+            original_settings = sim_world.get_settings()
+            settings = sim_world.get_settings()
+            if not settings.synchronous_mode:
+                settings.synchronous_mode = True
+                settings.fixed_delta_seconds = 0.05
+            sim_world.apply_settings(settings)
+
+            # TODO: understand .get_trafficmanager()
+            # traffic_manager = client.get_trafficmanager()
+            # traffic_manager.set_synchronous_mode(True)
+
+        # ----------------------------
+        # Weather: Static
+        # Traffic and pedestrians: No
+        # ----------------------------
+        weather = self.environment.environment["weather"]
+        traffic = self.environment.environment["traffic_pedestrians"]
+        if weather != "dynamic" and traffic is False:
+            pass
+
+        # -------------------------------
+        # Pygame, HUD, world
+        # -------------------------------
+        display = pygame.display.set_mode(
+            (
+                self.environment.environment["width_image"],
+                self.environment.environment["height_image"],
+            ),
+            pygame.HWSURFACE | pygame.DOUBLEBUF,
+        )
+        display.fill((0, 0, 0))
+        pygame.display.flip()
+
+        hud = HUD(
+            self.environment.environment["width_image"],
+            self.environment.environment["height_image"],
+        )
+        world = World(sim_world, hud, self.environment.environment)
+        # controller = KeyboardControl(world, args.autopilot)
+
+        if self.environment.environment["sync"]:
+            sim_world.tick()
+        else:
+            sim_world.wait_for_tick()
+
+        clock = pygame.time.Clock()
+
+        # TODO: env.recorder_file() to save trainings
 
         log = LoggingHandler(self.log_file)
 
-        ## Load Environment
-        env = gym.make(self.env_params.env_name, **self.environment.environment)
+        # -------------------------------
+        # Load Environment
+        # -------------------------------
 
         start_time = datetime.now()
         best_epoch = 1
@@ -85,7 +196,7 @@ class TrainerFollowLaneQlearnAutoCarla:
         best_step = 0
         best_epoch_training_time = 0
         epsilon = self.environment.environment["epsilon"]
-        epsilon_decay = epsilon / (self.env_params.total_episodes // 2)
+        epsilon_decay = epsilon / (self.env_params.total_episodes)
         # states_counter = {}
 
         logger.debug(
@@ -101,6 +212,7 @@ class TrainerFollowLaneQlearnAutoCarla:
             f"alpha = {self.environment.environment['alpha']}\n"
             f"gamma = {self.environment.environment['gamma']}\n"
         )
+        # -------------------------------
         ## --- init Qlearn
         qlearn = QLearnCarla(
             len(self.global_params.states_set),
@@ -121,69 +233,75 @@ class TrainerFollowLaneQlearnAutoCarla:
             epsilon = epsilon / 2
 
         ## --- PYgame
-        #display = pygame.display.set_mode((VIEW_WIDTH, VIEW_HEIGHT), pygame.HWSURFACE | pygame.DOUBLEBUF)
-        #pygame_clock = pygame.time.Clock()
- 
-        #TODO: if weather is dynamic, set time variable to control weather
+        # display = pygame.display.set_mode((VIEW_WIDTH, VIEW_HEIGHT), pygame.HWSURFACE | pygame.DOUBLEBUF)
+        # pygame_clock = pygame.time.Clock()
 
+        # TODO: if weather is dynamic, set time variable to control weather
+
+        while True:
+            if self.environment.environment["sync"]:
+                sim_world.tick()
+            clock.tick_busy_loop(60)
+            # if controller.parse_events(client, world, clock, args.sync):
+            #    return
+            world.tick(clock)
+            world.render(display)
+            pygame.display.flip()
 
         ## -------------    START TRAINING --------------------
-        for episode in tqdm(
-            range(1, self.env_params.total_episodes + 1),
-            ascii=True,
-            unit="episodes",
-        ):
-            done = False
-            cumulated_reward = 0
-            step = 0
-            start_time_epoch = datetime.now()
-            observation = env.reset()
-            print(f"\n{observation=}\n")
+        #        for episode in tqdm(
+        #            range(1, self.env_params.total_episodes + 1),
+        #            ascii=True,
+        #            unit="episodes",
+        #        ):
+        #            done = False
+        #            cumulated_reward = 0
+        #            step = 0
+        #            start_time_epoch = datetime.now()
+        #            observation = env.reset()
+        #            print(f"\n{observation=}\n")
 
-            #while not done:
-                #self.world.tick()
-                #pygame_clock.tick_busy_loop(20)
-                #self.render(display)
-                #bounding_boxes = ClientSideBoundingBoxes.get_bounding_boxes(vehicles, self.camera)
-                #ClientSideBoundingBoxes.draw_bounding_boxes(self.display, bounding_boxes)
+        # while not done:
+        # self.world.tick()
+        # pygame_clock.tick_busy_loop(20)
+        # self.render(display)
+        # bounding_boxes = ClientSideBoundingBoxes.get_bounding_boxes(vehicles, self.camera)
+        # ClientSideBoundingBoxes.draw_bounding_boxes(self.display, bounding_boxes)
 
-                #pygame.display.flip()
+        # pygame.display.flip()
 
-                #pygame.event.pump()
-                #cv2.imshow("Agent", observation)
-                #cv2.waitKey(1)
-                #step += 1
-                #action = qlearn.select_action(observation)
-                #new_observation, reward, done, _ = env.step(action, step)
-                #cumulated_reward += reward
-                #qlearn.learn(observation, action, reward, new_observation)
-                #observation = new_observation
+        # pygame.event.pump()
+        # cv2.imshow("Agent", observation)
+        # cv2.waitKey(1)
+        # step += 1
+        # action = qlearn.select_action(observation)
+        # new_observation, reward, done, _ = env.step(action, step)
+        # cumulated_reward += reward
+        # qlearn.learn(observation, action, reward, new_observation)
+        # observation = new_observation
 
+        # updating epsilon for exploration
+        # if epsilon > self.environment.environment["epsilon_min"]:
+        #    epsilon -= epsilon_decay
+        #    epsilon = qlearn.update_epsilon(
+        #        max(self.environment.environment["epsilon_min"], epsilon)
+        #    )
 
-            # updating epsilon for exploration
-            #if epsilon > self.environment.environment["epsilon_min"]:
-            #    epsilon -= epsilon_decay
-            #    epsilon = qlearn.update_epsilon(
-            #        max(self.environment.environment["epsilon_min"], epsilon)
-            #    )
+        # TODO:
+        # pygame.display.flip()
+        # pygame.event.pump()
+        #           env.destroy_all_actors()
 
+        # close
+        #        env.set_synchronous_mode(False)
+        # self.camera.destroy()
+        # self.car.destroy()
+        # TODO:
+        if world is not None:
+            world.destroy()
 
-            #TODO:
-            #pygame.display.flip()
-            #pygame.event.pump()
-            env.destroy_all_actors()
-
-        # close 
-        env.set_synchronous_mode(False)
-        #self.camera.destroy()
-        #self.car.destroy()
-        #TODO:
-        #pygame.quit()
+        pygame.quit()
         env.close()
-
-
-
-
 
     #########################################################################33
     #########################################################################33

@@ -68,15 +68,14 @@ class LoadEnvParams:
             self.env_name = config["carla_environments"][self.env]["env_name"]
             self.total_episodes = config["settings"]["total_episodes"]
             self.training_time = config["settings"]["training_time"]
-            self.save_episodes = config["carla_environments"][self.env][
-                "save_episodes"
-            ]
+            self.save_episodes = config["carla_environments"][self.env]["save_episodes"]
             self.save_every_step = config["carla_environments"][self.env][
                 "save_every_step"
             ]
             self.estimated_steps = config["carla_environments"][self.env][
                 "estimated_steps"
             ]
+
 
 class LoadGlobalParams:
     """
@@ -489,7 +488,6 @@ class LoadEnvVariablesQlearnGazebo:
         self.environment["GAZEBO_MASTER_URI"] = config["ros"]["gazebo_master_uri"]
 
 
-
 class LoadEnvVariablesQlearnCarla:
     """
     ONLY FOR Qlearn algorithm
@@ -527,17 +525,18 @@ class LoadEnvVariablesQlearnCarla:
 
         # Env
         self.environment["env"] = config["settings"]["env"]
-        self.environment["town"] = config[self.environment_set][self.env][
-            "town"
+        self.environment["town"] = config[self.environment_set][self.env]["town"]
+        self.environment["car"] = config[self.environment_set][self.env]["car"]
+        self.environment["weather"] = config[self.environment_set][self.env]["weather"]
+        self.environment["weather"] = config[self.environment_set][self.env]["weather"]
+        self.environment["traffic_pedestrians"] = config[self.environment_set][
+            self.env
+        ]["traffic_pedestrians"]
+        self.environment["city_lights"] = config[self.environment_set][self.env][
+            "city_lights"
         ]
-        self.environment["car"] = config[self.environment_set][self.env][
-            "car"
-        ]
-        self.environment["weather"] = config[self.environment_set][self.env][
-            "weather"
-        ]
-        self.environment["estimated_steps"] = config[self.environment_set][self.env][
-            "estimated_steps"
+        self.environment["car_lights"] = config[self.environment_set][self.env][
+            "car_lights"
         ]
         self.environment["alternate_pose"] = config[self.environment_set][self.env][
             "alternate_pose"
@@ -548,7 +547,23 @@ class LoadEnvVariablesQlearnCarla:
         self.environment["save_every_step"] = config[self.environment_set][self.env][
             "save_every_step"
         ]
-                # Image
+        self.environment["init_pose"] = config[self.environment_set][self.env][
+            "init_pose"
+        ]
+        self.environment["goal_pose"] = config[self.environment_set][self.env][
+            "goal_pose"
+        ]
+        self.environment["filter"] = config[self.environment_set][self.env]["filter"]
+        self.environment["generation"] = config[self.environment_set][self.env][
+            "generation"
+        ]
+        self.environment["rolename"] = config[self.environment_set][self.env][
+            "rolename"
+        ]
+        self.environment["gamma"] = config[self.environment_set][self.env]["gamma"]
+        self.environment["sync"] = config[self.environment_set][self.env]["sync"]
+
+        # --------- Image
         self.environment["height_image"] = config["agents"][self.agent][
             "camera_params"
         ]["height"]
@@ -591,7 +606,7 @@ class LoadEnvVariablesQlearnCarla:
         self.environment["epsilon"] = config["algorithm"]["qlearn"]["epsilon"]
         self.environment["epsilon_min"] = config["algorithm"]["qlearn"]["epsilon_min"]
         self.environment["gamma"] = config["algorithm"]["qlearn"]["gamma"]
-        
-        # ROS
-        self.environment["ROS_MASTER_URI"] = config["ros"]["ros_master_uri"]
-        self.environment["GAZEBO_MASTER_URI"] = config["ros"]["gazebo_master_uri"]
+
+        # CARLA
+        self.environment["carla_server"] = config["carla"]["carla_server"]
+        self.environment["carla_client"] = config["carla"]["carla_client"]
