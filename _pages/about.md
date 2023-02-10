@@ -43,6 +43,14 @@ to the already presented papers.
 * Video: [https://www.youtube.com/watch?v=GNVHds_mvlg](https://www.youtube.com/watch?v=GNVHds_mvlg)
 * Slides: [Link](https://drive.google.com/file/d/1vH_wJzckWLzj_7PjccFqqb2ZZh4y936K/view?usp=sharing)
 
+### Reward (Mis) Design for Autonomous Driving (W.Bradley Knox, Alessandro Allievi, Holger Banzhaf, Feliz Schmitt, Peter Stone)
+
+[18 nov 2022] Presented by Pedro Fernández.
+
+* Paper: [https://www.mdpi.com/1424-8220/22/21/8373/pdf](https://arxiv.org/abs/2104.13906)
+* Slides: [Link](https://docs.google.com/presentation/d/1H8JjnrVve6IRUrQ0rqxhugdqm96bN1l6NSGhbxf-G7E/edit?usp=sharing)
+
+
 ### Reinforcement Learning-Based Autonomous Driving at Intersections in CARLA Simulator (Rodrigo Gutiérrez-Moreno, Rafael Barea, Elena López-Guillén, Javier Araluce and Luis M. Bergasa)
 
 [21 dec 2022] Presented by Rubén Lucas.
