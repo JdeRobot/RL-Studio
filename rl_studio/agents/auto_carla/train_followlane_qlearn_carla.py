@@ -26,9 +26,20 @@ from rl_studio.agents.utils import (
 )
 from rl_studio.algorithms.qlearn import QLearnCarla
 from rl_studio.envs.gazebo.gazebo_envs import *
-from rl_studio.envs.carla.utils.bounding_boxes import ClientSideBoundingBoxes
+from rl_studio.envs.carla.utils.bounding_boxes import BasicSynchronousClient
 from rl_studio.envs.carla.utils.logger import logger
 from rl_studio.envs.carla.utils.manual_control import HUD, World
+from rl_studio.envs.carla.utils.visualize_multiple_sensors import (
+    DisplayManager,
+    SensorManager,
+)
+from rl_studio.envs.carla.utils.synchronous_mode import (
+    CarlaSyncMode,
+    draw_image,
+    get_font,
+    should_quit,
+)
+from rl_studio.envs.carla.carla_env import CarlaEnv
 
 try:
     sys.path.append(
@@ -43,22 +54,6 @@ try:
     )
 except IndexError:
     pass
-
-
-# class TrainerFollowLaneQlearnAutoCarla:
-# def __init__(self, config_file):
-# print(f"\n{config_file=}")
-# weather = config_file["carla_environments"]["follow_lane"]["weather"]
-# traffic = config_file["carla_environments"]["follow_lane"][
-#    "traffic_pedestrians"
-# ]
-# ----------------------------
-# Weather: Static
-# Traffic and pedestrians: No
-# ----------------------------
-# if weather != "dynamic" and traffic is False:
-#    TrainerFollowLaneQlearnAutoCarlaStaticWeatherNoTraffic(config_file)
-#    return TrainerFollowLaneQlearnAutoCarlaStaticWeatherNoTraffic.main(self)
 
 
 class TrainerFollowLaneQlearnAutoCarla:
@@ -88,34 +83,170 @@ class TrainerFollowLaneQlearnAutoCarla:
 
         self.log_file = f"{self.global_params.logs_dir}/{time.strftime('%Y%m%d-%H%M%S')}_{self.global_params.mode}_{self.global_params.task}_{self.global_params.algorithm}_{self.global_params.agent}_{self.global_params.framework}.log"
 
-        print(f"\n{config=}")
-        print(f"\n{self.environment=}\n")
-        print(f"\n{self.environment.environment=}\n")
-
-        # self.weather = config["carla_environments"]["follow_lane"]["weather"]
-        # self.traffic = config["carla_environments"]["follow_lane"][
-        #    "traffic_pedestrians"
-        # ]
-
-        # ----------------------------
-        # launch client and world
-        # ----------------------------
-        # self.client = carla.Client(config["carla_server"], config["carla_client"])
-        # self.client.set_timeout(2.0)
-        # self.world = self.client.get_world()
-        # self.blueprint_library = self.world.get_blueprint_library()
-        # self.car_model = random.choice(self.blueprint_library.filter("vehicle.*.*"))
-
-        # ----------------------------
-        # Weather: Static
-        # Traffic and pedestrians: No
-        # ----------------------------
-        # if self.weather != "dynamic" and self.traffic is False:
-        #    pass
+        print(f"\nin TrainerFollowLaneQlearnAutoCarla {config=}")
+        # print(f"\nin TrainerFollowLaneQlearnAutoCarla {self.environment=}\n")
+        print(
+            f"\nin TrainerFollowLaneQlearnAutoCarla {self.environment.environment=}\n"
+        )
+        # lanzamos Carla server
+        CarlaEnv.__init__(self)
 
     def main(self):
+        """ """
+        print(f"\nself.env_params.env_name = {self.env_params.env_name}\n")
+
+        # env = gym.make(self.env_params.env_name, **self.environment.environment)
+
+        print(f"\n enter main()\n")
+
+        # ----------------------------
+        # launch client and world (sync or async)
+        # ----------------------------
+        # client = carla.Client(
+        #    self.environment.environment["carla_server"],
+        #    self.environment.environment["carla_client"],
+        # )
+        # client.set_timeout(2.0)
+        # world = client.get_world()
+        # bsc = BasicSynchronousClient(world)
+        # bsc.setup_car()
+        # bsc.setup_camera()
+        # bsc.set_synchronous_mode(True)
+
+        # -------------------------------
+        # visualize sensors
+        # -------------------------------
+        # display_manager = DisplayManager(
+        #    grid_size=[2, 3],
+        #    window_size=[1500, 800],
+        # )
+
+        # Then, SensorManager can be used to spawn RGBCamera, LiDARs and SemanticLiDARs as needed
+        # and assign each of them to a grid position,
+
+        # -- General view
         """
-        Implementation of QlearnF1, a table based algorithm
+        camera_general = SensorManager(
+            world,
+            display_manager,
+            "RGBCamera",
+            carla.Transform(carla.Location(x=-4, z=2.4), carla.Rotation(yaw=+00)),
+            bsc.car,
+            {},
+            display_pos=[0, 0],
+        )
+        # -- RGB front camera
+        camera_rgb_front = SensorManager(
+            world,
+            display_manager,
+            "RGBCamera",
+            carla.Transform(carla.Location(x=2, z=1), carla.Rotation(yaw=+00)),
+            bsc.car,
+            {},
+            display_pos=[0, 1],
+        )
+        camera_depth = SensorManager(
+            world,
+            display_manager,
+            "DepthLogarithmicCamera",
+            carla.Transform(carla.Location(x=0, z=2.4), carla.Rotation(yaw=+00)),
+            bsc.car,
+            {},
+            display_pos=[0, 2],
+        )
+        camera_semantic = SensorManager(
+            world,
+            display_manager,
+            "SemanticCamera",
+            carla.Transform(carla.Location(x=2, z=1), carla.Rotation(yaw=+00)),
+            bsc.car,
+            {},
+            display_pos=[1, 0],
+        )
+        """
+        # -------------------------------
+        # Load Environment
+        # -------------------------------
+        # self.environment.environment["world"] = world
+        # self.environment.environment["bsc"] = bsc
+        # self.environment.environment["camera_rgb_front"] = camera_rgb_front
+        # self.environment.environment["display_manager"] = display_manager
+        env = gym.make(self.env_params.env_name, **self.environment.environment)
+
+        log = LoggingHandler(self.log_file)
+
+        start_time = datetime.now()
+        best_epoch = 1
+        current_max_reward = 0
+        best_step = 0
+        best_epoch_training_time = 0
+        epsilon = self.environment.environment["epsilon"]
+        epsilon_decay = epsilon / (self.env_params.total_episodes)
+        # states_counter = {}
+        ## --- using epsilon reduced
+        epsilon = epsilon / 2
+        # -------------------------------
+        ## --- init Qlearn
+        qlearn = QLearnCarla(
+            len(self.global_params.states_set),
+            self.global_params.actions,
+            len(self.global_params.actions_set),
+            self.environment.environment["epsilon"],
+            self.environment.environment["alpha"],
+            self.environment.environment["gamma"],
+            self.environment.environment["num_regions"],
+        )
+
+        # while True:
+        #    world.tick()
+        #    display_manager.render()
+
+        ## -------------    START TRAINING --------------------
+        for episode in tqdm(
+            range(1, self.env_params.total_episodes + 1),
+            ascii=True,
+            unit="episodes",
+        ):
+            env.world.tick()
+            env.display_manager.render()
+            done = False
+            cumulated_reward = 0
+            step = 0
+            start_time_epoch = datetime.now()
+            ## reset env()
+            # print(f"bsc = {bsc}")
+            observation = env.reset()
+
+            for actor in env.actor_list[::-1]:
+                print(f"actor : {actor}\n")
+                actor.destroy()
+            # env.actor_list = []
+            # bsc.destroy_all_actors()
+
+        # --- end for
+        # bsc.set_synchronous_mode(False)
+        # bsc.destroy_all_actors()
+        # bsc.camera.destroy()
+        # bsc.car.destroy()
+        # pygame.quit()
+        env.close()
+
+    #########################################################################33
+    #########################################################################33
+    #########################################################################33
+    #########################################################################33
+    #########################################################################33
+    #########################################################################33
+    #########################################################################33
+    ##################
+    ##################
+    ##################
+    ##################
+    ##################
+    def ma__in(self):
+        """
+        Funciona para Manual Control: crea World, HUD y sensores. Lanza Pygame pero solo 1 ventana, y no se ven bien los sensores
+        pero funciona...dejamos ahi para control
         """
         env = gym.make(self.env_params.env_name, **self.environment.environment)
 
@@ -187,6 +318,85 @@ class TrainerFollowLaneQlearnAutoCarla:
         log = LoggingHandler(self.log_file)
 
         # -------------------------------
+        # visualize sensors
+        # -------------------------------
+        # display_manager = DisplayManager(
+        #    grid_size=[2, 3],
+        #    window_size=[
+        #        self.environment.environment["width_image"],
+        #        self.environment.environment["height_image"],
+        #    ],
+        # )
+
+        # Then, SensorManager can be used to spawn RGBCamera, LiDARs and SemanticLiDARs as needed
+        # and assign each of them to a grid position,
+        SensorManager(
+            sim_world,
+            display,
+            "RGBCamera",
+            carla.Transform(carla.Location(x=0, z=2.4), carla.Rotation(yaw=-90)),
+            world.player,
+            {},
+            display_pos=[0, 0],
+        )
+        SensorManager(
+            sim_world,
+            display,
+            "RGBCamera",
+            carla.Transform(carla.Location(x=0, z=2.4), carla.Rotation(yaw=+00)),
+            world.player,
+            {},
+            display_pos=[0, 1],
+        )
+        SensorManager(
+            sim_world,
+            display,
+            "RGBCamera",
+            carla.Transform(carla.Location(x=0, z=2.4), carla.Rotation(yaw=+90)),
+            world.player,
+            {},
+            display_pos=[0, 2],
+        )
+        SensorManager(
+            sim_world,
+            display,
+            "RGBCamera",
+            carla.Transform(carla.Location(x=0, z=2.4), carla.Rotation(yaw=180)),
+            world.player,
+            {},
+            display_pos=[1, 1],
+        )
+
+        SensorManager(
+            sim_world,
+            display,
+            "LiDAR",
+            carla.Transform(carla.Location(x=0, z=2.4)),
+            world.player,
+            {
+                "channels": "64",
+                "range": "100",
+                "points_per_second": "250000",
+                "rotation_frequency": "20",
+            },
+            display_pos=[1, 0],
+        )
+        SensorManager(
+            sim_world,
+            display,
+            "SemanticLiDAR",
+            carla.Transform(carla.Location(x=0, z=2.4)),
+            world.player,
+            {
+                "channels": "64",
+                "range": "100",
+                "points_per_second": "100000",
+                "rotation_frequency": "20",
+            },
+            display_pos=[1, 2],
+        )
+
+        # -------------------------------
         # Load Environment
         # -------------------------------
 
@@ -198,20 +408,8 @@ class TrainerFollowLaneQlearnAutoCarla:
         epsilon = self.environment.environment["epsilon"]
         epsilon_decay = epsilon / (self.env_params.total_episodes)
         # states_counter = {}
-
-        logger.debug(
-            f"\nstates = {self.global_params.states}\n"
-            f"states_set = {self.global_params.states_set}\n"
-            f"states_len = {len(self.global_params.states_set)}\n"
-            f"actions = {self.global_params.actions}\n"
-            f"actions set = {self.global_params.actions_set}\n"
-            f"actions_len = {len(self.global_params.actions_set)}\n"
-            f"actions_range = {range(len(self.global_params.actions_set))}\n"
-            f"epsilon = {epsilon}\n"
-            f"epsilon_decay = {epsilon_decay}\n"
-            f"alpha = {self.environment.environment['alpha']}\n"
-            f"gamma = {self.environment.environment['gamma']}\n"
-        )
+        ## --- using epsilon reduced
+        epsilon = epsilon / 2
         # -------------------------------
         ## --- init Qlearn
         qlearn = QLearnCarla(
@@ -224,79 +422,21 @@ class TrainerFollowLaneQlearnAutoCarla:
             self.environment.environment["num_regions"],
         )
 
-        ## --- retraining q model
-        if self.environment.environment["mode"] == "retraining":
-            qlearn.load_table(
-                f"{self.global_params.models_dir}/{self.environment.environment['retrain_qlearn_model_name']}"
-            )
-            ## --- using epsilon reduced
-            epsilon = epsilon / 2
-
-        ## --- PYgame
-        # display = pygame.display.set_mode((VIEW_WIDTH, VIEW_HEIGHT), pygame.HWSURFACE | pygame.DOUBLEBUF)
-        # pygame_clock = pygame.time.Clock()
-
-        # TODO: if weather is dynamic, set time variable to control weather
-
         while True:
             if self.environment.environment["sync"]:
                 sim_world.tick()
             clock.tick_busy_loop(60)
             # if controller.parse_events(client, world, clock, args.sync):
             #    return
+
+            # display_manager.render()
             world.tick(clock)
             world.render(display)
             pygame.display.flip()
 
-        ## -------------    START TRAINING --------------------
-        #        for episode in tqdm(
-        #            range(1, self.env_params.total_episodes + 1),
-        #            ascii=True,
-        #            unit="episodes",
-        #        ):
-        #            done = False
-        #            cumulated_reward = 0
-        #            step = 0
-        #            start_time_epoch = datetime.now()
-        #            observation = env.reset()
-        #            print(f"\n{observation=}\n")
-
-        # while not done:
-        # self.world.tick()
-        # pygame_clock.tick_busy_loop(20)
-        # self.render(display)
-        # bounding_boxes = ClientSideBoundingBoxes.get_bounding_boxes(vehicles, self.camera)
-        # ClientSideBoundingBoxes.draw_bounding_boxes(self.display, bounding_boxes)
-
-        # pygame.display.flip()
-
-        # pygame.event.pump()
-        # cv2.imshow("Agent", observation)
-        # cv2.waitKey(1)
-        # step += 1
-        # action = qlearn.select_action(observation)
-        # new_observation, reward, done, _ = env.step(action, step)
-        # cumulated_reward += reward
-        # qlearn.learn(observation, action, reward, new_observation)
-        # observation = new_observation
-
-        # updating epsilon for exploration
-        # if epsilon > self.environment.environment["epsilon_min"]:
-        #    epsilon -= epsilon_decay
-        #    epsilon = qlearn.update_epsilon(
-        #        max(self.environment.environment["epsilon_min"], epsilon)
-        #    )
-
         # TODO:
-        # pygame.display.flip()
-        # pygame.event.pump()
-        #           env.destroy_all_actors()
-
-        # close
-        #        env.set_synchronous_mode(False)
-        # self.camera.destroy()
-        # self.car.destroy()
-        # TODO:
+        if display_manager:
+            display_manager.destroy()
         if world is not None:
             world.destroy()
 
@@ -315,6 +455,149 @@ class TrainerFollowLaneQlearnAutoCarla:
     ##################
     ##################
     ##################
+
+    def __main(self):
+        """
+        Implementamos synchronous_mode.py que es mas sencillo
+        """
+        env = gym.make(self.env_params.env_name, **self.environment.environment)
+
+        # ----------------------------
+        # pygame, display
+        # ----------------------------
+        pygame.init()
+        display = pygame.display.set_mode(
+            (800, 600), pygame.HWSURFACE | pygame.DOUBLEBUF
+        )
+        font = get_font()
+        clock = pygame.time.Clock()
+
+        # ----------------------------
+        # launch client and world
+        # ----------------------------
+        client = carla.Client(
+            self.environment.environment["carla_server"],
+            self.environment.environment["carla_client"],
+        )
+        client.set_timeout(2.0)
+        world = client.get_world()
+
+        # ----------------------------
+        # blueprint
+        # ----------------------------
+        m = world.get_map()
+        start_pose = random.choice(m.get_spawn_points())
+        waypoint = m.get_waypoint(start_pose.location)
+
+        blueprint_library = world.get_blueprint_library()
+
+        # ----------------------------
+        # car
+        # ----------------------------
+        actor_list = []
+
+        vehicle = world.spawn_actor(
+            random.choice(blueprint_library.filter("vehicle.*")), start_pose
+        )
+        actor_list.append(vehicle)
+        vehicle.set_simulate_physics(False)
+        # ----------------------------
+        # RGB, Semantic
+        # ----------------------------
+        camera_rgb = world.spawn_actor(
+            blueprint_library.find("sensor.camera.rgb"),
+            carla.Transform(carla.Location(x=-5.5, z=2.8), carla.Rotation(pitch=-15)),
+            attach_to=vehicle,
+        )
+        actor_list.append(camera_rgb)
+
+        camera_semseg = world.spawn_actor(
+            blueprint_library.find("sensor.camera.semantic_segmentation"),
+            carla.Transform(carla.Location(x=-5.5, z=2.8), carla.Rotation(pitch=-15)),
+            attach_to=vehicle,
+        )
+        actor_list.append(camera_semseg)
+
+        log = LoggingHandler(self.log_file)
+
+        # -------------------------------
+        # Load Environment
+        # -------------------------------
+
+        start_time = datetime.now()
+        best_epoch = 1
+        current_max_reward = 0
+        best_step = 0
+        best_epoch_training_time = 0
+        epsilon = self.environment.environment["epsilon"]
+        epsilon_decay = epsilon / (self.env_params.total_episodes)
+        # states_counter = {}
+
+        # -------------------------------
+        ## --- init Qlearn
+        qlearn = QLearnCarla(
+            len(self.global_params.states_set),
+            self.global_params.actions,
+            len(self.global_params.actions_set),
+            self.environment.environment["epsilon"],
+            self.environment.environment["alpha"],
+            self.environment.environment["gamma"],
+            self.environment.environment["num_regions"],
+        )
+
+        ## --- using epsilon reduced
+        epsilon = epsilon / 2
+
+        try:
+            # Create a synchronous mode context.
+            with CarlaSyncMode(world, camera_rgb, camera_semseg, fps=30) as sync_mode:
+                while True:
+                    if should_quit():
+                        return
+                    clock.tick()
+
+                    # Advance the simulation and wait for the data.
+                    snapshot, image_rgb, image_semseg = sync_mode.tick(timeout=2.0)
+
+                    # Choose the next waypoint and update the car location.
+                    waypoint = random.choice(waypoint.next(1.5))
+                    vehicle.set_transform(waypoint.transform)
+
+                    image_semseg.convert(carla.ColorConverter.CityScapesPalette)
+                    fps = round(1.0 / snapshot.timestamp.delta_seconds)
+
+                    # Draw the display.
+                    draw_image(display, image_rgb)
+                    draw_image(display, image_semseg, blend=True)
+                    display.blit(
+                        font.render(
+                            "% 5d FPS (real)" % clock.get_fps(), True, (255, 255, 255)
+                        ),
+                        (8, 10),
+                    )
+                    display.blit(
+                        font.render(
+                            "% 5d FPS (simulated)" % fps, True, (255, 255, 255)
+                        ),
+                        (8, 28),
+                    )
+                    pygame.display.flip()
+        finally:
+            for actor in actor_list:
+                actor.destroy()
+
+            pygame.quit()
+            env.close()
+
+    ###########################################################################################
+    ###########################################################################################
+    ###########################################################################################
+    ###########################################################################################
+    ###########################################################################################
+    ###########################################################################################
+    ###########################################################################################
+    ###########################################################################################
+
     def main_____(self):
         """
         Qlearn Dictionnary

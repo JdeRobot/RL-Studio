@@ -10,7 +10,7 @@ settings:
   states: sp1 # sp1 (simplified perception with 1 point), sp3 (simplified perception with 3 points), spn (simplified perception with n points)
   rewards: follow_right_lane_only_center #
   framework: _
-  total_episodes: 1
+  total_episodes: 10
   training_time: 6
   models_dir: "./checkpoints"
   logs_dir: "./logs"

@@ -15,9 +15,10 @@ import matplotlib.pyplot as plt
 import matplotlib.image as mpimg
 
 from rl_studio.envs.carla.carla_env import CarlaEnv
-from rl_studio.envs.carla.utils.bounding_boxes import ClientSideBoundingBoxes
-from rl_studio.envs.carla.utils.logger import logger
-from rl_studio.envs.carla.utils.weather import Weather
+
+# from rl_studio.envs.carla.utils.bounding_boxes import ClientSideBoundingBoxes
+# from rl_studio.envs.carla.utils.logger import logger
+# from rl_studio.envs.carla.utils.weather import Weather
 from rl_studio.envs.carla.utils.environment import (
     apply_sun_presets,
     apply_weather_presets,
@@ -41,8 +42,9 @@ class FollowLaneEnv(CarlaEnv):
     def __init__(self, **config):
         """Constructor of the class."""
 
-        CarlaEnv.__init__(self, **config)
-        print(f"\nFollowLaneEnv\n")
+        print(f"in FollowLaneEnv -> launching CarlaEnv\n")
+        # CarlaEnv.__init__(self, **config)
+        print(f"\nin FollowLaneEnv again\n")
         print(f"{config=}\n")
         # self.actor_list = []
         # self.carla_map = None
@@ -84,7 +86,7 @@ class FollowLaneEnv(CarlaEnv):
         # if self.weather != "dynamic" and self.traffic is False:
         #    pass
 
-        self.actor_list = []
+        # self.actor_list = []
 
     #########################################################################
 
@@ -109,7 +111,7 @@ class FollowLaneEnv(CarlaEnv):
         # sleep for 5 seconds, then finish:
         time.sleep(5)
 
-    def reset(self):
+    def __reset(self):
         print(f"\nin reset()\n")
         if len(self.actor_list) > 0:
             print(f"destruyendo actors_list[]")

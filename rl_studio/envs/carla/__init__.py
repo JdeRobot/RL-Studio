@@ -4,7 +4,7 @@ from rl_studio.algorithms.algorithms_type import AlgorithmsType
 from rl_studio.envs.gazebo.f1.exceptions import NoValidEnvironmentType
 
 
-class CarlaEnv:
+class Carla:
     def __new__(cls, **environment):
 
         algorithm = environment["algorithm"]
