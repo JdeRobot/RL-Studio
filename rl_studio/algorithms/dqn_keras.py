@@ -99,8 +99,8 @@ class DQN:
             print(f"{outdir}/{environment['retrain_dqn_tf_model_name']}")
             # load pretrained actor and critic models
             dqn_retrained_model = f"{outdir}/{environment['retrain_dqn_tf_model_name']}"
-            self.model = load_model(dqn_retrained_model, compile=False)
-            self.target_model = load_model(dqn_retrained_model, compile=False)
+            self.model = load_model(dqn_retrained_model, compile=True)
+            self.target_model = load_model(dqn_retrained_model, compile=True)
 
         else:
             # main model

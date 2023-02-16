@@ -166,7 +166,7 @@ def configure_intensities_graph(ax1, intensities):
 
 
 def configure_boxplot_graph(ax1, intensities):
-    boxplot_y = np.linspace(0, 500, 27)
+    boxplot_y = np.linspace(0, 500, 26)
     ax1.set_yticks(boxplot_y)
     sorted_intensities = sorted(list(set(intensities)))
     ax1.set_xticks(sorted_intensities)
@@ -174,9 +174,10 @@ def configure_boxplot_graph(ax1, intensities):
     xticks = ax1.get_xticklabels()
     for xtick in xticks:
         xtick.set_horizontalalignment('right')
-        xtick.set_fontsize('xx-small')
+        xtick.set_fontsize('x-small')
     ax1.grid()
-
+    ax1.set_xlabel("intensity of perturbations with fixed frequency")
+    ax1.set_ylabel("number of steps")
 
 # def configure_intensities_graph(ax1, clear_ticks, intensities):
 def configure_deviation_graph(ax1, intensities):
@@ -189,12 +190,12 @@ def configure_deviation_graph(ax1, intensities):
     yticklabels = ax1.get_yticklabels()
     for yticklabel in yticklabels:
         yticklabel.set_horizontalalignment('right')
-        yticklabel.set_fontsize('xx-small')
+        yticklabel.set_fontsize('x-small')
 
     xticks = ax1.get_xticklabels()
     for xtick in xticks:
         xtick.set_horizontalalignment('right')
-        xtick.set_fontsize('xx-small')
+        xtick.set_fontsize('x-small')
     ax1.grid()
     ax1.legend()
 

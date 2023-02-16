@@ -80,7 +80,6 @@ optuna==3.1.0
 packaging==21.3
 pandas==1.5.2
 Pillow==9.3.0
-pkg_resources==0.0.0
 platformdirs==2.5.4
 protobuf==3.19.6
 pyasn1==0.4.8
@@ -173,8 +172,6 @@ tensorflow-estimator==2.11.0
 tensorflow-io-gcs-filesystem==0.28.0
 tensorrt==0.0.1
 termcolor==2.1.1
-tf==1.13.2
-tf-conversions==1.13.2
 tf2-geometry-msgs==0.7.6
 tf2-kdl==0.7.6
 tf2-py==0.7.6
@@ -190,3 +187,4 @@ Werkzeug==2.2.2
 wrapt==1.14.1
 xacro==1.14.14
 zipp==3.11.0
+reloading==1.1.2

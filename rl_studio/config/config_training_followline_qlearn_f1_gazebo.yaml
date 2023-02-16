@@ -1,5 +1,5 @@
 settings:
-  mode: retraining # training, retraining
+  mode: training # training, retraining
   task: follow_line_gazebo # follow_line_gazebo
   algorithm: qlearn # qlearn
   simulator: gazebo # openai, carla, gazebo, sumo
