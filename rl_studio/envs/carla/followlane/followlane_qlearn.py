@@ -204,6 +204,16 @@ class FollowLaneQlearnStaticWeatherNoTraffic(FollowLaneEnv):
             display_pos=[1, 0],
         )
 
+        SensorManager(
+            self.world,
+            self.display_manager,
+            "SemanticCameraSergio",
+            carla.Transform(carla.Location(x=0, z=2.4), carla.Rotation(yaw=+00)),
+            self.car,
+            {},
+            display_pos=[1, 2],
+        )
+
         return self.front_camera
 
     ####################################################
@@ -228,4 +238,6 @@ class FollowLaneQlearnStaticWeatherNoTraffic(FollowLaneEnv):
         """
         esta es la funcion callback que procesa la imagen y la segmenta
         """
+        print(image)
+        print('process_img_sergio')
         pass
