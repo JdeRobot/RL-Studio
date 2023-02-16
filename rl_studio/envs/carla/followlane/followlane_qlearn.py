@@ -208,7 +208,7 @@ class FollowLaneQlearnStaticWeatherNoTraffic(FollowLaneEnv):
             self.world,
             self.display_manager,
             "SemanticCameraSergio",
-            carla.Transform(carla.Location(x=0, z=2.4), carla.Rotation(yaw=+00)),
+            carla.Transform(carla.Location(x=2, z=1), carla.Rotation(yaw=+00)),
             self.car,
             {},
             display_pos=[1, 2],
