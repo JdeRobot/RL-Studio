@@ -29,7 +29,7 @@ from rl_studio.envs.carla.utils.environment import (
 
 
 class CarlaEnv(gym.Env):
-    def __init__(self, **config):
+    def CFCCCSF__init__(self, **config):
         """Constructor of the class."""
         print(f"in CarlaEnv\n")
         self.carla_map = None
@@ -230,7 +230,7 @@ class CarlaEnv(gym.Env):
 
         time.sleep(5)
 
-    def PPEPE__init__(self, **config):
+    def __init__(self, **config):
         """Constructor of the class."""
         print(f"in CarlaEnv\n")
         self.carla_map = None

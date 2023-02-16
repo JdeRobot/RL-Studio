@@ -85,7 +85,7 @@ class FollowLaneQlearnStaticWeatherNoTraffic(FollowLaneEnv):
         self.actor_list = []
         time.sleep(0.5)
 
-        ## ----  COCHE
+        ## -----------------------------------------------  COCHE
         car_bp = self.world.get_blueprint_library().filter("vehicle.*")[0]
         location = random.choice(self.world.get_map().get_spawn_points())
         self.car = self.world.try_spawn_actor(car_bp, location)
@@ -94,8 +94,7 @@ class FollowLaneQlearnStaticWeatherNoTraffic(FollowLaneEnv):
             self.car = self.world.try_spawn_actor(car_bp, location)
         self.actor_list.append(self.car)
 
-        print(f"boy por aca")
-        ## --- CAMERA
+        ## ----------------------------------------------- CAMERA FRONT
         self.rgb_cam = self.world.get_blueprint_library().find("sensor.camera.rgb")
         self.rgb_cam.set_attribute("image_size_x", f"640")
         self.rgb_cam.set_attribute("image_size_y", f"480")
@@ -120,13 +119,52 @@ class FollowLaneQlearnStaticWeatherNoTraffic(FollowLaneEnv):
         while self.front_camera is None:
             time.sleep(0.01)
 
+        ## ----------------------------------------------- CAMERA SERGIO
+        self.sergio_camera = self.world.get_blueprint_library().find(
+            "sensor.camera.rgb"
+        )
+        self.sergio_camera.set_attribute("image_size_x", f"640")
+        self.sergio_camera.set_attribute("image_size_y", f"480")
+        self.sergio_camera.set_attribute("fov", f"110")
+        transformsergiocamera = carla.Transform(
+            carla.Location(x=2.5, z=0.7), carla.Rotation(yaw=+00)
+        )
+        self.front_camera_sergio = self.world.spawn_actor(
+            self.sergio_camera, transformsergiocamera, attach_to=self.car
+        )
+        self.actor_list.append(self.front_camera_sergio)
+
+        # We need to pass the lambda a weak reference to self to avoid circular
+        # reference.
+        weak_self_sergio = weakref.ref(self)
+        self.front_camera_sergio.listen(
+            lambda data: FollowLaneQlearnStaticWeatherNoTraffic.process_img_sergio(
+                weak_self_sergio, data
+            )
+        )
+
+        while self.front_camera is None:
+            time.sleep(0.01)
+
         for actor in self.actor_list:
             print(f"in reset - actor: {actor} \n")
 
+        # --------------- actuator
         self.car.set_autopilot(True)
 
         # self.display_manager.add_sensor(self.front_camera)
         # self.display_manager.render()
+
+        # ---------------------------------- SHOW OFF
+        SensorManager(
+            self.world,
+            self.display_manager,
+            "RGBCamera",
+            carla.Transform(carla.Location(x=-4, z=2.4), carla.Rotation(yaw=+00)),
+            self.car,
+            {},
+            display_pos=[0, 0],
+        )
         SensorManager(
             self.world,
             self.display_manager,
@@ -136,6 +174,36 @@ class FollowLaneQlearnStaticWeatherNoTraffic(FollowLaneEnv):
             {},
             display_pos=[0, 1],
         )
+        SensorManager(
+            self.world,
+            self.display_manager,
+            "SemanticCamera",
+            carla.Transform(carla.Location(x=2, z=1), carla.Rotation(yaw=+00)),
+            self.car,
+            {},
+            display_pos=[0, 2],
+        )
+        SensorManager(
+            self.world,
+            self.display_manager,
+            "DepthLogarithmicCamera",
+            carla.Transform(carla.Location(x=0, z=2.4), carla.Rotation(yaw=+00)),
+            self.car,
+            {},
+            display_pos=[1, 1],
+        )
+
+        ### CREO QUE PONIENDO ESTO, LA IMAGEN SE VERA EN PYGAME
+        SensorManager(
+            self.world,
+            self.display_manager,
+            "RGBCamera",
+            carla.Transform(carla.Location(x=0, z=2.4), carla.Rotation(yaw=+00)),
+            self.car,
+            {},
+            display_pos=[1, 0],
+        )
+
         return self.front_camera
 
     ####################################################
@@ -155,19 +223,9 @@ class FollowLaneQlearnStaticWeatherNoTraffic(FollowLaneEnv):
         cv2.waitKey(1)
         self.front_camera = i3
 
-    """
-    def reset(self):
-        from rl_studio.envs.carla.followlane.followlane_env import (
-            FollowLaneEnv,
-        )
-
-        return FollowLaneEnv.reset(self)
-
-    def step(self, action, step):
-        from rl_studio.envs.carla.followlane.followlane_env import (
-            FollowLaneEnv,
-        )
-
-        return FollowLaneEnv.step(self, action, step)
-
-    """
+    @staticmethod
+    def process_img_sergio(weak_self, image):
+        """
+        esta es la funcion callback que procesa la imagen y la segmenta
+        """
+        pass
