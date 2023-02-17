@@ -75,6 +75,9 @@ class FollowLaneQlearnStaticWeatherNoTraffic(FollowLaneEnv):
         self.blueprint_library = self.world.get_blueprint_library()
         self.model_3 = self.blueprint_library.filter("model3")[0]
 
+    def __del__(self):
+        print("__del__ called")
+
     def reset(self):
         """
         reset for
@@ -83,9 +86,9 @@ class FollowLaneQlearnStaticWeatherNoTraffic(FollowLaneEnv):
         - tasks: FollowLane
         """
 
-        # self.client.apply_batch(
-        #    [carla.command.DestroyActor(x) for x in self.actor_list]
-        # )
+        self.client.apply_batch(
+            [carla.command.DestroyActor(x) for x in self.actor_list]
+        )
         # if len(self.actor_list) > 0:
         #    self.destroy_all_actors()
         #    print(f"entro reset destroy actors")
@@ -122,16 +125,16 @@ class FollowLaneQlearnStaticWeatherNoTraffic(FollowLaneEnv):
 
         # We need to pass the lambda a weak reference to self to avoid circular
         # reference.
-        weak_self = weakref.ref(self)
-        self.sensor_front_camera.listen(
-            lambda data: FollowLaneQlearnStaticWeatherNoTraffic.process_image_weak(
-                weak_self, data
-            )
-        )
-        # self.front_camera.listen(lambda data: self.process_image(data))
+        # weak_self = weakref.ref(self)
+        # self.sensor_front_camera.listen(
+        #    lambda data: FollowLaneQlearnStaticWeatherNoTraffic.process_image_weak(
+        #        weak_self, data
+        #    )
+        # )
+        self.sensor_front_camera.listen(lambda data: self.process_image(data))
         # self.front_camera.listen(self.process_img)
-        # self.front_camera.listen(self.pruebaparaescuchar)
-        # self.front_camera.listen(lambda data: self.pruebaparaescuchar(data))
+        # self.sensor_front_camera.listen(self.pruebaparaescuchar)
+        # self.sensor_front_camera.listen(lambda data: self.pruebaparaescuchar(data))
 
         time.sleep(2.0)
         while self.sensor_front_camera is None:
@@ -148,7 +151,7 @@ class FollowLaneQlearnStaticWeatherNoTraffic(FollowLaneEnv):
         print(f"len(image_dict) = {len(self.image_dict)}")
 
         #### VAMOs a enganar al step
-        stados = random.randint(0, 4)
+        stados = random.randint(0, 16)
         stados = [stados]
         print(f"stados = {stados}")
         return stados
@@ -160,6 +163,7 @@ class FollowLaneQlearnStaticWeatherNoTraffic(FollowLaneEnv):
 
     def process_image(self, image):
         """Convert a CARLA raw image to a BGRA numpy array."""
+        print(f"holaaaaaaaaaaaaaa-----------------------------------")
         if not isinstance(image, carla.Image):
             raise ValueError("Argument must be a carla.Image")
         image = np.array(image.raw_data)
@@ -170,7 +174,7 @@ class FollowLaneQlearnStaticWeatherNoTraffic(FollowLaneEnv):
         cv2.imshow("", image3)
         cv2.waitKey(1)
         time.sleep(0.1)
-        print(f"holaaaaaaaaaaaaaa-----------------------------------")
+        self.front_camera = image3
 
     @staticmethod
     def process_image_weak(weak_self, image):
@@ -204,21 +208,27 @@ class FollowLaneQlearnStaticWeatherNoTraffic(FollowLaneEnv):
 
     #################################################
     #################################################
-    def step(self, action, step):
+    def step(self, action):
 
         print(f"entramos en step()")
         ### -------- send action
-        params = self.control(action)
-        print(f"params = {params}")
+        # params = self.control(action)
+        # print(f"params = {params}")
 
         ### -------- State get center lane
-        weak_self = weakref.ref(self)
-        self.sensor_front_camera.listen(
-            lambda data: FollowLaneQlearnStaticWeatherNoTraffic.process_image_weak(
-                weak_self, data
-            )
-        )
-        params["pos"] = 270
+        # weak_self = weakref.ref(self)
+        # self.sensor_front_camera.listen(
+        #    lambda data: FollowLaneQlearnStaticWeatherNoTraffic.process_image_weak(
+        #        weak_self, data
+        #    )
+        # )
+        # self.sensor_front_camera.listen(lambda data: self.process_image(data))
+        # time.sleep(2.0)
+        # while self.sensor_front_camera is None:
+        #    time.sleep(0.01)
+        #    print(f"entro")
+
+        # params["pos"] = 270
         center = 270
         stados = random.randint(0, 4)
         stados = [stados]
@@ -240,13 +250,15 @@ class FollowLaneQlearnStaticWeatherNoTraffic(FollowLaneEnv):
         elif action == 2:
             self.vehicle.apply_control(carla.VehicleControl(throttle=0.32, steer=0.2))
             steering_angle = 0.2
-        elif action == 3:
-            self.vehicle.apply_control(carla.VehicleControl(throttle=0.2, steer=-0.4))
-            steering_angle = 0.4
-        elif action == 4:
-            self.vehicle.apply_control(carla.VehicleControl(throttle=0.2, steer=0.4))
-            steering_angle = 0.4
-
+        # elif action == 3:
+        #    self.vehicle.apply_control(carla.VehicleControl(throttle=0.2, steer=-0.4))
+        #    steering_angle = 0.4
+        # elif action == 4:
+        #    self.vehicle.apply_control(carla.VehicleControl(throttle=0.2, steer=0.4))
+        #    steering_angle = 0.4
+        else:
+            print("error en action")
+            pass
         params = {}
 
         v = self.vehicle.get_velocity()
@@ -528,5 +540,5 @@ class FollowLaneQlearnStaticWeatherNoTraffic(FollowLaneEnv):
         esta es la funcion callback que procesa la imagen y la segmenta
         """
         print(image)
-        print('process_img_sergio')
+        print("process_img_sergio")
         pass

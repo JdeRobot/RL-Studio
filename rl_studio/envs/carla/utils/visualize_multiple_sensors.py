@@ -53,6 +53,7 @@ class DisplayManager:
         self.grid_size = grid_size
         self.window_size = window_size
         self.sensor_list = []
+        # self.actor_list = []
 
     def get_window_size(self):
         return [int(self.window_size[0]), int(self.window_size[1])]
@@ -85,6 +86,7 @@ class DisplayManager:
     def destroy(self):
         for s in self.sensor_list:
             s.destroy()
+        self.sensor_list = []
 
     def render_enabled(self):
         return self.display != None
@@ -105,6 +107,9 @@ class SensorManager:
         self.world = world
         self.display_man = display_man
         self.display_pos = display_pos
+
+        self.actor_list = []
+
         self.sensor = self.init_sensor(sensor_type, transform, attached, sensor_options)
         self.sensor_options = sensor_options
         self.timer = CustomTimer()
@@ -125,86 +130,12 @@ class SensorManager:
                 camera_bp.set_attribute(key, sensor_options[key])
 
             camera = self.world.spawn_actor(camera_bp, transform, attach_to=attached)
+
+            self.actor_list.append(camera)
+
             camera.listen(self.save_rgb_image)
 
-            return camera
-
-        elif sensor_type == "DepthCamera":
-            camera_bp = self.world.get_blueprint_library().find("sensor.camera.depth")
-            disp_size = self.display_man.get_display_size()
-            camera_bp.set_attribute("image_size_x", str(disp_size[0]))
-            camera_bp.set_attribute("image_size_y", str(disp_size[1]))
-
-            for key in sensor_options:
-                camera_bp.set_attribute(key, sensor_options[key])
-
-            camera = self.world.spawn_actor(camera_bp, transform, attach_to=attached)
-            # TODO: cambiar
-            camera.listen(self.save_depth_image)
-
-            return camera
-
-        elif sensor_type == "DepthLogarithmicCamera":
-            camera_bp = self.world.get_blueprint_library().find("sensor.camera.depth")
-            disp_size = self.display_man.get_display_size()
-            camera_bp.set_attribute("image_size_x", str(disp_size[0]))
-            camera_bp.set_attribute("image_size_y", str(disp_size[1]))
-
-            for key in sensor_options:
-                camera_bp.set_attribute(key, sensor_options[key])
-
-            camera = self.world.spawn_actor(camera_bp, transform, attach_to=attached)
-            # TODO: cambiar
-            camera.listen(self.save_depthlogarithmic_image)
-
-            return camera
-
-        elif sensor_type == "DvsCamera":
-            camera_bp = self.world.get_blueprint_library().find("sensor.camera.dvs")
-            disp_size = self.display_man.get_display_size()
-            camera_bp.set_attribute("image_size_x", str(disp_size[0]))
-            camera_bp.set_attribute("image_size_y", str(disp_size[1]))
-
-            for key in sensor_options:
-                camera_bp.set_attribute(key, sensor_options[key])
-
-            camera = self.world.spawn_actor(camera_bp, transform, attach_to=attached)
-            # TODO: cambiar
-            camera.listen(self.save_rgb_image)
-
-            return camera
-
-        elif sensor_type == "OpticalCamera":
-            camera_bp = self.world.get_blueprint_library().find(
-                "sensor.camera.optical_flow"
-            )
-            disp_size = self.display_man.get_display_size()
-            camera_bp.set_attribute("image_size_x", str(disp_size[0]))
-            camera_bp.set_attribute("image_size_y", str(disp_size[1]))
-
-            for key in sensor_options:
-                camera_bp.set_attribute(key, sensor_options[key])
-
-            camera = self.world.spawn_actor(camera_bp, transform, attach_to=attached)
-            # TODO: cambiar
-            camera.listen(self.save_optical_image)
-
-            return camera
-
-        elif sensor_type == "SemanticCamera":
-            camera_bp = self.world.get_blueprint_library().find(
-                "sensor.camera.semantic_segmentation"
-            )
-            disp_size = self.display_man.get_display_size()
-            camera_bp.set_attribute("image_size_x", str(disp_size[0]))
-            camera_bp.set_attribute("image_size_y", str(disp_size[1]))
-
-            for key in sensor_options:
-                camera_bp.set_attribute(key, sensor_options[key])
-
-            camera = self.world.spawn_actor(camera_bp, transform, attach_to=attached)
-            # TODO: cambiar
-            camera.listen(self.save_semantic_image)
+            # self.display_man.actor_list.append(camera)
 
             return camera
 
@@ -224,59 +155,6 @@ class SensorManager:
             camera.listen(self.save_semantic_image_sergio)
 
             return camera
-
-        elif sensor_type == "LiDAR":
-            lidar_bp = self.world.get_blueprint_library().find("sensor.lidar.ray_cast")
-            lidar_bp.set_attribute("range", "100")
-            lidar_bp.set_attribute(
-                "dropoff_general_rate",
-                lidar_bp.get_attribute("dropoff_general_rate").recommended_values[0],
-            )
-            lidar_bp.set_attribute(
-                "dropoff_intensity_limit",
-                lidar_bp.get_attribute("dropoff_intensity_limit").recommended_values[0],
-            )
-            lidar_bp.set_attribute(
-                "dropoff_zero_intensity",
-                lidar_bp.get_attribute("dropoff_zero_intensity").recommended_values[0],
-            )
-
-            for key in sensor_options:
-                lidar_bp.set_attribute(key, sensor_options[key])
-
-            lidar = self.world.spawn_actor(lidar_bp, transform, attach_to=attached)
-
-            lidar.listen(self.save_lidar_image)
-
-            return lidar
-
-        elif sensor_type == "SemanticLiDAR":
-            lidar_bp = self.world.get_blueprint_library().find(
-                "sensor.lidar.ray_cast_semantic"
-            )
-            lidar_bp.set_attribute("range", "100")
-
-            for key in sensor_options:
-                lidar_bp.set_attribute(key, sensor_options[key])
-
-            lidar = self.world.spawn_actor(lidar_bp, transform, attach_to=attached)
-
-            lidar.listen(self.save_semanticlidar_image)
-
-            return lidar
-
-        elif sensor_type == "Radar":
-            radar_bp = self.world.get_blueprint_library().find("sensor.other.radar")
-            for key in sensor_options:
-                radar_bp.set_attribute(key, sensor_options[key])
-
-            radar = self.world.spawn_actor(radar_bp, transform, attach_to=attached)
-            radar.listen(self.save_radar_image)
-
-            return radar
-
-        else:
-            return None
 
     def get_sensor(self):
         return self.sensor
@@ -321,7 +199,6 @@ class SensorManager:
         self.time_processing += t_end - t_start
         self.tics_processing += 1
 
-    
     def save_semantic_image_sergio(self, image):
         t_start = self.timer.time()
 
@@ -362,9 +239,9 @@ class SensorManager:
 
         # Say you want these points in a list form, then you can do this.
         pts_list = [[r, c] for r, c in zip(*intersection_points)]
-        #print(pts_list)
+        # print(pts_list)
 
-        #for x, y in pts_list:
+        # for x, y in pts_list:
         #    image_2[x][y] = (255, 0, 0)
 
         red_line_mask = np.zeros((400, 500, 3), dtype=np.uint8)
@@ -372,15 +249,13 @@ class SensorManager:
         for x, y in pts_list:
             red_line_mask[x][y] = (255, 0, 0)
 
-
         if self.display_man.render_enabled():
-            #self.surface = pygame.surfarray.make_surface(array.swapaxes(0, 1))
+            # self.surface = pygame.surfarray.make_surface(array.swapaxes(0, 1))
             self.surface = pygame.surfarray.make_surface(red_line_mask.swapaxes(0, 1))
 
         t_end = self.timer.time()
         self.time_processing += t_end - t_start
         self.tics_processing += 1
-    
 
     def save_depth_image(self, image):
         t_start = self.timer.time()
@@ -497,4 +372,5 @@ class SensorManager:
             self.display_man.display.blit(self.surface, offset)
 
     def destroy(self):
+        print(f"in DisplayManeger.destroy - self.sensor = {self.sensor}")
         self.sensor.destroy()

@@ -187,6 +187,8 @@ class TrainerFollowLaneQlearnAutoCarla:
         epsilon = epsilon / 2
         # -------------------------------
         ## --- init Qlearn
+        print(f"\nstates_len = {len(self.global_params.states_set)}")
+        print(f"\nactions_len = {len(self.global_params.actions_set)}")
         qlearn = QLearnCarla(
             len(self.global_params.states_set),
             self.global_params.actions,
@@ -196,7 +198,11 @@ class TrainerFollowLaneQlearnAutoCarla:
             self.environment.environment["gamma"],
             self.environment.environment["num_regions"],
         )
-
+        print(f"qlearn.q_table = {qlearn.q_table}")
+        print(f"len qlearn.q_table = {len(qlearn.q_table)}")
+        print(f"type qlearn.q_table = {type(qlearn.q_table)}")
+        print(f"shape qlearn.q_table = {np.shape(qlearn.q_table)}")
+        print(f"size qlearn.q_table = {np.size(qlearn.q_table)}")
         # while True:
         #    world.tick()
         #    display_manager.render()
@@ -222,27 +228,31 @@ class TrainerFollowLaneQlearnAutoCarla:
             ## reset env()
             # print(f"bsc = {bsc}")
 
-            while not done:
+            for j in range(0, 4):
+                # while not done:
                 step += 1
+                print(f"step = {step}")
+                print(f"observation = {observation}")
                 # Pick an action based on the current state
                 action = qlearn.select_action(observation)
                 print(f"action = {action}")
                 # Execute the action and get feedback
-                new_observation, reward, done, _ = env.step(action, step)
+                new_observation, reward, done, _ = env.step(action)
                 print(
-                    f"new_observation = {new_observation}, reward = {reward}, done = {done}, observation = {observation}"
+                    f"j = {j}, new_observation = {new_observation}, reward = {reward}, done = {done}, observation = {observation}"
                 )
                 cumulated_reward += reward
-                qlearn.learn(observation, action, reward, new_observation)
-                observation = new_observation
-
+                # qlearn.learn(observation, action, reward, new_observation)
+                # observation = new_observation
+                print("llego aqui")
             ## ------------ destroy actors
             # .display_manager.destroy()
-            env.destroy_all_actors()
+            print(env)
+            # env.destroy_all_actors()
             # for actor in env.actor_list[::-1]:
             #    print(f"\nin main() actor : {actor}\n")
             #    actor.destroy()
-            # print(f"\nin main() actor : {actor}\n")
+            print(f"no llego aqui\n")
 
             # env.actor_list = []
             # bsc.destroy_all_actors()
@@ -252,7 +262,7 @@ class TrainerFollowLaneQlearnAutoCarla:
         # bsc.destroy_all_actors()
         # bsc.camera.destroy()
         # bsc.car.destroy()
-        pygame.quit()
+        # pygame.quit()
         env.close()
 
     #########################################################################33

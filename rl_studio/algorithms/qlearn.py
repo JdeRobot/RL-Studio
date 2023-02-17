@@ -179,7 +179,7 @@ class QLearn:
             i = q.index(maxQ)
 
         action = i
-        
+
         if return_q:  # if they want it, give it!
             return action, q
         return action
@@ -296,7 +296,6 @@ class QLearn:
         return self.epsilon
 
 
-
 class QLearnCarla:
     def __init__(
         self, states_len, actions, actions_len, epsilon, alpha, gamma, num_regions
@@ -312,6 +311,12 @@ class QLearnCarla:
 
     def select_action(self, state):
         state = state[0]
+        print(f"in selec_action()")
+        print(f"qlearn.q_table = {self.q_table}")
+        print(f"len qlearn.q_table = {len(self.q_table)}")
+        print(f"type qlearn.q_table = {type(self.q_table)}")
+        print(f"shape qlearn.q_table = {np.shape(self.q_table)}")
+        print(f"size qlearn.q_table = {np.size(self.q_table)}")
 
         if np.random.random() > self.epsilon:
             action = np.argmax(self.q_table[state])
@@ -357,4 +362,3 @@ class QLearnCarla:
             f"{outdir}/{time.strftime('%Y%m%d-%H%M%S')}_Circuit-{environment['circuit_name']}_States-{environment['states']}_Actions-{environment['action_space']}_Rewards-{environment['reward_function']}_epsilon-{round(epsilon,3)}_epoch-{episode}_step-{step}_reward-{int(cumulated_reward)}-qtable.npy",
             qtable,
         )
-
