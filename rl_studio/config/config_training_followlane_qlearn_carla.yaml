@@ -10,7 +10,7 @@ settings:
   states: sp1 # sp1 (simplified perception with 1 point), sp3 (simplified perception with 3 points), spn (simplified perception with n points)
   rewards: follow_right_lane_only_center #
   framework: _
-  total_episodes: 20
+  total_episodes: 4
   training_time: 6
   models_dir: "./checkpoints"
   logs_dir: "./logs"
@@ -111,7 +111,7 @@ carla_environments:
     city_lights: False
     car_lights: False
     alternate_pose: False
-    estimated_steps: 2
+    estimated_steps: 5
     save_episodes: 10
     save_every_step: 1000
     init_pose:

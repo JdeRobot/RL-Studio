@@ -45,7 +45,7 @@ class FollowLaneEnv(CarlaEnv):
         print(f"in FollowLaneEnv -> launching CarlaEnv\n")
         # CarlaEnv.__init__(self, **config)
         print(f"\nin FollowLaneEnv again\n")
-        print(f"{config=}\n")
+        # print(f"{config=}\n")
         # self.actor_list = []
         # self.carla_map = None
         # self.client = None
@@ -90,7 +90,7 @@ class FollowLaneEnv(CarlaEnv):
 
     #########################################################################
 
-    def reset_(self):
+    def reset_AAAA(self):
         self.actor_list = []
         client = carla.Client("localhost", 2000)
         client.set_timeout(2.0)

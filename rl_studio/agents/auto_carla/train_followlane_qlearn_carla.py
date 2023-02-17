@@ -83,17 +83,17 @@ class TrainerFollowLaneQlearnAutoCarla:
 
         self.log_file = f"{self.global_params.logs_dir}/{time.strftime('%Y%m%d-%H%M%S')}_{self.global_params.mode}_{self.global_params.task}_{self.global_params.algorithm}_{self.global_params.agent}_{self.global_params.framework}.log"
 
-        print(f"\nin TrainerFollowLaneQlearnAutoCarla {config=}")
+        # print(f"\nin TrainerFollowLaneQlearnAutoCarla {config=}")
         # print(f"\nin TrainerFollowLaneQlearnAutoCarla {self.environment=}\n")
-        print(
-            f"\nin TrainerFollowLaneQlearnAutoCarla {self.environment.environment=}\n"
-        )
+        # print(
+        #    f"\nin TrainerFollowLaneQlearnAutoCarla {self.environment.environment=}\n"
+        # )
         # lanzamos Carla server
         CarlaEnv.__init__(self)
 
     def main(self):
         """ """
-        print(f"\nself.env_params.env_name = {self.env_params.env_name}\n")
+        # print(f"\nself.env_params.env_name = {self.env_params.env_name}\n")
 
         # env = gym.make(self.env_params.env_name, **self.environment.environment)
 
@@ -207,28 +207,52 @@ class TrainerFollowLaneQlearnAutoCarla:
             ascii=True,
             unit="episodes",
         ):
+
+            # env.display_manager.render()
+            observation = env.reset()
+            # if observation.any():
+            #    print(f"hay observation = {observation}\n")
+            print(f"\nin main() observation = {observation}")
             env.world.tick()
-            env.display_manager.render()
+
             done = False
             cumulated_reward = 0
             step = 0
             start_time_epoch = datetime.now()
             ## reset env()
             # print(f"bsc = {bsc}")
-            observation = env.reset()
 
-            for actor in env.actor_list[::-1]:
-                print(f"actor : {actor}\n")
-                actor.destroy()
+            while not done:
+                step += 1
+                # Pick an action based on the current state
+                action = qlearn.select_action(observation)
+                print(f"action = {action}")
+                # Execute the action and get feedback
+                new_observation, reward, done, _ = env.step(action, step)
+                print(
+                    f"new_observation = {new_observation}, reward = {reward}, done = {done}, observation = {observation}"
+                )
+                cumulated_reward += reward
+                qlearn.learn(observation, action, reward, new_observation)
+                observation = new_observation
+
+            ## ------------ destroy actors
+            # .display_manager.destroy()
+            env.destroy_all_actors()
+            # for actor in env.actor_list[::-1]:
+            #    print(f"\nin main() actor : {actor}\n")
+            #    actor.destroy()
+            # print(f"\nin main() actor : {actor}\n")
+
             # env.actor_list = []
             # bsc.destroy_all_actors()
 
-        # --- end for
+        # ----------- end for
         # bsc.set_synchronous_mode(False)
         # bsc.destroy_all_actors()
         # bsc.camera.destroy()
         # bsc.car.destroy()
-        # pygame.quit()
+        pygame.quit()
         env.close()
 
     #########################################################################33
