@@ -11,7 +11,7 @@ import gym
 import numpy as np
 from rosgraph_msgs.msg import Clock
 import rospy
-from tf.transformations import quaternion_from_euler
+#from tf.transformations import quaternion_from_euler
 
 from agents.utils import print_messages
 
@@ -70,7 +70,6 @@ class GazeboEnv(gym.Env):
             ]
         )
         # print("Gazebo launched!")
-
         self.gzclient_pid = 0
 
         # Launch the simulation with the given launchfile name

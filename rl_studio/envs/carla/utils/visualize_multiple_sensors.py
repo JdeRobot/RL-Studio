@@ -208,6 +208,23 @@ class SensorManager:
 
             return camera
 
+        elif sensor_type == "SemanticCameraSergio":
+            camera_bp = self.world.get_blueprint_library().find(
+                "sensor.camera.semantic_segmentation"
+            )
+            disp_size = self.display_man.get_display_size()
+            camera_bp.set_attribute("image_size_x", str(disp_size[0]))
+            camera_bp.set_attribute("image_size_y", str(disp_size[1]))
+
+            for key in sensor_options:
+                camera_bp.set_attribute(key, sensor_options[key])
+
+            camera = self.world.spawn_actor(camera_bp, transform, attach_to=attached)
+            # TODO: cambiar
+            camera.listen(self.save_semantic_image_sergio)
+
+            return camera
+
         elif sensor_type == "LiDAR":
             lidar_bp = self.world.get_blueprint_library().find("sensor.lidar.ray_cast")
             lidar_bp.set_attribute("range", "100")
@@ -303,6 +320,67 @@ class SensorManager:
         t_end = self.timer.time()
         self.time_processing += t_end - t_start
         self.tics_processing += 1
+
+    
+    def save_semantic_image_sergio(self, image):
+        t_start = self.timer.time()
+
+        image.convert(carla.ColorConverter.CityScapesPalette)
+        array = np.frombuffer(image.raw_data, dtype=np.dtype("uint8"))
+        array = np.reshape(array, (image.height, image.width, 4))
+        array = array[:, :, :3]
+        array = array[:, :, ::-1]
+
+        hsv_nemo = cv2.cvtColor(array, cv2.COLOR_RGB2HSV)
+        light_sidewalk = (151, 217, 243)
+        dark_sidewalk = (153, 219, 245)
+
+        light_pavement = (149, 127, 127)
+        dark_pavement = (151, 129, 129)
+
+        mask_sidewalk = cv2.inRange(hsv_nemo, light_sidewalk, dark_sidewalk)
+        result_sidewalk = cv2.bitwise_and(array, array, mask=mask_sidewalk)
+
+        mask_pavement = cv2.inRange(hsv_nemo, light_pavement, dark_pavement)
+        result_pavement = cv2.bitwise_and(array, array, mask=mask_pavement)
+
+        # Adjust according to your adjacency requirement.
+        kernel = np.ones((3, 3), dtype=np.uint8)
+
+        # Dilating masks to expand boundary.
+        color1_mask = cv2.dilate(mask_sidewalk, kernel, iterations=1)
+        color2_mask = cv2.dilate(mask_pavement, kernel, iterations=1)
+
+        # Required points now will have both color's mask val as 255.
+        common = cv2.bitwise_and(color1_mask, color2_mask)
+        SOME_THRESHOLD = 10
+
+        # Common is binary np.uint8 image, min = 0, max = 255.
+        # SOME_THRESHOLD can be anything within the above range. (not needed though)
+        # Extract/Use it in whatever way you want it.
+        intersection_points = np.where(common > SOME_THRESHOLD)
+
+        # Say you want these points in a list form, then you can do this.
+        pts_list = [[r, c] for r, c in zip(*intersection_points)]
+        #print(pts_list)
+
+        #for x, y in pts_list:
+        #    image_2[x][y] = (255, 0, 0)
+
+        red_line_mask = np.zeros((400, 500, 3), dtype=np.uint8)
+
+        for x, y in pts_list:
+            red_line_mask[x][y] = (255, 0, 0)
+
+
+        if self.display_man.render_enabled():
+            #self.surface = pygame.surfarray.make_surface(array.swapaxes(0, 1))
+            self.surface = pygame.surfarray.make_surface(red_line_mask.swapaxes(0, 1))
+
+        t_end = self.timer.time()
+        self.time_processing += t_end - t_start
+        self.tics_processing += 1
+    
 
     def save_depth_image(self, image):
         t_start = self.timer.time()
