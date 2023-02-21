@@ -311,12 +311,12 @@ class QLearnCarla:
 
     def select_action(self, state):
         state = state[0]
-        print(f"in selec_action()")
-        print(f"qlearn.q_table = {self.q_table}")
-        print(f"len qlearn.q_table = {len(self.q_table)}")
-        print(f"type qlearn.q_table = {type(self.q_table)}")
-        print(f"shape qlearn.q_table = {np.shape(self.q_table)}")
-        print(f"size qlearn.q_table = {np.size(self.q_table)}")
+        # print(f"in selec_action()")
+        # print(f"qlearn.q_table = {self.q_table}")
+        # print(f"len qlearn.q_table = {len(self.q_table)}")
+        # print(f"type qlearn.q_table = {type(self.q_table)}")
+        # print(f"shape qlearn.q_table = {np.shape(self.q_table)}")
+        # print(f"size qlearn.q_table = {np.size(self.q_table)}")
 
         if np.random.random() > self.epsilon:
             action = np.argmax(self.q_table[state])

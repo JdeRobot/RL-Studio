@@ -84,6 +84,7 @@ class DisplayManager:
         pygame.display.flip()
 
     def destroy(self):
+        # print(f"entro en destroy()")
         for s in self.sensor_list:
             s.destroy()
         self.sensor_list = []
@@ -107,17 +108,14 @@ class SensorManager:
         self.world = world
         self.display_man = display_man
         self.display_pos = display_pos
-
-        self.actor_list = []
-
         self.sensor = self.init_sensor(sensor_type, transform, attached, sensor_options)
         self.sensor_options = sensor_options
         self.timer = CustomTimer()
-
         self.time_processing = 0.0
         self.tics_processing = 0
-
         self.display_man.add_sensor(self)
+
+        self.front_camera = None
 
     def init_sensor(self, sensor_type, transform, attached, sensor_options):
         if sensor_type == "RGBCamera":
@@ -130,12 +128,23 @@ class SensorManager:
                 camera_bp.set_attribute(key, sensor_options[key])
 
             camera = self.world.spawn_actor(camera_bp, transform, attach_to=attached)
-
-            self.actor_list.append(camera)
-
             camera.listen(self.save_rgb_image)
 
-            # self.display_man.actor_list.append(camera)
+            return camera
+
+        elif sensor_type == "SemanticCamera":
+            camera_bp = self.world.get_blueprint_library().find(
+                "sensor.camera.semantic_segmentation"
+            )
+            disp_size = self.display_man.get_display_size()
+            camera_bp.set_attribute("image_size_x", str(disp_size[0]))
+            camera_bp.set_attribute("image_size_y", str(disp_size[1]))
+
+            for key in sensor_options:
+                camera_bp.set_attribute(key, sensor_options[key])
+
+            camera = self.world.spawn_actor(camera_bp, transform, attach_to=attached)
+            camera.listen(self.save_semantic_image)
 
             return camera
 
@@ -175,13 +184,7 @@ class SensorManager:
         self.time_processing += t_end - t_start
         self.tics_processing += 1
 
-        # i = np.array(image.raw_data)
-        # print(i.shape)
-        # i2 = i.reshape((400, 500, 4))
-        # i3 = i2[:, :, :3]
-        # cv2.imshow("", array)
-        # cv2.waitKey(1)
-        # self.front_camera = i3
+        self.front_camera = array
 
     def save_semantic_image(self, image):
         t_start = self.timer.time()
@@ -252,115 +255,6 @@ class SensorManager:
         if self.display_man.render_enabled():
             # self.surface = pygame.surfarray.make_surface(array.swapaxes(0, 1))
             self.surface = pygame.surfarray.make_surface(red_line_mask.swapaxes(0, 1))
-
-        t_end = self.timer.time()
-        self.time_processing += t_end - t_start
-        self.tics_processing += 1
-
-    def save_depth_image(self, image):
-        t_start = self.timer.time()
-
-        image.convert(carla.ColorConverter.Depth)
-        array = np.frombuffer(image.raw_data, dtype=np.dtype("uint8"))
-        array = np.reshape(array, (image.height, image.width, 4))
-        array = array[:, :, :3]
-        array = array[:, :, ::-1]
-
-        if self.display_man.render_enabled():
-            self.surface = pygame.surfarray.make_surface(array.swapaxes(0, 1))
-
-        t_end = self.timer.time()
-        self.time_processing += t_end - t_start
-        self.tics_processing += 1
-
-    def save_depthlogarithmic_image(self, image):
-        t_start = self.timer.time()
-
-        image.convert(carla.ColorConverter.LogarithmicDepth)
-        array = np.frombuffer(image.raw_data, dtype=np.dtype("uint8"))
-        array = np.reshape(array, (image.height, image.width, 4))
-        array = array[:, :, :3]
-        array = array[:, :, ::-1]
-
-        if self.display_man.render_enabled():
-            self.surface = pygame.surfarray.make_surface(array.swapaxes(0, 1))
-
-        t_end = self.timer.time()
-        self.time_processing += t_end - t_start
-        self.tics_processing += 1
-
-    def save_optical_image(self, image):
-        t_start = self.timer.time()
-
-        image.convert(carla.ColorConverter.Raw)
-        array = np.frombuffer(image.raw_data, dtype=np.dtype("uint8"))
-        array = np.reshape(array, (image.height, image.width, 4))
-        array = array[:, :, :3]
-        array = array[:, :, ::-1]
-
-        if self.display_man.render_enabled():
-            self.surface = pygame.surfarray.make_surface(array.swapaxes(0, 1))
-
-        t_end = self.timer.time()
-        self.time_processing += t_end - t_start
-        self.tics_processing += 1
-
-    def save_lidar_image(self, image):
-        t_start = self.timer.time()
-
-        disp_size = self.display_man.get_display_size()
-        lidar_range = 2.0 * float(self.sensor_options["range"])
-
-        points = np.frombuffer(image.raw_data, dtype=np.dtype("f4"))
-        points = np.reshape(points, (int(points.shape[0] / 4), 4))
-        lidar_data = np.array(points[:, :2])
-        lidar_data *= min(disp_size) / lidar_range
-        lidar_data += (0.5 * disp_size[0], 0.5 * disp_size[1])
-        lidar_data = np.fabs(lidar_data)  # pylint: disable=E1111
-        lidar_data = lidar_data.astype(np.int32)
-        lidar_data = np.reshape(lidar_data, (-1, 2))
-        lidar_img_size = (disp_size[0], disp_size[1], 3)
-        lidar_img = np.zeros((lidar_img_size), dtype=np.uint8)
-
-        lidar_img[tuple(lidar_data.T)] = (255, 255, 255)
-
-        if self.display_man.render_enabled():
-            self.surface = pygame.surfarray.make_surface(lidar_img)
-
-        t_end = self.timer.time()
-        self.time_processing += t_end - t_start
-        self.tics_processing += 1
-
-    def save_semanticlidar_image(self, image):
-        t_start = self.timer.time()
-
-        disp_size = self.display_man.get_display_size()
-        lidar_range = 2.0 * float(self.sensor_options["range"])
-
-        points = np.frombuffer(image.raw_data, dtype=np.dtype("f4"))
-        points = np.reshape(points, (int(points.shape[0] / 6), 6))
-        lidar_data = np.array(points[:, :2])
-        lidar_data *= min(disp_size) / lidar_range
-        lidar_data += (0.5 * disp_size[0], 0.5 * disp_size[1])
-        lidar_data = np.fabs(lidar_data)  # pylint: disable=E1111
-        lidar_data = lidar_data.astype(np.int32)
-        lidar_data = np.reshape(lidar_data, (-1, 2))
-        lidar_img_size = (disp_size[0], disp_size[1], 3)
-        lidar_img = np.zeros((lidar_img_size), dtype=np.uint8)
-
-        lidar_img[tuple(lidar_data.T)] = (255, 255, 255)
-
-        if self.display_man.render_enabled():
-            self.surface = pygame.surfarray.make_surface(lidar_img)
-
-        t_end = self.timer.time()
-        self.time_processing += t_end - t_start
-        self.tics_processing += 1
-
-    def save_radar_image(self, radar_data):
-        t_start = self.timer.time()
-        points = np.frombuffer(radar_data.raw_data, dtype=np.dtype("f4"))
-        points = np.reshape(points, (len(radar_data), 4))
 
         t_end = self.timer.time()
         self.time_processing += t_end - t_start

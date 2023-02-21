@@ -39,6 +39,269 @@ class FollowLaneQlearnStaticWeatherNoTraffic(FollowLaneEnv):
         print(f"launching FollowLaneCarlaConfig\n ")
         FollowLaneCarlaConfig.__init__(self, **config)
 
+        #######################################
+        self.display_manager = None
+        self.vehicle = None
+        self.actor_list = []
+        self.timer = CustomTimer()
+
+        self.client = carla.Client(
+            config["carla_server"],
+            config["carla_client"],
+        )
+        self.client.set_timeout(5.0)
+        print(f"\n maps in carla 0.9.13: {self.client.get_available_maps()}\n")
+
+        # self.world = self.client.get_world()
+        self.world = self.client.load_world(config["town"])
+        self.original_settings = self.world.get_settings()
+
+        self.traffic_manager = self.client.get_trafficmanager(8000)
+        settings = self.world.get_settings()
+        # settings.synchronous_mode = False
+        settings.fixed_delta_seconds = 0.05
+        # set syncronous mode
+        if config["sync"]:
+            print(f"activate sync mode")
+            # traffic_manager = self.client.get_trafficmanager(8000)
+            # settings = self.world.get_settings()
+            self.traffic_manager.set_synchronous_mode(True)
+            # settings.synchronous_mode = True
+        else:
+            print(f"activate async mode")
+            self.traffic_manager.set_synchronous_mode(False)
+            # settings.synchronous_mode = False
+        self.world.apply_settings(settings)
+
+        self.camera = None
+        self.vehicle = None
+        self.display = None
+        self.image = None
+
+        ## -- display manager
+        self.display_manager = DisplayManager(
+            grid_size=[2, 3],
+            window_size=[1500, 800],
+        )
+
+    def reset(self):
+
+        self.collision_hist = []
+        self.actor_list = []
+        self.display_manager.actor_list = []
+        time.sleep(3)
+
+        ## -----------------------------------------------  COCHE
+        car_bp = self.world.get_blueprint_library().filter("vehicle.*")[0]
+        location = random.choice(self.world.get_map().get_spawn_points())
+        self.car = self.world.try_spawn_actor(car_bp, location)
+        while self.car is None:
+            # print(f"entro here {datetime.now()}")
+            self.car = self.world.try_spawn_actor(car_bp, location)
+        self.actor_list.append(self.car)
+
+        # --------------- actuator
+        self.car.set_autopilot(True)
+
+        # self.display_manager.add_sensor(self.front_camera)
+        # self.display_manager.render()
+
+        # time.sleep(5)
+
+        # ---------------------------------- SHOW UP
+
+        ### TODO: si se bloquea despues de muchos epochs, debe ser porque no esta eliminando estos sensores
+        self.camera_spectator = SensorManager(
+            # SensorManager(
+            self.world,
+            self.display_manager,
+            "RGBCamera",
+            carla.Transform(carla.Location(x=-5, z=2.8), carla.Rotation(yaw=+00)),
+            self.car,
+            {},
+            display_pos=[0, 0],
+        )
+        # self.actor_list.append(self.camera.actor_list[0])
+
+        self.front_camera = SensorManager(
+            # SensorManager(
+            self.world,
+            self.display_manager,
+            "RGBCamera",
+            carla.Transform(carla.Location(x=2, z=1), carla.Rotation(yaw=+00)),
+            self.car,
+            {},
+            display_pos=[1, 0],
+        )
+
+        self.front_camera_segmentated = SensorManager(
+            # SensorManager(
+            self.world,
+            self.display_manager,
+            "SemanticCamera",
+            carla.Transform(carla.Location(x=2, z=1), carla.Rotation(yaw=+00)),
+            self.car,
+            {},
+            display_pos=[0, 1],
+        )
+
+        self.sergio_camera = SensorManager(
+            self.world,
+            self.display_manager,
+            "SemanticCameraSergio",
+            carla.Transform(carla.Location(x=2, z=1), carla.Rotation(yaw=+00)),
+            self.car,
+            {},
+            display_pos=[1, 1],
+        )
+        self.sergio_camera2 = SensorManager(
+            self.world,
+            self.display_manager,
+            "SemanticCameraSergio",
+            carla.Transform(carla.Location(x=2, z=4), carla.Rotation(yaw=+0)),
+            self.car,
+            {},
+            display_pos=[0, 2],
+        )
+        self.sergio_camera3 = SensorManager(
+            self.world,
+            self.display_manager,
+            "SemanticCameraSergio",
+            carla.Transform(carla.Location(x=2, z=3), carla.Rotation(yaw=+0)),
+            self.car,
+            {},
+            display_pos=[1, 2],
+        )
+
+        time.sleep(1)
+        # print(f"self.front_camera.sensor = {self.front_camera.sensor}")
+        # print(f"self.sergio_camera.sensor = {self.sergio_camera.sensor}")
+        # print(f"self.front_camera.front_camera = {self.front_camera.front_camera}")
+
+        # return self.front_camera
+        #### VAMOs a enganar al step
+        stados = random.randint(0, 16)
+        stados = [stados]
+        # print(f"stados = {stados}")
+        return stados
+
+    ####################################################
+    ####################################################
+
+    @staticmethod
+    def process_img_sergio(weak_self, image):
+        """
+        esta es la funcion callback que procesa la imagen y la segmenta
+        """
+        print(image)
+        print("process_img_sergio")
+        pass
+
+    def destroy_all_actors(self):
+        for actor in self.actor_list[::-1]:
+            # for actor in self.actor_list:
+            actor.destroy()
+        # print(f"\nin self.destroy_all_actors(), actor : {actor}\n")
+
+        # self.actor_list = []
+        # .client.apply_batch(
+        #    [carla.command.DestroyActor(x) for x in self.actor_list[::-1]]
+        # )
+
+    def step(self, action):
+
+        # print(f"entramos en step()")
+        ### -------- send action
+        # params = self.control(action)
+        # print(f"params = {params}")
+
+        ### -------- State get center lane
+        # weak_self = weakref.ref(self)
+        # self.sensor_front_camera.listen(
+        #    lambda data: FollowLaneQlearnStaticWeatherNoTraffic.process_image_weak(
+        #        weak_self, data
+        #    )
+        # )
+        # self.sensor_front_camera.listen(lambda data: self.process_image(data))
+        # time.sleep(2.0)
+        # while self.sensor_front_camera is None:
+        #    time.sleep(0.01)
+        #    print(f"entro")
+
+        # params["pos"] = 270
+        center = 270
+        stados = random.randint(0, 4)
+        stados = [stados]
+        # print(f"stados = {stados}")
+        ## -------- Rewards
+        reward, done = self.rewards_followlane_centerline(center)
+
+        return stados, reward, done, {}
+
+    def control(self, action):
+
+        steering_angle = 0
+        if action == 0:
+            self.vehicle.apply_control(carla.VehicleControl(throttle=0.32, steer=-0.2))
+            steering_angle = 0.2
+        elif action == 1:
+            self.vehicle.apply_control(carla.VehicleControl(throttle=0.7, steer=0.0))
+            steering_angle = 0
+        elif action == 2:
+            self.vehicle.apply_control(carla.VehicleControl(throttle=0.32, steer=0.2))
+            steering_angle = 0.2
+        # elif action == 3:
+        #    self.vehicle.apply_control(carla.VehicleControl(throttle=0.2, steer=-0.4))
+        #    steering_angle = 0.4
+        # elif action == 4:
+        #    self.vehicle.apply_control(carla.VehicleControl(throttle=0.2, steer=0.4))
+        #    steering_angle = 0.4
+        else:
+            print("error en action")
+            pass
+        params = {}
+
+        v = self.vehicle.get_velocity()
+        params["velocity"] = math.sqrt(v.x**2 + v.y**2 + v.z**2)
+
+        w = self.vehicle.get_angular_velocity()
+        params["steering_angle"] = steering_angle
+
+        return params
+
+    def rewards_followlane_centerline(self, center):
+        """
+        works perfectly
+        rewards in function of center of Line
+        """
+        done = False
+        if 0.65 >= center > 0.25:
+            reward = 10
+        elif (0.9 > center > 0.65) or (0.25 >= center > 0):
+            reward = 2
+        elif 0 >= center > -0.9:
+            reward = 1
+        else:
+            reward = -100
+            done = True
+
+        return reward, done
+
+
+###########################################################################################################
+############################################################################################################
+#############################################################################################################
+class OLD_FollowLaneQlearnStaticWeatherNoTraffic(FollowLaneEnv):
+    def __init__(self, **config):
+
+        print(f"in FollowLaneQlearnStaticWeatherNoTraffic -> launching FollowLaneEnv\n")
+        ###### init F1env
+        FollowLaneEnv.__init__(self, **config)
+        ###### init class variables
+        print(f"leaving FollowLaneEnv\n ")
+        print(f"launching FollowLaneCarlaConfig\n ")
+        FollowLaneCarlaConfig.__init__(self, **config)
+
         # print(f"config = {config}")
         # ----------------------------
         # self.bsc = config["bsc"]
@@ -53,10 +316,21 @@ class FollowLaneQlearnStaticWeatherNoTraffic(FollowLaneEnv):
         self.client.set_timeout(5.0)
         self.world = self.client.get_world()
 
-        # set syncronous mode
         settings = self.world.get_settings()
-        settings.synchronous_mode = False
+        # settings.synchronous_mode = False
         settings.fixed_delta_seconds = 0.05
+
+        # set syncronous mode
+        if config["sync"]:
+            print(f"activo sync")
+            # traffic_manager = self.client.get_trafficmanager(8000)
+            # settings = self.world.get_settings()
+            # traffic_manager.set_synchronous_mode(True)
+            settings.synchronous_mode = True
+        else:
+            print(f"activo async")
+            settings.synchronous_mode = False
+
         self.world.apply_settings(settings)
 
         self.camera = None
@@ -64,16 +338,30 @@ class FollowLaneQlearnStaticWeatherNoTraffic(FollowLaneEnv):
         self.display = None
         self.image = None
 
+        ## -- display manager
+        # self.surface = None
         # self.display_manager = DisplayManager(
         #    grid_size=[2, 3],
         #    window_size=[1500, 800],
         # )
+        self.timer = CustomTimer()
+        self.time_processing = 0.0
+        self.tics_processing = 0
 
         self.image_dict = {}
         # self.display_manager.add_sensor(self)
 
         self.blueprint_library = self.world.get_blueprint_library()
         self.model_3 = self.blueprint_library.filter("model3")[0]
+
+        ## --- vamos con Pygame
+        pygame.init()
+        pygame.font.init()
+        self.gameDisplay = pygame.display.set_mode(
+            (1500, 800), pygame.HWSURFACE | pygame.DOUBLEBUF
+        )
+        self.clock = pygame.time.Clock()
+        self.surface = None
 
     def __del__(self):
         print("__del__ called")
@@ -86,20 +374,20 @@ class FollowLaneQlearnStaticWeatherNoTraffic(FollowLaneEnv):
         - tasks: FollowLane
         """
 
-        self.client.apply_batch(
-            [carla.command.DestroyActor(x) for x in self.actor_list]
-        )
+        # self.client.apply_batch(
+        #    [carla.command.DestroyActor(x) for x in self.actor_list]
+        # )
         # if len(self.actor_list) > 0:
         #    self.destroy_all_actors()
         #    print(f"entro reset destroy actors")
         # self.collision_hist = []
         # self.actor_list = []
         # time.sleep(1)
-        print(f"entro reset()")
+        # print(f"entro reset()")
         self.collision_hist = []
         self.actor_list = []
         self.image_dict = {}
-        print(f"len(image_dict) antes de leer imagen= {len(self.image_dict)}")
+        # print(f"len(image_dict) antes de leer imagen= {len(self.image_dict)}")
         ## -----------------------------------------------  COCHE
         # car_bp = self.world.get_blueprint_library().filter("vehicle.*")[0]
         self.transform = random.choice(self.world.get_map().get_spawn_points())
@@ -112,6 +400,7 @@ class FollowLaneQlearnStaticWeatherNoTraffic(FollowLaneEnv):
 
         ## ----------------------------------------------- CAMERA FRONT
         self.rgb_cam = self.blueprint_library.find("sensor.camera.rgb")
+        # disp_size = self.display_manager.get_display_size()
         self.rgb_cam.set_attribute("image_size_x", "640")
         self.rgb_cam.set_attribute("image_size_y", "480")
         self.rgb_cam.set_attribute("fov", "110")
@@ -121,6 +410,7 @@ class FollowLaneQlearnStaticWeatherNoTraffic(FollowLaneEnv):
         self.sensor_front_camera = self.world.spawn_actor(
             self.rgb_cam, transform, attach_to=self.vehicle
         )
+        # self.actor_list.append(self.rgb_cam)
         self.actor_list.append(self.sensor_front_camera)
 
         # We need to pass the lambda a weak reference to self to avoid circular
@@ -131,7 +421,8 @@ class FollowLaneQlearnStaticWeatherNoTraffic(FollowLaneEnv):
         #        weak_self, data
         #    )
         # )
-        self.sensor_front_camera.listen(lambda data: self.process_image(data))
+        self.sensor_front_camera.listen(lambda data: self.PYGAME_process_image(data))
+        # self.display_manager.add_sensor(self.sensor_front_camera)
         # self.front_camera.listen(self.process_img)
         # self.sensor_front_camera.listen(self.pruebaparaescuchar)
         # self.sensor_front_camera.listen(lambda data: self.pruebaparaescuchar(data))
@@ -142,21 +433,60 @@ class FollowLaneQlearnStaticWeatherNoTraffic(FollowLaneEnv):
             print(f"entro")
 
         # --------------- actuator
-        self.vehicle.set_autopilot(True)
-        time.sleep(1)
+        # self.vehicle.set_autopilot(True)
+        # time.sleep(1)
 
-        for actor in self.actor_list:
-            print(f"in reset - actor in self.actor_list: {actor} \n")
+        # for actor in self.actor_list:
+        #    print(f"in reset - actor in self.actor_list: {actor} \n")
 
-        print(f"len(image_dict) = {len(self.image_dict)}")
+        # print(f"len(image_dict) = {len(self.image_dict)}")
 
         #### VAMOs a enganar al step
         stados = random.randint(0, 16)
         stados = [stados]
-        print(f"stados = {stados}")
+        # print(f"stados = {stados}")
         return stados
 
         # return self.front_camera
+
+    def PYGAME_process_image(self, image):
+        """Convert a CARLA raw image to a BGRA numpy array."""
+        print(f"holaaaaaaaaaaaaaa-----------------------------------")
+        if not isinstance(image, carla.Image):
+            raise ValueError("Argument must be a carla.Image")
+        t_start = self.timer.time()
+
+        image.convert(carla.ColorConverter.Raw)
+        array = np.frombuffer(image.raw_data, dtype=np.dtype("uint8"))
+        array = np.reshape(array, (image.height, image.width, 4))
+        array = array[:, :, :3]
+        array = array[:, :, ::-1]
+        self.image_dict["image"] = array
+
+        # if self.display_manager.render_enabled():
+        self.surface = pygame.surfarray.make_surface(array.swapaxes(0, 1))
+
+        t_end = self.timer.time()
+        self.time_processing += t_end - t_start
+        self.tics_processing += 1
+        if self.surface is not None:
+            # offset = self.display_manager.get_display_offset([0, 0])
+            self.gameDisplay.blit(self.surface, (640, 480))
+
+        # pygame.display.flip()
+        # pygame.display.update()
+        self.clock.tick(60)
+
+        # print(f"self.image_dict = {self.image_dict}")
+        # cv2.imshow("", array)
+        # cv2.waitKey(1)
+        # time.sleep(0.1)
+        self.front_camera = array
+
+    def render(self):
+        if self.surface is not None:
+            offset = self.display_manager.get_display_offset([0, 0])
+            self.display_manager.display.blit(self.surface, offset)
 
     def pruebaparaescuchar(self, data):
         print("------------------------entre por fin")
@@ -199,20 +529,23 @@ class FollowLaneQlearnStaticWeatherNoTraffic(FollowLaneEnv):
         self.front_camera = image3
 
     def destroy_all_actors(self):
-        # for actor in self.actor_list[::-1]:
-        for actor in self.actor_list:
+        for actor in self.actor_list[::-1]:
+            # for actor in self.actor_list:
             actor.destroy()
-            print(f"\nin self.destroy_all_actors(), actor : {actor}\n")
+        # print(f"\nin self.destroy_all_actors(), actor : {actor}\n")
 
-        self.actor_list = []
+        # self.actor_list = []
+        # .client.apply_batch(
+        #    [carla.command.DestroyActor(x) for x in self.actor_list[::-1]]
+        # )
 
     #################################################
     #################################################
     def step(self, action):
 
-        print(f"entramos en step()")
+        # print(f"entramos en step()")
         ### -------- send action
-        # params = self.control(action)
+        params = self.control(action)
         # print(f"params = {params}")
 
         ### -------- State get center lane
@@ -232,7 +565,7 @@ class FollowLaneQlearnStaticWeatherNoTraffic(FollowLaneEnv):
         center = 270
         stados = random.randint(0, 4)
         stados = [stados]
-        print(f"stados = {stados}")
+        # print(f"stados = {stados}")
         ## -------- Rewards
         reward, done = self.rewards_followlane_centerline(center)
 
