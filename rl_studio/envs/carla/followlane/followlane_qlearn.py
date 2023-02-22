@@ -163,11 +163,23 @@ class FollowLaneQlearnStaticWeatherNoTraffic(FollowLaneEnv):
             {},
             display_pos=[0, 2],
         )
+        '''
         self.sergio_camera3 = SensorManager(
             self.world,
             self.display_manager,
             "SemanticCameraSergio",
             carla.Transform(carla.Location(x=2, z=3), carla.Rotation(yaw=+0)),
+            self.car,
+            {},
+            display_pos=[1, 2],
+        )
+        '''
+
+        SensorManager(
+            self.world,
+            self.display_manager,
+            "BirdEyeView",
+            carla.Transform(carla.Location(x=2, z=1), carla.Rotation(yaw=+00)),
             self.car,
             {},
             display_pos=[1, 2],
