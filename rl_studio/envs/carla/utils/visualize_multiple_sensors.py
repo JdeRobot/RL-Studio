@@ -23,6 +23,8 @@ import time
 import numpy as np
 import cv2
 
+from carla_birdeye_view import BirdViewProducer, BirdViewCropType, PixelDimensions
+
 try:
     import pygame
     from pygame.locals import K_ESCAPE
@@ -166,7 +168,6 @@ class SensorManager:
             return camera
         
         elif sensor_type == "BirdEyeView":
-            from carla_birdeye_view import BirdViewProducer, BirdViewCropType, PixelDimensions
             client = carla.Client('localhost', 2000)
             client.set_timeout(10.0)
 
@@ -290,7 +291,6 @@ class SensorManager:
     def save_bev_image(self, image):
         t_start = self.timer.time()
         if self.display_man.render_enabled():
-            from carla_birdeye_view import BirdViewProducer, BirdViewCropType, PixelDimensions
             car_bp = self.world.get_actors().filter("vehicle.*")[0]
             birdview = self.birdview_producer.produce(
                 agent_vehicle=car_bp  # carla.Actor (spawned vehicle)
