@@ -7,10 +7,10 @@ settings:
   env: follow_lane # Town01, simple, nurburgring, montreal, curves, simple_laser, manual, autoparking
   agent: auto_carla # f1, autoparkingRL, auto_carla, mountain_car, robot_mesh, cartpole, turtlebot
   actions: simple # simple, medium, hard, test, autoparking_simple
-  states: sp1 # sp1 (simplified perception with 1 point), sp3 (simplified perception with 3 points), spn (simplified perception with n points)
+  states: sp4 # sp1 (simplified perception with 1 point), sp3 (simplified perception with 3 points), spn (simplified perception with n points)
   rewards: follow_right_lane_only_center #
   framework: _
-  total_episodes: 4
+  total_episodes: 3
   training_time: 6
   models_dir: "./checkpoints"
   logs_dir: "./logs"
@@ -55,18 +55,18 @@ agents:
 states:
   sp1:
     0: [50]
-  sp3:
-    0: [5, 15, 22]
+  sp4:
+    0: [20, 50, 100, 120]
   sp5:
     0: [3, 5, 10, 15, 20]
   spn:
-    0: [10]
+    0: [50, 120, 180]
 
 actions:
   simple:
-    0: [3, 0]
-    1: [2, 1]
-    2: [2, -1]
+    0: [2, -1]
+    1: [3, 0]
+    2: [2, 1]
   medium:
     0: [3, 0]
     1: [2, 1]
@@ -103,7 +103,7 @@ rewards:
 carla_environments:
   follow_lane:
     env_name: CarlaEnv-v0
-    town: Town04_Opt #Town01, Town02, Town03, Town04, Town05, Town10HD
+    town: Town02 #Town01, Town02, Town03, Town04, Town05, Town10HD
     # Town01_Opt, Town02_Opt, Town03_Opt, Town04_Opt, Town05_Opt, Town10HD_Opt
     car: model1
     #sync_mode: True
@@ -112,7 +112,7 @@ carla_environments:
     city_lights: False
     car_lights: False
     alternate_pose: False
-    estimated_steps: 1
+    estimated_steps: 10
     save_episodes: 10
     save_every_step: 1000
     init_pose:

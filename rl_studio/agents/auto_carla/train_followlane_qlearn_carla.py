@@ -121,7 +121,7 @@ class TrainerFollowLaneQlearnAutoCarla:
             cumulated_reward = 0
             step = 0
 
-            for j in range(0, 4):
+            while not done:
                 if self.environment.environment["sync"]:
                     env.world.tick()
                 else:
@@ -130,7 +130,7 @@ class TrainerFollowLaneQlearnAutoCarla:
                 action = qlearn.select_action(observation)
                 new_observation, reward, done, _ = env.step(action)
                 print(
-                    f"j = {j}, step = {step}, action = {action}, new_observation = {new_observation}, reward = {reward}, done = {done}, observation = {observation}"
+                    f"step = {step}, action = {action}, new_observation = {new_observation}, reward = {reward}, done = {done}, observation = {observation}"
                 )
                 cumulated_reward += reward
                 env.display_manager.render()

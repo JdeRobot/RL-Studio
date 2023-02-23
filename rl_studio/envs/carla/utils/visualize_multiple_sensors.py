@@ -116,6 +116,8 @@ class SensorManager:
         self.display_man.add_sensor(self)
 
         self.front_camera = None
+        self.front_camera_sergio_segmentation = None
+        self.front_camera_sergio_bev = None
 
     def init_sensor(self, sensor_type, transform, attached, sensor_options):
         if sensor_type == "RGBCamera":
@@ -162,6 +164,38 @@ class SensorManager:
             camera = self.world.spawn_actor(camera_bp, transform, attach_to=attached)
             # TODO: cambiar
             camera.listen(self.save_semantic_image_sergio)
+
+            return camera
+
+        elif sensor_type == "BirdEyeView":
+            from carla_birdeye_view import (
+                BirdViewProducer,
+                BirdViewCropType,
+                PixelDimensions,
+            )
+
+            client = carla.Client("localhost", 2000)
+            client.set_timeout(10.0)
+
+            self.birdview_producer = BirdViewProducer(
+                client,  # carla.Client
+                target_size=PixelDimensions(width=100, height=300),
+                pixels_per_meter=10,
+                crop_type=BirdViewCropType.FRONT_AREA_ONLY,
+            )
+
+            camera_bp = self.world.get_blueprint_library().find(
+                "sensor.camera.semantic_segmentation"
+            )
+            disp_size = self.display_man.get_display_size()
+            camera_bp.set_attribute("image_size_x", str(disp_size[0]))
+            camera_bp.set_attribute("image_size_y", str(disp_size[1]))
+
+            for key in sensor_options:
+                camera_bp.set_attribute(key, sensor_options[key])
+
+            camera = self.world.spawn_actor(camera_bp, transform, attach_to=attached)
+            camera.listen(self.save_bev_image)
 
             return camera
 
@@ -247,7 +281,8 @@ class SensorManager:
         # for x, y in pts_list:
         #    image_2[x][y] = (255, 0, 0)
 
-        red_line_mask = np.zeros((400, 500, 3), dtype=np.uint8)
+        # red_line_mask = np.zeros((400, 500, 3), dtype=np.uint8)
+        red_line_mask = np.zeros((image.height, image.width, 3), dtype=np.uint8)
 
         for x, y in pts_list:
             red_line_mask[x][y] = (255, 0, 0)
@@ -260,11 +295,59 @@ class SensorManager:
         self.time_processing += t_end - t_start
         self.tics_processing += 1
 
+        self.front_camera_sergio_segmentation = red_line_mask
+
+    def save_bev_image(self, image):
+        t_start = self.timer.time()
+        if self.display_man.render_enabled():
+            from carla_birdeye_view import (
+                BirdViewProducer,
+                BirdViewCropType,
+                PixelDimensions,
+            )
+
+            car_bp = self.world.get_actors().filter("vehicle.*")[0]
+            birdview = self.birdview_producer.produce(
+                agent_vehicle=car_bp  # carla.Actor (spawned vehicle)
+            )
+            image = BirdViewProducer.as_rgb(birdview)
+            image = np.rot90(image)
+
+            if image.shape[0] != image.shape[1]:
+                if image.shape[0] > image.shape[1]:
+                    difference = image.shape[0] - image.shape[1]
+                    extra_left, extra_right = int(difference / 2), int(difference / 2)
+                    extra_top, extra_bottom = 0, 0
+                else:
+                    difference = image.shape[1] - image.shape[0]
+                    extra_left, extra_right = 0, 0
+                    extra_top, extra_bottom = int(difference / 2), int(difference / 2)
+                image = np.pad(
+                    image,
+                    ((extra_top, extra_bottom), (extra_left, extra_right), (0, 0)),
+                    mode="constant",
+                    constant_values=0,
+                )
+                image = np.pad(
+                    image,
+                    ((100, 100), (50, 50), (0, 0)),
+                    mode="constant",
+                    constant_values=0,
+                )
+
+            self.surface = pygame.surfarray.make_surface(image)
+
+        t_end = self.timer.time()
+        self.time_processing += t_end - t_start
+        self.tics_processing += 1
+
+        self.front_camera_sergio_bev = image
+
     def render(self):
         if self.surface is not None:
             offset = self.display_man.get_display_offset(self.display_pos)
             self.display_man.display.blit(self.surface, offset)
 
     def destroy(self):
-        print(f"in DisplayManeger.destroy - self.sensor = {self.sensor}")
+        # print(f"in DisplayManeger.destroy - self.sensor = {self.sensor}")
         self.sensor.destroy()
