@@ -128,11 +128,11 @@ class TrainerFollowLaneQlearnAutoCarla:
                     env.world.wait_for_tick()
                 step += 1
                 action = qlearn.select_action(observation)
-                new_observation, reward, done, _ = env.step(action)
-                print(
-                    f"step = {step}, action = {action}, new_observation = {new_observation}, reward = {reward}, done = {done}, observation = {observation}"
-                )
-                cumulated_reward += reward
+                # new_observation, reward, done, _ = env.step(action)
+                # print(
+                #    f"step = {step}, action = {action}, new_observation = {new_observation}, reward = {reward}, done = {done}, observation = {observation}"
+                # )
+                # cumulated_reward += reward
                 env.display_manager.render()
 
             ## ------------ destroy actors
@@ -297,9 +297,9 @@ class TrainerFollowLaneQlearnAutoCarla:
                 # print(f"action = {action}")
                 # Execute the action and get feedback
                 new_observation, reward, done, _ = env.step(action)
-                print(
-                    f"j = {j}, step = {step}, action = {action}, new_observation = {new_observation}, reward = {reward}, done = {done}, observation = {observation}"
-                )
+                # print(
+                #    f"j = {j}, step = {step}, action = {action}, new_observation = {new_observation}, reward = {reward}, done = {done}, observation = {observation}"
+                # )
                 cumulated_reward += reward
                 pygame.display.flip()
                 # qlearn.learn(observation, action, reward, new_observation)

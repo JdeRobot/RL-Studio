@@ -78,9 +78,9 @@ class Bcolors:
 
 def print_messages(*args, **kwargs):
 
-    print(f"\n\t{Bcolors.OKCYAN}====>\t{args[0]}:{Bcolors.ENDC}\n")
+    print(f"\n\t{Bcolors.OKCYAN}====>\t{args[0]}:{Bcolors.ENDC}")
     for key, value in kwargs.items():
-        print(f"\t{Bcolors.OKBLUE}[INFO] {key} = {value}{Bcolors.ENDC}")
+        print(f"{Bcolors.OKBLUE}[INFO] {key} = {value}{Bcolors.ENDC}")
     print("\n")
 
 

@@ -56,7 +56,7 @@ states:
   sp1:
     0: [50]
   sp4:
-    0: [20, 50, 100, 120]
+    0: [30, 60, 100, 120]
   sp5:
     0: [3, 5, 10, 15, 20]
   spn:
@@ -103,7 +103,7 @@ rewards:
 carla_environments:
   follow_lane:
     env_name: CarlaEnv-v0
-    town: Town02 #Town01, Town02, Town03, Town04, Town05, Town10HD
+    town: Town01 #Town01, Town02, Town03, Town04, Town05, Town10HD
     # Town01_Opt, Town02_Opt, Town03_Opt, Town04_Opt, Town05_Opt, Town10HD_Opt
     car: model1
     #sync_mode: True

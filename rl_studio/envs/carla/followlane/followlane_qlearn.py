@@ -1,3 +1,4 @@
+from collections import Counter
 import math
 import time
 import carla
@@ -16,15 +17,17 @@ from rl_studio.agents.utils import (
 )
 from rl_studio.envs.carla.followlane.followlane_env import FollowLaneEnv
 from rl_studio.envs.carla.followlane.settings import FollowLaneCarlaConfig
+from rl_studio.envs.carla.followlane.utils import AutoCarlaUtils
 
 from rl_studio.envs.carla.utils.bounding_boxes import BasicSynchronousClient
 from rl_studio.envs.carla.utils.visualize_multiple_sensors import (
     DisplayManager,
     SensorManager,
+    CustomTimer,
 )
 import pygame
-from rl_studio.envs.carla.utils.visualize_multiple_sensors import (
-    CustomTimer,
+from rl_studio.envs.carla.utils.global_route_planner import (
+    GlobalRoutePlanner,
 )
 
 
@@ -75,6 +78,9 @@ class FollowLaneQlearnStaticWeatherNoTraffic(FollowLaneEnv):
 
         self.car = None
 
+        self.perfect_distance_pixels = None
+        self.perfect_distance_normalized = None
+
     def reset(self):
 
         # print(f"=============== RESET ===================")
@@ -83,7 +89,17 @@ class FollowLaneQlearnStaticWeatherNoTraffic(FollowLaneEnv):
         # self.display_manager.actor_list = []
 
         ## ---  Car
-        self.setup_car_random_pose()
+        if self.alternate_pose:
+            self.setup_car_random_pose()
+        else:
+            # waypoints = self.get_waypoints()
+            waypoints = self.get_generated_waypoints(0, 50)
+            print(f"{len(waypoints) = }")
+            init_waypoint = waypoints[0]
+            target_waypoint = waypoints[50]
+            # target_waypoint = self.get_target_waypoint(waypoints[50], life_time=1000)
+            self.setup_car_fix_pose(init_waypoint)
+
         ## --- Sensor collision
         self.setup_col_sensor()
 
@@ -174,15 +190,15 @@ class FollowLaneQlearnStaticWeatherNoTraffic(FollowLaneEnv):
         #    display_pos=[2, 2],
         # )
 
-        # self.front_camera_mas_baja_bev = SensorManager(
-        #    self.world,
-        #    self.display_manager,
-        #    "BirdEyeView",
-        #    carla.Transform(carla.Location(x=2, z=1.5), carla.Rotation(yaw=+00)),
-        #    self.car,
-        #    {},
-        #    display_pos=[2, 2],
-        # )
+        self.front_camera_mas_baja_bev = SensorManager(
+            self.world,
+            self.display_manager,
+            "BirdEyeView",
+            carla.Transform(carla.Location(x=2, z=1.5), carla.Rotation(yaw=+00)),
+            self.car,
+            {},
+            display_pos=[2, 2],
+        )
 
         self.front_camera_1_5 = SensorManager(
             self.world,
@@ -222,89 +238,170 @@ class FollowLaneQlearnStaticWeatherNoTraffic(FollowLaneEnv):
         # stados = random.randint(0, 16)
         # stados = [stados]
         # print(f"stados = {stados}")
+        AutoCarlaUtils.show_image("image", self.front_camera.front_camera, 1)
+        mask = self.preprocess_image(
+            self.sergio_front_camera_1_5.front_camera_sergio_segmentation
+        )
+        AutoCarlaUtils.show_image("mask", mask, 1)
 
         ## -- states
-        states, _, _ = self.calculate_states(
-            self.front_camera.front_camera,
-            self.sergio_front_camera_1_5.front_camera_sergio_segmentation,
-        )
+        (
+            states,
+            distance_center,
+            distance_to_centr_normalized,
+        ) = self.calculate_states(mask)
+
+        self.perfect_distance_pixels = distance_center
+        self.perfect_distance_normalized = distance_to_centr_normalized
 
         return states
 
     ####################################################
     ####################################################
-    def calculate_states(self, image, red_mask):
-
-        # print(
-        #    f"ORIGINAL IMAGE SIZE: height = {red_mask.shape[0]}, width = {red_mask.shape[1]}, center = {red_mask.shape[1]//2}"
-        # )
-
-        ## first, we cut the upper image
-        height = red_mask.shape[0]
-        # width = red_mask.shape[1]
-        # center_image = width // 2
-        image_middle_line = (height) // 2
-        img_sliced = red_mask[image_middle_line:]
-        ## calculating new image measurements
-        height = img_sliced.shape[0]
-        width = img_sliced.shape[1]
+    def calculate_states(self, mask):
+        width = mask.shape[1]
         center_image = width // 2
-
-        ## -- convert to GRAY
-        gray_mask = cv2.cvtColor(img_sliced, cv2.COLOR_BGR2GRAY)
-
-        ## --  aplicamos mascara para convertir a BLANCOS Y NEGROS
-        _, white_mask = cv2.threshold(gray_mask, 10, 255, cv2.THRESH_BINARY)
-
-        # self.show_image("image", image, 1)
-        self.show_image("red mask", cv2.cvtColor(red_mask, cv2.COLOR_BGR2RGB), 1)
-        # self.show_image("gray mask", gray_mask, 1)
-        self.show_image("white mask", white_mask, 1)
-
-        # print(f"{height = }, {width = }, {center_image = }")
-        # print(f"{self.x_row = }")
         ## get total lines in every line point
-        lines = [white_mask[self.x_row[i], :] for i, _ in enumerate(self.x_row)]
+        lines = [mask[self.x_row[i], :] for i, _ in enumerate(self.x_row)]
         ## As we drive in right lane, we get from right to left
         lines_inversed = [list(reversed(lines[x])) for x, _ in enumerate(lines)]
         ## get the distance from right lane to center
         inv_index_right = [
             np.argmax(lines_inversed[x]) for x, _ in enumerate(lines_inversed)
         ]
-        # print(f"{inv_index_right = }\n")
         index_right = [
             width - inv_index_right[x] for x, _ in enumerate(inv_index_right)
         ]
-        # print(f"{index_right = }\n")
         distance_to_center = [
             width - inv_index_right[x] - center_image
             for x, _ in enumerate(inv_index_right)
         ]
-        # print(f"{distance_to_center = }\n")
         ## normalized distances
         distance_to_center_normalized = [
             abs(float((center_image - index_right[i]) / center_image))
             for i, _ in enumerate(index_right)
         ]
-        # print(f"distance_to_center_normalized = {distance_to_center_normalized}")
-
-        # TODO: mostrar la imagen con las 4 lineas de las filas y la posicion del centro
-
-        ## calculating states
-        states = []
-        states2 = []
-        for _, x in enumerate(index_right):
-            states.append(int(x / 40))
-            states2.append(int(x / (width / self.num_regions)))
-        # print(f"states:{states}\n")
-        # print(f"states2:{states2}\n")
+        pixels_in_state = mask.shape[1] / self.num_regions
+        states = [int(value / pixels_in_state) for _, value in enumerate(index_right)]
 
         return states, distance_to_center, distance_to_center_normalized
 
-    def show_image(self, name, img, waitkey):
-        window_name = f"{name}"
-        cv2.imshow(window_name, img)
-        cv2.waitKey(waitkey)
+    def preprocess_image(self, red_mask):
+        ## first, we cut the upper image
+        height = red_mask.shape[0]
+        image_middle_line = (height) // 2
+        img_sliced = red_mask[image_middle_line:]
+        ## calculating new image measurements
+        height = img_sliced.shape[0]
+        ## -- convert to GRAY
+        gray_mask = cv2.cvtColor(img_sliced, cv2.COLOR_BGR2GRAY)
+        ## --  aplicamos mascara para convertir a BLANCOS Y NEGROS
+        _, white_mask = cv2.threshold(gray_mask, 10, 255, cv2.THRESH_BINARY)
+
+        return white_mask
+
+    def get_waypoints(self):
+        """genera ciertos waypoints"""
+        print(f"entre")
+        map = self.world.get_map()
+        sampling_resolution = 2
+        grp = GlobalRoutePlanner(map, sampling_resolution)
+        # grp.setup()
+        spawn_points = self.world.get_map().get_spawn_points()
+        # spawn_points = map.generate_waypoints(2.0)
+        print(f"{len(spawn_points) = }")
+
+        a = carla.Location(spawn_points[0].location)
+        b = carla.Location(spawn_points[len(spawn_points) - 1].location)
+        w1 = grp.trace_route(
+            a, b
+        )  # there are other funcations can be used to generate a route in GlobalRoutePlanner.
+        i = 0
+        for w in w1:
+            if i % 10 == 0:
+                self.world.debug.draw_string(
+                    w[0].transform.location,
+                    "O",
+                    draw_shadow=False,
+                    color=carla.Color(r=255, g=0, b=0),
+                    life_time=120.0,
+                    persistent_lines=True,
+                )
+            else:
+                self.world.debug.draw_string(
+                    w[0].transform.location,
+                    "O",
+                    draw_shadow=False,
+                    color=carla.Color(r=0, g=0, b=255),
+                    life_time=1000.0,
+                    persistent_lines=True,
+                )
+            i += 1
+
+        return w1
+
+    def get_generated_waypoints(self, init, target):
+        """genera todos los waypoints"""
+        map = self.world.get_map()
+        sampling_resolution = 2
+        grp = GlobalRoutePlanner(map, sampling_resolution)
+        # grp.setup()
+        # spawn_points = self.world.get_map().get_spawn_points()
+        spawn_points = map.generate_waypoints(10.0)
+        print(f"{len(spawn_points) = }")
+
+        filtered_waypoints = []
+        i = 0
+        for waypoint in spawn_points:
+            filtered_waypoints.append(waypoint)
+            if i != target:
+                self.world.debug.draw_string(
+                    waypoint.transform.location,
+                    "O",
+                    draw_shadow=False,
+                    color=carla.Color(r=0, g=255, b=0),
+                    life_time=1000,
+                    persistent_lines=True,
+                )
+            else:
+                self.world.debug.draw_string(
+                    waypoint.transform.location,
+                    "O",
+                    draw_shadow=False,
+                    color=carla.Color(r=255, g=0, b=0),
+                    life_time=1000,
+                    persistent_lines=True,
+                )
+            i += 1
+
+        return filtered_waypoints
+
+    def get_target_waypoint(self, target_waypoint, life_time):
+        """
+        draw target point
+        """
+        self.world.debug.draw_string(
+            target_waypoint.transform.location,
+            "O",
+            draw_shadow=False,
+            color=carla.Color(r=255, g=0, b=0),
+            life_time=life_time,
+            persistent_lines=True,
+        )
+
+    def setup_car_fix_pose(self, init):
+        car_bp = self.world.get_blueprint_library().filter("vehicle.*")[0]
+        # location = random.choice(self.world.get_map().get_spawn_points())
+        location = carla.Transform(
+            carla.Location(x=-14.130021, y=69.766624, z=4),
+            carla.Rotation(pitch=360.000000, yaw=0.073273, roll=0.000000),
+        )
+        self.car = self.world.spawn_actor(car_bp, location)
+        while self.car is None:
+            self.car = self.world.spawn_actor(car_bp, location)
+
+        self.actor_list.append(self.car)
+        time.sleep(1)
 
     def setup_car_random_pose(self):
         car_bp = self.world.get_blueprint_library().filter("vehicle.*")[0]
@@ -344,7 +441,7 @@ class FollowLaneQlearnStaticWeatherNoTraffic(FollowLaneEnv):
 
         ### -------- send action
         params = self.control(action)
-        print(f"params = {params}")
+        # print(f"params = {params}")
 
         # params["pos"] = 270
         # center = 270
@@ -353,18 +450,69 @@ class FollowLaneQlearnStaticWeatherNoTraffic(FollowLaneEnv):
         # print(f"stados = {stados}")
 
         ## -- states
+        mask = self.preprocess_image(
+            self.sergio_front_camera_1_5.front_camera_sergio_segmentation
+        )
+
+        AutoCarlaUtils.show_image("mask", mask, 1)
+
         (
             states,
             distance_to_center,
             distance_to_center_normalized,
-        ) = self.calculate_states(
-            self.front_camera.front_camera,
-            self.sergio_front_camera_1_5.front_camera_sergio_segmentation,
-        )
+        ) = self.calculate_states(mask)
+
         # print(f"states:{states}\n")
+        AutoCarlaUtils.show_image_with_centrals(
+            "image",
+            self.front_camera.front_camera[mask.shape[0] :],
+            1,
+            distance_to_center,
+            distance_to_center_normalized,
+            self.x_row,
+        )
+
+        ## ------ calculate distance error and states
+        # print(f"{self.perfect_distance_normalized =}")
+        error = [
+            abs(
+                self.perfect_distance_normalized[index]
+                - distance_to_center_normalized[index]
+            )
+            for index, value in enumerate(self.x_row)
+        ]
+        counter_states = Counter(states)
+        states_16 = counter_states.get(16)
 
         ## -------- Rewards
-        reward, done = self.rewards_followlane_center_v_w()
+        reward = self.rewards_easy(error, params)
+
+        ## ----- hacemos la salida
+        done = False
+        if states_16 is not None and (
+            states_16 > (len(states) // 2)
+        ):  # salimos porque no detecta linea a la derecha
+            done = True
+        if len(self.collision_hist) > 0:  # te has chocado, baby
+            done = True
+
+        print_messages(
+            "in step()",
+            height=mask.shape[0],
+            width=mask.shape[1],
+            velocity=params["velocity"],
+            steering_angle=params["steering_angle"],
+            states=states,
+            distance_to_center=distance_to_center,
+            distance_to_center_normalized=distance_to_center_normalized,
+            self_perfect_distance_pixels=self.perfect_distance_pixels,
+            self_perfect_distance_normalized=self.perfect_distance_normalized,
+            error=error,
+            done=done,
+            reward=reward,
+            states_16=states_16,
+            self_collision_hist=self.collision_hist,
+        )
 
         return states, reward, done, {}
 
@@ -399,8 +547,45 @@ class FollowLaneQlearnStaticWeatherNoTraffic(FollowLaneEnv):
 
         return params
 
+    def rewards_followlane_dist_v_angle(self, error, params):
+        # rewards = []
+        # for i,_ in enumerate(error):
+        #    if (error[i] < 0.2):
+        #        rewards.append(10)
+        #    elif (0.2 <= error[i] < 0.4):
+        #        rewards.append(2)
+        #    elif (0.4 <= error[i] < 0.9):
+        #        rewards.append(1)
+        #    else:
+        #        rewards.append(0)
+        rewards = [0.1 / error[i] for i, _ in enumerate(error)]
+        function_reward = sum(rewards) / len(rewards)
+        function_reward += math.log10(params["velocity"])
+        function_reward -= 1 / (math.exp(params["steering_angle"]))
+
+        return function_reward
+
+    def rewards_easy(self, error, params):
+        rewards = []
+        for i, _ in enumerate(error):
+            if error[i] < 0.2:
+                rewards.append(10)
+            elif 0.2 <= error[i] < 0.4:
+                rewards.append(2)
+            elif 0.4 <= error[i] < 0.9:
+                rewards.append(1)
+            else:
+                rewards.append(-100)
+
+        function_reward = sum(rewards) / len(rewards)
+        function_reward += params["velocity"] * 0.5
+        function_reward -= params["steering_angle"] * 1.02
+
+        return function_reward
+
     def rewards_followlane_center_v_w(self):
-        center = 0.3
+        """esta sin terminar"""
+        center = 0
         done = False
         if 0.65 >= center > 0.25:
             reward = 10

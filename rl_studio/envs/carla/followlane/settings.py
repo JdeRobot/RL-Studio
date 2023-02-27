@@ -54,8 +54,8 @@ class FollowLaneCarlaConfig(BaseModel):
         self.rewards = config["rewards"]
         self.min_reward = config["min_reward"]
 
-        # Others
-        # self.telemetry = config["telemetry"]
+        # Pose
+        self.alternate_pose = config["alternate_pose"]
 
         self.actor_list = []
         self.collision_hist = []
