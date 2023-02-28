@@ -169,6 +169,7 @@ class FollowLaneQlearnStaticWeatherNoTraffic(FollowLaneEnv):
             {},
             display_pos=[0, 2],
         )
+        """
 
         self.front_camera_mas_baja_segmentated = SensorManager(
             self.world,
@@ -179,55 +180,16 @@ class FollowLaneQlearnStaticWeatherNoTraffic(FollowLaneEnv):
             {},
             display_pos=[1, 2],
         )
+        """
 
-        # self.sergio_front_camera_mas_baja = SensorManager(
-        #    self.world,
-        #    self.display_manager,
-        #    "SemanticCameraSergio",
-        #    carla.Transform(carla.Location(x=2, z=0.5), carla.Rotation(yaw=+0)),
-        #    self.car,
-        #    {},
-        #    display_pos=[2, 2],
-        # )
-
-        self.front_camera_mas_baja_bev = SensorManager(
+        SensorManager(
             self.world,
             self.display_manager,
             "BirdEyeView",
-            carla.Transform(carla.Location(x=2, z=1.5), carla.Rotation(yaw=+00)),
+            carla.Transform(carla.Location(x=2, z=1), carla.Rotation(yaw=+00)),
             self.car,
             {},
-            display_pos=[2, 2],
-        )
-
-        self.front_camera_1_5 = SensorManager(
-            self.world,
-            self.display_manager,
-            "RGBCamera",
-            carla.Transform(carla.Location(x=2, z=1.5), carla.Rotation(yaw=+00)),
-            self.car,
-            {},
-            display_pos=[0, 3],
-        )
-
-        self.front_camera_1_5_segmentated = SensorManager(
-            self.world,
-            self.display_manager,
-            "SemanticCamera",
-            carla.Transform(carla.Location(x=2, z=1.5), carla.Rotation(yaw=+00)),
-            self.car,
-            {},
-            display_pos=[1, 3],
-        )
-
-        self.sergio_front_camera_1_5 = SensorManager(
-            self.world,
-            self.display_manager,
-            "SemanticCameraSergio",
-            carla.Transform(carla.Location(x=2, z=1.5), carla.Rotation(yaw=+0)),
-            self.car,
-            {},
-            display_pos=[2, 3],
+            display_pos=[1, 2],
         )
 
         time.sleep(1)
