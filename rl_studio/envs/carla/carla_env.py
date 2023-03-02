@@ -232,7 +232,6 @@ class CarlaEnv(gym.Env):
 
     def __init__(self, **config):
         """Constructor of the class."""
-        print(f"in CarlaEnv\n")
         self.carla_map = None
         self.client = None
         self.world = None

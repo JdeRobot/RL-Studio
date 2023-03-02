@@ -105,9 +105,11 @@ class SensorManager:
         attached,
         sensor_options,
         display_pos,
+        client=None,
     ):
         self.surface = None
         self.world = world
+        self.client = client  # added for BEV
         self.display_man = display_man
         self.display_pos = display_pos
         self.sensor = self.init_sensor(sensor_type, transform, attached, sensor_options)
@@ -118,8 +120,8 @@ class SensorManager:
         self.display_man.add_sensor(self)
 
         self.front_camera = None
-        self.front_camera_sergio_segmentation = None
-        self.front_camera_sergio_bev = None
+        self.front_camera_red_mask = None
+        self.front_camera_bev = None
 
     def init_sensor(self, sensor_type, transform, attached, sensor_options):
         if sensor_type == "RGBCamera":
@@ -152,7 +154,7 @@ class SensorManager:
 
             return camera
 
-        elif sensor_type == "SemanticCameraSergio":
+        elif sensor_type == "RedMask":
             camera_bp = self.world.get_blueprint_library().find(
                 "sensor.camera.semantic_segmentation"
             )
@@ -165,16 +167,16 @@ class SensorManager:
 
             camera = self.world.spawn_actor(camera_bp, transform, attach_to=attached)
             # TODO: cambiar
-            camera.listen(self.save_semantic_image_sergio)
+            camera.listen(self.save_red_mask_semantic_image)
 
             return camera
 
         elif sensor_type == "BirdEyeView":
-            client = carla.Client("localhost", 2000)
-            client.set_timeout(10.0)
+            # client = carla.Client("localhost", 2000)
+            # client.set_timeout(10.0)
 
             self.birdview_producer = BirdViewProducer(
-                client,  # carla.Client
+                self.client,  # carla.Client
                 target_size=PixelDimensions(width=100, height=300),
                 pixels_per_meter=10,
                 crop_type=BirdViewCropType.FRONT_AREA_ONLY,
@@ -232,7 +234,7 @@ class SensorManager:
         self.time_processing += t_end - t_start
         self.tics_processing += 1
 
-    def save_semantic_image_sergio(self, image):
+    def save_red_mask_semantic_image(self, image):
         t_start = self.timer.time()
 
         image.convert(carla.ColorConverter.CityScapesPalette)
@@ -291,6 +293,8 @@ class SensorManager:
         self.time_processing += t_end - t_start
         self.tics_processing += 1
 
+        self.front_camera_red_mask = red_line_mask
+
     def save_bev_image(self, image):
         t_start = self.timer.time()
         if self.display_man.render_enabled():
@@ -328,6 +332,8 @@ class SensorManager:
         t_end = self.timer.time()
         self.time_processing += t_end - t_start
         self.tics_processing += 1
+
+        self.front_camera_bev = image
 
     def render(self):
         if self.surface is not None:

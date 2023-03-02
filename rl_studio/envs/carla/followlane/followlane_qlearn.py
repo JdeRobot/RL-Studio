@@ -34,12 +34,9 @@ from rl_studio.envs.carla.utils.global_route_planner import (
 class FollowLaneQlearnStaticWeatherNoTraffic(FollowLaneEnv):
     def __init__(self, **config):
 
-        print(f"in FollowLaneQlearnStaticWeatherNoTraffic -> launching FollowLaneEnv\n")
         ###### init F1env
         FollowLaneEnv.__init__(self, **config)
         ###### init class variables
-        print(f"leaving FollowLaneEnv\n ")
-        print(f"launching FollowLaneCarlaConfig\n ")
         FollowLaneCarlaConfig.__init__(self, **config)
 
         # self.display_manager = None
@@ -72,7 +69,7 @@ class FollowLaneQlearnStaticWeatherNoTraffic(FollowLaneEnv):
 
         ## -- display manager
         self.display_manager = DisplayManager(
-            grid_size=[3, 4],
+            grid_size=[2, 3],
             window_size=[1500, 800],
         )
 
@@ -83,128 +80,197 @@ class FollowLaneQlearnStaticWeatherNoTraffic(FollowLaneEnv):
 
     def reset(self):
 
-        # print(f"=============== RESET ===================")
         self.collision_hist = []
         self.actor_list = []
-        # self.display_manager.actor_list = []
+        spectator = self.world.get_spectator()
 
         ## ---  Car
+        waypoints_town = self.world.get_map().generate_waypoints(5.0)
+        init_waypoint = waypoints_town[self.waypoints_init + 1]
+
         if self.alternate_pose:
             self.setup_car_random_pose()
-        else:
+        elif self.waypoints_target is not None:
             # waypoints = self.get_waypoints()
-            waypoints = self.get_generated_waypoints(0, 50)
-            print(f"{len(waypoints) = }")
-            init_waypoint = waypoints[0]
-            target_waypoint = waypoints[50]
-            # target_waypoint = self.get_target_waypoint(waypoints[50], life_time=1000)
+            filtered_waypoints = self.draw_waypoints(
+                waypoints_town,
+                self.waypoints_init,
+                self.waypoints_target,
+                self.waypoints_lane_id,
+                2000,
+            )
+            self.setup_car_fix_pose(init_waypoint)
+
+        else:  # TODO: hacer en el caso que se quiera poner el target con .next()
+            waypoints_lane = init_waypoint.next_until_lane_end(1000)
+            waypoints_next = init_waypoint.next(1000)
+            print(f"{init_waypoint.transform.location.x = }")
+            print(f"{init_waypoint.transform.location.y = }")
+            print(f"{init_waypoint.lane_id = }")
+            print(f"{init_waypoint.road_id = }")
+            print(f"{len(waypoints_lane) = }")
+            print(f"{len(waypoints_next) = }")
+            w_road = []
+            w_lane = []
+            for x in waypoints_next:
+                w_road.append(x.road_id)
+                w_lane.append(x.lane_id)
+
+            counter_lanes = Counter(w_lane)
+            counter_road = Counter(w_road)
+            print(f"{counter_lanes = }")
+            print(f"{counter_road = }")
+
             self.setup_car_fix_pose(init_waypoint)
 
         ## --- Sensor collision
         self.setup_col_sensor()
 
         ## --- Cameras
-        self.camera_spectator = SensorManager(
+        # self.camera_spectator = SensorManager(
+        #    self.world,
+        #    self.display_manager,
+        #    "RGBCamera",
+        #    carla.Transform(carla.Location(x=-5, z=2.8), carla.Rotation(yaw=+00)),
+        #    self.car,
+        #    {},
+        #    display_pos=[0, 0],
+        # )
+        # self.camera_spectator_segmentated = SensorManager(
+        #    self.world,
+        #    self.display_manager,
+        #    "SemanticCamera",
+        #    carla.Transform(carla.Location(x=-5, z=2.8), carla.Rotation(yaw=+00)),
+        #    self.car,
+        #    {},
+        #    display_pos=[1, 0],
+        # )
+        # self.sergio_camera_spectator = SensorManager(
+        #    self.world,
+        #    self.display_manager,
+        #    "SemanticCameraSergio",
+        #    carla.Transform(carla.Location(x=-5, z=2.8), carla.Rotation(yaw=+00)),
+        #    self.car,
+        #    {},
+        #    display_pos=[2, 0],
+        # )
+        # self.front_camera = SensorManager(
+        #    self.world,
+        #    self.display_manager,
+        #    "RGBCamera",
+        #    carla.Transform(carla.Location(x=2, z=1), carla.Rotation(yaw=+00)),
+        #    self.car,
+        #    {},
+        #    display_pos=[0, 1],
+        # )
+
+        # self.front_camera_segmentated = SensorManager(
+        #    self.world,
+        #    self.display_manager,
+        #    "SemanticCamera",
+        #    carla.Transform(carla.Location(x=2, z=1), carla.Rotation(yaw=+00)),
+        #    self.car,
+        #    {},
+        #    display_pos=[1, 1],
+        # )
+
+        # self.sergio_front_camera = SensorManager(
+        #    self.world,
+        #    self.display_manager,
+        #    "SemanticCameraSergio",
+        #    carla.Transform(carla.Location(x=2, z=1), carla.Rotation(yaw=+00)),
+        #    self.car,
+        #    {},
+        #    display_pos=[2, 1],
+        # )
+        # self.front_camera_mas_baja = SensorManager(
+        #    self.world,
+        #    self.display_manager,
+        #    "RGBCamera",
+        #    carla.Transform(carla.Location(x=2, z=0.5), carla.Rotation(yaw=+00)),
+        #    self.car,
+        #    {},
+        #    display_pos=[0, 2],
+        # )
+        # self.front_camera_mas_baja_segmentated = SensorManager(
+        #    self.world,
+        #    self.display_manager,
+        #    "SemanticCamera",
+        #    carla.Transform(carla.Location(x=2, z=0.5), carla.Rotation(yaw=+00)),
+        #    self.car,
+        #    {},
+        #    display_pos=[1, 2],
+        # )
+
+        # self.sergio_front_camera_mas_baja = SensorManager(
+        #    self.world,
+        #    self.display_manager,
+        #    "SemanticCameraSergio",
+        #    carla.Transform(carla.Location(x=2, z=0.5), carla.Rotation(yaw=+0)),
+        #    self.car,
+        #    {},
+        #    display_pos=[2, 2],
+        # )
+
+        self.front_camera_1_5_bev = SensorManager(
+            self.world,
+            self.display_manager,
+            "BirdEyeView",
+            carla.Transform(carla.Location(x=2, z=1.5), carla.Rotation(yaw=+00)),
+            self.car,
+            {},
+            display_pos=[1, 1],
+            client=self.client,
+        )
+
+        self.front_camera_1_5 = SensorManager(
             self.world,
             self.display_manager,
             "RGBCamera",
-            carla.Transform(carla.Location(x=-5, z=2.8), carla.Rotation(yaw=+00)),
+            carla.Transform(carla.Location(x=2, z=1.5), carla.Rotation(yaw=+00)),
             self.car,
             {},
             display_pos=[0, 0],
         )
-        self.camera_spectator_segmentated = SensorManager(
+
+        self.front_camera_1_5_segmentated = SensorManager(
             self.world,
             self.display_manager,
             "SemanticCamera",
-            carla.Transform(carla.Location(x=-5, z=2.8), carla.Rotation(yaw=+00)),
-            self.car,
-            {},
-            display_pos=[1, 0],
-        )
-        self.sergio_camera_spectator = SensorManager(
-            self.world,
-            self.display_manager,
-            "SemanticCameraSergio",
-            carla.Transform(carla.Location(x=-5, z=2.8), carla.Rotation(yaw=+00)),
-            self.car,
-            {},
-            display_pos=[2, 0],
-        )
-        self.front_camera = SensorManager(
-            self.world,
-            self.display_manager,
-            "RGBCamera",
-            carla.Transform(carla.Location(x=2, z=1), carla.Rotation(yaw=+00)),
+            carla.Transform(carla.Location(x=2, z=1.5), carla.Rotation(yaw=+00)),
             self.car,
             {},
             display_pos=[0, 1],
         )
 
-        self.front_camera_segmentated = SensorManager(
+        self.front_camera_1_5_red_mask = SensorManager(
             self.world,
             self.display_manager,
-            "SemanticCamera",
-            carla.Transform(carla.Location(x=2, z=1), carla.Rotation(yaw=+00)),
-            self.car,
-            {},
-            display_pos=[1, 1],
-        )
-
-        self.sergio_front_camera = SensorManager(
-            self.world,
-            self.display_manager,
-            "SemanticCameraSergio",
-            carla.Transform(carla.Location(x=2, z=1), carla.Rotation(yaw=+00)),
-            self.car,
-            {},
-            display_pos=[2, 1],
-        )
-        self.front_camera_mas_baja = SensorManager(
-            self.world,
-            self.display_manager,
-            "RGBCamera",
-            carla.Transform(carla.Location(x=2, z=0.5), carla.Rotation(yaw=+00)),
+            "RedMask",
+            carla.Transform(carla.Location(x=2, z=1.5), carla.Rotation(yaw=+0)),
             self.car,
             {},
             display_pos=[0, 2],
-        )
-        """
-
-        self.front_camera_mas_baja_segmentated = SensorManager(
-            self.world,
-            self.display_manager,
-            "SemanticCamera",
-            carla.Transform(carla.Location(x=2, z=0.5), carla.Rotation(yaw=+00)),
-            self.car,
-            {},
-            display_pos=[1, 2],
-        )
-        """
-
-        SensorManager(
-            self.world,
-            self.display_manager,
-            "BirdEyeView",
-            carla.Transform(carla.Location(x=2, z=1), carla.Rotation(yaw=+00)),
-            self.car,
-            {},
-            display_pos=[1, 2],
         )
 
         time.sleep(1)
         self.episode_start = time.time()
         self.car.apply_control(carla.VehicleControl(throttle=0.0, brake=0.0))
 
-        #### VAMOs a enganar al step
-        # stados = random.randint(0, 16)
-        # stados = [stados]
-        # print(f"stados = {stados}")
-        AutoCarlaUtils.show_image("image", self.front_camera.front_camera, 1)
+        AutoCarlaUtils.show_image("image", self.front_camera_1_5.front_camera, 1)
+
         mask = self.preprocess_image(
-            self.sergio_front_camera_1_5.front_camera_sergio_segmentation
+            self.front_camera_1_5_red_mask.front_camera_red_mask
         )
         AutoCarlaUtils.show_image("mask", mask, 1)
+
+        # Wait for world to get the vehicle actor
+        self.world.tick()
+
+        world_snapshot = self.world.wait_for_tick()
+        actor_snapshot = world_snapshot.find(self.car.id)
+        # Set spectator at given transform (vehicle transform)
+        spectator.set_transform(actor_snapshot.get_transform())
 
         ## -- states
         (
@@ -262,78 +328,31 @@ class FollowLaneQlearnStaticWeatherNoTraffic(FollowLaneEnv):
 
         return white_mask
 
-    def get_waypoints(self):
-        """genera ciertos waypoints"""
-        print(f"entre")
-        map = self.world.get_map()
-        sampling_resolution = 2
-        grp = GlobalRoutePlanner(map, sampling_resolution)
-        # grp.setup()
-        spawn_points = self.world.get_map().get_spawn_points()
-        # spawn_points = map.generate_waypoints(2.0)
-        print(f"{len(spawn_points) = }")
-
-        a = carla.Location(spawn_points[0].location)
-        b = carla.Location(spawn_points[len(spawn_points) - 1].location)
-        w1 = grp.trace_route(
-            a, b
-        )  # there are other funcations can be used to generate a route in GlobalRoutePlanner.
-        i = 0
-        for w in w1:
-            if i % 10 == 0:
-                self.world.debug.draw_string(
-                    w[0].transform.location,
-                    "O",
-                    draw_shadow=False,
-                    color=carla.Color(r=255, g=0, b=0),
-                    life_time=120.0,
-                    persistent_lines=True,
-                )
-            else:
-                self.world.debug.draw_string(
-                    w[0].transform.location,
-                    "O",
-                    draw_shadow=False,
-                    color=carla.Color(r=0, g=0, b=255),
-                    life_time=1000.0,
-                    persistent_lines=True,
-                )
-            i += 1
-
-        return w1
-
-    def get_generated_waypoints(self, init, target):
-        """genera todos los waypoints"""
-        map = self.world.get_map()
-        sampling_resolution = 2
-        grp = GlobalRoutePlanner(map, sampling_resolution)
-        # grp.setup()
-        # spawn_points = self.world.get_map().get_spawn_points()
-        spawn_points = map.generate_waypoints(10.0)
-        print(f"{len(spawn_points) = }")
-
+    def draw_waypoints(self, spawn_points, init, target, lane_id, life_time):
         filtered_waypoints = []
-        i = 0
-        for waypoint in spawn_points:
+        i = init
+        for waypoint in spawn_points[init + 1 : target + 2]:
             filtered_waypoints.append(waypoint)
-            if i != target:
-                self.world.debug.draw_string(
-                    waypoint.transform.location,
-                    "O",
-                    draw_shadow=False,
-                    color=carla.Color(r=0, g=255, b=0),
-                    life_time=1000,
-                    persistent_lines=True,
-                )
-            else:
-                self.world.debug.draw_string(
-                    waypoint.transform.location,
-                    "O",
-                    draw_shadow=False,
-                    color=carla.Color(r=255, g=0, b=0),
-                    life_time=1000,
-                    persistent_lines=True,
-                )
+            string = f"[{waypoint.road_id},{waypoint.lane_id},{i}]"
+            if waypoint.lane_id == lane_id:
+                if i != target:
+                    self.world.debug.draw_string(
+                        waypoint.transform.location,
+                        f"X - {string}",
+                        draw_shadow=False,
+                        color=carla.Color(r=0, g=255, b=0),
+                        life_time=life_time,
+                        persistent_lines=True,
+                    )
+                else:
+                    self.world.debug.draw_string(
+                        waypoint.transform.location,
+                        f"X - {string}",
+                        draw_shadow=False,
+                        color=carla.Color(r=255, g=0, b=0),
+                        life_time=life_time,
+                        persistent_lines=True,
+                    )
             i += 1
 
         return filtered_waypoints
@@ -354,10 +373,23 @@ class FollowLaneQlearnStaticWeatherNoTraffic(FollowLaneEnv):
     def setup_car_fix_pose(self, init):
         car_bp = self.world.get_blueprint_library().filter("vehicle.*")[0]
         # location = random.choice(self.world.get_map().get_spawn_points())
+        # location = carla.Transform(
+        #    carla.Location(x=-14.130021, y=69.766624, z=4),
+        #    carla.Rotation(pitch=360.000000, yaw=0.073273, roll=0.000000),
+        # )
         location = carla.Transform(
-            carla.Location(x=-14.130021, y=69.766624, z=4),
-            carla.Rotation(pitch=360.000000, yaw=0.073273, roll=0.000000),
+            carla.Location(
+                x=init.transform.location.x,
+                y=init.transform.location.y,
+                z=init.transform.location.z,
+            ),
+            carla.Rotation(
+                pitch=init.transform.rotation.pitch,
+                yaw=init.transform.rotation.yaw,
+                roll=init.transform.rotation.roll,
+            ),
         )
+
         self.car = self.world.spawn_actor(car_bp, location)
         while self.car is None:
             self.car = self.world.spawn_actor(car_bp, location)
@@ -413,7 +445,7 @@ class FollowLaneQlearnStaticWeatherNoTraffic(FollowLaneEnv):
 
         ## -- states
         mask = self.preprocess_image(
-            self.sergio_front_camera_1_5.front_camera_sergio_segmentation
+            self.front_camera_1_5_red_mask.front_camera_red_mask
         )
 
         AutoCarlaUtils.show_image("mask", mask, 1)
@@ -427,7 +459,7 @@ class FollowLaneQlearnStaticWeatherNoTraffic(FollowLaneEnv):
         # print(f"states:{states}\n")
         AutoCarlaUtils.show_image_with_centrals(
             "image",
-            self.front_camera.front_camera[mask.shape[0] :],
+            self.front_camera_1_5.front_camera[mask.shape[0] :],
             1,
             distance_to_center,
             distance_to_center_normalized,
@@ -458,23 +490,23 @@ class FollowLaneQlearnStaticWeatherNoTraffic(FollowLaneEnv):
         if len(self.collision_hist) > 0:  # te has chocado, baby
             done = True
 
-        print_messages(
-            "in step()",
-            height=mask.shape[0],
-            width=mask.shape[1],
-            velocity=params["velocity"],
-            steering_angle=params["steering_angle"],
-            states=states,
-            distance_to_center=distance_to_center,
-            distance_to_center_normalized=distance_to_center_normalized,
-            self_perfect_distance_pixels=self.perfect_distance_pixels,
-            self_perfect_distance_normalized=self.perfect_distance_normalized,
-            error=error,
-            done=done,
-            reward=reward,
-            states_16=states_16,
-            self_collision_hist=self.collision_hist,
-        )
+        # print_messages(
+        #    "in step()",
+        #    height=mask.shape[0],
+        #    width=mask.shape[1],
+        #    velocity=params["velocity"],
+        #    steering_angle=params["steering_angle"],
+        #    states=states,
+        #    distance_to_center=distance_to_center,
+        #    distance_to_center_normalized=distance_to_center_normalized,
+        #    self_perfect_distance_pixels=self.perfect_distance_pixels,
+        #    self_perfect_distance_normalized=self.perfect_distance_normalized,
+        #    error=error,
+        #    done=done,
+        #    reward=reward,
+        #    states_16=states_16,
+        #    self_collision_hist=self.collision_hist,
+        # )
 
         return states, reward, done, {}
 
@@ -483,7 +515,7 @@ class FollowLaneQlearnStaticWeatherNoTraffic(FollowLaneEnv):
         steering_angle = 0
         if action == 0:
             self.car.apply_control(carla.VehicleControl(throttle=1, steer=-0.2))
-            steering_angle = 0.2
+            steering_angle = -0.2
         elif action == 1:
             self.car.apply_control(carla.VehicleControl(throttle=1, steer=0.0))
             steering_angle = 0

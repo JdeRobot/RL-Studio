@@ -42,54 +42,6 @@ class FollowLaneEnv(CarlaEnv):
     def __init__(self, **config):
         """Constructor of the class."""
 
-        print(f"in FollowLaneEnv -> launching CarlaEnv\n")
-        # CarlaEnv.__init__(self, **config)
-        print(f"\nin FollowLaneEnv again\n")
-        # print(f"{config=}\n")
-        # self.actor_list = []
-        # self.carla_map = None
-        # self.client = None
-        # self.world = None
-        # self.transform = None
-        # self.vehicle = None
-        # self.camera = None
-        # self.vehicle = self.blueprint_library.filter(config["car"])[0]
-        # self.height_image = config["height_image"]
-        # self.width_image = config["width_image"]
-        # self.vehicles = None
-
-        # self.display = None
-        # self.image = None
-        # self.capture = True
-        # pygame.init()
-        # pygame.font.init()
-        # world = None
-        # original_settings = None
-
-        # ----------------------------
-        # launch client and world
-        # ----------------------------
-        # self.client = carla.Client('localhost', 2000)
-        # self.client = carla.Client(config["carla_server"], config["carla_client"])
-        # self.client.set_timeout(2.0)
-        # self.world = self.client.get_world()
-        # self.blueprint_library = self.world.get_blueprint_library()
-        # self.car_model = random.choice(self.blueprint_library.filter("vehicle.*.*"))
-        # self.car_model = self.blueprint_library.filter('model3')[0]
-
-        # ----------------------------
-        # Weather: Static
-        # Traffic and pedestrians: No
-        # ----------------------------
-        # self.weather = config["weather"]
-        # self.traffic = config["traffic_pedestrians"]
-        # if self.weather != "dynamic" and self.traffic is False:
-        #    pass
-
-        # self.actor_list = []
-
-    #########################################################################
-
     def reset_AAAA(self):
         self.actor_list = []
         client = carla.Client("localhost", 2000)

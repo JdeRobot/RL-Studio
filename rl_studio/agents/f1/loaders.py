@@ -562,6 +562,21 @@ class LoadEnvVariablesQlearnCarla:
         ]
         self.environment["gamma"] = config[self.environment_set][self.env]["gamma"]
         self.environment["sync"] = config[self.environment_set][self.env]["sync"]
+        self.environment["waypoints_meters"] = config[self.environment_set][self.env][
+            "waypoints_meters"
+        ]
+        self.environment["waypoints_init"] = config[self.environment_set][self.env][
+            "waypoints_init"
+        ]
+        self.environment["waypoints_target"] = config[self.environment_set][self.env][
+            "waypoints_target"
+        ]
+        self.environment["waypoints_lane_id"] = config[self.environment_set][self.env][
+            "waypoints_lane_id"
+        ]
+        self.environment["waypoints_road_id"] = config[self.environment_set][self.env][
+            "waypoints_road_id"
+        ]
 
         # --------- Image
         self.environment["height_image"] = config["agents"][self.agent][

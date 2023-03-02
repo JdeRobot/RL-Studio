@@ -296,7 +296,105 @@ class QLearn:
         return self.epsilon
 
 
+#########################################################################
+
+
 class QLearnCarla:
+    def __init__(self, actions, epsilon, alpha, gamma):
+        self.q_table = {}
+        self.epsilon = epsilon  # exploration constant
+        self.alpha = alpha  # learning rate
+        self.gamma = gamma  # discount factor
+        self.actions = actions
+
+    # def getQValues(self, state, action):
+    #    return self.q_table.get((state, action), 0.0)
+
+    def select_action(self, state):
+        q_list = [self.q_table.get((state, a), 0.0) for a in self.actions]
+        # print(f"\n{q_list = }")
+        max_q = max(q_list)
+        # print(f"{max_q}")
+        count_max = q_list.count(max_q)
+        # print(f"{count_max}")
+        if count_max > 1:
+            best = [i for i in range(len(q_list)) if q_list[i] == max_q]
+            max_q = random.choice(best)
+        # print(f"{len(self.actions)=}")
+        if np.random.random() > self.epsilon:
+            action = q_list.index(max_q)
+        else:
+            action = np.random.randint(0, len(self.actions))
+
+        # print(f"\n{action = }")
+
+        return action
+
+    def learn(self, state, action, reward, next_state):
+        """
+        Two ways of similar Q-Learn eq., and we choose 1):
+
+        1) Q(s, a) = (1 - alpha) * Q(s,a) + alpha * (reward(s,a) + gamma * max(Q(s',a))
+
+        2) Q(s, a) = Q(s,a) + alpha * (reward(s,a) + gamma * Q(s',a) - Q(s,a))
+        """
+        # print(f"q_table al entrar al learn() = {self.q_table}")
+        # print(f"{state = }")
+        # print(f"{next_state = }")
+
+        # max_q_new = max([self.q_table.get(next_state, a) for a in self.actions])
+        max_q_new = [
+            self.q_table[index, values]
+            for index, values in self.q_table
+            if values == action and index == next_state
+        ]
+        max_q_new = 0 if len(max_q_new) == 0 else max_q_new[0]
+
+        # print(f"{max_q_new = }")
+
+        current_q = self.q_table.get((state, action), None)
+        # print(f"{current_q = }")
+        if current_q is None:
+            self.q_table[(state, action)] = reward
+
+        else:
+            self.q_table[(state, action)] = (
+                1 - self.alpha
+            ) * current_q + self.alpha * (reward + self.gamma * max_q_new)
+        # print(f"q_table al salir del learn() {self.q_table = }")
+
+    def inference(self, state):
+        return np.argmax(self.q_table[state])
+
+    def update_epsilon(self, epsilon):
+        self.epsilon = epsilon
+        return self.epsilon
+
+    def load_table(self, file):
+        self.q_table = np.load(file)
+
+    def save_numpytable(
+        self,
+        qtable,
+        environment,
+        outdir,
+        cumulated_reward,
+        episode,
+        step,
+        epsilon,
+    ):
+        np.save(
+            f"{outdir}/{time.strftime('%Y%m%d-%H%M%S')}_Circuit-{environment['circuit_name']}_States-{environment['states']}_Actions-{environment['action_space']}_Rewards-{environment['reward_function']}_epsilon-{round(epsilon,3)}_epoch-{episode}_step-{step}_reward-{int(cumulated_reward)}-qtable.npy",
+            qtable,
+        )
+
+
+#########################################################################
+class QLearnCarlaTable:
+    """table based
+    It works with 1 point of perception (1 feature low-level)
+    """
+
     def __init__(
         self, states_len, actions, actions_len, epsilon, alpha, gamma, num_regions
     ):

@@ -23,6 +23,7 @@ from rl_studio.agents.utils import (
     save_batch,
     save_best_episode,
     LoggingHandler,
+    print_messages,
 )
 from rl_studio.algorithms.qlearn import QLearnCarla
 from rl_studio.envs.gazebo.gazebo_envs import *
@@ -92,23 +93,46 @@ class TrainerFollowLaneQlearnAutoCarla:
         CarlaEnv.__init__(self)
 
     def main(self):
+        log = LoggingHandler(self.log_file)
         env = gym.make(self.env_params.env_name, **self.environment.environment)
 
         epsilon = self.environment.environment["epsilon"]
         epsilon_decay = epsilon / (self.env_params.total_episodes)
-
-        epsilon = epsilon / 2
+        # epsilon = epsilon / 2
         # -------------------------------
-        qlearn = QLearnCarla(
-            len(self.global_params.states_set),
-            self.global_params.actions,
-            len(self.global_params.actions_set),
-            self.environment.environment["epsilon"],
-            self.environment.environment["alpha"],
-            self.environment.environment["gamma"],
-            self.environment.environment["num_regions"],
+        # log.logger.info(
+        #    f"\nactions_len = {len(self.global_params.actions_set)}\n"
+        #    f"actions_range = {range(len(self.global_params.actions_set))}\n"
+        #    f"actions = {self.global_params.actions_set}\n"
+        #    f"epsilon = {epsilon}\n"
+        #    f"epsilon_decay = {epsilon_decay}\n"
+        #    f"alpha = {self.environment.environment['alpha']}\n"
+        #    f"gamma = {self.environment.environment['gamma']}\n"
+        # )
+        print_messages(
+            "main()",
+            actions_len=len(self.global_params.actions_set),
+            actions_range=range(len(self.global_params.actions_set)),
+            actions=self.global_params.actions_set,
+            epsilon=epsilon,
+            epsilon_decay=epsilon_decay,
+            alpha=self.environment.environment["alpha"],
+            gamma=self.environment.environment["gamma"],
         )
-
+        ## --- init Qlearn
+        qlearn = QLearnCarla(
+            actions=range(len(self.global_params.actions_set)),
+            epsilon=self.environment.environment["epsilon"],
+            alpha=self.environment.environment["alpha"],
+            gamma=self.environment.environment["gamma"],
+        )
+        # log.logger.info(
+        #    f"\nqlearn.q_table = {qlearn.q_table}",
+        # )
+        print_messages(
+            "",
+            qlearn_q_table=qlearn.q_table,
+        )
         ## -------------    START TRAINING --------------------
         for episode in tqdm(
             range(1, self.env_params.total_episodes + 1),
@@ -116,10 +140,20 @@ class TrainerFollowLaneQlearnAutoCarla:
             unit="episodes",
         ):
 
-            observation = env.reset()
             done = False
             cumulated_reward = 0
             step = 0
+
+            observation = env.reset()
+            state = "".join(map(str, observation))
+            print_messages(
+                "in episode",
+                episode=episode,
+                observation=observation,
+                state=state,
+                type_observation=type(observation),
+                type_state=type(state),
+            )
 
             while not done:
                 if self.environment.environment["sync"]:
@@ -127,12 +161,31 @@ class TrainerFollowLaneQlearnAutoCarla:
                 else:
                     env.world.wait_for_tick()
                 step += 1
-                action = qlearn.select_action(observation)
-                # new_observation, reward, done, _ = env.step(action)
-                # print(
-                #    f"step = {step}, action = {action}, new_observation = {new_observation}, reward = {reward}, done = {done}, observation = {observation}"
-                # )
-                # cumulated_reward += reward
+                action = qlearn.select_action(state)
+                # print(f"{action = }")
+                new_observation, reward, done, _ = env.step(action)
+
+                cumulated_reward += reward
+                next_state = "".join(map(str, new_observation))
+                print_messages(
+                    "",
+                    step=step,
+                    action=action,
+                    state=state,
+                    new_observation=new_observation,
+                    reward=reward,
+                    done=done,
+                    next_state=next_state,
+                    # state=state,
+                )
+
+                qlearn.learn(state, action, reward, next_state)
+                state = next_state
+                print_messages(
+                    "",
+                    next_state=next_state,
+                    state=state,
+                )
                 env.display_manager.render()
 
             ## ------------ destroy actors

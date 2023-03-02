@@ -56,6 +56,11 @@ class FollowLaneCarlaConfig(BaseModel):
 
         # Pose
         self.alternate_pose = config["alternate_pose"]
+        self.waypoints_meters = config["waypoints_meters"]
+        self.waypoints_init = config["waypoints_init"]
+        self.waypoints_target = config["waypoints_target"]
+        self.waypoints_lane_id = config["waypoints_lane_id"]
+        self.waypoints_road_id = config["waypoints_road_id"]
 
-        self.actor_list = []
-        self.collision_hist = []
+        # self.actor_list = []
+        # self.collision_hist = []
