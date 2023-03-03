@@ -64,7 +64,17 @@ class LoadEnvParams:
             ]
 
         elif config["settings"]["simulator"] == "carla":
-            pass
+            self.env = config["settings"]["env"]
+            self.env_name = config["carla_environments"][self.env]["env_name"]
+            self.total_episodes = config["settings"]["total_episodes"]
+            self.training_time = config["settings"]["training_time"]
+            self.save_episodes = config["carla_environments"][self.env]["save_episodes"]
+            self.save_every_step = config["carla_environments"][self.env][
+                "save_every_step"
+            ]
+            self.estimated_steps = config["carla_environments"][self.env][
+                "estimated_steps"
+            ]
 
 
 class LoadGlobalParams:
@@ -112,6 +122,7 @@ class LoadGlobalParams:
         self.logs_dir = f"{config['settings']['logs_dir']}/{config['settings']['mode']}/{config['settings']['task']}_{config['settings']['algorithm']}_{config['settings']['agent']}_{config['settings']['framework']}/logs"
         self.metrics_data_dir = f"{config['settings']['metrics_dir']}/{config['settings']['mode']}/{config['settings']['task']}_{config['settings']['algorithm']}_{config['settings']['agent']}_{config['settings']['framework']}/data"
         self.metrics_graphics_dir = f"{config['settings']['metrics_dir']}/{config['settings']['mode']}/{config['settings']['task']}_{config['settings']['algorithm']}_{config['settings']['agent']}_{config['settings']['framework']}/graphics"
+        self.recorders_carla_dir = f"{config['settings']['recorder_carla_dir']}/{config['settings']['mode']}/{config['settings']['task']}_{config['settings']['algorithm']}_{config['settings']['agent']}_{config['settings']['framework']}"
         self.training_time = config["settings"]["training_time"]
         ####### States
         self.states = config["settings"]["states"]
@@ -358,7 +369,7 @@ class LoadEnvVariablesDDPGGazebo:
 class LoadEnvVariablesQlearnGazebo:
     """
     ONLY FOR Qlearn algorithm
-    Creates a new variable 'environment', which contains values to Gazebo env, Carla env ...
+    Creates a new variable 'environment', which contains Gazebo env values
     """
 
     def __init__(self, config) -> None:
@@ -475,3 +486,142 @@ class LoadEnvVariablesQlearnGazebo:
         #
         self.environment["ROS_MASTER_URI"] = config["ros"]["ros_master_uri"]
         self.environment["GAZEBO_MASTER_URI"] = config["ros"]["gazebo_master_uri"]
+
+
+class LoadEnvVariablesQlearnCarla:
+    """
+    ONLY FOR Qlearn algorithm
+    Creates a new variable 'environment', which contains Carla env values
+    """
+
+    def __init__(self, config) -> None:
+        """environment variable for reset(), step() methods"""
+        # self.agent = config["settings"]["agent"]
+        # self.algorithm = config["settings"]["algorithm"]
+        # self.task = config["settings"]["task"]
+        # self.framework = config["settings"]["framework"]
+        self.environment_set = config["settings"]["environment_set"]
+        self.env = config["settings"]["env"]
+        self.agent = config["settings"]["agent"]
+        self.states = config["settings"]["states"]
+        self.actions = config["settings"]["actions"]
+        self.actions_set = config["actions"][self.actions]
+        self.rewards = config["settings"]["rewards"]
+        ##### environment variable
+        self.environment = {}
+        self.environment["agent"] = config["settings"]["agent"]
+        self.environment["algorithm"] = config["settings"]["algorithm"]
+        self.environment["task"] = config["settings"]["task"]
+        self.environment["framework"] = config["settings"]["framework"]
+
+        # Training/inference
+        self.environment["mode"] = config["settings"]["mode"]
+        self.environment["retrain_qlearn_model_name"] = config["retraining"]["qlearn"][
+            "retrain_qlearn_model_name"
+        ]
+        self.environment["inference_qlearn_model_name"] = config["inference"]["qlearn"][
+            "inference_qlearn_model_name"
+        ]
+
+        # Env
+        self.environment["env"] = config["settings"]["env"]
+        self.environment["town"] = config[self.environment_set][self.env]["town"]
+        self.environment["car"] = config[self.environment_set][self.env]["car"]
+        self.environment["weather"] = config[self.environment_set][self.env]["weather"]
+        self.environment["weather"] = config[self.environment_set][self.env]["weather"]
+        self.environment["traffic_pedestrians"] = config[self.environment_set][
+            self.env
+        ]["traffic_pedestrians"]
+        self.environment["city_lights"] = config[self.environment_set][self.env][
+            "city_lights"
+        ]
+        self.environment["car_lights"] = config[self.environment_set][self.env][
+            "car_lights"
+        ]
+        self.environment["alternate_pose"] = config[self.environment_set][self.env][
+            "alternate_pose"
+        ]
+        self.environment["save_episodes"] = config[self.environment_set][self.env][
+            "save_episodes"
+        ]
+        self.environment["save_every_step"] = config[self.environment_set][self.env][
+            "save_every_step"
+        ]
+        self.environment["init_pose"] = config[self.environment_set][self.env][
+            "init_pose"
+        ]
+        self.environment["goal_pose"] = config[self.environment_set][self.env][
+            "goal_pose"
+        ]
+        self.environment["filter"] = config[self.environment_set][self.env]["filter"]
+        self.environment["generation"] = config[self.environment_set][self.env][
+            "generation"
+        ]
+        self.environment["rolename"] = config[self.environment_set][self.env][
+            "rolename"
+        ]
+        self.environment["gamma"] = config[self.environment_set][self.env]["gamma"]
+        self.environment["sync"] = config[self.environment_set][self.env]["sync"]
+        self.environment["waypoints_meters"] = config[self.environment_set][self.env][
+            "waypoints_meters"
+        ]
+        self.environment["waypoints_init"] = config[self.environment_set][self.env][
+            "waypoints_init"
+        ]
+        self.environment["waypoints_target"] = config[self.environment_set][self.env][
+            "waypoints_target"
+        ]
+        self.environment["waypoints_lane_id"] = config[self.environment_set][self.env][
+            "waypoints_lane_id"
+        ]
+        self.environment["waypoints_road_id"] = config[self.environment_set][self.env][
+            "waypoints_road_id"
+        ]
+
+        # --------- Image
+        self.environment["height_image"] = config["agents"][self.agent][
+            "camera_params"
+        ]["height"]
+        self.environment["width_image"] = config["agents"][self.agent]["camera_params"][
+            "width"
+        ]
+        self.environment["center_image"] = config["agents"][self.agent][
+            "camera_params"
+        ]["center_image"]
+        self.environment["image_resizing"] = config["agents"][self.agent][
+            "camera_params"
+        ]["image_resizing"]
+        self.environment["new_image_size"] = config["agents"][self.agent][
+            "camera_params"
+        ]["new_image_size"]
+        self.environment["raw_image"] = config["agents"][self.agent]["camera_params"][
+            "raw_image"
+        ]
+        self.environment["num_regions"] = config["agents"][self.agent]["camera_params"][
+            "num_regions"
+        ]
+        self.environment["lower_limit"] = config["agents"][self.agent]["camera_params"][
+            "lower_limit"
+        ]
+        # States
+        self.environment["states"] = config["settings"]["states"]
+        self.environment["x_row"] = config["states"][self.states][0]
+
+        # Actions
+        self.environment["action_space"] = config["settings"]["actions"]
+        self.environment["actions"] = config["actions"][self.actions]
+
+        # Rewards
+        self.environment["reward_function"] = config["settings"]["rewards"]
+        self.environment["rewards"] = config["rewards"][self.rewards]
+        self.environment["min_reward"] = config["rewards"][self.rewards]["min_reward"]
+
+        # Algorithm
+        self.environment["alpha"] = config["algorithm"]["qlearn"]["alpha"]
+        self.environment["epsilon"] = config["algorithm"]["qlearn"]["epsilon"]
+        self.environment["epsilon_min"] = config["algorithm"]["qlearn"]["epsilon_min"]
+        self.environment["gamma"] = config["algorithm"]["qlearn"]["gamma"]
+
+        # CARLA
+        self.environment["carla_server"] = config["carla"]["carla_server"]
+        self.environment["carla_client"] = config["carla"]["carla_client"]

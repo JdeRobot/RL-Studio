@@ -12,6 +12,10 @@ agents/brains/logs/f1_qlearn_gym_experiments
 logs
 *.DS_Store
 catkin_ws
+output
+recorders
+logs
+
 
 
 ### Images ###

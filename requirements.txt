@@ -3,6 +3,7 @@ actionlib==1.14.0
 alembic==1.9.2
 angles==1.9.13
 astunparse==1.6.3
+#base_local_planner==1.17.2
 bondpy==1.8.6
 cachetools==5.2.0
 camera-calibration==1.17.0
@@ -41,6 +42,7 @@ genlisp==0.4.18
 genmsg==0.6.0
 gennodejs==2.0.2
 genpy==0.6.15
+#geodesy==0.5.6
 google-auth==2.14.1
 google-auth-oauthlib==0.4.6
 google-pasta==0.2.0
@@ -174,13 +176,16 @@ tf2-geometry-msgs==0.7.6
 tf2-kdl==0.7.6
 tf2-py==0.7.6
 tf2-ros==0.7.6
+#tf2-sensor-msgs==0.7.6
 threadpoolctl==3.1.0
 topic-tools==1.15.15
 tqdm==4.64.1
 typing_extensions==4.4.0
+#unique_id==1.0.6
 urllib3==1.26.13
 Werkzeug==2.2.2
 wrapt==1.14.1
 xacro==1.14.14
 zipp==3.11.0
 reloading==1.1.2
+carla-birdeye-view==1.1.1
