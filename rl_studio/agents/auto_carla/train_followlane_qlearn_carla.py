@@ -96,6 +96,12 @@ class TrainerFollowLaneQlearnAutoCarla:
         log = LoggingHandler(self.log_file)
         env = gym.make(self.env_params.env_name, **self.environment.environment)
 
+        start_time = datetime.now()
+        best_epoch = 1
+        current_max_reward = 0
+        best_step = 0
+        best_epoch_training_time = 0
+
         epsilon = self.environment.environment["epsilon"]
         epsilon_decay = epsilon / (self.env_params.total_episodes)
         # epsilon = epsilon / 2
@@ -187,7 +193,41 @@ class TrainerFollowLaneQlearnAutoCarla:
                     state=state,
                 )
                 env.display_manager.render()
+                # render params
+                """
+                render_params(
+                    action=action,
+                    episode=episode,
+                    step=step,
+                    v=self.global_params.actions_set[action][
+                        0
+                    ],  # this case for discrete
+                    w=self.global_params.actions_set[action][
+                        1
+                    ],  # this case for discrete
+                    epsilon=epsilon,
+                    observation=observation,
+                    reward_in_step=reward,
+                    cumulated_reward=cumulated_reward,
+                    current_max_reward=current_max_reward,
+                    done=done,
+                )
+                """
+                # End epoch
+                if step > self.env_params.estimated_steps:
+                    done = True
+                    np.save(
+                        f"{self.global_params.models_dir}/{time.strftime('%Y%m%d-%H%M%S')}_Circuit-{self.environment.environment['circuit_name']}_States-{self.environment.environment['states']}_Actions-{self.environment.environment['action_space']}_Rewards-{self.environment.environment['reward_function']}_epsilon-{round(epsilon,3)}_epoch-{episode}_step-{step}_reward-{int(cumulated_reward)}-qtable.npy",
+                        qlearn.q_table,
+                    )
 
+            # updating epsilon for exploration
+            if epsilon > self.environment.environment["epsilon_min"]:
+                # self.epsilon *= self.epsilon_discount
+                epsilon -= epsilon_decay
+                epsilon = qlearn.update_epsilon(
+                    max(self.environment.environment["epsilon_min"], epsilon)
+                )
             ## ------------ destroy actors
 
             env.destroy_all_actors()

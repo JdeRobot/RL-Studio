@@ -7,6 +7,10 @@ import numpy as np
 
 
 class QLearnF1:
+    """table based
+    Gazebo
+    """
+
     def __init__(
         self, states_len, actions, actions_len, epsilon, alpha, gamma, num_regions
     ):
@@ -135,6 +139,10 @@ class QLearnF1:
 
 
 class QLearn:
+    """original dict based
+    Gazebo
+    """
+
     def __init__(self, actions, epsilon=0.99, alpha=0.8, gamma=0.9):
         self.q = {}
         self.epsilon = epsilon  # exploration constant
@@ -300,6 +308,8 @@ class QLearn:
 
 
 class QLearnCarla:
+    """dict based"""
+
     def __init__(self, actions, epsilon, alpha, gamma):
         self.q_table = {}
         self.epsilon = epsilon  # exploration constant
@@ -312,17 +322,16 @@ class QLearnCarla:
 
     def select_action(self, state):
         q_list = [self.q_table.get((state, a), 0.0) for a in self.actions]
-        # print(f"\n{q_list = }")
+        print(f"\n{q_list = }")
         max_q = max(q_list)
-        # print(f"{max_q}")
+        print(f"{max_q = }")
         count_max = q_list.count(max_q)
-        # print(f"{count_max}")
-        if count_max > 1:
-            best = [i for i in range(len(q_list)) if q_list[i] == max_q]
-            max_q = random.choice(best)
-        # print(f"{len(self.actions)=}")
-        if np.random.random() > self.epsilon:
-            action = q_list.index(max_q)
+        print(f"{count_max= }")
+        best_index = [index for index, value in enumerate(q_list) if value == max_q]
+
+        if count_max > 1 or np.random.random() > self.epsilon:
+            # best = [i for i in range(len(q_list)) if q_list[i] == max_q]
+            action = random.choice(best_index)
         else:
             action = np.random.randint(0, len(self.actions))
 

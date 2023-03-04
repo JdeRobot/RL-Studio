@@ -14,21 +14,18 @@ from sensor_msgs.msg import Image
 
 from rl_studio.agents.utils import (
     print_messages,
+    render_params,
 )
 from rl_studio.envs.carla.followlane.followlane_env import FollowLaneEnv
 from rl_studio.envs.carla.followlane.settings import FollowLaneCarlaConfig
 from rl_studio.envs.carla.followlane.utils import AutoCarlaUtils
 
-from rl_studio.envs.carla.utils.bounding_boxes import BasicSynchronousClient
 from rl_studio.envs.carla.utils.visualize_multiple_sensors import (
     DisplayManager,
     SensorManager,
     CustomTimer,
 )
 import pygame
-from rl_studio.envs.carla.utils.global_route_planner import (
-    GlobalRoutePlanner,
-)
 
 
 class FollowLaneQlearnStaticWeatherNoTraffic(FollowLaneEnv):
@@ -62,11 +59,6 @@ class FollowLaneQlearnStaticWeatherNoTraffic(FollowLaneEnv):
             self.traffic_manager.set_synchronous_mode(False)
         self.world.apply_settings(settings)
 
-        # self.camera = None
-        # self.vehicle = None
-        # self.display = None
-        # self.image = None
-
         ## -- display manager
         self.display_manager = DisplayManager(
             grid_size=[2, 3],
@@ -77,6 +69,9 @@ class FollowLaneQlearnStaticWeatherNoTraffic(FollowLaneEnv):
 
         self.perfect_distance_pixels = None
         self.perfect_distance_normalized = None
+
+        self._control = carla.VehicleControl()
+        self.params = {}
 
     def reset(self):
 
@@ -125,92 +120,6 @@ class FollowLaneQlearnStaticWeatherNoTraffic(FollowLaneEnv):
 
         ## --- Sensor collision
         self.setup_col_sensor()
-
-        ## --- Cameras
-        # self.camera_spectator = SensorManager(
-        #    self.world,
-        #    self.display_manager,
-        #    "RGBCamera",
-        #    carla.Transform(carla.Location(x=-5, z=2.8), carla.Rotation(yaw=+00)),
-        #    self.car,
-        #    {},
-        #    display_pos=[0, 0],
-        # )
-        # self.camera_spectator_segmentated = SensorManager(
-        #    self.world,
-        #    self.display_manager,
-        #    "SemanticCamera",
-        #    carla.Transform(carla.Location(x=-5, z=2.8), carla.Rotation(yaw=+00)),
-        #    self.car,
-        #    {},
-        #    display_pos=[1, 0],
-        # )
-        # self.sergio_camera_spectator = SensorManager(
-        #    self.world,
-        #    self.display_manager,
-        #    "SemanticCameraSergio",
-        #    carla.Transform(carla.Location(x=-5, z=2.8), carla.Rotation(yaw=+00)),
-        #    self.car,
-        #    {},
-        #    display_pos=[2, 0],
-        # )
-        # self.front_camera = SensorManager(
-        #    self.world,
-        #    self.display_manager,
-        #    "RGBCamera",
-        #    carla.Transform(carla.Location(x=2, z=1), carla.Rotation(yaw=+00)),
-        #    self.car,
-        #    {},
-        #    display_pos=[0, 1],
-        # )
-
-        # self.front_camera_segmentated = SensorManager(
-        #    self.world,
-        #    self.display_manager,
-        #    "SemanticCamera",
-        #    carla.Transform(carla.Location(x=2, z=1), carla.Rotation(yaw=+00)),
-        #    self.car,
-        #    {},
-        #    display_pos=[1, 1],
-        # )
-
-        # self.sergio_front_camera = SensorManager(
-        #    self.world,
-        #    self.display_manager,
-        #    "SemanticCameraSergio",
-        #    carla.Transform(carla.Location(x=2, z=1), carla.Rotation(yaw=+00)),
-        #    self.car,
-        #    {},
-        #    display_pos=[2, 1],
-        # )
-        # self.front_camera_mas_baja = SensorManager(
-        #    self.world,
-        #    self.display_manager,
-        #    "RGBCamera",
-        #    carla.Transform(carla.Location(x=2, z=0.5), carla.Rotation(yaw=+00)),
-        #    self.car,
-        #    {},
-        #    display_pos=[0, 2],
-        # )
-        # self.front_camera_mas_baja_segmentated = SensorManager(
-        #    self.world,
-        #    self.display_manager,
-        #    "SemanticCamera",
-        #    carla.Transform(carla.Location(x=2, z=0.5), carla.Rotation(yaw=+00)),
-        #    self.car,
-        #    {},
-        #    display_pos=[1, 2],
-        # )
-
-        # self.sergio_front_camera_mas_baja = SensorManager(
-        #    self.world,
-        #    self.display_manager,
-        #    "SemanticCameraSergio",
-        #    carla.Transform(carla.Location(x=2, z=0.5), carla.Rotation(yaw=+0)),
-        #    self.car,
-        #    {},
-        #    display_pos=[2, 2],
-        # )
 
         self.front_camera_1_5_bev = SensorManager(
             self.world,
@@ -434,7 +343,7 @@ class FollowLaneQlearnStaticWeatherNoTraffic(FollowLaneEnv):
         # print(f"=============== STEP ===================")
 
         ### -------- send action
-        params = self.control(action)
+        self.control(action)
         # print(f"params = {params}")
 
         # params["pos"] = 270
@@ -442,6 +351,16 @@ class FollowLaneQlearnStaticWeatherNoTraffic(FollowLaneEnv):
         # stados = random.randint(0, 4)
         # stados = [stados]
         # print(f"stados = {stados}")
+
+        render_params(
+            speed=self.params["speed"],
+            steering_angle=self.params["steering_angle"],
+            Steer=self.params["Steer"],
+            location=self.params["location"],
+            Throttle=self.params["Throttle"],
+            Brake=self.params["Brake"],
+            height=self.params["height"],
+        )
 
         ## -- states
         mask = self.preprocess_image(
@@ -479,7 +398,7 @@ class FollowLaneQlearnStaticWeatherNoTraffic(FollowLaneEnv):
         states_16 = counter_states.get(16)
 
         ## -------- Rewards
-        reward = self.rewards_easy(error, params)
+        reward = self.rewards_easy(error, self.params)
 
         ## ----- hacemos la salida
         done = False
@@ -514,32 +433,40 @@ class FollowLaneQlearnStaticWeatherNoTraffic(FollowLaneEnv):
 
         steering_angle = 0
         if action == 0:
-            self.car.apply_control(carla.VehicleControl(throttle=1, steer=-0.2))
+            # self.car.apply_control(carla.VehicleControl(throttle=1, steer=-0.2))
+            self._control.throttle = min(self._control.throttle + 0.1, 1.00)
+            self._control.steer = -0.2
             steering_angle = -0.2
         elif action == 1:
-            self.car.apply_control(carla.VehicleControl(throttle=1, steer=0.0))
+            # self.car.apply_control(carla.VehicleControl(throttle=1, steer=0.0))
+            self._control.throttle = min(self._control.throttle + 0.1, 1.00)
+            self._control.steer = 0.0
             steering_angle = 0
         elif action == 2:
-            self.car.apply_control(carla.VehicleControl(throttle=1, steer=0.2))
+            # self.car.apply_control(carla.VehicleControl(throttle=1, steer=0.2))
+            self._control.throttle = min(self._control.throttle + 0.1, 1.00)
+            self._control.steer = 0.2
             steering_angle = 0.2
-        # elif action == 3:
-        #    self.vehicle.apply_control(carla.VehicleControl(throttle=0.2, steer=-0.4))
-        #    steering_angle = 0.4
-        # elif action == 4:
-        #    self.vehicle.apply_control(carla.VehicleControl(throttle=0.2, steer=0.4))
-        #    steering_angle = 0.4
-        else:
-            print("error in action")
-            pass
-        params = {}
 
+        self.car.apply_control(self._control)
+
+        t = self.car.get_transform()
         v = self.car.get_velocity()
-        params["velocity"] = math.sqrt(v.x**2 + v.y**2 + v.z**2)
-
+        c = self.car.get_control()
         w = self.car.get_angular_velocity()
-        params["steering_angle"] = steering_angle
+        self.params["speed"] = int(3.6 * math.sqrt(v.x**2 + v.y**2 + v.z**2))
+        self.params["steering_angle"] = w
+        print(f"{self.params['steering_angle'].x = }")
+        print(f"{self.params['steering_angle'].y = }")
+        print(f"{self.params['steering_angle'].z = }")
 
-        return params
+        self.params["location"] = (t.location.x, t.location.y)
+        self.params["Throttle"] = c.throttle
+        self.params["Steer"] = c.steer
+        self.params["Brake"] = c.brake
+        self.params["height"] = t.location.z
+
+        # return self.params
 
     def rewards_followlane_dist_v_angle(self, error, params):
         # rewards = []
@@ -572,8 +499,8 @@ class FollowLaneQlearnStaticWeatherNoTraffic(FollowLaneEnv):
                 rewards.append(-100)
 
         function_reward = sum(rewards) / len(rewards)
-        function_reward += params["velocity"] * 0.5
-        function_reward -= params["steering_angle"] * 1.02
+        function_reward += params["speed"] * 0.5
+        # function_reward -= params["steering_angle"] * 1.02
 
         return function_reward
 

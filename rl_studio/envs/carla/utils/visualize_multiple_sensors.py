@@ -46,6 +46,7 @@ class CustomTimer:
 
 class DisplayManager:
     def __init__(self, grid_size, window_size):
+
         pygame.init()
         pygame.font.init()
         self.display = pygame.display.set_mode(
@@ -56,6 +57,7 @@ class DisplayManager:
         self.window_size = window_size
         self.sensor_list = []
         # self.actor_list = []
+        # self.visualize = visualize
 
     def get_window_size(self):
         return [int(self.window_size[0]), int(self.window_size[1])]

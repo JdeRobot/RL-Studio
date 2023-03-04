@@ -547,12 +547,6 @@ class LoadEnvVariablesQlearnCarla:
         self.environment["save_every_step"] = config[self.environment_set][self.env][
             "save_every_step"
         ]
-        self.environment["init_pose"] = config[self.environment_set][self.env][
-            "init_pose"
-        ]
-        self.environment["goal_pose"] = config[self.environment_set][self.env][
-            "goal_pose"
-        ]
         self.environment["filter"] = config[self.environment_set][self.env]["filter"]
         self.environment["generation"] = config[self.environment_set][self.env][
             "generation"
@@ -577,7 +571,6 @@ class LoadEnvVariablesQlearnCarla:
         self.environment["waypoints_road_id"] = config[self.environment_set][self.env][
             "waypoints_road_id"
         ]
-
         # --------- Image
         self.environment["height_image"] = config["agents"][self.agent][
             "camera_params"
