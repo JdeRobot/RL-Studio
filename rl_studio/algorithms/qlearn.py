@@ -312,17 +312,16 @@ class QLearnCarla:
 
     def select_action(self, state):
         q_list = [self.q_table.get((state, a), 0.0) for a in self.actions]
-        # print(f"\n{q_list = }")
+        print(f"\n{q_list = }")
         max_q = max(q_list)
-        # print(f"{max_q}")
+        print(f"{max_q = }")
         count_max = q_list.count(max_q)
-        # print(f"{count_max}")
-        if count_max > 1:
-            best = [i for i in range(len(q_list)) if q_list[i] == max_q]
-            max_q = random.choice(best)
-        # print(f"{len(self.actions)=}")
-        if np.random.random() > self.epsilon:
-            action = q_list.index(max_q)
+        print(f"{count_max= }")
+        best_index = [index for index, value in enumerate(q_list) if value == max_q]
+
+        if count_max > 1 or np.random.random() > self.epsilon:
+            # best = [i for i in range(len(q_list)) if q_list[i] == max_q]
+            action = random.choice(best_index)
         else:
             action = np.random.randint(0, len(self.actions))
 
@@ -338,7 +337,7 @@ class QLearnCarla:
 
         2) Q(s, a) = Q(s,a) + alpha * (reward(s,a) + gamma * Q(s',a) - Q(s,a))
         """
-        # print(f"q_table al entrar al learn() = {self.q_table}")
+        # print(f"init q_table in learn() = {self.q_table}")
         # print(f"{state = }")
         # print(f"{next_state = }")
 
@@ -361,7 +360,7 @@ class QLearnCarla:
             self.q_table[(state, action)] = (
                 1 - self.alpha
             ) * current_q + self.alpha * (reward + self.gamma * max_q_new)
-        # print(f"q_table al salir del learn() {self.q_table = }")
+        # print(f"output q_table learn() {self.q_table = }")
 
     def inference(self, state):
         return np.argmax(self.q_table[state])

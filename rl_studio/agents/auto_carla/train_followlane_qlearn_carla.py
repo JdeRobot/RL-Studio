@@ -145,7 +145,7 @@ class TrainerFollowLaneQlearnAutoCarla:
             step = 0
 
             observation = env.reset()
-            state = "".join(map(str, observation))
+            state = "-".join(map(str, observation))
             print_messages(
                 "in episode",
                 episode=episode,
@@ -166,7 +166,7 @@ class TrainerFollowLaneQlearnAutoCarla:
                 new_observation, reward, done, _ = env.step(action)
 
                 cumulated_reward += reward
-                next_state = "".join(map(str, new_observation))
+                next_state = "-".join(map(str, new_observation))
                 print_messages(
                     "",
                     step=step,
@@ -187,6 +187,41 @@ class TrainerFollowLaneQlearnAutoCarla:
                     state=state,
                 )
                 env.display_manager.render()
+                # render params
+                """
+                render_params(
+                    action=action,
+                    episode=episode,
+                    step=step,
+                    v=self.global_params.actions_set[action][
+                        0
+                    ],  # this case for discrete
+                    w=self.global_params.actions_set[action][
+                        1
+                    ],  # this case for discrete
+                    epsilon=epsilon,
+                    observation=observation,
+                    reward_in_step=reward,
+                    cumulated_reward=cumulated_reward,
+                    current_max_reward=current_max_reward,
+                    done=done,
+                )
+                """
+                # End epoch
+                if step > self.env_params.estimated_steps:
+                    done = True
+                    np.save(
+                        f"{self.global_params.models_dir}/{time.strftime('%Y%m%d-%H%M%S')}_Circuit-{self.environment.environment['town']}_States-{self.environment.environment['states']}_Actions-{self.environment.environment['action_space']}_Rewards-{self.environment.environment['reward_function']}_epsilon-{round(epsilon,3)}_epoch-{episode}_step-{step}_reward-{int(cumulated_reward)}-qtable.npy",
+                        qlearn.q_table,
+                    )
+
+            # updating epsilon for exploration
+            if epsilon > self.environment.environment["epsilon_min"]:
+                # self.epsilon *= self.epsilon_discount
+                epsilon -= epsilon_decay
+                epsilon = qlearn.update_epsilon(
+                    max(self.environment.environment["epsilon_min"], epsilon)
+                )
 
             ## ------------ destroy actors
 
