@@ -79,11 +79,46 @@ source ~/.bashrc
 The commits follow the [gitmoji](https://gitmoji.dev/) convention and the code is formatted with [Black](https://black.readthedocs.io/en/stable/).
 
 
+## Install Carla Simulator
+
+![](./rl_studio/docs/carla_spectator_camera.png)
+If you want to work with Carla Simulator, you need to install
+
+- [Carla v. 0.9.13](https://carla.readthedocs.io/en/0.9.13/start_quickstart/)
+- [ROS Bridge](https://carla.readthedocs.io/projects/ros-bridge/en/latest/) to work with ROS Noetic
+- carla-birdeye-view version 1.1.1 to work with birdeye view images. You can install through `pip install --no-deps carla-birdeye-view 1.1.1`
+
+![](./rl_studio/docs/carla_board.png)
+
+
 ## Checking everything. Set environment
-
-### Set ROS Noetic and Formula 1 agent configuration
-
 The fastest way to verify that the installation has been successful is to follow the next steps.
+
+### Carla
+Be sure your .bashrc has the path to Carla and ROS bridge:
+
+`export CARLA_ROOT=$HOME/CARLA_0.9.13`
+
+and
+
+`source ~/carla-ros-bridge/catkin_ws/devel/setup.bash`
+
+Now, you can launch RL-Studio inside your virtual environment:
+
+`cd ~/RL-Studio/rl_studio`
+
+`python rl_studio.py -f config/<file>.yaml`
+
+i.e.:
+
+
+`python rl-studio.py -f config/config_training_followlane_qlearn_carla.yaml`
+
+
+
+### Set ROS Noetic, Gazebo and Formula 1 agent configuration
+
+
 
 To connect RL-Studio with ROS and Gazebo and the different agents and circuits installed:
 

@@ -42,7 +42,8 @@ There are several config files to take as example. If you need more information 
 
 The following graph shows a conceptual diagram of the operation of RL-Studio in training mode. In the case of making inference or retraining, the process is similar
 
-![](./docs/rlstudio-diagram.svg)
+![](../rl_studio/docs/rls-diagram.svg)
+
 
 # Run RL Studio
 
@@ -92,3 +93,24 @@ Remaining params should be adjusted too. There are many working yaml files in co
 > outputs in the desired way.
 
 More info about how to config and launch any task, please go to [agents](agents/README.md) section.
+
+
+## Carla
+
+Two scripts have been developed to get the waypoints of each city in the simulator. In `/envs/carla/utils/`
+
+- `plot_waypoints.py` generates a plot with all the waypoints in the city. By zooming in you can get the road_id, lane_id and waypoint_id of every of them.
+Launch it with `python plot_waypoints.py -t <town>` where `<town>` could be Town01, you get next image
+
+![](../rl_studio/docs/Town01_waypoints.png)
+
+- `plot_topology.py` generates the connected waypoints to build routes. Launch it with `python plot_topology.py -t <town>` and generates next image 
+  
+![](../rl_studio/docs/Town01_topology.png)
+
+
+
+
+
+
+
