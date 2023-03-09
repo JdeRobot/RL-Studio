@@ -56,7 +56,7 @@ class FollowLaneQlearnStaticWeatherNoTraffic(FollowLaneEnv):
         self.original_settings = self.world.get_settings()
         self.traffic_manager = self.client.get_trafficmanager(8000)
         settings = self.world.get_settings()
-        settings.fixed_delta_seconds = 0.05
+        settings.fixed_delta_seconds = 0.5
         if config["sync"]:
             self.traffic_manager.set_synchronous_mode(True)
         else:
@@ -70,8 +70,8 @@ class FollowLaneQlearnStaticWeatherNoTraffic(FollowLaneEnv):
 
         ## -- display manager
         self.display_manager = DisplayManager(
-            grid_size=[2, 3],
-            window_size=[1500, 800],
+            grid_size=[2, 2],
+            window_size=[900, 600],
         )
 
         self.car = None
@@ -80,6 +80,7 @@ class FollowLaneQlearnStaticWeatherNoTraffic(FollowLaneEnv):
         self.perfect_distance_normalized = None
         # self._control = carla.VehicleControl()
         self.params = {}
+        self.target_waypoint = None
 
     def reset(self):
 
@@ -102,6 +103,14 @@ class FollowLaneQlearnStaticWeatherNoTraffic(FollowLaneEnv):
                 self.waypoints_lane_id,
                 2000,
             )
+            self.target_waypoint = filtered_waypoints[-1]
+            # print(f"{self.target_waypoint=}")
+            # print(f"{self.target_waypoint.transform.location.x=}")
+            # print(f"{self.target_waypoint.transform.location.y=}")
+            # print(f"{self.target_waypoint.road_id=}")
+            # print(f"{self.target_waypoint.lane_id=}")
+            # print(f"{self.target_waypoint.id=}")
+
             self.setup_car_fix_pose(init_waypoint)
 
         else:  # TODO: hacer en el caso que se quiera poner el target con .next()
@@ -167,7 +176,7 @@ class FollowLaneQlearnStaticWeatherNoTraffic(FollowLaneEnv):
             carla.Transform(carla.Location(x=2, z=1.5), carla.Rotation(yaw=+0)),
             self.car,
             {},
-            display_pos=[0, 2],
+            display_pos=[1, 0],
         )
 
         time.sleep(1)
@@ -253,7 +262,15 @@ class FollowLaneQlearnStaticWeatherNoTraffic(FollowLaneEnv):
 
         return white_mask
 
+    ########################################################
+    #  waypoints, car pose
+    #
+    ########################################################
+
     def draw_waypoints(self, spawn_points, init, target, lane_id, life_time):
+        """
+        WArning: target always has to be the last waypoint, since it is the FINISH
+        """
         filtered_waypoints = []
         i = init
         for waypoint in spawn_points[init + 1 : target + 2]:
@@ -398,23 +415,30 @@ class FollowLaneQlearnStaticWeatherNoTraffic(FollowLaneEnv):
         counter_states = Counter(states)
         states_16 = counter_states.get(16)
 
+        ## -------- Ending Step()...
         done = False
-
         ## -------- Rewards
-        reward, done = self.rewards_easy(error, self.params)
+        reward, done = self.autocarlarewards.rewards_easy(error, self.params)
         # reward, done = self.rewards_followlane_error_center(
         #    distance_to_center_normalized, self.rewards
         # )
 
-        ## -------- Finish by...
-        if states_16 is not None and (
-            states_16 > (len(states) // 2)
-        ):  # not red right line
+        ## -------- ... or Finish by...
+        if states_16 is not None and (states_16 >= len(states)):  # not red right line
             print(f"no red line detected")
             done = True
         if len(self.collision_hist) > 0:  # crash you, baby
             done = True
             print(f"crash")
+
+        is_finish, dist = AutoCarlaUtils.finish_target(
+            self.params["location"],
+            self.target_waypoint,
+            self.max_target_waypoint_distance,
+        )
+        if is_finish:
+            print(f"Finish!!!!")
+            done = True
 
         render_params(
             action=action,
@@ -430,8 +454,13 @@ class FollowLaneQlearnStaticWeatherNoTraffic(FollowLaneEnv):
             distance_to_center=distance_to_center,
             distance_to_center_normalized=distance_to_center_normalized,
             reward=reward,
+            error=error,
             done=done,
+            states_16=states_16,
+            self_collision_hist=self.collision_hist,
+            distance_to_finish=dist,
         )
+        """
         print_messages(
             "in step()",
             height=mask.shape[0],
@@ -455,27 +484,34 @@ class FollowLaneQlearnStaticWeatherNoTraffic(FollowLaneEnv):
             states_16=states_16,
             self_collision_hist=self.collision_hist,
         )
-
+        """
         return states, reward, done, {}
+
+    def clip_throttle(self, throttle, curr_speed, target_speed):
+        """
+        limits throttle in function of current speed and target speed
+        """
+        clip_throttle = np.clip(throttle - 0.1 * (curr_speed - target_speed), 0.25, 1.0)
+        return clip_throttle
 
     def control(self, action):
 
         steering_angle = 0
         if action == 0:
-            self.car.apply_control(carla.VehicleControl(throttle=0.3, steer=-0.1))
+            self.car.apply_control(carla.VehicleControl(throttle=0.3, steer=-0.01))
             # self._control.throttle = min(self._control.throttle + 0.01, 1.00)
             # self._control.steer = -0.02
-            steering_angle = -0.02
+            steering_angle = -0.01
         elif action == 1:
             self.car.apply_control(carla.VehicleControl(throttle=0.6, steer=0.0))
             # self._control.throttle = min(self._control.throttle + 0.01, 1.00)
             # self._control.steer = 0.0
             steering_angle = 0
         elif action == 2:
-            self.car.apply_control(carla.VehicleControl(throttle=0.3, steer=-0.1))
+            self.car.apply_control(carla.VehicleControl(throttle=0.3, steer=0.01))
             # self._control.throttle = min(self._control.throttle + 0.01, 1.0)
             # self._control.steer = 0.02
-            steering_angle = 0.02
+            steering_angle = 0.01
 
         # self.car.apply_control(self._control)
 
@@ -496,95 +532,10 @@ class FollowLaneQlearnStaticWeatherNoTraffic(FollowLaneEnv):
         self.params["Brake"] = c.brake
         self.params["height"] = t.location.z
 
-    def rewards_followlane_dist_v_angle(self, error, params):
-        # rewards = []
-        # for i,_ in enumerate(error):
-        #    if (error[i] < 0.2):
-        #        rewards.append(10)
-        #    elif (0.2 <= error[i] < 0.4):
-        #        rewards.append(2)
-        #    elif (0.4 <= error[i] < 0.9):
-        #        rewards.append(1)
-        #    else:
-        #        rewards.append(0)
-        rewards = [0.1 / error[i] for i, _ in enumerate(error)]
-        function_reward = sum(rewards) / len(rewards)
-        function_reward += math.log10(params["velocity"])
-        function_reward -= 1 / (math.exp(params["steering_angle"]))
-
-        return function_reward
-
-    def rewards_followline_center(self, center, rewards):
-        """
-        original for Following Line
-        """
-        done = False
-        if center > 0.9:
-            done = True
-            reward = rewards["penal"]
-        elif 0 <= center <= 0.2:
-            reward = rewards["from_10"]
-        elif 0.2 < center <= 0.4:
-            reward = rewards["from_02"]
-        else:
-            reward = rewards["from_01"]
-
-        return reward, done
-
-    def rewards_followlane_error_center(self, error, rewards):
-        """
-        original for Following Line
-        """
-        done = False
-        if error > 0.9:
-            done = True
-            reward = rewards["penal"]
-        elif 0 <= error <= 0.2:
-            reward = rewards["from_10"]
-        elif 0.2 < error <= 0.4:
-            reward = rewards["from_02"]
-        else:
-            reward = rewards["from_01"]
-
-        return reward, done
-
-    def rewards_easy(self, error, params):
-        rewards = []
-        done = False
-        for i, _ in enumerate(error):
-            if error[i] < 0.2:
-                rewards.append(10)
-            elif 0.2 <= error[i] < 0.4:
-                rewards.append(2)
-            elif 0.4 <= error[i] < 0.9:
-                rewards.append(1)
-            else:
-                rewards.append(-100)
-                done = True
-
-        function_reward = sum(rewards) / len(rewards)
-
-        # TODO: remove next comments
-        # function_reward += params["velocity"] * 0.5
-        # function_reward -= params["steering_angle"] * 1.02
-
-        return function_reward, done
-
-    def rewards_followlane_center_v_w(self):
-        """esta sin terminar"""
-        center = 0
-        done = False
-        if 0.65 >= center > 0.25:
-            reward = 10
-        elif (0.9 > center > 0.65) or (0.25 >= center > 0):
-            reward = 2
-        elif 0 >= center > -0.9:
-            reward = 1
-        else:
-            reward = -100
-            done = True
-
-        return reward, done
+    ########################################################
+    #  utils
+    #
+    ########################################################
 
     def __del__(self):
         print("__del__ called")

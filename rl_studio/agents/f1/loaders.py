@@ -577,7 +577,9 @@ class LoadEnvVariablesQlearnCarla:
         self.environment["waypoints_road_id"] = config[self.environment_set][self.env][
             "waypoints_road_id"
         ]
-
+        self.environment["max_target_waypoint_distance"] = config[self.environment_set][
+            self.env
+        ]["max_target_waypoint_distance"]
         # --------- Image
         self.environment["height_image"] = config["agents"][self.agent][
             "camera_params"

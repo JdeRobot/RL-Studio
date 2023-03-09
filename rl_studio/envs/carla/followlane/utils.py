@@ -7,6 +7,29 @@ class AutoCarlaUtils:
         self.f1 = None
 
     @staticmethod
+    def finish_target(current_car_pose, target_pose, max_distance):
+
+        current_car_pose_x = current_car_pose[0]
+        current_car_pose_y = current_car_pose[1]
+        target_x = target_pose.transform.location.x
+        target_y = target_pose.transform.location.y
+
+        dist = ((current_car_pose_x - target_x) ** 2) + (
+            (current_car_pose_y - target_y) ** 2
+        )
+        dist = np.sum(dist, axis=0)
+        dist = np.sqrt(dist)
+
+        # print(f"{current_car_pose = }")
+        # print(f"{target_x = }, {target_y = }")
+        # print(f"{dist = }")
+
+        # print(dist)
+        if dist < max_distance:
+            return True, dist
+        return False, dist
+
+    @staticmethod
     def show_image_with_centrals(
         name, img, waitkey, centrals_in_pixels, centrals_normalized, x_row, x, y
     ):

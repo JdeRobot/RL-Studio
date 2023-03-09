@@ -4,6 +4,68 @@ import numpy as np
 
 
 class AutoCarlaRewards:
+    def rewards_easy(self, error, params):
+        rewards = []
+        done = False
+        for i, _ in enumerate(error):
+            if error[i] < 0.2:
+                rewards.append(10)
+            elif 0.2 <= error[i] < 0.4:
+                rewards.append(2)
+            elif 0.4 <= error[i] < 0.9:
+                rewards.append(0)
+            else:
+                rewards.append(-100)
+                done = True
+
+        function_reward = sum(rewards) / len(rewards)
+
+        # TODO: remove next comments
+        # function_reward += params["velocity"] * 0.5
+        # function_reward -= params["steering_angle"] * 1.02
+
+        return function_reward, done
+
+    def rewards_followline_center(self, center, rewards):
+        """
+        original for Following Line
+        """
+        done = False
+        if center > 0.9:
+            done = True
+            reward = rewards["penal"]
+        elif 0 <= center <= 0.2:
+            reward = rewards["from_10"]
+        elif 0.2 < center <= 0.4:
+            reward = rewards["from_02"]
+        else:
+            reward = rewards["from_01"]
+
+        return reward, done
+
+    def rewards_followlane_dist_v_angle(self, error, params):
+        # rewards = []
+        # for i,_ in enumerate(error):
+        #    if (error[i] < 0.2):
+        #        rewards.append(10)
+        #    elif (0.2 <= error[i] < 0.4):
+        #        rewards.append(2)
+        #    elif (0.4 <= error[i] < 0.9):
+        #        rewards.append(1)
+        #    else:
+        #        rewards.append(0)
+        rewards = [0.1 / error[i] for i, _ in enumerate(error)]
+        function_reward = sum(rewards) / len(rewards)
+        function_reward += math.log10(params["velocity"])
+        function_reward -= 1 / (math.exp(params["steering_angle"]))
+
+        return function_reward
+
+    ########################################################
+    # So far only Carla exclusively
+    #
+    ########################################################
+
     @staticmethod
     def rewards_followlane_centerline(center, rewards):
         """
@@ -69,23 +131,6 @@ class AutoCarlaRewards:
         d = np.true_divide(error, self.center_image)
         reward = np.round(np.exp(-d), 4)
         return reward
-
-    def rewards_followline_center(self, center, rewards):
-        """
-        original for Following Line
-        """
-        done = False
-        if center > 0.9:
-            done = True
-            reward = rewards["penal"]
-        elif 0 <= center <= 0.2:
-            reward = rewards["from_10"]
-        elif 0.2 < center <= 0.4:
-            reward = rewards["from_02"]
-        else:
-            reward = rewards["from_01"]
-
-        return reward, done
 
     def rewards_followline_v_w_centerline(
         self, vel_cmd, center, rewards, beta_1, beta_0

@@ -61,6 +61,7 @@ class FollowLaneCarlaConfig(BaseModel):
         self.waypoints_target = config["waypoints_target"]
         self.waypoints_lane_id = config["waypoints_lane_id"]
         self.waypoints_road_id = config["waypoints_road_id"]
+        self.max_target_waypoint_distance = config["max_target_waypoint_distance"]
 
         # self.actor_list = []
         # self.collision_hist = []

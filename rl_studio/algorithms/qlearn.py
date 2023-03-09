@@ -312,11 +312,11 @@ class QLearnCarla:
 
     def select_action(self, state):
         q_list = [self.q_table.get((state, a), 0.0) for a in self.actions]
-        print(f"\n{q_list = }")
+        # print(f"\n{q_list = }")
         max_q = max(q_list)
-        print(f"{max_q = }")
+        # print(f"{max_q = }")
         count_max = q_list.count(max_q)
-        print(f"{count_max= }")
+        # print(f"{count_max= }")
         best_index = [index for index, value in enumerate(q_list) if value == max_q]
 
         if count_max > 1 or np.random.random() > self.epsilon:
