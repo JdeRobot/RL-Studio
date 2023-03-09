@@ -42,7 +42,8 @@ There are several config files to take as example. If you need more information 
 
 The following graph shows a conceptual diagram of the operation of RL-Studio in training mode. In the case of making inference or retraining, the process is similar
 
-![](./docs/rlstudio-diagram.svg)
+![](../rl_studio/docs/rls-diagram.png)
+
 
 # Run RL Studio
 
@@ -91,4 +92,4 @@ Remaining params should be adjusted too. There are many working yaml files in co
 > need extend the rl-studio.py to listen for inputs in a port and execute the loaded brain/algorithm to provide
 > outputs in the desired way.
 
-More info about how to config and launch any task, please go to [agents](agents/README.md) section.
+More info about how to config and launch any task, please go to [agents](agents/README.md) se
