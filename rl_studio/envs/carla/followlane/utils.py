@@ -81,9 +81,51 @@ class AutoCarlaUtils:
         cv2.waitKey(waitkey)
 
     @staticmethod
-    def show_image(name, img, waitkey, x, y):
+    def show_image(name, img, x, y):
         window_name = f"{name}"
         cv2.namedWindow(window_name)  # Create a named window
         cv2.moveWindow(window_name, x, y)  # Move it to (40,30)
         cv2.imshow(window_name, img)
-        cv2.waitKey(waitkey)
+        cv2.waitKey(1)
+
+    @staticmethod
+    def show_images(name, img1, img2, x, y):
+        window_name = f"{name}"
+        hori = np.concatenate((img1, img2), axis=1)
+        cv2.namedWindow(window_name)  # Create a named window
+        cv2.moveWindow(window_name, x, y)  # Move it to (40,30)
+        cv2.imshow(window_name, hori)
+        cv2.waitKey(1)
+
+    @staticmethod
+    def show_images_tile(name, list_img, x, y):
+        window_name = f"{name}"
+        # img_tile = cv2.vconcat([cv2.hconcat(list_h) for list_h in list_img])
+
+        width_common = 320
+        height_common = 240
+        # image resizing
+        im_list_resize = [
+            cv2.resize(
+                np.array(img),
+                (width_common, height_common),
+                interpolation=cv2.INTER_CUBIC,
+            )
+            for img in list_img
+        ]
+        # print(f"{im_list_resize = }")
+        # for i, value in enumerate(im_list_resize):
+        #    print(f"({i = }")
+        # print(f"{len(im_list_resize) = }, {type(im_list_resize) = }")
+        im_list = [img for img in im_list_resize]
+        # print(f"{len(im_list) = }, {type(im_list) = }")
+
+        im_list_concat = np.concatenate(im_list, axis=1)
+        # im_list_concat = cv2.hconcat(
+        #    [im_list_resize[0], im_list_resize[1], im_list_resize[2]]
+        # )
+        # im_list_concat = cv2.hconcat([im_list_resize[0], im_list_resize[1]])
+        cv2.namedWindow(window_name)  # Create a named window
+        cv2.moveWindow(window_name, x, y)  # Move it to (40,30)
+        cv2.imshow(window_name, im_list_concat)
+        cv2.waitKey(1)

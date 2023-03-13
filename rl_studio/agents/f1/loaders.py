@@ -528,7 +528,6 @@ class LoadEnvVariablesQlearnCarla:
         self.environment["town"] = config[self.environment_set][self.env]["town"]
         self.environment["car"] = config[self.environment_set][self.env]["car"]
         self.environment["weather"] = config[self.environment_set][self.env]["weather"]
-        self.environment["weather"] = config[self.environment_set][self.env]["weather"]
         self.environment["traffic_pedestrians"] = config[self.environment_set][
             self.env
         ]["traffic_pedestrians"]

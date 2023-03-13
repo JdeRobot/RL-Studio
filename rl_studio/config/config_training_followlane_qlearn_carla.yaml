@@ -127,7 +127,7 @@ carla_environments:
     sync: True #syncronous mode or async
     alternate_pose: False
     waypoints_meters: 5 #distance between waypoints in meters
-    waypoints_init: 839
+    waypoints_init: 879 #879 crash testing, 839 init straight lane
     waypoints_target: 959 #961
     waypoints_lane_id: -1
     waypoints_road_id: 8

@@ -143,7 +143,7 @@ def render_params_left_bottom(**kwargs):
 
     window_name = "Stats Board"
     cv2.namedWindow(window_name)  # Create a named window
-    cv2.moveWindow(window_name, 0, 00)  # Move it to (40,30)
+    cv2.moveWindow(window_name, 0, 500)  # Move it to (40,30)
     cv2.imshow(window_name, canvas)
     cv2.waitKey(100)
 

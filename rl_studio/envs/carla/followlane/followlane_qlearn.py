@@ -52,6 +52,19 @@ class FollowLaneQlearnStaticWeatherNoTraffic(FollowLaneEnv):
         self.client.set_timeout(5.0)
         print(f"\n maps in carla 0.9.13: {self.client.get_available_maps()}\n")
 
+        """
+        self.world = self.client.get_world()
+        self.world = self.client.load_world(config["town"])
+        settings = self.world.get_settings()
+        settings.fixed_delta_seconds = 0.05
+        if config["sync"]:
+            settings.synchronous_mode = True
+        else:
+            settings.synchronous_mode = False
+        self.world.apply_settings(settings)
+
+        """
+
         self.world = self.client.load_world(config["town"])
         self.original_settings = self.world.get_settings()
         self.traffic_manager = self.client.get_trafficmanager(8000)
@@ -63,16 +76,29 @@ class FollowLaneQlearnStaticWeatherNoTraffic(FollowLaneEnv):
             self.traffic_manager.set_synchronous_mode(False)
         self.world.apply_settings(settings)
 
+        """este no funciona
+        self.world = self.client.load_world(config["town"])
+        # self.original_settings = self.world.get_settings()
+        # self.traffic_manager = self.client.get_trafficmanager(8000)
+        settings = self.world.get_settings()
+        settings.fixed_delta_seconds = 0.05
+        if config["sync"]:
+            settings.synchronous_mode = True
+        else:
+            settings.synchronous_mode = False
+        self.world.apply_settings(settings)
+        """
+
         # self.camera = None
         # self.vehicle = None
         # self.display = None
         # self.image = None
 
         ## -- display manager
-        self.display_manager = DisplayManager(
-            grid_size=[2, 2],
-            window_size=[900, 600],
-        )
+        # self.display_manager = DisplayManager(
+        #    grid_size=[2, 2],
+        #    window_size=[900, 600],
+        # )
 
         self.car = None
 
@@ -82,11 +108,15 @@ class FollowLaneQlearnStaticWeatherNoTraffic(FollowLaneEnv):
         self.params = {}
         self.target_waypoint = None
 
+        self.front_rgb_camera = None
+        self.front_red_mask_camera = None
+        self.front_camera_bev = None
+        self.spectator = self.world.get_spectator()
+
     def reset(self):
 
         self.collision_hist = []
         self.actor_list = []
-        spectator = self.world.get_spectator()
 
         ## ---  Car
         waypoints_town = self.world.get_map().generate_waypoints(5.0)
@@ -138,46 +168,22 @@ class FollowLaneQlearnStaticWeatherNoTraffic(FollowLaneEnv):
         ## --- Sensor collision
         self.setup_col_sensor()
 
-        self.front_camera_1_5_bev = SensorManager(
-            self.world,
-            self.display_manager,
-            "BirdEyeView",
-            carla.Transform(carla.Location(x=2, z=1.5), carla.Rotation(yaw=+00)),
-            self.car,
-            {},
-            display_pos=[1, 1],
-            client=self.client,
-        )
+        ## --- Cameras
+        self.setup_rgb_camera()
+        # self.setup_semantic_camera()
+        while self.front_rgb_camera is None:
+            # print("1")
+            time.sleep(0.01)
 
-        self.front_camera_1_5 = SensorManager(
-            self.world,
-            self.display_manager,
-            "RGBCamera",
-            carla.Transform(carla.Location(x=2, z=1.5), carla.Rotation(yaw=+00)),
-            self.car,
-            {},
-            display_pos=[0, 0],
-        )
+        self.setup_red_mask_camera()
+        # self.setup_bev_camera()
 
-        self.front_camera_1_5_segmentated = SensorManager(
-            self.world,
-            self.display_manager,
-            "SemanticCamera",
-            carla.Transform(carla.Location(x=2, z=1.5), carla.Rotation(yaw=+00)),
-            self.car,
-            {},
-            display_pos=[0, 1],
-        )
+        while self.front_red_mask_camera is None:
+            time.sleep(0.01)
 
-        self.front_camera_1_5_red_mask = SensorManager(
-            self.world,
-            self.display_manager,
-            "RedMask",
-            carla.Transform(carla.Location(x=2, z=1.5), carla.Rotation(yaw=+0)),
-            self.car,
-            {},
-            display_pos=[1, 0],
-        )
+        # AutoCarlaUtils.show_images(
+        #    "main", self.front_rgb_camera, self.front_red_mask_camera, 600, 5
+        # )
 
         time.sleep(1)
         self.episode_start = time.time()
@@ -185,20 +191,43 @@ class FollowLaneQlearnStaticWeatherNoTraffic(FollowLaneEnv):
 
         # AutoCarlaUtils.show_image("image", self.front_camera_1_5.front_camera, 1, 0, 10)
 
-        mask = self.preprocess_image(
-            self.front_camera_1_5_red_mask.front_camera_red_mask
-        )
+        mask = self.preprocess_image(self.front_red_mask_camera)
+        # mask = self.preprocess_image(
+        #    self.front_camera_1_5_red_mask.front_camera_red_mask
+        # )
         # AutoCarlaUtils.show_image(
         #    "mask", mask, 1, self.front_camera_1_5.front_camera.shape[1], 10
         # )
 
+        print(
+            f"{self.front_rgb_camera.shape[0] = }, {self.front_rgb_camera.shape[1] = }"
+        )
+        print(
+            f"{self.front_red_mask_camera.shape[0] = }, {self.front_red_mask_camera.shape[1] = }"
+        )
+        print(f"{mask.shape[0] = }, {mask.shape[1] = }")
+
+        AutoCarlaUtils.show_image(
+            "RGB",
+            self.front_rgb_camera,
+            500,
+            10,
+        )
+        AutoCarlaUtils.show_image(
+            "red mask",
+            self.front_red_mask_camera,
+            1000,
+            10,
+        )
+
         # Wait for world to get the vehicle actor
+        time.sleep(5)
         self.world.tick()
 
         world_snapshot = self.world.wait_for_tick()
         actor_snapshot = world_snapshot.find(self.car.id)
         # Set spectator at given transform (vehicle transform)
-        spectator.set_transform(actor_snapshot.get_transform())
+        self.spectator.set_transform(actor_snapshot.get_transform())
 
         ## -- states
         (
@@ -263,7 +292,7 @@ class FollowLaneQlearnStaticWeatherNoTraffic(FollowLaneEnv):
         return white_mask
 
     ########################################################
-    #  waypoints, car pose
+    #  waypoints, car pose, sensors
     #
     ########################################################
 
@@ -339,13 +368,155 @@ class FollowLaneQlearnStaticWeatherNoTraffic(FollowLaneEnv):
         self.actor_list.append(self.colsensor)
         self.colsensor.listen(lambda event: self.collision_data(event))
 
+    ##################
+    #
+    # Cameras
+    ##################
+
+    def setup_rgb_camera(self):
+        print("enter setup_rg_camera")
+        rgb_cam = self.world.get_blueprint_library().find("sensor.camera.rgb")
+        rgb_cam.set_attribute("image_size_x", f"{self.width}")
+        rgb_cam.set_attribute("image_size_y", f"{self.height}")
+        rgb_cam.set_attribute("fov", f"110")
+
+        transform = carla.Transform(carla.Location(x=2, z=1.5), carla.Rotation(yaw=+00))
+        camera_rgb = self.world.spawn_actor(rgb_cam, transform, attach_to=self.car)
+        self.actor_list.append(camera_rgb)
+        print(f"{len(self.actor_list) = }")
+        camera_rgb.listen(self.save_rgb_image)
+
+    def save_rgb_image(self, data: carla.Image):
+        """
+        @param data: pure carla.Image
+        """
+        print(f"entro awui")
+        """Convert a CARLA raw image to a BGRA numpy array."""
+        if not isinstance(data, carla.Image):
+            raise ValueError("Argument must be a carla.Image")
+        image = np.array(data.raw_data)
+        image = image.reshape((480, 640, 4))
+        image = image[:, :, :3]
+        # self._data_dict["image"] = image3
+        cv2.imshow("", image)
+        cv2.waitKey(1)
+        self.front_rgb_camera = image
+
+    def _save_rgb_image(self, image):
+        # t_start = self.timer.time()
+
+        image.convert(carla.ColorConverter.Raw)
+        array = np.frombuffer(image.raw_data, dtype=np.dtype("uint8"))
+        array = np.reshape(array, (image.height, image.width, 4))
+        array = array[:, :, :3]
+        array = array[:, :, ::-1]
+
+        # if self.display_man.render_enabled():
+        #    self.surface = pygame.surfarray.make_surface(array.swapaxes(0, 1))
+
+        # t_end = self.timer.time()
+        # self.time_processing += t_end - t_start
+        # self.tics_processing += 1
+        cv2.imshow("", array)
+        cv2.waitKey(1)
+        self.front_rgb_camera = array
+
+    def setup_red_mask_camera(self):
+        self.red_mask_cam = self.world.get_blueprint_library().find(
+            "sensor.camera.semantic_segmentation"
+        )
+        self.red_mask_cam.set_attribute("image_size_x", f"{self.width}")
+        self.red_mask_cam.set_attribute("image_size_y", f"{self.height}")
+
+        transform = carla.Transform(carla.Location(x=2, z=1.5), carla.Rotation(yaw=+00))
+        self.camera_red_mask = self.world.spawn_actor(
+            self.red_mask_cam, transform, attach_to=self.car
+        )
+        self.actor_list.append(self.camera_red_mask)
+        self.camera_red_mask.listen(
+            lambda data: self.save_red_mask_semantic_image(data)
+        )
+
+    def save_red_mask_semantic_image(self, image):
+        # t_start = self.timer.time()
+        print(f"en red_mask calbback")
+        image.convert(carla.ColorConverter.CityScapesPalette)
+        array = np.frombuffer(image.raw_data, dtype=np.dtype("uint8"))
+        array = np.reshape(array, (image.height, image.width, 4))
+        array = array[:, :, :3]
+        array = array[:, :, ::-1]
+
+        hsv_nemo = cv2.cvtColor(array, cv2.COLOR_RGB2HSV)
+        light_sidewalk = (151, 217, 243)
+        dark_sidewalk = (153, 219, 245)
+
+        light_pavement = (149, 127, 127)
+        dark_pavement = (151, 129, 129)
+
+        mask_sidewalk = cv2.inRange(hsv_nemo, light_sidewalk, dark_sidewalk)
+        result_sidewalk = cv2.bitwise_and(array, array, mask=mask_sidewalk)
+
+        mask_pavement = cv2.inRange(hsv_nemo, light_pavement, dark_pavement)
+        result_pavement = cv2.bitwise_and(array, array, mask=mask_pavement)
+
+        # Adjust according to your adjacency requirement.
+        kernel = np.ones((3, 3), dtype=np.uint8)
+
+        # Dilating masks to expand boundary.
+        color1_mask = cv2.dilate(mask_sidewalk, kernel, iterations=1)
+        color2_mask = cv2.dilate(mask_pavement, kernel, iterations=1)
+
+        # Required points now will have both color's mask val as 255.
+        common = cv2.bitwise_and(color1_mask, color2_mask)
+        SOME_THRESHOLD = 10
+
+        # Common is binary np.uint8 image, min = 0, max = 255.
+        # SOME_THRESHOLD can be anything within the above range. (not needed though)
+        # Extract/Use it in whatever way you want it.
+        intersection_points = np.where(common > SOME_THRESHOLD)
+
+        # Say you want these points in a list form, then you can do this.
+        pts_list = [[r, c] for r, c in zip(*intersection_points)]
+        # print(pts_list)
+
+        # for x, y in pts_list:
+        #    image_2[x][y] = (255, 0, 0)
+
+        # red_line_mask = np.zeros((400, 500, 3), dtype=np.uint8)
+        red_line_mask = np.zeros((image.height, image.width, 3), dtype=np.uint8)
+
+        for x, y in pts_list:
+            red_line_mask[x][y] = (255, 0, 0)
+
+        # t_end = self.timer.time()
+        # self.time_processing += t_end - t_start
+        # self.tics_processing += 1
+
+        self.front_red_mask_camera = red_line_mask
+
+    ##################
+    #
+    #
+    ##################
+
     def collision_data(self, event):
         self.collision_hist.append(event)
+        actor_we_collide_against = event.other_actor
+        impulse = event.normal_impulse
+        intensity = math.sqrt(impulse.x**2 + impulse.y**2 + impulse.z**2)
+        print(f"you crashed with {actor_we_collide_against.type_id}")
+        # self.actor_list.append(actor_we_collide_against)
 
     def destroy_all_actors(self):
+        print("\ndestroying %d actors" % len(self.actor_list))
         for actor in self.actor_list[::-1]:
             # for actor in self.actor_list:
+            print(f"destroying actor : {actor}\n")
             actor.destroy()
+        print(f"All actors destroyed")
+        # for collisions in self.collision_hist:
+        # for actor in self.actor_list:
+        # collisions.destroy()
         # print(f"\nin self.destroy_all_actors(), actor : {actor}\n")
 
         # self.actor_list = []
@@ -369,6 +540,9 @@ class FollowLaneQlearnStaticWeatherNoTraffic(FollowLaneEnv):
         # stados = [stados]
         # print(f"stados = {stados}")
 
+        AutoCarlaUtils.show_images(
+            "main", self.front_rgb_camera, self.front_red_mask_camera, 300, 500
+        )
         ## -- states
         mask = self.preprocess_image(
             self.front_camera_1_5_red_mask.front_camera_red_mask
@@ -394,7 +568,7 @@ class FollowLaneQlearnStaticWeatherNoTraffic(FollowLaneEnv):
         # print(f"states:{states}\n")
         AutoCarlaUtils.show_image_with_centrals(
             "image",
-            self.front_camera_1_5.front_camera[mask.shape[0] :],
+            self.front_rgb_camera.front_camera[mask.shape[0] :],
             1,
             distance_to_center,
             distance_to_center_normalized,
@@ -403,6 +577,13 @@ class FollowLaneQlearnStaticWeatherNoTraffic(FollowLaneEnv):
             10,
         )
 
+        AutoCarlaUtils.show_images_tile(
+            "imagesss",
+            # [self.front_rgb_camera, self.front_red_mask_camera, mask],
+            [self.front_rgb_camera, self.front_red_mask_camera],
+            500,
+            500,
+        )
         ## ------ calculate distance error and states
         # print(f"{self.perfect_distance_normalized =}")
         error = [
@@ -498,7 +679,9 @@ class FollowLaneQlearnStaticWeatherNoTraffic(FollowLaneEnv):
 
         steering_angle = 0
         if action == 0:
-            self.car.apply_control(carla.VehicleControl(throttle=0.3, steer=-0.01))
+            self.car.apply_control(
+                carla.VehicleControl(throttle=0.3, steer=0.1)
+            )  # jugamos con -0.01
             # self._control.throttle = min(self._control.throttle + 0.01, 1.00)
             # self._control.steer = -0.02
             steering_angle = -0.01
@@ -508,7 +691,9 @@ class FollowLaneQlearnStaticWeatherNoTraffic(FollowLaneEnv):
             # self._control.steer = 0.0
             steering_angle = 0
         elif action == 2:
-            self.car.apply_control(carla.VehicleControl(throttle=0.3, steer=0.01))
+            self.car.apply_control(
+                carla.VehicleControl(throttle=0.3, steer=0.1)
+            )  # jigamos con 0.01 par ala recta
             # self._control.throttle = min(self._control.throttle + 0.01, 1.0)
             # self._control.steer = 0.02
             steering_angle = 0.01
