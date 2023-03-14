@@ -136,17 +136,17 @@ class TrainerFollowLaneQlearnAutoCarla:
         # log.logger.info(
         #    f"\nqlearn.q_table = {qlearn.q_table}",
         # )
-        print_messages(
-            "",
-            qlearn_q_table=qlearn.q_table,
-        )
+        # print_messages(
+        #    "",
+        #    qlearn_q_table=qlearn.q_table,
+        # )
         ## -------------    START TRAINING --------------------
         for episode in tqdm(
             range(1, self.env_params.total_episodes + 1),
             ascii=True,
             unit="episodes",
         ):
-
+            time.sleep(1)
             done = False
             cumulated_reward = 0
             step = 0
@@ -164,10 +164,10 @@ class TrainerFollowLaneQlearnAutoCarla:
             )
 
             while not done:
-                if self.environment.environment["sync"]:
-                    env.world.tick()
-                else:
-                    env.world.wait_for_tick()
+                # if self.environment.environment["sync"]:
+                env.world.tick()
+                # else:
+                #    env.world.wait_for_tick()
                 step += 1
                 action = qlearn.select_action(state)
                 # print(f"{action = }")
@@ -217,7 +217,7 @@ class TrainerFollowLaneQlearnAutoCarla:
                 #    next_state=next_state,
                 #    state=state,
                 # )
-                env.display_manager.render()
+                # env.display_manager.render()
                 # render params
 
                 render_params_left_bottom(
@@ -404,10 +404,10 @@ class TrainerFollowLaneQlearnAutoCarla:
             ## ------------ destroy actors
 
             env.destroy_all_actors()
-            env.display_manager.destroy()
+        # env.display_manager.destroy()
         # ----------- end for
 
-        env.close()
+        # env.close()
 
     ######################################################################################################
     def AAAAmain(self):

@@ -1,4 +1,5 @@
 import cv2
+import imutils
 import numpy as np
 
 
@@ -46,6 +47,7 @@ class AutoCarlaUtils:
                 ),
                 cv2.FONT_HERSHEY_SIMPLEX,
                 0.3,
+                # (255, 255, 255),
                 (255, 255, 255),
                 1,
                 cv2.LINE_AA,
@@ -53,9 +55,10 @@ class AutoCarlaUtils:
             cv2.putText(
                 img,
                 str(f"[{centrals_normalized[index]}]"),
-                (img.shape[1] - 50, int(x_row[index])),
+                (img.shape[1] - 100, int(x_row[index])),
                 cv2.FONT_HERSHEY_SIMPLEX,
                 0.3,
+                # (255, 255, 255),
                 (255, 255, 255),
                 1,
                 cv2.LINE_AA,
@@ -64,14 +67,14 @@ class AutoCarlaUtils:
                 img,
                 (0, int(x_row[index])),
                 (int(img.shape[1]), int(x_row[index])),
-                color=(200, 200, 200),
+                color=(100, 200, 100),
                 thickness=1,
             )
             cv2.line(
                 img,
                 (int(img.shape[1] // 2), 0),
                 (int(img.shape[1] // 2), int(img.shape[0])),
-                color=(200, 200, 200),
+                color=(100, 200, 100),
                 thickness=1,
             )
 
@@ -89,9 +92,9 @@ class AutoCarlaUtils:
         cv2.waitKey(1)
 
     @staticmethod
-    def show_images(name, img1, img2, x, y):
+    def show_images(name, img, x, y):
         window_name = f"{name}"
-        hori = np.concatenate((img1, img2), axis=1)
+        hori = np.concatenate(img, axis=1)
         cv2.namedWindow(window_name)  # Create a named window
         cv2.moveWindow(window_name, x, y)  # Move it to (40,30)
         cv2.imshow(window_name, hori)
@@ -105,11 +108,18 @@ class AutoCarlaUtils:
         width_common = 320
         height_common = 240
         # image resizing
+        # im_list_resize = [
+        #    cv2.resize(
+        #        np.array(img),
+        #        (width_common, height_common),
+        #        interpolation=cv2.INTER_CUBIC,
+        #    )
+        #    for img in list_img
+        # ]
         im_list_resize = [
-            cv2.resize(
+            imutils.resize(
                 np.array(img),
-                (width_common, height_common),
-                interpolation=cv2.INTER_CUBIC,
+                width=width_common,
             )
             for img in list_img
         ]
