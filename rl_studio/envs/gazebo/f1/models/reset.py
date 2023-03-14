@@ -54,11 +54,9 @@ class Reset(F1Env):
         else:
             self._gazebo_set_fix_pose_f1_follow_right_lane()
 
-        self._gazebo_unpause()
 
         ##==== get image from sensor camera
         f1_image_camera, _ = self.f1gazeboimages.get_camera_info()
-        self._gazebo_pause()
 
         ##==== calculating State
         # simplified perception as observation

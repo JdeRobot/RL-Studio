@@ -114,8 +114,6 @@ class F1CameraEnv(F1Env):
 
     def step(self, action) -> Tuple:
 
-        self._gazebo_unpause()
-        
         vel_cmd = Twist()
         vel_cmd.linear.x = self.actions[action][0]
         vel_cmd.angular.z = self.actions[action][1]
@@ -139,7 +137,6 @@ class F1CameraEnv(F1Env):
         end = time.time()
         #print(end - start)
         
-        self._gazebo_pause()
         points = self.processed_image(f1_image_camera.data)
         state = self.calculate_observation(points)
         center = float(self.config.center_image - points[0]) / (
@@ -170,7 +167,6 @@ class F1CameraEnv(F1Env):
         else:
             self._gazebo_reset()
 
-        self._gazebo_unpause()
 
         # Get camera info
         image_data = None
@@ -189,12 +185,9 @@ class F1CameraEnv(F1Env):
         state = self.calculate_observation(points)
         # reset_state = (state, False)
 
-        self._gazebo_pause()
-
         return state
 
     def inference(self, action):
-        self._gazebo_unpause()
 
         vel_cmd = Twist()
         vel_cmd.linear.x = self.config.ACTIONS_SET[action][0]
@@ -207,7 +200,6 @@ class F1CameraEnv(F1Env):
         cv_image = CvBridge().imgmsg_to_cv2(image_data, "bgr8")
         f1_image_camera = self.image_msg_to_image(image_data, cv_image)
 
-        self._gazebo_pause()
 
         points = self.processed_image(f1_image_camera.data)
         state = self.calculate_observation(points)
