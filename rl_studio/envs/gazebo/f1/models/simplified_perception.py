@@ -13,7 +13,7 @@ class F1GazeboSimplifiedPerception:
         :parameters: input image 640x480
         :return:
             centrals: lists with distance to center in pixels
-            cntrals_normalized: lists with distance in range [0,1] for calculating rewards
+            centrals_normalized: lists with distance in range [0,1] for calculating rewards
         """
         image_middle_line = height // 2
         img_sliced = img[image_middle_line:]

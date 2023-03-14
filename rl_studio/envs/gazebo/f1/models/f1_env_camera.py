@@ -127,6 +127,7 @@ class F1CameraEnv(F1Env):
 
         f1_image_camera = self.image.getImage()
         self.previous_image = f1_image_camera.data
+
         
         while np.array_equal(self.previous_image, f1_image_camera.data):
             if (time.time() - start) > 0.1:

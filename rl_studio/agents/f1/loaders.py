@@ -100,9 +100,7 @@ class LoadGlobalParams:
             "avg": [],
             "max": [],
             "min": [],
-            "step": [],
             "epoch_training_time": [],
-            "total_training_time": [],
         }
         self.best_current_epoch = {
             "best_epoch": [],
@@ -124,6 +122,8 @@ class LoadGlobalParams:
         self.metrics_graphics_dir = f"{config['settings']['metrics_dir']}/{config['settings']['mode']}/{config['settings']['task']}_{config['settings']['algorithm']}_{config['settings']['agent']}_{config['settings']['framework']}/graphics"
         self.recorders_carla_dir = f"{config['settings']['recorder_carla_dir']}/{config['settings']['mode']}/{config['settings']['task']}_{config['settings']['algorithm']}_{config['settings']['agent']}_{config['settings']['framework']}"
         self.training_time = config["settings"]["training_time"]
+        self.debug_stats = config["settings"]["debug_stats"]
+        self.show_monitoring = config["settings"]["show_monitoring"]
         ####### States
         self.states = config["settings"]["states"]
         self.states_set = config["states"][self.states]
@@ -132,6 +132,10 @@ class LoadGlobalParams:
         self.actions_set = config["actions"][self.actions]
         ####### Rewards
         self.rewards = config["settings"]["rewards"]
+        ###### Exploration
+        self.steps_to_decrease = config["settings"]["steps_to_decrease"]
+        self.decrease_substraction = config["settings"]["decrease_substraction"]
+        self.decrease_min = config["settings"]["decrease_min"]
 
 
 class LoadEnvVariablesDQNGazebo:
@@ -270,14 +274,19 @@ class LoadEnvVariablesDDPGGazebo:
         self.environment["model_state_name"] = config[self.environment_set][self.env][
             "model_state_name"
         ]
+        self.environment["sleep"] = config[self.environment_set][self.env][
+            "sleep"
+        ]
+        self.environment["punish_ineffective_vel"] = config["settings"]["reward_params"]["punish_ineffective_vel"]
+        self.environment["punish_zig_zag_value"] = config["settings"]["reward_params"]["punish_zig_zag_value"]
+        self.environment["reward_function_tuning"] = config["settings"]["reward_params"]["function"]
+        self.environment["beta_1"] = config["settings"]["reward_params"]["beta_1"]
+
+
         # Training/inference
         self.environment["mode"] = config["settings"]["mode"]
-        self.environment["retrain_ddpg_tf_actor_model_name"] = config["retraining"][
-            "ddpg"
-        ]["retrain_ddpg_tf_actor_model_name"]
-        self.environment["retrain_ddpg_tf_critic_model_name"] = config["retraining"][
-            "ddpg"
-        ]["retrain_ddpg_tf_critic_model_name"]
+        self.environment["retrain_ddpg_tf_actor_model_name"] = f"{config['retraining']['ddpg']['retrain_ddpg_tf_model_name']}/ACTOR"
+        self.environment["retrain_ddpg_tf_critic_model_name"] = f"{config['retraining']['ddpg']['retrain_ddpg_tf_model_name']}/CRITIC"
         self.environment["inference_ddpg_tf_actor_model_name"] = config["inference"][
             "ddpg"
         ]["inference_ddpg_tf_actor_model_name"]

@@ -10,42 +10,22 @@ def save_actorcritic_model(
     agent, global_params, algoritmhs_params, environment, cumulated_reward, episode, text
 ):
 
+    timestamp = time.strftime('%Y%m%d-%H%M%S')
     agent.actor_model.save(
-        f"{global_params.models_dir}/{time.strftime('%Y%m%d-%H%M%S')}_{algoritmhs_params.model_name}_{text}_ACTOR"
-        f"Circuit-{environment['circuit_name']}_"
-        f"States-{environment['states']}_"
-        f"Actions-{environment['action_space']}_"
-        f"BATCH_Rewards-{environment['reward_function']}_"
-        f"MaxReward-{int(cumulated_reward)}_"
-        f"Epoch-{episode}"
+        f"{global_params.models_dir}/{timestamp}_{text}_"
+        f"C-{environment['circuit_name']}_"
+        f"S-{environment['states']}_"
+        f"A-{environment['action_space']}_"
+        f"MR-{int(cumulated_reward)}_"
+        f"E-{episode}/ACTOR"
     )    
     agent.critic_model.save(
-        f"{global_params.models_dir}/{time.strftime('%Y%m%d-%H%M%S')}_{algoritmhs_params.model_name}_{text}_CRITIC"
-        f"Circuit-{environment['circuit_name']}_"
-        f"States-{environment['states']}_"
-        f"Actions-{environment['action_space']}_"
-        f"BATCH_Rewards-{environment['reward_function']}_"
-        f"MaxReward-{int(cumulated_reward)}_"
-        f"Epoch-{episode}"
+        f"{global_params.models_dir}/{timestamp}_{text}_"
+        f"C-{environment['circuit_name']}_"
+        f"S-{environment['states']}_"
+        f"A-{environment['action_space']}_"
+        f"MR-{int(cumulated_reward)}_"
+        f"E-{episode}/CRITIC"
     )
 
-    # save model in h5 format
-    agent.actor_model.save(
-        f"{global_params.models_dir}/{time.strftime('%Y%m%d-%H%M%S')}_{algoritmhs_params.model_name}_{text}_ACTOR"
-        f"Circuit-{environment['circuit_name']}_"
-        f"States-{environment['states']}_"
-        f"Actions-{environment['action_space']}_"
-        f"BATCH_Rewards-{environment['reward_function']}_"
-        f"MaxReward-{int(cumulated_reward)}_"
-        f"Epoch-{episode}.h5"
-    )    
-    agent.critic_model.save(
-        f"{global_params.models_dir}/{time.strftime('%Y%m%d-%H%M%S')}_{algoritmhs_params.model_name}_{text}_CRITIC"
-        f"Circuit-{environment['circuit_name']}_"
-        f"States-{environment['states']}_"
-        f"Actions-{environment['action_space']}_"
-        f"BATCH_Rewards-{environment['reward_function']}_"
-        f"MaxReward-{int(cumulated_reward)}_"
-        f"Epoch-{episode}.h5"
-    )
 

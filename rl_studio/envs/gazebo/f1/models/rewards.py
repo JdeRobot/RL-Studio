@@ -4,6 +4,12 @@ import numpy as np
 
 
 class F1GazeboRewards:
+    def __init__(self, **config):
+        self.reward_function_tuning = config.get("reward_function_tuning")
+        self.punish_zig_zag_value = config.get("punish_zig_zag_value")
+        self.punish_ineffective_vel = config.get("punish_ineffective_vel")
+        self.beta_1 = config.get("beta_1")
+
     @staticmethod
     def rewards_followlane_centerline(center, rewards):
         """
@@ -86,6 +92,58 @@ class F1GazeboRewards:
             reward = rewards["from_01"]
 
         return reward, done
+
+    def rewards_followline_velocity_center(self, v, w, state, range_v, range_w):
+        """
+        original for Following Line
+        """
+        # we reward proximity to the line
+        p_reward1, done1 = self.reward_proximity(state[-2])
+        p_reward2, done2 = self.reward_proximity(state[-4])
+        p_reward3, done3 = self.reward_proximity(state[-5])
+        p_reward = (p_reward1 + p_reward2 + p_reward3)/3
+        done = done1 and done2 and done3
+
+        v_norm = self.normalize_range(v, range_v[0], range_v[1])
+        v_reward = v_norm * pow(p_reward, 2)
+        beta = self.beta_1
+        reward = (beta * p_reward) + ((1 - beta) * v_reward)
+
+        # penalizing steering to avoid zig-zag
+        w_punish = self.normalize_range(abs(w), 0, abs(range_w[1])) * self.punish_zig_zag_value
+        reward = reward - (p_reward * w_punish)
+
+        # penalizing accelerating on bad positions
+        v_punish = reward * (1 - p_reward) * v_norm * self.punish_ineffective_vel
+        reward = reward - v_punish
+
+        return reward, done
+
+    def normalize_range(self, num, a, b):
+        return (num - a) / (b - a)
+
+    def reward_proximity(self, state):
+        # sigmoid_pos = self.sigmoid_function(0, 1, state)
+        if abs(state) > 0.7:
+            return 0, True
+        else:
+            if self.reward_function_tuning == "sigmoid":
+                return 1-self.sigmoid_function(0, 1, abs(state), 5), False
+            elif self.reward_function_tuning == "linear":
+                return self.linear_function(1, -1.4, abs(state)), False
+            elif self.reward_function_tuning == "pow":
+                return pow(1 - abs(state), 5), False
+            else:
+                return 1 - abs(state), False
+
+
+    def sigmoid_function(self, start, end, x, slope=10):
+        slope = slope / (end - start)
+        sigmoid = 1 / (1 + np.exp(-slope * (x - ((start + end) / 2))))
+        return sigmoid
+
+    def linear_function(self, cross_x, slope, x):
+        return cross_x + (slope * x)
 
     def rewards_followline_v_w_centerline(
         self, vel_cmd, center, rewards, beta_1, beta_0

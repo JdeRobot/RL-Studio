@@ -62,18 +62,48 @@ class Reset(F1Env):
 
         ##==== calculating State
         # simplified perception as observation
-        centrals_in_pixels, _ = self.simplifiedperception.calculate_centrals_lane(
-            f1_image_camera.data,
-            self.height,
-            self.width,
-            self.x_row,
-            self.lower_limit,
-            self.center_image,
+        points_in_red_line, centrals_normalized = self.simplifiedperception.processed_image(
+            f1_image_camera.data, self.height, self.width, self.x_row, self.center_image
         )
-        states = self.simplifiedperception.calculate_observation(
-            centrals_in_pixels, self.center_image, self.pixel_region
-        )
-        state = [states[0]]
-        state_size = len(state)
+        self._gazebo_pause()
+        states = centrals_normalized
+        state_size = len(states)
 
-        return state, state_size
+        return states, state_size
+
+    def reset_f1_state_sp_line(self):
+        """
+               reset for
+               - State: Simplified perception
+               - tasks: FollowLane and FollowLine
+               """
+        self._gazebo_reset()
+        # === POSE ===
+        if self.alternate_pose:
+            self._gazebo_set_random_pose_f1_follow_rigth_lane()
+        else:
+            self._gazebo_set_fix_pose_f1_follow_right_lane()
+
+        ##==== get image from sensor camera
+        f1_image_camera, _ = self.f1gazeboimages.get_camera_info()
+        f1_image_camera, _ = self.f1gazeboimages.get_camera_info()
+
+        ##==== get center
+        points_in_red_line, _ = self.simplifiedperception.processed_image(
+            f1_image_camera.data, self.height, self.width, self.x_row, self.center_image
+        )
+
+        if self.state_space == "spn":
+            self.point = points_in_red_line[self.poi]
+        else:
+            self.point = points_in_red_line[0]
+
+        ##==== get State
+        ##==== simplified perception as observation
+        states = self.simplifiedperception.calculate_observation(
+            points_in_red_line, self.center_image, self.pixel_region
+        )
+
+        state_size = len(states)
+        
+        return states, state_size
