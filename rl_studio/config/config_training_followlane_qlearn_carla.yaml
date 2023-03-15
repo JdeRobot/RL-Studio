@@ -107,8 +107,6 @@ rewards:
 carla_environments:
   follow_lane:
     env_name: CarlaEnv-v0
-    town: Town01 #Town01, Town02, Town03, Town04, Town05, Town10HD
-    # Town01_Opt, Town02_Opt, Town03_Opt, Town04_Opt, Town05_Opt, Town10HD_Opt
     car: model1
     #sync_mode: True
     weather: ClearNoon #dynamic, argparse
@@ -126,9 +124,11 @@ carla_environments:
     gamma: 2.2 #for camera
     sync: True #syncronous mode or async
     alternate_pose: False
+    town: Town01 #Town01, Town02, Town03, Town04, Town05, Town06, Town07, Town10HD
+    # Town01_Opt, Town02_Opt, Town03_Opt, Town04_Opt, Town05_Opt, Town10HD_Opt
     waypoints_meters: 5 #distance between waypoints in meters
-    waypoints_init: 879 #879 crash testing, 839 init straight lane
-    waypoints_target: 959 #961
-    waypoints_lane_id: -1
-    waypoints_road_id: 8
-    max_target_waypoint_distance: 1 # distance to finish waypoint
+    waypoints_init: 839 #Town07: (20, -1, 945) 951, #Town01: 879 crash testing, 839 init straight lane
+    waypoints_target: 961 #Town07: (57, -1, 1249), #Town01: 959, 961
+    waypoints_lane_id: -1 # -1: right lane from south to north
+    waypoints_road_id: 8 # Town07: (20)-920-21-39-57, #Town01: 8
+    max_target_waypoint_distance: 3 # distance to finish waypoint
