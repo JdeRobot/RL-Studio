@@ -58,3 +58,11 @@ to the already presented papers.
 * Paper: [https://www.mdpi.com/1424-8220/22/21/8373/pdf](https://www.mdpi.com/1424-8220/22/21/8373/pdf)
 * Slides: [Link](https://drive.google.com/file/d/1z4TPq1i9-RdowkBjbDIavlDibbjOPMpk/view?usp=share_link)
 
+### Interpretable End-to-End Urban Autonomous Driving With Latent Deep Reinforcement Learning (Jianyu Chen, Shengo Eben Li, Masayoshi Tomizuka)
+
+[9 mar 2023] Presented by Pedro Fernández.
+
+* Paper: [https://arxiv.org/pdf/2001.08726v3.pdf](https://arxiv.org/pdf/2001.08726v3.pdf)
+* Code: [https://github.com/cjy1992/interp-e2e-driving](https://github.com/cjy1992/interp-e2e-driving)
+* Slides: [Link](https://docs.google.com/presentation/d/1IUolkhOX_o-k0641iP0VDNX8t4Qha6ikj8ohQhocZI0/edit?usp=sharing)
+
