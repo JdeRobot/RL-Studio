@@ -145,6 +145,7 @@ class FollowLaneQlearnStaticWeatherNoTraffic(FollowLaneEnv):
         self.bev_cam.set_attribute("image_size_x", f"{self.width}")
         self.bev_cam.set_attribute("image_size_y", f"{self.height}")
         self.front_camera_bev = None
+        self.front_camera_bev_mask = None
 
         ## --------------- Segmentation Camera ---------------
         self.segm_cam = self.world.get_blueprint_library().find(
@@ -189,6 +190,7 @@ class FollowLaneQlearnStaticWeatherNoTraffic(FollowLaneEnv):
         self.sensor_camera_rgb = None
         self.sensor_camera_red_mask = None
         self.front_camera_bev = None
+        self.front_camera_bev_mask = None
         self.sensor_camera_segmentation = None
         self.lane_sensor = None
         self.obstacle_sensor = None
@@ -562,17 +564,22 @@ class FollowLaneQlearnStaticWeatherNoTraffic(FollowLaneEnv):
         array = array[:, :, ::-1]
 
         hsv_nemo = cv2.cvtColor(array, cv2.COLOR_RGB2HSV)
-        light_sidewalk = (151, 217, 243)
-        dark_sidewalk = (153, 219, 245)
+
+        if (self.world.get_map().name == 'Carla/Maps/Town07'):
+            light_sidewalk = (42, 200, 233)
+            dark_sidewalk = (44, 202, 235)
+        else:
+            light_sidewalk = (151, 217, 243)
+            dark_sidewalk = (153, 219, 245)
 
         light_pavement = (149, 127, 127)
         dark_pavement = (151, 129, 129)
 
         mask_sidewalk = cv2.inRange(hsv_nemo, light_sidewalk, dark_sidewalk)
-        result_sidewalk = cv2.bitwise_and(array, array, mask=mask_sidewalk)
+        #result_sidewalk = cv2.bitwise_and(array, array, mask=mask_sidewalk)
 
         mask_pavement = cv2.inRange(hsv_nemo, light_pavement, dark_pavement)
-        result_pavement = cv2.bitwise_and(array, array, mask=mask_pavement)
+        #result_pavement = cv2.bitwise_and(array, array, mask=mask_pavement)
 
         # Adjust according to your adjacency requirement.
         kernel = np.ones((3, 3), dtype=np.uint8)
@@ -631,9 +638,17 @@ class FollowLaneQlearnStaticWeatherNoTraffic(FollowLaneEnv):
             agent_vehicle=car_bp  # carla.Actor (spawned vehicle)
         )
         image = BirdViewProducer.as_rgb(birdview)
+        hsv_nemo = cv2.cvtColor(image, cv2.COLOR_RGB2HSV)
+
+        # Extract central line
+        light_center_line = (17, 134, 232)
+        dark_center_line = (19, 136, 234)
+        mask_center_line = cv2.inRange(hsv_nemo, light_center_line, dark_center_line)
+        result = cv2.bitwise_and(hsv_nemo, hsv_nemo, mask=mask_center_line)
+
         # image = np.rot90(image)
         image = np.array(image)
-
+        result = np.array(result)
         if image.shape[0] != image.shape[1]:
             if image.shape[0] > image.shape[1]:
                 difference = image.shape[0] - image.shape[1]
@@ -657,6 +672,7 @@ class FollowLaneQlearnStaticWeatherNoTraffic(FollowLaneEnv):
             )
 
         self.front_camera_bev = image
+        self.front_camera_bev_mask = result
 
     def setup_segmentation_camera(self):
         # print("enter setup_rg_camera")
@@ -782,6 +798,26 @@ class FollowLaneQlearnStaticWeatherNoTraffic(FollowLaneEnv):
             self.front_camera_bev,
             1400,
             600,
+        )
+
+        mask = self.preprocess_image(self.front_camera_bev_mask)
+
+        (
+            states,
+            distance_to_center,
+            distance_to_center_normalized,
+        ) = self.calculate_states(mask)
+
+        
+        AutoCarlaUtils.show_image_with_centrals(
+            name="bev_mask",
+            img=self.front_camera_bev_mask,
+            waitkey=1,
+            centrals_in_pixels=distance_to_center,
+            centrals_normalized=distance_to_center_normalized,
+            x_row=[50],
+            x=1000,
+            y=600,
         )
 
         error = [
