@@ -562,17 +562,22 @@ class FollowLaneQlearnStaticWeatherNoTraffic(FollowLaneEnv):
         array = array[:, :, ::-1]
 
         hsv_nemo = cv2.cvtColor(array, cv2.COLOR_RGB2HSV)
-        light_sidewalk = (151, 217, 243)
-        dark_sidewalk = (153, 219, 245)
+
+        if (self.world.get_map().name == 'Carla/Maps/Town07'):
+            light_sidewalk = (42, 200, 233)
+            dark_sidewalk = (44, 202, 235)
+        else:
+            light_sidewalk = (151, 217, 243)
+            dark_sidewalk = (153, 219, 245)
 
         light_pavement = (149, 127, 127)
         dark_pavement = (151, 129, 129)
 
         mask_sidewalk = cv2.inRange(hsv_nemo, light_sidewalk, dark_sidewalk)
-        result_sidewalk = cv2.bitwise_and(array, array, mask=mask_sidewalk)
+        #result_sidewalk = cv2.bitwise_and(array, array, mask=mask_sidewalk)
 
         mask_pavement = cv2.inRange(hsv_nemo, light_pavement, dark_pavement)
-        result_pavement = cv2.bitwise_and(array, array, mask=mask_pavement)
+        #result_pavement = cv2.bitwise_and(array, array, mask=mask_pavement)
 
         # Adjust according to your adjacency requirement.
         kernel = np.ones((3, 3), dtype=np.uint8)
