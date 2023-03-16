@@ -145,6 +145,7 @@ class FollowLaneQlearnStaticWeatherNoTraffic(FollowLaneEnv):
         self.bev_cam.set_attribute("image_size_x", f"{self.width}")
         self.bev_cam.set_attribute("image_size_y", f"{self.height}")
         self.front_camera_bev = None
+        self.front_camera_bev_mask = None
 
         ## --------------- Segmentation Camera ---------------
         self.segm_cam = self.world.get_blueprint_library().find(
@@ -189,6 +190,7 @@ class FollowLaneQlearnStaticWeatherNoTraffic(FollowLaneEnv):
         self.sensor_camera_rgb = None
         self.sensor_camera_red_mask = None
         self.front_camera_bev = None
+        self.front_camera_bev_mask = None
         self.sensor_camera_segmentation = None
         self.lane_sensor = None
         self.obstacle_sensor = None
@@ -636,9 +638,17 @@ class FollowLaneQlearnStaticWeatherNoTraffic(FollowLaneEnv):
             agent_vehicle=car_bp  # carla.Actor (spawned vehicle)
         )
         image = BirdViewProducer.as_rgb(birdview)
+        hsv_nemo = cv2.cvtColor(image, cv2.COLOR_RGB2HSV)
+
+        # Extract central line
+        light_center_line = (17, 134, 232)
+        dark_center_line = (19, 136, 234)
+        mask_center_line = cv2.inRange(hsv_nemo, light_center_line, dark_center_line)
+        result = cv2.bitwise_and(hsv_nemo, hsv_nemo, mask=mask_center_line)
+
         # image = np.rot90(image)
         image = np.array(image)
-
+        result = np.array(result)
         if image.shape[0] != image.shape[1]:
             if image.shape[0] > image.shape[1]:
                 difference = image.shape[0] - image.shape[1]
@@ -661,7 +671,30 @@ class FollowLaneQlearnStaticWeatherNoTraffic(FollowLaneEnv):
                 constant_values=0,
             )
 
+        if result.shape[0] != result.shape[1]:
+            if result.shape[0] > result.shape[1]:
+                difference = result.shape[0] - result.shape[1]
+                extra_left, extra_right = int(difference / 2), int(difference / 2)
+                extra_top, extra_bottom = 0, 0
+            else:
+                difference = result.shape[1] - result.shape[0]
+                extra_left, extra_right = 0, 0
+                extra_top, extra_bottom = int(difference / 2), int(difference / 2)
+            result = np.pad(
+                result,
+                ((extra_top, extra_bottom), (extra_left, extra_right), (0, 0)),
+                mode="constant",
+                constant_values=0,
+            )
+            result = np.pad(
+                result,
+                ((100, 100), (50, 50), (0, 0)),
+                mode="constant",
+                constant_values=0,
+            )
+
         self.front_camera_bev = image
+        self.front_camera_bev_mask = result
 
     def setup_segmentation_camera(self):
         # print("enter setup_rg_camera")
@@ -786,6 +819,13 @@ class FollowLaneQlearnStaticWeatherNoTraffic(FollowLaneEnv):
             "bev",
             self.front_camera_bev,
             1400,
+            600,
+        )
+
+        AutoCarlaUtils.show_image(
+            "bev_mask",
+            self.front_camera_bev_mask,
+            1000,
             600,
         )
 
