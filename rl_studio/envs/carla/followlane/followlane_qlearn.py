@@ -671,28 +671,6 @@ class FollowLaneQlearnStaticWeatherNoTraffic(FollowLaneEnv):
                 constant_values=0,
             )
 
-        if result.shape[0] != result.shape[1]:
-            if result.shape[0] > result.shape[1]:
-                difference = result.shape[0] - result.shape[1]
-                extra_left, extra_right = int(difference / 2), int(difference / 2)
-                extra_top, extra_bottom = 0, 0
-            else:
-                difference = result.shape[1] - result.shape[0]
-                extra_left, extra_right = 0, 0
-                extra_top, extra_bottom = int(difference / 2), int(difference / 2)
-            result = np.pad(
-                result,
-                ((extra_top, extra_bottom), (extra_left, extra_right), (0, 0)),
-                mode="constant",
-                constant_values=0,
-            )
-            result = np.pad(
-                result,
-                ((100, 100), (50, 50), (0, 0)),
-                mode="constant",
-                constant_values=0,
-            )
-
         self.front_camera_bev = image
         self.front_camera_bev_mask = result
 
@@ -822,11 +800,24 @@ class FollowLaneQlearnStaticWeatherNoTraffic(FollowLaneEnv):
             600,
         )
 
-        AutoCarlaUtils.show_image(
-            "bev_mask",
-            self.front_camera_bev_mask,
-            1000,
-            600,
+        mask = self.preprocess_image(self.front_camera_bev_mask)
+
+        (
+            states,
+            distance_to_center,
+            distance_to_center_normalized,
+        ) = self.calculate_states(mask)
+
+        
+        AutoCarlaUtils.show_image_with_centrals(
+            name="bev_mask",
+            img=self.front_camera_bev_mask,
+            waitkey=1,
+            centrals_in_pixels=distance_to_center,
+            centrals_normalized=distance_to_center_normalized,
+            x_row=[50],
+            x=1000,
+            y=600,
         )
 
         error = [
