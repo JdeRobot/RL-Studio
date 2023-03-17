@@ -202,42 +202,43 @@ class FollowLaneQlearnStaticWeatherNoTraffic(FollowLaneEnv):
         ## ---  Car
         waypoints_town = self.world.get_map().generate_waypoints(5.0)
         init_waypoint = waypoints_town[self.waypoints_init + 1]
+        filtered_waypoints = self.draw_waypoints(
+            waypoints_town,
+            self.waypoints_init,
+            self.waypoints_target,
+            self.waypoints_lane_id,
+            2000,
+        )
+        self.target_waypoint = filtered_waypoints[-1]
 
         if self.alternate_pose:
             self.setup_car_random_pose()
-        elif self.waypoints_target is not None:
-            # waypoints = self.get_waypoints()
-            filtered_waypoints = self.draw_waypoints(
-                waypoints_town,
-                self.waypoints_init,
-                self.waypoints_target,
-                self.waypoints_lane_id,
-                2000,
-            )
-            self.target_waypoint = filtered_waypoints[-1]
-            self.setup_car_fix_pose(init_waypoint)
+        else:
+            if self.waypoints_target is not None:
+                # waypoints = self.get_waypoints()
+                self.setup_car_fix_pose(init_waypoint)
 
-        else:  # TODO: hacer en el caso que se quiera poner el target con .next()
-            waypoints_lane = init_waypoint.next_until_lane_end(1000)
-            waypoints_next = init_waypoint.next(1000)
-            print(f"{init_waypoint.transform.location.x = }")
-            print(f"{init_waypoint.transform.location.y = }")
-            print(f"{init_waypoint.lane_id = }")
-            print(f"{init_waypoint.road_id = }")
-            print(f"{len(waypoints_lane) = }")
-            print(f"{len(waypoints_next) = }")
-            w_road = []
-            w_lane = []
-            for x in waypoints_next:
-                w_road.append(x.road_id)
-                w_lane.append(x.lane_id)
+            else:  # TODO: hacer en el caso que se quiera poner el target con .next()
+                waypoints_lane = init_waypoint.next_until_lane_end(1000)
+                waypoints_next = init_waypoint.next(1000)
+                print(f"{init_waypoint.transform.location.x = }")
+                print(f"{init_waypoint.transform.location.y = }")
+                print(f"{init_waypoint.lane_id = }")
+                print(f"{init_waypoint.road_id = }")
+                print(f"{len(waypoints_lane) = }")
+                print(f"{len(waypoints_next) = }")
+                w_road = []
+                w_lane = []
+                for x in waypoints_next:
+                    w_road.append(x.road_id)
+                    w_lane.append(x.lane_id)
 
-            counter_lanes = Counter(w_lane)
-            counter_road = Counter(w_road)
-            print(f"{counter_lanes = }")
-            print(f"{counter_road = }")
+                counter_lanes = Counter(w_lane)
+                counter_road = Counter(w_road)
+                print(f"{counter_lanes = }")
+                print(f"{counter_road = }")
 
-            self.setup_car_fix_pose(init_waypoint)
+                self.setup_car_fix_pose(init_waypoint)
 
         ## --- Cameras
         self.setup_rgb_camera()
@@ -565,7 +566,7 @@ class FollowLaneQlearnStaticWeatherNoTraffic(FollowLaneEnv):
 
         hsv_nemo = cv2.cvtColor(array, cv2.COLOR_RGB2HSV)
 
-        if (self.world.get_map().name == 'Carla/Maps/Town07'):
+        if self.world.get_map().name == "Carla/Maps/Town07":
             light_sidewalk = (42, 200, 233)
             dark_sidewalk = (44, 202, 235)
         else:
@@ -576,10 +577,10 @@ class FollowLaneQlearnStaticWeatherNoTraffic(FollowLaneEnv):
         dark_pavement = (151, 129, 129)
 
         mask_sidewalk = cv2.inRange(hsv_nemo, light_sidewalk, dark_sidewalk)
-        #result_sidewalk = cv2.bitwise_and(array, array, mask=mask_sidewalk)
+        # result_sidewalk = cv2.bitwise_and(array, array, mask=mask_sidewalk)
 
         mask_pavement = cv2.inRange(hsv_nemo, light_pavement, dark_pavement)
-        #result_pavement = cv2.bitwise_and(array, array, mask=mask_pavement)
+        # result_pavement = cv2.bitwise_and(array, array, mask=mask_pavement)
 
         # Adjust according to your adjacency requirement.
         kernel = np.ones((3, 3), dtype=np.uint8)
@@ -808,7 +809,6 @@ class FollowLaneQlearnStaticWeatherNoTraffic(FollowLaneEnv):
             distance_to_center_normalized,
         ) = self.calculate_states(mask)
 
-        
         AutoCarlaUtils.show_image_with_centrals(
             name="bev_mask",
             img=self.front_camera_bev_mask,
