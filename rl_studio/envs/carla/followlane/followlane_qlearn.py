@@ -28,6 +28,7 @@ from rl_studio.envs.carla.utils.visualize_multiple_sensors import (
     SensorManager,
     CustomTimer,
 )
+
 import pygame
 from rl_studio.envs.carla.utils.global_route_planner import (
     GlobalRoutePlanner,
@@ -274,20 +275,36 @@ class FollowLaneQlearnStaticWeatherNoTraffic(FollowLaneEnv):
 
         time.sleep(1)
         self.car.apply_control(carla.VehicleControl(throttle=0.0, brake=0.0))
-
-        mask = self.preprocess_image(self.front_red_mask_camera)
-
         self.setup_spectator()
 
-        ## -- states
-        (
-            states,
-            distance_center,
-            distance_to_centr_normalized,
-        ) = self.calculate_states(mask)
+        ########### --- calculating STATES
+        mask = self.preprocess_image(self.front_red_mask_camera)
+        lane_centers_in_pixels = self.calculate_lane_centers(mask)
+        ### errors: distance to center of image to lane center
+        image_center = mask.shape[1] // 2
+        errors = [
+            image_center - lane_centers_in_pixels[i]
+            for i, _ in enumerate(lane_centers_in_pixels)
+        ]
+        ###
+        # errors_normalized = [
+        #  float((image_center - errors[i]) / image_center)
+        #    for i, _ in enumerate(errors)]
+        pixels_in_state = mask.shape[1] / self.num_regions
+        states = [
+            int(value / pixels_in_state)
+            for _, value in enumerate(lane_centers_in_pixels)
+        ]
 
-        self.perfect_distance_pixels = distance_center
-        self.perfect_distance_normalized = distance_to_centr_normalized
+        ## -- states
+        # (
+        #    states,
+        #    distance_center,
+        #    distance_to_centr_normalized,
+        # ) = self.calculate_states(mask)
+
+        # self.perfect_distance_pixels = distance_center
+        # self.perfect_distance_normalized = distance_to_centr_normalized
 
         return states
 
@@ -295,6 +312,49 @@ class FollowLaneQlearnStaticWeatherNoTraffic(FollowLaneEnv):
     #
     # Reset Methods
     ####################################################
+
+    def calculate_lane_centers(self, mask):
+        """
+        calculating LANE CENTRAL
+        """
+        width = mask.shape[1]
+        center_image = width // 2
+        ## get total lines in every line point
+        lines = [mask[self.x_row[i], :] for i, _ in enumerate(self.x_row)]
+        ### ----- from right to left
+        lines_inversed = [list(reversed(lines[x])) for x, _ in enumerate(lines)]
+        # print(f"{lines_inversed = }")
+        inv_index_right = [
+            np.argmax(lines_inversed[x]) for x, _ in enumerate(lines_inversed)
+        ]
+        # print(f"{inv_index_right = }")
+
+        cte_right, cte_left = 20, 20
+        inv_index_right = [
+            inv_index_right[x] + cte_right for x, _ in enumerate(inv_index_right)
+        ]
+        # print(f"{inv_index_right = }")
+        index_right = [
+            mask.shape[1] - inv_index_right[x] for x, _ in enumerate(inv_index_right)
+        ]
+        # print(f"{index_right = }")
+
+        ### --- now from left to right
+        # print(f"{lines = }")
+        index_left = [np.argmax(lines[x]) for x, _ in enumerate(lines)]
+        # print(f"{index_left = }")
+        index_left = [index_left[x] + cte_left for x, _ in enumerate(index_left)]
+        # print(f"{index_left = }")
+
+        ### --- calculate center of lane in every moment
+        width = mask.shape[1]
+        # print(f"{width = }")
+        centers = [
+            ((right - left) // 2) + left for right, left in zip(index_right, index_left)
+        ]
+        # print(f"{centers = }")
+
+        return centers
 
     def calculate_states(self, mask):
         """
@@ -328,6 +388,9 @@ class FollowLaneQlearnStaticWeatherNoTraffic(FollowLaneEnv):
         return states, distance_to_center, distance_to_center_normalized
 
     def preprocess_image(self, red_mask):
+        """
+        image is cropping from up to middle
+        """
         ## first, we cut the upper image
         height = red_mask.shape[0]
         image_middle_line = (height) // 2
@@ -337,7 +400,9 @@ class FollowLaneQlearnStaticWeatherNoTraffic(FollowLaneEnv):
         ## -- convert to GRAY
         gray_mask = cv2.cvtColor(img_sliced, cv2.COLOR_BGR2GRAY)
         ## --  apply mask to convert in Black and White
-        _, white_mask = cv2.threshold(gray_mask, 10, 255, cv2.THRESH_BINARY)
+        theshold = 50
+        # _, white_mask = cv2.threshold(gray_mask, 10, 255, cv2.THRESH_BINARY)
+        _, white_mask = cv2.threshold(gray_mask, theshold, 255, cv2.THRESH_BINARY)
 
         return white_mask
 
@@ -506,11 +571,6 @@ class FollowLaneQlearnStaticWeatherNoTraffic(FollowLaneEnv):
         self.sensor_camera_rgb.listen(self.save_rgb_image)
 
     def save_rgb_image(self, data: carla.Image):
-        """
-        @Fran Vazquez
-        """
-
-        """Convert a CARLA raw image to a BGRA numpy array."""
         if not isinstance(data, carla.Image):
             raise ValueError("Argument must be a carla.Image")
         image = np.array(data.raw_data)
@@ -520,9 +580,6 @@ class FollowLaneQlearnStaticWeatherNoTraffic(FollowLaneEnv):
         self.front_rgb_camera = image
 
     def _save_rgb_image(self, image):
-        """
-        taking from visualize_multiple_sensors.py
-        """
         # t_start = self.timer.time()
 
         image.convert(carla.ColorConverter.Raw)
@@ -615,6 +672,7 @@ class FollowLaneQlearnStaticWeatherNoTraffic(FollowLaneEnv):
         # self.time_processing += t_end - t_start
         # self.tics_processing += 1
 
+        red_line_mask = cv2.cvtColor(red_line_mask, cv2.COLOR_BGR2RGB)
         self.front_red_mask_camera = red_line_mask
 
     def setup_bev_camera(self):
@@ -753,35 +811,71 @@ class FollowLaneQlearnStaticWeatherNoTraffic(FollowLaneEnv):
         #    "main", self.front_rgb_camera, self.front_red_mask_camera, 300, 500
         # )
         ## -- states
-        mask = self.preprocess_image(self.front_red_mask_camera)
+        # mask = self.preprocess_image(self.front_red_mask_camera)
 
-        (
-            states,
-            distance_to_center,
-            distance_to_center_normalized,
-        ) = self.calculate_states(mask)
+        ########### --- calculating STATES
+        mask = self.preprocess_image(self.front_red_mask_camera)
+        lane_centers_in_pixels = self.calculate_lane_centers(mask)
+        ### errors: distance to center of image to lane center
+        image_center = mask.shape[1] // 2
+        errors = [
+            image_center - lane_centers_in_pixels[i]
+            for i, _ in enumerate(lane_centers_in_pixels)
+        ]
+        ###
+        errors_normalized = [
+            float((image_center - errors[i]) / image_center)
+            for i, _ in enumerate(errors)
+        ]
+        pixels_in_state = mask.shape[1] / self.num_regions
+        states = [
+            int(value / pixels_in_state)
+            for _, value in enumerate(lane_centers_in_pixels)
+        ]
+        print(
+            f"{lane_centers_in_pixels =}, {errors =}, {errors_normalized =}, {states =}\n"
+        )
+        # (
+        #    states,
+        #    distance_to_center,
+        #    distance_to_center_normalized,
+        # ) = self.calculate_states(mask)
 
         # AutoCarlaUtils.show_image("mask", mask, 1, 500, 10)
         AutoCarlaUtils.show_image_with_centrals(
             "mask",
             mask,
             1,
-            distance_to_center,
-            distance_to_center_normalized,
+            # distance_to_center,
+            lane_centers_in_pixels,
+            states,
             self.x_row,
             600,
             10,
         )
-        AutoCarlaUtils.show_image_with_centrals(
-            "front RGB",
-            self.front_rgb_camera[(self.front_rgb_camera.shape[0] // 2) :],
+        AutoCarlaUtils.show_image_with_everything(
+            "mask2",
+            mask,
             1,
-            distance_to_center,
-            distance_to_center_normalized,
+            lane_centers_in_pixels,
+            errors,
+            states,
             self.x_row,
             600,
-            500,
+            600,
         )
+
+        # AutoCarlaUtils.show_image_with_centrals(
+        #    "front RGB",
+        #    self.front_rgb_camera[(self.front_rgb_camera.shape[0] // 2) :],
+        #    1,
+        #    distance_to_center,
+        #    distance_to_center_normalized,
+        #    self.x_row,
+        #    600,
+        #    500,
+        # )
+
         AutoCarlaUtils.show_image(
             "front RGB resize",
             self.front_rgb_camera,
@@ -794,46 +888,53 @@ class FollowLaneQlearnStaticWeatherNoTraffic(FollowLaneEnv):
             1200,
             500,
         )
+        # AutoCarlaUtils.show_image(
+        #    "bev",
+        #    self.front_camera_bev,
+        #    1400,
+        #    600,
+        # )
         AutoCarlaUtils.show_image(
-            "bev",
-            self.front_camera_bev,
+            "self.front_red_mask_camera",
+            self.front_red_mask_camera,
             1400,
             600,
         )
+        # mask = self.preprocess_image(self.front_camera_bev_mask)
 
-        mask = self.preprocess_image(self.front_camera_bev_mask)
+        # (
+        #    states,
+        #    distance_to_center,
+        #    distance_to_center_normalized,
+        # ) = self.calculate_states(mask)
 
-        (
-            states,
-            distance_to_center,
-            distance_to_center_normalized,
-        ) = self.calculate_states(mask)
+        # AutoCarlaUtils.show_image_with_centrals(
+        #    name="bev_mask",
+        #    img=self.front_camera_bev_mask,
+        #    waitkey=1,
+        #    centrals_in_pixels=distance_to_center,
+        #    centrals_normalized=distance_to_center_normalized,
+        #    x_row=[50],
+        #    x=1000,
+        #    y=600,
+        # )
 
-        AutoCarlaUtils.show_image_with_centrals(
-            name="bev_mask",
-            img=self.front_camera_bev_mask,
-            waitkey=1,
-            centrals_in_pixels=distance_to_center,
-            centrals_normalized=distance_to_center_normalized,
-            x_row=[50],
-            x=1000,
-            y=600,
-        )
-
-        error = [
-            abs(
-                self.perfect_distance_normalized[index]
-                - distance_to_center_normalized[index]
-            )
-            for index, value in enumerate(self.x_row)
-        ]
+        # error = [
+        #    abs(
+        #        self.perfect_distance_normalized[index]
+        #        - distance_to_center_normalized[index]
+        #    )
+        #    for index, value in enumerate(self.x_row)
+        # ]
         counter_states = Counter(states)
         states_16 = counter_states.get(16)
 
         ## -------- Ending Step()...
         done = False
         ## -------- Rewards
-        reward, done = self.autocarlarewards.rewards_easy(error, self.params)
+        reward, done = self.autocarlarewards.rewards_easy(
+            errors_normalized, self.params
+        )
         # reward, done = self.rewards_followlane_error_center(
         #    distance_to_center_normalized, self.rewards
         # )
@@ -866,10 +967,10 @@ class FollowLaneQlearnStaticWeatherNoTraffic(FollowLaneEnv):
             height=self.params["height"],
             _="------------------------",
             states=states,
-            distance_to_center=distance_to_center,
-            distance_to_center_normalized=distance_to_center_normalized,
+            lane_centers_in_pixels=lane_centers_in_pixels,
+            errors_normalized=errors_normalized,
             reward=reward,
-            error=error,
+            errors=errors,
             done=done,
             states_16=states_16,
             self_collision_hist=self.collision_hist,

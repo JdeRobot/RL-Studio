@@ -124,7 +124,7 @@ carla_environments:
     gamma: 2.2 #for camera
     sync: True #syncronous mode or async
     alternate_pose: True
-    town: Town04 #Town01, Town02, Town03, Town04, Town05, Town06, Town07, Town10HD, Town11
+    town: Town07 #Town01, Town02, Town03, Town04, Town05, Town06, Town07, Town10HD, Town11
     # Town01_Opt, Town02_Opt, Town03_Opt, Town04_Opt, Town05_Opt, Town10HD_Opt
     waypoints_meters: 5 #distance between waypoints in meters
     waypoints_init: 1 #Town07: (20, -1, 945) 951, #Town01: 879 crash testing, 839 init straight lane

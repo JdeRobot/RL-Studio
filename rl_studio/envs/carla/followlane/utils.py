@@ -31,6 +31,58 @@ class AutoCarlaUtils:
         return False, dist
 
     @staticmethod
+    def show_image_with_everything(
+        name, img, waitkey, centrals_in_pixels, errors, states, x_row, x, y
+    ):
+        window_name = f"{name}"
+        img = np.array(img)
+
+        for index, _ in enumerate(x_row):
+            ### horizontal line in x_row file
+            cv2.line(
+                img,
+                (0, int(x_row[index])),
+                (int(img.shape[1]), int(x_row[index])),
+                color=(100, 200, 100),
+                thickness=1,
+            )
+            ### vertical line in center of the image
+            cv2.line(
+                img,
+                (int(img.shape[1] // 2), 0),
+                (int(img.shape[1] // 2), int(img.shape[0])),
+                color=(100, 200, 100),
+                thickness=1,
+            )
+            ### Points
+            cv2.circle(
+                img,
+                (int(x_row[index]), int(centrals_in_pixels[index])),
+                2,
+                (150, 200, 150),
+                2,
+            )
+
+            cv2.putText(
+                img,
+                str(
+                    f"[center:{int(centrals_in_pixels[index])}]-[state:{states[index]}]-[dist:{errors[index]}]"
+                ),
+                (int(x_row[index]) - 5, int(centrals_in_pixels[index] + 5)),
+                cv2.FONT_HERSHEY_SIMPLEX,
+                0.3,
+                # (255, 255, 255),
+                (255, 255, 255),
+                1,
+                cv2.LINE_AA,
+            )
+
+        cv2.namedWindow(window_name)  # Create a named window
+        cv2.moveWindow(window_name, x, y)  # Move it to (40,30)
+        cv2.imshow(window_name, img)
+        cv2.waitKey(waitkey)
+
+    @staticmethod
     def show_image_with_centrals(
         name, img, waitkey, centrals_in_pixels, centrals_normalized, x_row, x, y
     ):
