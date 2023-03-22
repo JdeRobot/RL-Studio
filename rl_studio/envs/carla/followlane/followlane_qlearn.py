@@ -107,16 +107,19 @@ class FollowLaneQlearnStaticWeatherNoTraffic(FollowLaneEnv):
         self.colsensor = self.world.get_blueprint_library().find(
             "sensor.other.collision"
         )
+        self.collision_hist = []
         self.col_sensor = None
         ## --------------- Lane invasion sensor ---------------
         self.laneinvsensor = self.world.get_blueprint_library().find(
             "sensor.other.lane_invasion"
         )
+        self.lane_changing_hist = []
         self.lane_sensor = None
         ## --------------- Obstacle sensor ---------------
         self.obstsensor = self.world.get_blueprint_library().find(
             "sensor.other.obstacle"
         )
+        self.obstacle_hist = []
         self.obstacle_sensor = None
         ## --------------- RGB camera ---------------
         self.rgb_cam = self.world.get_blueprint_library().find("sensor.camera.rgb")
@@ -166,6 +169,7 @@ class FollowLaneQlearnStaticWeatherNoTraffic(FollowLaneEnv):
 
         self.spectator = self.world.get_spectator()
         # self.spectator = None
+        self.actor_list = []
 
     #################################################################################
     #
@@ -173,8 +177,7 @@ class FollowLaneQlearnStaticWeatherNoTraffic(FollowLaneEnv):
     #################################################################################
     def reset(self):
 
-        # TODO: one solution (ugly) is listening for Server. If not server process, launching it again
-
+        ### --- stoping and destroying all actors
         if (self.col_sensor is not None and self.col_sensor.is_listening) or (
             self.sensor_camera_rgb is not None and self.sensor_camera_rgb.is_listening
         ):
@@ -185,7 +188,7 @@ class FollowLaneQlearnStaticWeatherNoTraffic(FollowLaneEnv):
             self.sensor_camera_segmentation.stop()
             self.lane_sensor.stop()
             self.obstacle_sensor.stop()
-            self.destroy_all_actors()
+            self.destroy_all_actors_apply_batch()
 
         self.col_sensor = None
         self.sensor_camera_rgb = None
@@ -282,10 +285,10 @@ class FollowLaneQlearnStaticWeatherNoTraffic(FollowLaneEnv):
         lane_centers_in_pixels = self.calculate_lane_centers(mask)
         ### errors: distance to center of image to lane center
         image_center = mask.shape[1] // 2
-        errors = [
-            image_center - lane_centers_in_pixels[i]
-            for i, _ in enumerate(lane_centers_in_pixels)
-        ]
+        # errors = [
+        #    image_center - lane_centers_in_pixels[i]
+        #    for i, _ in enumerate(lane_centers_in_pixels)
+        # ]
         ###
         # errors_normalized = [
         #  float((image_center - errors[i]) / image_center)
@@ -317,37 +320,63 @@ class FollowLaneQlearnStaticWeatherNoTraffic(FollowLaneEnv):
         """
         calculating LANE CENTRAL
         """
-        width = mask.shape[1]
-        center_image = width // 2
+
         ## get total lines in every line point
         lines = [mask[self.x_row[i], :] for i, _ in enumerate(self.x_row)]
-        ### ----- from right to left
+
+        ### ----------------- from right to left
         lines_inversed = [list(reversed(lines[x])) for x, _ in enumerate(lines)]
         # print(f"{lines_inversed = }")
         inv_index_right = [
             np.argmax(lines_inversed[x]) for x, _ in enumerate(lines_inversed)
         ]
         # print(f"{inv_index_right = }")
-
-        cte_right, cte_left = 20, 20
-        inv_index_right = [
-            inv_index_right[x] + cte_right for x, _ in enumerate(inv_index_right)
+        offset = 20
+        inv_index_right_plus_offset = [
+            inv_index_right[x] + offset for x, _ in enumerate(inv_index_right)
         ]
         # print(f"{inv_index_right = }")
         index_right = [
             mask.shape[1] - inv_index_right[x] for x, _ in enumerate(inv_index_right)
         ]
+
+        ### --------------- now second line from rght to left
+        cropped_lines_inversed = [
+            lines_inversed[x][inv_index_right_plus_offset[x] :]
+            for x, _ in enumerate(lines_inversed)
+        ]
+        ## ---------------- calculating index in second line
+        try:
+            second_inv_index_right = [
+                np.argmax(cropped_lines_inversed[x])
+                for x, _ in enumerate(cropped_lines_inversed)
+            ]
+        except:
+            print(f"{cropped_lines_inversed =}")
+            cropped_lines_inversed = [0]
+            second_inv_index_right = [
+                np.argmax(cropped_lines_inversed[x])
+                for x, _ in enumerate(cropped_lines_inversed)
+            ]
+
+        index_left = [
+            mask.shape[1] - inv_index_right[x] - second_inv_index_right[x] + offset
+            if second_inv_index_right[x] != 0
+            else 0
+            for x, _ in enumerate(second_inv_index_right)
+        ]
+
         # print(f"{index_right = }")
 
         ### --- now from left to right
         # print(f"{lines = }")
-        index_left = [np.argmax(lines[x]) for x, _ in enumerate(lines)]
+        # index_left = [np.argmax(lines[x]) for x, _ in enumerate(lines)]
         # print(f"{index_left = }")
-        index_left = [index_left[x] + cte_left for x, _ in enumerate(index_left)]
+        # index_left = [index_left[x] + cte_left for x, _ in enumerate(index_left)]
         # print(f"{index_left = }")
 
         ### --- calculate center of lane in every moment
-        width = mask.shape[1]
+        # width = mask.shape[1]
         # print(f"{width = }")
         centers = [
             ((right - left) // 2) + left for right, left in zip(index_right, index_left)
@@ -470,10 +499,10 @@ class FollowLaneQlearnStaticWeatherNoTraffic(FollowLaneEnv):
         print(f"{init.right_lane_marking = }")
         """
 
-        # location = carla.Transform(
-        #    carla.Location(x=73.7, y=-10, z=0.300000),
-        #    carla.Rotation(pitch=0.000000, yaw=-62.5, roll=0.000000),
-        # )
+        location = carla.Transform(
+            carla.Location(x=73.7, y=-10, z=0.300000),
+            carla.Rotation(pitch=0.000000, yaw=-62.5, roll=0.000000),
+        )
 
         self.car = self.world.spawn_actor(self.vehicle, location)
         while self.car is None:
@@ -533,7 +562,7 @@ class FollowLaneQlearnStaticWeatherNoTraffic(FollowLaneEnv):
 
     def obstacle_data(self, event):
         self.obstacle_hist.append(event)
-        print(f"you have found an obstacle")
+        # print(f"you have found an obstacle")
 
     def setup_spectator(self):
         # self.spectator = self.world.get_spectator()
@@ -770,25 +799,16 @@ class FollowLaneQlearnStaticWeatherNoTraffic(FollowLaneEnv):
     #
     ##################
 
-    def destroy_all_actors(self):
-        print("\ndestroying %d actors" % len(self.actor_list))
-        # for actor in self.actor_list[::-1]:
-        # for actor in self.actor_list:
-        #    print(f"destroying actor : {actor}\n")
-        # if actor.id != self.spectator_id:
-        #    print(f"destroying actor : {actor}\n")
-        #    actor.destroy()
-        # print(f"All actors destroyed")
-        # print(f"{len(self.actor_list) = }")
-        # for collisions in self.collision_hist:
-        # for actor in self.actor_list:
-        # collisions.destroy()
-        # print(f"\nin self.destroy_all_actors(), actor : {actor}\n")
-
-        # self.actor_list = []
+    def destroy_all_actors_apply_batch(self):
+        print("\ndestroying %d actors with apply_batch method" % len(self.actor_list))
         self.client.apply_batch(
             [carla.command.DestroyActor(x) for x in self.actor_list[::-1]]
         )
+
+    def destroy_all_actors(self):
+        print("\ndestroying %d actors with destroy() method" % len(self.actor_list))
+        for actor in self.actor_list[::-1]:
+            actor.destroy()
 
     #################################################
     #
@@ -818,23 +838,24 @@ class FollowLaneQlearnStaticWeatherNoTraffic(FollowLaneEnv):
         lane_centers_in_pixels = self.calculate_lane_centers(mask)
         ### errors: distance to center of image to lane center
         image_center = mask.shape[1] // 2
-        errors = [
+        dist = [
             image_center - lane_centers_in_pixels[i]
             for i, _ in enumerate(lane_centers_in_pixels)
         ]
         ###
-        errors_normalized = [
-            float((image_center - errors[i]) / image_center)
-            for i, _ in enumerate(errors)
+        dist_normalized = [
+            float((image_center - abs(dist[i])) / image_center)
+            for i, _ in enumerate(dist)
         ]
         pixels_in_state = mask.shape[1] / self.num_regions
         states = [
             int(value / pixels_in_state)
             for _, value in enumerate(lane_centers_in_pixels)
         ]
-        print(
-            f"{lane_centers_in_pixels =}, {errors =}, {errors_normalized =}, {states =}\n"
-        )
+        # print(
+        #    f"{lane_centers_in_pixels =}, {dist =}, {dist_normalized =}, {states =}\n"
+        # )
+
         # (
         #    states,
         #    distance_to_center,
@@ -842,64 +863,65 @@ class FollowLaneQlearnStaticWeatherNoTraffic(FollowLaneEnv):
         # ) = self.calculate_states(mask)
 
         # AutoCarlaUtils.show_image("mask", mask, 1, 500, 10)
-        AutoCarlaUtils.show_image_with_centrals(
-            "mask",
-            mask,
-            1,
-            # distance_to_center,
-            lane_centers_in_pixels,
-            states,
-            self.x_row,
-            600,
-            10,
-        )
+        # AutoCarlaUtils.show_image_with_centrals(
+        #    "mask",
+        #    mask,
+        #    1,
+        # distance_to_center,
+        #    lane_centers_in_pixels,
+        #    states,
+        #    self.x_row,
+        #    600,
+        #    10,
+        # )
         AutoCarlaUtils.show_image_with_everything(
             "mask2",
             mask,
             1,
             lane_centers_in_pixels,
-            errors,
+            dist,
             states,
             self.x_row,
             600,
-            600,
-        )
-
-        # AutoCarlaUtils.show_image_with_centrals(
-        #    "front RGB",
-        #    self.front_rgb_camera[(self.front_rgb_camera.shape[0] // 2) :],
-        #    1,
-        #    distance_to_center,
-        #    distance_to_center_normalized,
-        #    self.x_row,
-        #    600,
-        #    500,
-        # )
-
-        AutoCarlaUtils.show_image(
-            "front RGB resize",
-            self.front_rgb_camera,
-            1200,
             10,
         )
-        AutoCarlaUtils.show_image(
-            "semantic",
-            self.segmentation_cam,
-            1200,
+
+        AutoCarlaUtils.show_image_with_everything(
+            "front RGB",
+            self.front_rgb_camera[(self.front_rgb_camera.shape[0] // 2) :],
+            1,
+            lane_centers_in_pixels,
+            dist,
+            states,
+            self.x_row,
+            600,
             500,
         )
+
+        # AutoCarlaUtils.show_image(
+        #    "front RGB",
+        #    self.front_rgb_camera,
+        #    1200,
+        #    10,
+        # )
+        # AutoCarlaUtils.show_image(
+        #    "semantic",
+        #    self.segmentation_cam,
+        #    1200,
+        #    10,
+        # )
         # AutoCarlaUtils.show_image(
         #    "bev",
         #    self.front_camera_bev,
         #    1400,
         #    600,
         # )
-        AutoCarlaUtils.show_image(
-            "self.front_red_mask_camera",
-            self.front_red_mask_camera,
-            1400,
-            600,
-        )
+        # AutoCarlaUtils.show_image(
+        #    "self.front_red_mask_camera",
+        #    self.front_red_mask_camera,
+        #    1400,
+        #    600,
+        # )
         # mask = self.preprocess_image(self.front_camera_bev_mask)
 
         # (
@@ -932,9 +954,7 @@ class FollowLaneQlearnStaticWeatherNoTraffic(FollowLaneEnv):
         ## -------- Ending Step()...
         done = False
         ## -------- Rewards
-        reward, done = self.autocarlarewards.rewards_easy(
-            errors_normalized, self.params
-        )
+        reward, done = self.autocarlarewards.rewards_easy(dist_normalized, self.params)
         # reward, done = self.rewards_followlane_error_center(
         #    distance_to_center_normalized, self.rewards
         # )
@@ -968,12 +988,13 @@ class FollowLaneQlearnStaticWeatherNoTraffic(FollowLaneEnv):
             _="------------------------",
             states=states,
             lane_centers_in_pixels=lane_centers_in_pixels,
-            errors_normalized=errors_normalized,
+            dist_to_center=dist,
+            dist_normalized=dist_normalized,
             reward=reward,
-            errors=errors,
             done=done,
             states_16=states_16,
             self_collision_hist=self.collision_hist,
+            self_obstacle_hist=self.obstacle_hist,
             distance_to_finish=dist,
         )
         """
@@ -1015,23 +1036,23 @@ class FollowLaneQlearnStaticWeatherNoTraffic(FollowLaneEnv):
         steering_angle = 0
         if action == 0:
             self.car.apply_control(
-                carla.VehicleControl(throttle=0.3, steer=-0.1)
+                carla.VehicleControl(throttle=0.32, steer=-0.2)
             )  # jugamos con -0.01
             # self._control.throttle = min(self._control.throttle + 0.01, 1.00)
             # self._control.steer = -0.02
-            steering_angle = -0.1
+            steering_angle = -0.2
         elif action == 1:
-            self.car.apply_control(carla.VehicleControl(throttle=0.6, steer=0.0))
+            self.car.apply_control(carla.VehicleControl(throttle=0.7, steer=0.0))
             # self._control.throttle = min(self._control.throttle + 0.01, 1.00)
             # self._control.steer = 0.0
             steering_angle = 0
         elif action == 2:
             self.car.apply_control(
-                carla.VehicleControl(throttle=0.3, steer=0.1)
+                carla.VehicleControl(throttle=0.32, steer=0.2)
             )  # jigamos con 0.01 par ala recta
             # self._control.throttle = min(self._control.throttle + 0.01, 1.0)
             # self._control.steer = 0.02
-            steering_angle = 0.1
+            steering_angle = 0.2
 
         # self.car.apply_control(self._control)
 

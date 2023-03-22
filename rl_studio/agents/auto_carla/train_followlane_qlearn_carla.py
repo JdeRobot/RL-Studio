@@ -146,7 +146,7 @@ class TrainerFollowLaneQlearnAutoCarla:
             ascii=True,
             unit="episodes",
         ):
-            time.sleep(1)
+            time.sleep(0.1)
             done = False
             cumulated_reward = 0
             step = 0

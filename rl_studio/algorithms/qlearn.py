@@ -319,8 +319,11 @@ class QLearnCarla:
         # print(f"{count_max= }")
         best_index = [index for index, value in enumerate(q_list) if value == max_q]
 
-        if count_max > 1 or np.random.random() > self.epsilon:
+        if count_max > 1:
             # best = [i for i in range(len(q_list)) if q_list[i] == max_q]
+            action = random.choice(best_index)
+        elif np.random.random() > self.epsilon:
+            # action = max_q
             action = random.choice(best_index)
         else:
             action = np.random.randint(0, len(self.actions))

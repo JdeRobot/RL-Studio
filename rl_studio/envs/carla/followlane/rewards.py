@@ -8,12 +8,12 @@ class AutoCarlaRewards:
         rewards = []
         done = False
         for i, _ in enumerate(error):
-            if error[i] < 0.2:
+            if error[i] > 0.85:
                 rewards.append(10)
-            elif 0.2 <= error[i] < 0.4:
+            elif 0.85 >= error[i] > 0.45:
                 rewards.append(2)
-            elif 0.4 <= error[i] < 0.9:
-                rewards.append(0)
+            elif 0.45 >= error[i] > 0.1:
+                rewards.append(0.1)
             else:
                 rewards.append(-100)
                 done = True

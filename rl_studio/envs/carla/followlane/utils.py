@@ -57,9 +57,10 @@ class AutoCarlaUtils:
             ### Points
             cv2.circle(
                 img,
-                (int(x_row[index]), int(centrals_in_pixels[index])),
-                2,
-                (150, 200, 150),
+                (int(centrals_in_pixels[index]), int(x_row[index])),
+                5,
+                # (150, 200, 150),
+                (255, 255, 255),
                 2,
             )
 
@@ -68,9 +69,9 @@ class AutoCarlaUtils:
                 str(
                     f"[center:{int(centrals_in_pixels[index])}]-[state:{states[index]}]-[dist:{errors[index]}]"
                 ),
-                (int(x_row[index]) - 5, int(centrals_in_pixels[index] + 5)),
+                (int(centrals_in_pixels[index]) - 50, int(x_row[index]) - 5),
                 cv2.FONT_HERSHEY_SIMPLEX,
-                0.3,
+                0.4,
                 # (255, 255, 255),
                 (255, 255, 255),
                 1,
