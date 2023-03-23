@@ -10,8 +10,8 @@ settings:
   states: sp1 # sp1 (simplified perception with 1 point), sp3 (simplified perception with 3 points), spn (simplified perception with n points)
   rewards: follow_right_lane_only_center #
   framework: _
-  total_episodes: 5000
-  training_time: 6
+  total_episodes: 500
+  training_time: 12
   models_dir: "./checkpoints"
   logs_dir: "./logs"
   metrics_dir: "./metrics"
@@ -36,7 +36,7 @@ inference:
 algorithm:
   qlearn:
     alpha: 0.7
-    epsilon: 0.1
+    epsilon: 0.95
     epsilon_min: 0.05
     gamma: 0.9
 
@@ -54,7 +54,7 @@ agents:
 
 states:
   sp1:
-    0: [50]
+    0: [100]
   sp4:
     0: [30, 60, 100, 120]
   sp5:
@@ -113,9 +113,9 @@ carla_environments:
     traffic_pedestrians: False
     city_lights: False
     car_lights: False
-    estimated_steps: 1000
+    estimated_steps: 500
     save_episodes: 10
-    save_every_step: 10
+    save_every_step: 50
     init_pose:
     goal_pose:
     filter: vehicle.*
@@ -128,7 +128,7 @@ carla_environments:
     # Town01_Opt, Town02_Opt, Town03_Opt, Town04_Opt, Town05_Opt, Town10HD_Opt
     waypoints_meters: 5 #distance between waypoints in meters
     waypoints_init: 1 #Town07: (20, -1, 945) 951, #Town01: 879 crash testing, 839 init straight lane
-    waypoints_target: 961 #Town07: (57, -1, 1249), #Town01: 959, 961
+    waypoints_target: 1249 #Town07: (57, -1, 1249), #Town01: 959, 961
     waypoints_lane_id: -1 # -1: right lane from south to north
     waypoints_road_id: 8 # Town07: (20)-920-21-39-57, #Town01: 8
     max_target_waypoint_distance: 3 # distance to finish waypoint

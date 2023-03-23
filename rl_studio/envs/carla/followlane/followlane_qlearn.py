@@ -333,11 +333,13 @@ class FollowLaneQlearnStaticWeatherNoTraffic(FollowLaneEnv):
         # print(f"{inv_index_right = }")
         offset = 20
         inv_index_right_plus_offset = [
-            inv_index_right[x] + offset for x, _ in enumerate(inv_index_right)
+            inv_index_right[x] + offset if inv_index_right[x] != 0 else 0
+            for x, _ in enumerate(inv_index_right)
         ]
         # print(f"{inv_index_right = }")
         index_right = [
-            mask.shape[1] - inv_index_right[x] for x, _ in enumerate(inv_index_right)
+            mask.shape[1] - inv_index_right[x] if inv_index_right[x] != 0 else 0
+            for x, _ in enumerate(inv_index_right)
         ]
 
         ### --------------- now second line from rght to left
@@ -379,7 +381,10 @@ class FollowLaneQlearnStaticWeatherNoTraffic(FollowLaneEnv):
         # width = mask.shape[1]
         # print(f"{width = }")
         centers = [
-            ((right - left) // 2) + left for right, left in zip(index_right, index_left)
+            ((right - left) // 2) + left
+            if (index_right[right] != 0) and (index_left[left] != 0)
+            else 0
+            for right, left in zip(index_right, index_left)
         ]
         # print(f"{centers = }")
 
@@ -387,7 +392,7 @@ class FollowLaneQlearnStaticWeatherNoTraffic(FollowLaneEnv):
 
     def calculate_states(self, mask):
         """
-        from right, search for red line. It could be weakness to a bad masking
+        from right, search for red line
         """
         width = mask.shape[1]
         center_image = width // 2
@@ -573,7 +578,7 @@ class FollowLaneQlearnStaticWeatherNoTraffic(FollowLaneEnv):
         # self.spectator.set_transform(actor_snapshot.get_transform())
         self.spectator.set_transform(
             carla.Transform(
-                car_transfor.location + carla.Location(z=30),
+                car_transfor.location + carla.Location(z=60),
                 carla.Rotation(pitch=-90, roll=-90),
             )
         )
@@ -818,20 +823,6 @@ class FollowLaneQlearnStaticWeatherNoTraffic(FollowLaneEnv):
     def step(self, action):
         ### -------- send action
         self.control(action)
-        # self.world.tick()
-        # print(f"params = {params}")
-
-        # params["pos"] = 270
-        # center = 270
-        # stados = random.randint(0, 4)
-        # stados = [stados]
-        # print(f"stados = {stados}")
-
-        # AutoCarlaUtils.show_images(
-        #    "main", self.front_rgb_camera, self.front_red_mask_camera, 300, 500
-        # )
-        ## -- states
-        # mask = self.preprocess_image(self.front_red_mask_camera)
 
         ########### --- calculating STATES
         mask = self.preprocess_image(self.front_red_mask_camera)
@@ -852,28 +843,6 @@ class FollowLaneQlearnStaticWeatherNoTraffic(FollowLaneEnv):
             int(value / pixels_in_state)
             for _, value in enumerate(lane_centers_in_pixels)
         ]
-        # print(
-        #    f"{lane_centers_in_pixels =}, {dist =}, {dist_normalized =}, {states =}\n"
-        # )
-
-        # (
-        #    states,
-        #    distance_to_center,
-        #    distance_to_center_normalized,
-        # ) = self.calculate_states(mask)
-
-        # AutoCarlaUtils.show_image("mask", mask, 1, 500, 10)
-        # AutoCarlaUtils.show_image_with_centrals(
-        #    "mask",
-        #    mask,
-        #    1,
-        # distance_to_center,
-        #    lane_centers_in_pixels,
-        #    states,
-        #    self.x_row,
-        #    600,
-        #    10,
-        # )
         AutoCarlaUtils.show_image_with_everything(
             "mask2",
             mask,
@@ -897,48 +866,11 @@ class FollowLaneQlearnStaticWeatherNoTraffic(FollowLaneEnv):
             600,
             500,
         )
-
-        # AutoCarlaUtils.show_image(
-        #    "front RGB",
-        #    self.front_rgb_camera,
-        #    1200,
-        #    10,
-        # )
-        # AutoCarlaUtils.show_image(
-        #    "semantic",
-        #    self.segmentation_cam,
-        #    1200,
-        #    10,
-        # )
         # AutoCarlaUtils.show_image(
         #    "bev",
         #    self.front_camera_bev,
         #    1400,
         #    600,
-        # )
-        # AutoCarlaUtils.show_image(
-        #    "self.front_red_mask_camera",
-        #    self.front_red_mask_camera,
-        #    1400,
-        #    600,
-        # )
-        # mask = self.preprocess_image(self.front_camera_bev_mask)
-
-        # (
-        #    states,
-        #    distance_to_center,
-        #    distance_to_center_normalized,
-        # ) = self.calculate_states(mask)
-
-        # AutoCarlaUtils.show_image_with_centrals(
-        #    name="bev_mask",
-        #    img=self.front_camera_bev_mask,
-        #    waitkey=1,
-        #    centrals_in_pixels=distance_to_center,
-        #    centrals_normalized=distance_to_center_normalized,
-        #    x_row=[50],
-        #    x=1000,
-        #    y=600,
         # )
 
         # error = [
@@ -950,6 +882,7 @@ class FollowLaneQlearnStaticWeatherNoTraffic(FollowLaneEnv):
         # ]
         counter_states = Counter(states)
         states_16 = counter_states.get(16)
+        states_0 = counter_states.get(0)
 
         ## -------- Ending Step()...
         done = False
@@ -960,7 +893,9 @@ class FollowLaneQlearnStaticWeatherNoTraffic(FollowLaneEnv):
         # )
 
         ## -------- ... or Finish by...
-        if states_16 is not None and (states_16 >= len(states)):  # not red right line
+        if (states_16 is not None and (states_16 >= len(states))) or (
+            states_0 is not None and (states_0 >= len(states))
+        ):  # not red right line
             print(f"no red line detected")
             done = True
         if len(self.collision_hist) > 0:  # crash you, baby
@@ -992,9 +927,10 @@ class FollowLaneQlearnStaticWeatherNoTraffic(FollowLaneEnv):
             dist_normalized=dist_normalized,
             reward=reward,
             done=done,
+            states_0=states_0,
             states_16=states_16,
-            self_collision_hist=self.collision_hist,
-            self_obstacle_hist=self.obstacle_hist,
+            num_self_collision_hist=len(self.collision_hist),
+            num_self_obstacle_hist=len(self.obstacle_hist),
             distance_to_finish=dist,
         )
         """
@@ -1036,7 +972,7 @@ class FollowLaneQlearnStaticWeatherNoTraffic(FollowLaneEnv):
         steering_angle = 0
         if action == 0:
             self.car.apply_control(
-                carla.VehicleControl(throttle=0.32, steer=-0.2)
+                carla.VehicleControl(throttle=0.5, steer=-0.2)
             )  # jugamos con -0.01
             # self._control.throttle = min(self._control.throttle + 0.01, 1.00)
             # self._control.steer = -0.02
@@ -1048,7 +984,7 @@ class FollowLaneQlearnStaticWeatherNoTraffic(FollowLaneEnv):
             steering_angle = 0
         elif action == 2:
             self.car.apply_control(
-                carla.VehicleControl(throttle=0.32, steer=0.2)
+                carla.VehicleControl(throttle=0.5, steer=0.2)
             )  # jigamos con 0.01 par ala recta
             # self._control.throttle = min(self._control.throttle + 0.01, 1.0)
             # self._control.steer = 0.02
