@@ -657,7 +657,7 @@ class FollowLaneQlearnStaticWeatherNoTraffic(FollowLaneEnv):
 
         hsv_nemo = cv2.cvtColor(array, cv2.COLOR_RGB2HSV)
 
-        if self.world.get_map().name == "Carla/Maps/Town07":
+        if self.world.get_map().name == "Carla/Maps/Town07" or self.world.get_map().name == "Carla/Maps/Town04":
             light_sidewalk = (42, 200, 233)
             dark_sidewalk = (44, 202, 235)
         else:
