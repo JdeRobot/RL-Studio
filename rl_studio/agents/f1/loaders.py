@@ -507,6 +507,13 @@ class LoadEnvVariablesQlearnCarla:
         self.actions = config["settings"]["actions"]
         self.actions_set = config["actions"][self.actions]
         self.rewards = config["settings"]["rewards"]
+        self.town = config[self.environment_set][self.env]["town"]
+        self.waypoints_lane_id = config[self.environment_set][self.env][
+            "waypoints_lane_id"
+        ]
+        self.town_circuit = config[self.environment_set][self.env]["init_pose"][
+            "town_circuit"
+        ]
         ##### environment variable
         self.environment = {}
         self.environment["agent"] = config["settings"]["agent"]
@@ -537,20 +544,11 @@ class LoadEnvVariablesQlearnCarla:
         self.environment["car_lights"] = config[self.environment_set][self.env][
             "car_lights"
         ]
-        self.environment["alternate_pose"] = config[self.environment_set][self.env][
-            "alternate_pose"
-        ]
         self.environment["save_episodes"] = config[self.environment_set][self.env][
             "save_episodes"
         ]
         self.environment["save_every_step"] = config[self.environment_set][self.env][
             "save_every_step"
-        ]
-        self.environment["init_pose"] = config[self.environment_set][self.env][
-            "init_pose"
-        ]
-        self.environment["goal_pose"] = config[self.environment_set][self.env][
-            "goal_pose"
         ]
         self.environment["filter"] = config[self.environment_set][self.env]["filter"]
         self.environment["generation"] = config[self.environment_set][self.env][
@@ -579,6 +577,23 @@ class LoadEnvVariablesQlearnCarla:
         self.environment["max_target_waypoint_distance"] = config[self.environment_set][
             self.env
         ]["max_target_waypoint_distance"]
+
+        self.environment["alternate_pose"] = config[self.environment_set][self.env][
+            "init_pose"
+        ]["alternate_pose"]
+        self.environment["random_pose"] = config[self.environment_set][self.env][
+            "init_pose"
+        ]["random_pose"]
+        self.environment["init_pose_number"] = config[self.environment_set][self.env][
+            "init_pose"
+        ]["init_pose_number"]
+        self.environment["start_alternate_pose"] = config["carla_town_positions"][
+            self.town
+        ][self.town_circuit][self.waypoints_lane_id]["init_positions"]
+        self.environment["finish_alternate_pose"] = config["carla_town_positions"][
+            self.town
+        ][self.town_circuit][self.waypoints_lane_id]["finish_positions"]
+
         # --------- Image
         self.environment["height_image"] = config["agents"][self.agent][
             "camera_params"

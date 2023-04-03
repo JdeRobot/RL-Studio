@@ -387,7 +387,7 @@ class TrainerFollowLaneQlearnAutoCarla:
                     f"best_epoch_training_time = {best_epoch_training_time}\n"
                 )
                 print_messages(
-                    "aving BATCH",
+                    "saving BATCH",
                     best_epoch=best_epoch,
                     best_epoch_training_time=best_epoch_training_time,
                     current_max_reward=current_max_reward,

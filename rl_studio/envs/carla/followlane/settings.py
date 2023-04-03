@@ -55,7 +55,13 @@ class FollowLaneCarlaConfig(BaseModel):
         self.min_reward = config["min_reward"]
 
         # Pose
+        self.town = config["town"]
+        self.random_pose = config["random_pose"]
         self.alternate_pose = config["alternate_pose"]
+        self.init_pose_number = config["init_pose_number"]
+        self.start_alternate_pose = config["start_alternate_pose"]
+        self.finish_alternate_pose = config["finish_alternate_pose"]
+
         self.waypoints_meters = config["waypoints_meters"]
         self.waypoints_init = config["waypoints_init"]
         self.waypoints_target = config["waypoints_target"]

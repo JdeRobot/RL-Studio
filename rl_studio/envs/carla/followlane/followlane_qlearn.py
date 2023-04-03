@@ -215,13 +215,25 @@ class FollowLaneQlearnStaticWeatherNoTraffic(FollowLaneEnv):
         )
         self.target_waypoint = filtered_waypoints[-1]
 
-        if self.alternate_pose:
+        ## ---- random init position in the whole Town: actually for test functioning porposes
+        if self.random_pose:
             self.setup_car_random_pose()
+        ## -- Always same init position in a circuit predefined
+        elif self.alternate_pose is False:
+            # self.setup_car_fix_pose(init_waypoint)
+            # self.setup_car_fix_pose(self.start_alternate_pose)
+            self.setup_car_pose(self.start_alternate_pose, init=self.init_pose_number)
+
+        ## -- Same circuit, but random init positions
         else:
+            # self.setup_car_alternate_pose(self.start_alternate_pose)
+            self.setup_car_pose(self.start_alternate_pose)
+
+            """
             if self.waypoints_target is not None:
                 # waypoints = self.get_waypoints()
                 self.setup_car_fix_pose(init_waypoint)
-
+            
             else:  # TODO: hacer en el caso que se quiera poner el target con .next()
                 waypoints_lane = init_waypoint.next_until_lane_end(1000)
                 waypoints_next = init_waypoint.next(1000)
@@ -243,7 +255,7 @@ class FollowLaneQlearnStaticWeatherNoTraffic(FollowLaneEnv):
                 print(f"{counter_road = }")
 
                 self.setup_car_fix_pose(init_waypoint)
-
+                """
         ## --- Cameras
         self.setup_rgb_camera()
         # self.setup_semantic_camera()
@@ -382,8 +394,8 @@ class FollowLaneQlearnStaticWeatherNoTraffic(FollowLaneEnv):
         # print(f"{width = }")
         centers = [
             ((right - left) // 2) + left
-            if (index_right[right] != 0) and (index_left[left] != 0)
-            else 0
+            # if (index_right[right] != 0) and (index_left[left] != 0)
+            # else 0
             for right, left in zip(index_right, index_left)
         ]
         # print(f"{centers = }")
@@ -477,7 +489,68 @@ class FollowLaneQlearnStaticWeatherNoTraffic(FollowLaneEnv):
 
         return filtered_waypoints
 
+    def setup_car_pose(self, init_positions, init=None):
+        if init is None:
+            pose_init = np.random.randint(0, high=len(init_positions))
+        else:
+            pose_init = init
+
+        print(f"{pose_init =}")
+        # print(f"{random_init = }")
+        # print(f"{self.start_alternate_pose = }")
+        # print(f"{self.start_alternate_pose[random_init][0] = }")
+        location = carla.Transform(
+            carla.Location(
+                x=self.start_alternate_pose[pose_init][0],
+                y=self.start_alternate_pose[pose_init][1],
+                z=self.start_alternate_pose[pose_init][2],
+            ),
+            carla.Rotation(
+                pitch=self.start_alternate_pose[pose_init][3],
+                yaw=self.start_alternate_pose[pose_init][4],
+                roll=self.start_alternate_pose[pose_init][5],
+            ),
+        )
+
+        self.car = self.world.spawn_actor(self.vehicle, location)
+        while self.car is None:
+            self.car = self.world.spawn_actor(self.vehicle, location)
+
+        self.actor_list.append(self.car)
+        time.sleep(1)
+
+    def setup_car_alternate_pose(self, init_positions):
+        random_init = np.random.randint(0, high=len(init_positions))
+        # print(f"{random_init = }")
+        # print(f"{self.start_alternate_pose = }")
+        # print(f"{self.start_alternate_pose[random_init][0] = }")
+        location = carla.Transform(
+            carla.Location(
+                x=self.start_alternate_pose[random_init][0],
+                y=self.start_alternate_pose[random_init][1],
+                z=self.start_alternate_pose[random_init][2],
+            ),
+            carla.Rotation(
+                pitch=self.start_alternate_pose[random_init][3],
+                yaw=self.start_alternate_pose[random_init][4],
+                roll=self.start_alternate_pose[random_init][5],
+            ),
+        )
+
+        self.car = self.world.spawn_actor(self.vehicle, location)
+        while self.car is None:
+            self.car = self.world.spawn_actor(self.vehicle, location)
+
+        self.actor_list.append(self.car)
+        time.sleep(1)
+
     def setup_car_fix_pose(self, init):
+        """
+        Town07, road 20, -1, init curves
+        (73.7, -10, 0.3, 0.0, -62.5, 0.0)
+        """
+
+        """
         # car_bp = self.world.get_blueprint_library().filter("vehicle.*")[0]
         location = carla.Transform(
             carla.Location(
@@ -491,7 +564,7 @@ class FollowLaneQlearnStaticWeatherNoTraffic(FollowLaneEnv):
                 roll=init.transform.rotation.roll,
             ),
         )
-        """
+        
         print(f"{init.transform.location.x = }")
         print(f"{init.transform.location.y = }")
         print(f"{init.lane_id = }")
