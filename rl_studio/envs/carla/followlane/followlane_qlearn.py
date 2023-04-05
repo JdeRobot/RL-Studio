@@ -270,8 +270,6 @@ class FollowLaneQlearnStaticWeatherNoTraffic(FollowLaneEnv):
             time.sleep(0.01)
 
         self.setup_bev_camera()
-        # self.setup_bev_camera()
-
         while self.sensor_bev_camera is None:
             time.sleep(0.01)
 
@@ -290,7 +288,7 @@ class FollowLaneQlearnStaticWeatherNoTraffic(FollowLaneEnv):
 
         time.sleep(1)
         self.car.apply_control(carla.VehicleControl(throttle=0.0, brake=0.0))
-        self.setup_spectator()
+        # self.setup_spectator()
 
         ########### --- calculating STATES
         mask = self.preprocess_image(self.front_red_mask_camera)
@@ -613,7 +611,9 @@ class FollowLaneQlearnStaticWeatherNoTraffic(FollowLaneEnv):
         actor_we_collide_against = event.other_actor
         impulse = event.normal_impulse
         intensity = math.sqrt(impulse.x**2 + impulse.y**2 + impulse.z**2)
-        # print(f"you crashed with {actor_we_collide_against.type_id}")
+        print(
+            f"you have crashed with {actor_we_collide_against.type_id} with impulse {impulse} and intensity {intensity}"
+        )
         # self.actor_list.append(actor_we_collide_against)
 
     def setup_lane_invasion_sensor(self):
@@ -640,7 +640,7 @@ class FollowLaneQlearnStaticWeatherNoTraffic(FollowLaneEnv):
 
     def obstacle_data(self, event):
         self.obstacle_hist.append(event)
-        # print(f"you have found an obstacle")
+        print(f"you have found an obstacle")
 
     def setup_spectator(self):
         # self.spectator = self.world.get_spectator()
@@ -730,7 +730,10 @@ class FollowLaneQlearnStaticWeatherNoTraffic(FollowLaneEnv):
 
         hsv_nemo = cv2.cvtColor(array, cv2.COLOR_RGB2HSV)
 
-        if self.world.get_map().name == "Carla/Maps/Town07" or self.world.get_map().name == "Carla/Maps/Town04":
+        if (
+            self.world.get_map().name == "Carla/Maps/Town07"
+            or self.world.get_map().name == "Carla/Maps/Town04"
+        ):
             light_sidewalk = (42, 200, 233)
             dark_sidewalk = (44, 202, 235)
         else:
@@ -971,8 +974,10 @@ class FollowLaneQlearnStaticWeatherNoTraffic(FollowLaneEnv):
         ):  # not red right line
             print(f"no red line detected")
             done = True
-        if len(self.collision_hist) > 0:  # crash you, baby
+            reward = -100
+        if len(self.collision_hist) > 0:  # crashed you, baby
             done = True
+            reward = -100
             print(f"crash")
 
         is_finish, dist = AutoCarlaUtils.finish_target(
@@ -983,6 +988,12 @@ class FollowLaneQlearnStaticWeatherNoTraffic(FollowLaneEnv):
         if is_finish:
             print(f"Finish!!!!")
             done = True
+            reward = 100
+
+        if len(self.lane_changing_hist) > 2:  # you leave the lane
+            done = True
+            reward = -100
+            print(f"out of lane")
 
         render_params(
             action=action,
@@ -1004,6 +1015,7 @@ class FollowLaneQlearnStaticWeatherNoTraffic(FollowLaneEnv):
             states_16=states_16,
             num_self_collision_hist=len(self.collision_hist),
             num_self_obstacle_hist=len(self.obstacle_hist),
+            num_self_lane_change_hist=len(self.lane_changing_hist),
             distance_to_finish=dist,
         )
         """

@@ -10,7 +10,7 @@ settings:
   states: sp1 # sp1 (simplified perception with 1 point), sp3 (simplified perception with 3 points), spn (simplified perception with n points)
   rewards: follow_right_lane_only_center #
   framework: _
-  total_episodes: 10
+  total_episodes: 1000
   training_time: 12
   models_dir: "./checkpoints"
   logs_dir: "./logs"
@@ -113,7 +113,7 @@ carla_environments:
     traffic_pedestrians: False
     city_lights: False
     car_lights: False
-    estimated_steps: 10
+    estimated_steps: 300
     save_episodes: 10
     save_every_step: 50
     filter: vehicle.*
@@ -127,31 +127,45 @@ carla_environments:
     waypoints_road_id: 8 # Town07: (20)-920-21-39-57, #Town01: 8
     max_target_waypoint_distance: 3 # distance to finish waypoint
     waypoints_lane_id: lane1 # lane-1 (right lane from south to north), lane1
-    town: Town07 #Town01, Town02, Town03, Town04, Town05, Town06, Town07, Town10HD, Town11
+    town: Town04 #Town01, Town02, Town03, Town04, Town05, Town06, Town07, Town10HD, Town11
     # Town01_Opt, Town02_Opt, Town03_Opt, Town04_Opt, Town05_Opt, Town10HD_Opt
     init_pose:
-      random_pose: False # random positions in the whole town
-      alternate_pose: False # random positions but only for selected poses in carla_town_positions->tonwXX->laneX->init_positions
+      random_pose: True # random positions in the whole town
+      alternate_pose: True # random positions but only for selected poses in carla_town_positions->tonwXX->laneX->init_positions
       init_pose_number: 9
       town_circuit: mountain_circuit
 
 carla_town_positions:
+  Town04:
+    mountain_circuit:
+      lane-1:
+        init_positions:
+        finish_positions:
+      lane1:
+        init_positions:
+        finish_positions:
+
   Town07:
     mountain_circuit:
       lane-1:
         init_positions:
           0: [73.7, -10, 0.3, 0.0, -62.5, 0.0] #x, y, z, pitch, yaw, roll
-          1: [72.2, -38.7, 1.9, 4.4, 135.4, -0.3] #x, y, z, pitch, yaw, roll
-          2: [59.6, -70.8, 5.0, 4.7, -81.3, 0.0] #x, y, z, pitch, yaw, roll
-          3: [67.1, -112.6, 8.5, 4.5, -81.9, 0.0] #x, y, z, pitch, yaw, roll
-          4: [43.6, -193.1, 4.7, -4.5, -96.0, 0.1] #x, y, z, pitch, yaw, roll
-          5: [19.8, -238.2, 0.5, -4.5, -150.5, -0.5] # end point also
-          6: [-13.7, -243.7, 0, 4.5, -170.9, -0.2] # init point also
-          7: [-65.5, -233.1, 4.4, 4.3, 118.5, -0.5]
-          8: [-119, -217.4, 5.8, -5.4, -129.4, -0.4]
-          9: [-165.8, -247.4, 0.9, -5.0, -173.5, 0.2]
-          10: [-201.6, -223, 0, -0, 91.6, -0]
-          11: [-201.8, -173.4, 0, -0, 90.1, 0]
+          #1: [72.2, -38.7, 1.9, 4.4, 135.4, -0.3] #x, y, z, pitch, yaw, roll
+          #1: [71.6, -38.2, 1.9, 4.6, -132, 0] #x, y, z, pitch, yaw, roll
+          #2: [59.6, -70.8, 5.0, 4.7, -81.3, 0.0] #x, y, z, pitch, yaw, roll
+          #2: [61.3, -86.6, 6.3, 4.9, -79.1, 0.1] #x, y, z, pitch, yaw, roll
+          #3: [67.1, -112.6, 8.5, 4.5, -81.9, 0.0] #x, y, z, pitch, yaw, roll
+          1: [61.1, -137.8, 9.3, -2.2, -123.4, 0.1] #x, y, z, pitch, yaw, roll
+          2: [43.6, -193.1, 4.7, -4.5, -96.0, 0.1] #x, y, z, pitch, yaw, roll
+          #5: [19.8, -238.2, 0.5, -4.5, -150.5, -0.5] # end point also
+          #5: [19.5, -238.5, 0.5, -4.6, -155.9, -0.1] # end point also
+          3: [-13.7, -243.7, 0, 4.5, -170.9, -0.2] # init point also
+          4: [-65.5, -233.1, 4.4, 4.3, 118.5, -0.5]
+          #8: [-119, -217.4, 5.8, -5.4, -129.4, -0.4]
+          #8: [-119, -219.7, 5.5, -5.2, -125.4, -0.2]
+          5: [-165.8, -247.4, 0.9, -5.0, -173.5, 0.2]
+          6: [-201.6, -223, 0, -0, 91.6, -0]
+          7: [-201.8, -173.4, 0, -0, 90.1, 0]
         finish_positions:
           0: [19.8, -238.2, 0.5, -4.5, -150.5, -0.5]
           1: [-201.8, -173.4, 0, -0, 90.1]
@@ -162,11 +176,14 @@ carla_town_positions:
           2: [-161.9, -243.1, 1.3, 5.1, 9.4, 0.0]
           3: [-127.2, -222.1, 5.1, 5.0, 52.1, -0.5]
           4: [-67.1, -223.6, 5.1, -4.6, -56, -0.5]
-          5: [-19.9, -241.3, 0.4, -4.6, 12.7, -0.1] # also end point
+          #5: [-19.9, -241.3, 0.4, -4.6, 12.7, -0.1] # also end point
+          5: [-23.8, -242.5, 0.8, -4.7, 11.4, 0.0] # also end point
           6: [14.6, -237, 0.2, 4.5, 21.5, -0.2] # also init point
           7: [40.8, -185.2, 5.3, 4.6, 86.5, -0]
-          8: [62.9, -108.4, 8.1, -4.8, 99.3, 0.2]
-          9: [61.3, -45.5, 2.9, -4.5, 50.3, 0.4] #
+          #8: [62.9, -108.4, 8.1, -4.8, 99.3, 0.2]
+          #8: [62.9, -108.4, 8.1, -4.8, 99.3, 0.2]
+          #9: [61.3, -45.5, 2.9, -4.5, 50.3, 0.4] #
+          #9: [58.9, -50, 3.3, -4.5, 58.9, 0.5] #
 
         finish_positions:
           0: [-66.2, -225.2, 0.3]
