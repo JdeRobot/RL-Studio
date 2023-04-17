@@ -37,7 +37,6 @@ from rl_studio.envs.carla.utils.global_route_planner import (
 
 class FollowLaneQlearnStaticWeatherNoTraffic(FollowLaneEnv):
     def __init__(self, **config):
-
         ## --------------- init F1env
         FollowLaneEnv.__init__(self, **config)
         ## --------------- init class variables
@@ -176,18 +175,19 @@ class FollowLaneQlearnStaticWeatherNoTraffic(FollowLaneEnv):
     # Reset
     #################################################################################
     def reset(self):
-
         ### --- stoping and destroying all actors
-        if (self.col_sensor is not None and self.col_sensor.is_listening) or (
-            self.sensor_camera_rgb is not None and self.sensor_camera_rgb.is_listening
-        ):
-            self.col_sensor.stop()
-            self.sensor_camera_rgb.stop()
-            self.sensor_camera_red_mask.stop()
-            self.sensor_bev_camera.stop()
-            self.sensor_camera_segmentation.stop()
-            self.lane_sensor.stop()
-            self.obstacle_sensor.stop()
+        # if (self.col_sensor is not None and self.col_sensor.is_listening) or (
+        #    self.sensor_camera_rgb is not None and self.sensor_camera_rgb.is_listening
+        # ):
+        # if self.sensor_camera_rgb is not None or self.sensor_camera_rgb.is_listening:
+        if self.sensor_camera_rgb is not None:
+            # self.col_sensor.stop()
+            # self.sensor_camera_rgb.stop()
+            # self.sensor_camera_red_mask.stop()
+            # self.sensor_bev_camera.stop()
+            # self.sensor_camera_segmentation.stop()
+            # self.lane_sensor.stop()
+            # self.obstacle_sensor.stop()
             self.destroy_all_actors_apply_batch()
 
         self.col_sensor = None
@@ -257,30 +257,41 @@ class FollowLaneQlearnStaticWeatherNoTraffic(FollowLaneEnv):
                 self.setup_car_fix_pose(init_waypoint)
                 """
         ## --- Cameras
-        self.setup_rgb_camera()
+
+        ## ---- RGB
+        # self.setup_rgb_camera()
+        self.setup_rgb_camera_weakref()
         # self.setup_semantic_camera()
         while self.sensor_camera_rgb is None:
             # print("1")
             time.sleep(0.01)
 
-        self.setup_red_mask_camera()
+        ## ---- Red Mask
+        self.setup_red_mask_camera_weakref()
+        # self.setup_red_mask_camera()
         # self.setup_bev_camera()
-
         while self.sensor_camera_red_mask is None:
             time.sleep(0.01)
 
-        self.setup_bev_camera()
+        ## ---- BEV camera
+        self.setup_bev_camera_weakref()
+        # self.setup_bev_camera()
         while self.sensor_bev_camera is None:
             time.sleep(0.01)
 
-        self.setup_segmentation_camera()
+        ## --- SEgmentation camera
+        self.setup_segmentation_camera_weakref()
+        # self.setup_segmentation_camera()
         while self.sensor_camera_segmentation is None:
             time.sleep(0.01)
 
         ## --- Detectors Sensors
-        self.setup_col_sensor()
-        self.setup_lane_invasion_sensor()
-        self.setup_obstacle_sensor()
+        self.setup_col_sensor_weakref()
+        # self.setup_col_sensor()
+        self.setup_lane_invasion_sensor_weakref()
+        # self.setup_lane_invasion_sensor()
+        self.setup_obstacle_sensor_weakref()
+        # self.setup_obstacle_sensor()
 
         # AutoCarlaUtils.show_images(
         #    "main", self.front_rgb_camera, self.front_red_mask_camera, 600, 5
@@ -596,6 +607,42 @@ class FollowLaneQlearnStaticWeatherNoTraffic(FollowLaneEnv):
         self.actor_list.append(self.car)
         time.sleep(1)
 
+    ##################
+    #
+    # Detectors Sensors
+    ##################
+
+    def setup_col_sensor_weakref(self):
+        """weakref"""
+        # colsensor = self.world.get_blueprint_library().find("sensor.other.collision")
+        transform = carla.Transform(carla.Location(x=2.5, z=0.7))
+        self.col_sensor = self.world.spawn_actor(
+            self.colsensor, transform, attach_to=self.car
+        )
+        self.actor_list.append(self.col_sensor)
+        weak_self = weakref.ref(self)
+        self.col_sensor.listen(
+            lambda event: FollowLaneQlearnStaticWeatherNoTraffic._collision_data(
+                weak_self, event
+            )
+        )
+        # self.col_sensor.listen(self.collision_data)
+
+    @staticmethod
+    def _collision_data(weak_self, event):
+        """weakref"""
+        self = weak_self()
+        if not self:
+            return
+
+        self.collision_hist.append(event)
+        actor_we_collide_against = event.other_actor
+        impulse = event.normal_impulse
+        intensity = math.sqrt(impulse.x**2 + impulse.y**2 + impulse.z**2)
+        print(
+            f"you have crashed with {actor_we_collide_against.type_id} with impulse {impulse} and intensity {intensity}"
+        )
+
     def setup_col_sensor(self):
         # colsensor = self.world.get_blueprint_library().find("sensor.other.collision")
         transform = carla.Transform(carla.Location(x=2.5, z=0.7))
@@ -616,6 +663,31 @@ class FollowLaneQlearnStaticWeatherNoTraffic(FollowLaneEnv):
         )
         # self.actor_list.append(actor_we_collide_against)
 
+    def setup_lane_invasion_sensor_weakref(self):
+        """weakref"""
+        transform = carla.Transform(carla.Location(x=2.5, z=0.7))
+        self.lane_sensor = self.world.spawn_actor(
+            self.laneinvsensor, transform, attach_to=self.car
+        )
+        self.actor_list.append(self.lane_sensor)
+        # self.col_sensor.listen(lambda event: self.collision_data(event))
+        weak_self = weakref.ref(self)
+        self.lane_sensor.listen(self.lane_changing_data)
+        self.lane_sensor.listen(
+            lambda event: FollowLaneQlearnStaticWeatherNoTraffic._lane_changing(
+                weak_self, event
+            )
+        )
+
+    @staticmethod
+    def _lane_changing(weak_self, event):
+        """weakref"""
+        self = weak_self()
+        if not self:
+            return
+        self.lane_changing_hist.append(event)
+        print(f"you have changed the lane")
+
     def setup_lane_invasion_sensor(self):
         transform = carla.Transform(carla.Location(x=2.5, z=0.7))
         self.lane_sensor = self.world.spawn_actor(
@@ -628,6 +700,31 @@ class FollowLaneQlearnStaticWeatherNoTraffic(FollowLaneEnv):
     def lane_changing_data(self, event):
         self.lane_changing_hist.append(event)
         print(f"you have changed the lane")
+
+    def setup_obstacle_sensor_weakref(self):
+        """weakref"""
+        transform = carla.Transform(carla.Location(x=2.5, z=0.7))
+        self.obstacle_sensor = self.world.spawn_actor(
+            self.obstsensor, transform, attach_to=self.car
+        )
+        self.actor_list.append(self.obstacle_sensor)
+        # self.col_sensor.listen(lambda event: self.collision_data(event))
+        weak_self = weakref.ref(self)
+        # self.obstacle_sensor.listen(self.obstacle_data)
+        self.obstacle_sensor.listen(
+            lambda event: FollowLaneQlearnStaticWeatherNoTraffic._obstacle_sensor(
+                weak_self, event
+            )
+        )
+
+    @staticmethod
+    def _obstacle_sensor(weak_self, event):
+        """weakref"""
+        self = weak_self()
+        if not self:
+            return
+        self.obstacle_hist.append(event)
+        print(f"you have found an obstacle")
 
     def setup_obstacle_sensor(self):
         transform = carla.Transform(carla.Location(x=2.5, z=0.7))
@@ -642,6 +739,10 @@ class FollowLaneQlearnStaticWeatherNoTraffic(FollowLaneEnv):
         self.obstacle_hist.append(event)
         print(f"you have found an obstacle")
 
+    ##################
+    #
+    # spectator
+    ##################
     def setup_spectator(self):
         # self.spectator = self.world.get_spectator()
         car_transfor = self.car.get_transform()
@@ -661,6 +762,35 @@ class FollowLaneQlearnStaticWeatherNoTraffic(FollowLaneEnv):
     #
     # Cameras
     ##################
+    def setup_rgb_camera_weakref(self):
+        """weakref"""
+
+        transform = carla.Transform(carla.Location(x=2, z=1.5), carla.Rotation(yaw=+00))
+        self.sensor_camera_rgb = self.world.spawn_actor(
+            self.rgb_cam, transform, attach_to=self.car
+        )
+        self.actor_list.append(self.sensor_camera_rgb)
+        # print(f"{len(self.actor_list) = }")
+        weak_self = weakref.ref(self)
+        # self.sensor_camera_rgb.listen(self.save_rgb_image)
+        self.sensor_camera_rgb.listen(
+            lambda event: FollowLaneQlearnStaticWeatherNoTraffic._rgb_image(
+                weak_self, event
+            )
+        )
+
+    @staticmethod
+    def _rgb_image(weak_self, image):
+        """weakref"""
+        self = weak_self()
+        if not self:
+            return
+
+        image = np.array(image.raw_data)
+        image = image.reshape((480, 640, 4))
+        image = image[:, :, :3]
+        # self._data_dict["image"] = image3
+        self.front_rgb_camera = image
 
     def setup_rgb_camera(self):
         # print("enter setup_rg_camera")
@@ -704,6 +834,95 @@ class FollowLaneQlearnStaticWeatherNoTraffic(FollowLaneEnv):
         # cv2.imshow("", array)
         # cv2.waitKey(1)
         self.front_rgb_camera = array
+
+    ##################
+    #
+    # Red Mask Camera
+    ##################
+    def setup_red_mask_camera_weakref(self):
+        """weakref"""
+
+        transform = carla.Transform(carla.Location(x=2, z=1.5), carla.Rotation(yaw=+00))
+        self.sensor_camera_red_mask = self.world.spawn_actor(
+            self.red_mask_cam, transform, attach_to=self.car
+        )
+        self.actor_list.append(self.sensor_camera_red_mask)
+        weak_self = weakref.ref(self)
+        self.sensor_camera_red_mask.listen(
+            lambda event: FollowLaneQlearnStaticWeatherNoTraffic._red_mask_semantic_image(
+                weak_self, event
+            )
+        )
+        # self.sensor_camera_red_mask.listen(self.save_red_mask_semantic_image)
+
+    @staticmethod
+    def _red_mask_semantic_image(weak_self, image):
+        """weakref"""
+        self = weak_self()
+        if not self:
+            return
+        image.convert(carla.ColorConverter.CityScapesPalette)
+        array = np.frombuffer(image.raw_data, dtype=np.dtype("uint8"))
+        array = np.reshape(array, (image.height, image.width, 4))
+        array = array[:, :, :3]
+        array = array[:, :, ::-1]
+
+        hsv_nemo = cv2.cvtColor(array, cv2.COLOR_RGB2HSV)
+
+        if (
+            self.world.get_map().name == "Carla/Maps/Town07"
+            or self.world.get_map().name == "Carla/Maps/Town04"
+        ):
+            light_sidewalk = (42, 200, 233)
+            dark_sidewalk = (44, 202, 235)
+        else:
+            light_sidewalk = (151, 217, 243)
+            dark_sidewalk = (153, 219, 245)
+
+        light_pavement = (149, 127, 127)
+        dark_pavement = (151, 129, 129)
+
+        mask_sidewalk = cv2.inRange(hsv_nemo, light_sidewalk, dark_sidewalk)
+        # result_sidewalk = cv2.bitwise_and(array, array, mask=mask_sidewalk)
+
+        mask_pavement = cv2.inRange(hsv_nemo, light_pavement, dark_pavement)
+        # result_pavement = cv2.bitwise_and(array, array, mask=mask_pavement)
+
+        # Adjust according to your adjacency requirement.
+        kernel = np.ones((3, 3), dtype=np.uint8)
+
+        # Dilating masks to expand boundary.
+        color1_mask = cv2.dilate(mask_sidewalk, kernel, iterations=1)
+        color2_mask = cv2.dilate(mask_pavement, kernel, iterations=1)
+
+        # Required points now will have both color's mask val as 255.
+        common = cv2.bitwise_and(color1_mask, color2_mask)
+        SOME_THRESHOLD = 0
+
+        # Common is binary np.uint8 image, min = 0, max = 255.
+        # SOME_THRESHOLD can be anything within the above range. (not needed though)
+        # Extract/Use it in whatever way you want it.
+        intersection_points = np.where(common > SOME_THRESHOLD)
+
+        # Say you want these points in a list form, then you can do this.
+        pts_list = [[r, c] for r, c in zip(*intersection_points)]
+        # print(pts_list)
+
+        # for x, y in pts_list:
+        #    image_2[x][y] = (255, 0, 0)
+
+        # red_line_mask = np.zeros((400, 500, 3), dtype=np.uint8)
+        red_line_mask = np.zeros((image.height, image.width, 3), dtype=np.uint8)
+
+        for x, y in pts_list:
+            red_line_mask[x][y] = (255, 0, 0)
+
+        # t_end = self.timer.time()
+        # self.time_processing += t_end - t_start
+        # self.tics_processing += 1
+
+        red_line_mask = cv2.cvtColor(red_line_mask, cv2.COLOR_BGR2RGB)
+        self.front_red_mask_camera = red_line_mask
 
     def setup_red_mask_camera(self):
         # self.red_mask_cam = self.world.get_blueprint_library().find(
@@ -785,6 +1004,76 @@ class FollowLaneQlearnStaticWeatherNoTraffic(FollowLaneEnv):
         red_line_mask = cv2.cvtColor(red_line_mask, cv2.COLOR_BGR2RGB)
         self.front_red_mask_camera = red_line_mask
 
+    ##################
+    #
+    # BEV
+    ##################
+    def setup_bev_camera_weakref(self):
+        """weakref"""
+
+        transform = carla.Transform(carla.Location(x=2, z=1.5), carla.Rotation(yaw=+00))
+        self.sensor_bev_camera = self.world.spawn_actor(
+            self.bev_cam, transform, attach_to=self.car
+        )
+        self.actor_list.append(self.sensor_bev_camera)
+        # print(f"{len(self.actor_list) = }")
+        weak_self = weakref.ref(self)
+        # self.sensor_bev_camera.listen(self.save_bev_image)
+        self.sensor_bev_camera.listen(
+            lambda event: FollowLaneQlearnStaticWeatherNoTraffic._bev_image(
+                weak_self, event
+            )
+        )
+
+    @staticmethod
+    def _bev_image(weak_self, image):
+        """weakref"""
+        self = weak_self()
+        if not self:
+            return
+
+        car_bp = self.world.get_actors().filter("vehicle.*")[0]
+        # car_bp = self.vehicle
+        birdview = self.birdview_producer.produce(
+            agent_vehicle=car_bp  # carla.Actor (spawned vehicle)
+        )
+        image = BirdViewProducer.as_rgb(birdview)
+        hsv_nemo = cv2.cvtColor(image, cv2.COLOR_RGB2HSV)
+
+        # Extract central line
+        light_center_line = (17, 134, 232)
+        dark_center_line = (19, 136, 234)
+        mask_center_line = cv2.inRange(hsv_nemo, light_center_line, dark_center_line)
+        result = cv2.bitwise_and(hsv_nemo, hsv_nemo, mask=mask_center_line)
+
+        # image = np.rot90(image)
+        image = np.array(image)
+        result = np.array(result)
+        if image.shape[0] != image.shape[1]:
+            if image.shape[0] > image.shape[1]:
+                difference = image.shape[0] - image.shape[1]
+                extra_left, extra_right = int(difference / 2), int(difference / 2)
+                extra_top, extra_bottom = 0, 0
+            else:
+                difference = image.shape[1] - image.shape[0]
+                extra_left, extra_right = 0, 0
+                extra_top, extra_bottom = int(difference / 2), int(difference / 2)
+            image = np.pad(
+                image,
+                ((extra_top, extra_bottom), (extra_left, extra_right), (0, 0)),
+                mode="constant",
+                constant_values=0,
+            )
+            image = np.pad(
+                image,
+                ((100, 100), (50, 50), (0, 0)),
+                mode="constant",
+                constant_values=0,
+            )
+
+        self.front_camera_bev = image
+        self.front_camera_bev_mask = result
+
     def setup_bev_camera(self):
         # print("enter setup_rg_camera")
         # rgb_cam = self.world.get_blueprint_library().find("sensor.camera.rgb")
@@ -843,6 +1132,43 @@ class FollowLaneQlearnStaticWeatherNoTraffic(FollowLaneEnv):
         self.front_camera_bev = image
         self.front_camera_bev_mask = result
 
+    ##################
+    #
+    # Segmentation Camera
+    ##################
+
+    def setup_segmentation_camera_weakref(self):
+        """weakref"""
+
+        transform = carla.Transform(carla.Location(x=2, z=1.5), carla.Rotation(yaw=+00))
+        self.sensor_camera_segmentation = self.world.spawn_actor(
+            self.segm_cam, transform, attach_to=self.car
+        )
+        self.actor_list.append(self.sensor_camera_segmentation)
+        # print(f"{len(self.actor_list) = }")
+        weak_self = weakref.ref(self)
+        # self.sensor_camera_segmentation.listen(self.save_segmentation_image)
+        self.sensor_camera_segmentation.listen(
+            lambda event: FollowLaneQlearnStaticWeatherNoTraffic._segmentation_image(
+                weak_self, event
+            )
+        )
+
+    @staticmethod
+    def _segmentation_image(weak_self, image):
+        """weakref"""
+        self = weak_self()
+        if not self:
+            return
+
+        image.convert(carla.ColorConverter.CityScapesPalette)
+        array = np.frombuffer(image.raw_data, dtype=np.dtype("uint8"))
+        array = np.reshape(array, (image.height, image.width, 4))
+        array = array[:, :, :3]
+        array = array[:, :, ::-1]
+
+        self.segmentation_cam = array
+
     def setup_segmentation_camera(self):
         # print("enter setup_rg_camera")
         # rgb_cam = self.world.get_blueprint_library().find("sensor.camera.rgb")
@@ -877,7 +1203,7 @@ class FollowLaneQlearnStaticWeatherNoTraffic(FollowLaneEnv):
 
     ##################
     #
-    #
+    # Destroyers
     ##################
 
     def destroy_all_actors_apply_batch(self):
@@ -891,10 +1217,10 @@ class FollowLaneQlearnStaticWeatherNoTraffic(FollowLaneEnv):
         for actor in self.actor_list[::-1]:
             actor.destroy()
 
-    #################################################
+    ###################################################################################
     #
     # Step
-    #################################################
+    ###################################################################################
 
     def step(self, action):
         ### -------- send action
@@ -1053,7 +1379,6 @@ class FollowLaneQlearnStaticWeatherNoTraffic(FollowLaneEnv):
         return clip_throttle
 
     def control(self, action):
-
         steering_angle = 0
         if action == 0:
             self.car.apply_control(
