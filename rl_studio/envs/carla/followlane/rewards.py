@@ -4,6 +4,46 @@ import numpy as np
 
 
 class AutoCarlaRewards:
+    def rewards_right_line(self, dist_normalized, x_row, params):
+        normalized_distance = {
+            10: 0,
+            20: 0,
+            30: -0.1,
+            60: -0.1,
+            80: -0.2,
+            100: -0.3,
+            130: -0.5,
+            180: -0.5,
+            200: -0.5,
+            230: -0.6,
+        }
+        ground_truth_values = [
+            normalized_distance[value] for i, value in enumerate(x_row)
+        ]
+
+        rewards = []
+        done = False
+        for index, _ in enumerate(dist_normalized):
+            if dist_normalized[index] > 0:
+                dist_normalized[index] = -dist_normalized[index]
+            if 0.2 >= abs(dist_normalized[index] - ground_truth_values[index]) >= 0:
+                rewards.append(10)
+            elif 0.4 >= abs(dist_normalized[index] - ground_truth_values[index]) > 0.2:
+                rewards.append(2)
+            elif 0.8 >= abs(dist_normalized[index] - ground_truth_values[index]) > 0.4:
+                rewards.append(0.1)
+            else:
+                rewards.append(-100)
+                done = True
+
+        function_reward = sum(rewards) / len(rewards)
+
+        # TODO: remove next comments
+        # function_reward += params["velocity"] * 0.5
+        # function_reward -= params["steering_angle"] * 1.02
+
+        return function_reward, done
+
     def rewards_easy(self, error, params):
         rewards = []
         done = False

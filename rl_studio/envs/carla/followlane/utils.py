@@ -9,7 +9,6 @@ class AutoCarlaUtils:
 
     @staticmethod
     def finish_target(current_car_pose, target_pose, max_distance):
-
         current_car_pose_x = current_car_pose[0]
         current_car_pose_y = current_car_pose[1]
         target_x = target_pose.transform.location.x
@@ -67,7 +66,7 @@ class AutoCarlaUtils:
             cv2.putText(
                 img,
                 str(
-                    f"[center:{int(centrals_in_pixels[index])}]-[state:{states[index]}]-[dist:{errors[index]}]"
+                    f"[right_line:{int(centrals_in_pixels[index])}]-[state:{states[index]}]-[dist:{errors[index]}]"
                 ),
                 (int(centrals_in_pixels[index]) - 50, int(x_row[index]) - 5),
                 cv2.FONT_HERSHEY_SIMPLEX,

@@ -75,7 +75,7 @@ class FollowLaneQlearnStaticWeatherNoTraffic(FollowLaneEnv):
         self.world.unload_map_layer(carla.MapLayer.Foliage)
         self.world.unload_map_layer(carla.MapLayer.Particles)
         self.world.unload_map_layer(carla.MapLayer.Props)
-        
+
         self.original_settings = self.world.get_settings()
         self.traffic_manager = self.client.get_trafficmanager(8000)
         settings = self.world.get_settings()
@@ -349,6 +349,36 @@ class FollowLaneQlearnStaticWeatherNoTraffic(FollowLaneEnv):
     #
     # Reset Methods
     ####################################################
+
+    def calculate_line_right(self, mask):
+        """
+        calculates distance from center to right line
+        This distance will be using as a error from center lane
+        """
+        ## get total lines in every line point
+        lines = [mask[self.x_row[i], :] for i, _ in enumerate(self.x_row)]
+
+        ### ----------------- from right to left
+        lines_inversed = [list(reversed(lines[x])) for x, _ in enumerate(lines)]
+        # print(f"{lines_inversed = }")
+        inv_index_right = [
+            np.argmax(lines_inversed[x]) for x, _ in enumerate(lines_inversed)
+        ]
+        # print(f"{inv_index_right = }")
+        offset = 20
+        inv_index_right_plus_offset = [
+            inv_index_right[x] + offset if inv_index_right[x] != 0 else 0
+            for x, _ in enumerate(inv_index_right)
+        ]
+        # print(f"{inv_index_right = }")
+        index_right = [
+            mask.shape[1] - inv_index_right_plus_offset[x]
+            if inv_index_right_plus_offset[x] != 0
+            else 0
+            for x, _ in enumerate(inv_index_right_plus_offset)
+        ]
+
+        return index_right
 
     def calculate_lane_centers(self, mask):
         """
@@ -1246,28 +1276,29 @@ class FollowLaneQlearnStaticWeatherNoTraffic(FollowLaneEnv):
 
         ########### --- calculating STATES
         mask = self.preprocess_image(self.front_red_mask_camera)
-        lane_centers_in_pixels = self.calculate_lane_centers(mask)
+
+        # lane_centers_in_pixels = self.calculate_lane_centers(mask) # calculate center of lane
+        right_line_in_pixels = self.calculate_line_right(mask)
         ### errors: distance to center of image to lane center
         image_center = mask.shape[1] // 2
         dist = [
-            image_center - lane_centers_in_pixels[i]
-            for i, _ in enumerate(lane_centers_in_pixels)
+            image_center - right_line_in_pixels[i]
+            for i, _ in enumerate(right_line_in_pixels)
         ]
         ###
         dist_normalized = [
-            float((image_center - abs(dist[i])) / image_center)
-            for i, _ in enumerate(dist)
+            float((image_center - right_line_in_pixels[i]) / image_center)
+            for i, _ in enumerate(right_line_in_pixels)
         ]
         pixels_in_state = mask.shape[1] / self.num_regions
         states = [
-            int(value / pixels_in_state)
-            for _, value in enumerate(lane_centers_in_pixels)
+            int(value / pixels_in_state) for _, value in enumerate(right_line_in_pixels)
         ]
         AutoCarlaUtils.show_image_with_everything(
             "mask2",
             mask,
             1,
-            lane_centers_in_pixels,
+            right_line_in_pixels,
             dist,
             states,
             self.x_row,
@@ -1279,19 +1310,19 @@ class FollowLaneQlearnStaticWeatherNoTraffic(FollowLaneEnv):
             "front RGB",
             self.front_rgb_camera[(self.front_rgb_camera.shape[0] // 2) :],
             1,
-            lane_centers_in_pixels,
+            right_line_in_pixels,
             dist,
             states,
             self.x_row,
             600,
             500,
         )
-        AutoCarlaUtils.show_image(
-            "segmentation",
-            self.segmentation_cam,
-            1400,
-            600,
-        )
+        # AutoCarlaUtils.show_image(
+        #    "segmentation",
+        #    self.segmentation_cam,
+        #    1400,
+        #    600,
+        # )
 
         # error = [
         #    abs(
@@ -1307,7 +1338,9 @@ class FollowLaneQlearnStaticWeatherNoTraffic(FollowLaneEnv):
         ## -------- Ending Step()...
         done = False
         ## -------- Rewards
-        reward, done = self.autocarlarewards.rewards_easy(dist_normalized, self.params)
+        reward, done = self.autocarlarewards.rewards_right_line(
+            dist_normalized, self.x_row, self.params
+        )
         # reward, done = self.rewards_followlane_error_center(
         #    distance_to_center_normalized, self.rewards
         # )
@@ -1324,7 +1357,7 @@ class FollowLaneQlearnStaticWeatherNoTraffic(FollowLaneEnv):
             reward = -100
             print(f"crash")
 
-        is_finish, dist = AutoCarlaUtils.finish_target(
+        is_finish, dist_to_finish = AutoCarlaUtils.finish_target(
             self.params["location"],
             self.target_waypoint,
             self.max_target_waypoint_distance,
@@ -1340,17 +1373,19 @@ class FollowLaneQlearnStaticWeatherNoTraffic(FollowLaneEnv):
             print(f"out of lane")
 
         render_params(
-            action=action,
-            speed_kmh=self.params["speed"],
             # steering_angle=self.params["steering_angle"],
             Steer=self.params["Steer"],
             location=self.params["location"],
             Throttle=self.params["Throttle"],
             Brake=self.params["Brake"],
             height=self.params["height"],
+            action=action,
+            speed_kmh=self.params["speed"],
             _="------------------------",
             states=states,
-            lane_centers_in_pixels=lane_centers_in_pixels,
+            # lane_centers_in_pixels=lane_centers_in_pixels,
+            image_center=image_center,
+            right_line_in_pixels=right_line_in_pixels,
             dist_to_center=dist,
             dist_normalized=dist_normalized,
             reward=reward,
@@ -1360,7 +1395,7 @@ class FollowLaneQlearnStaticWeatherNoTraffic(FollowLaneEnv):
             num_self_collision_hist=len(self.collision_hist),
             num_self_obstacle_hist=len(self.obstacle_hist),
             num_self_lane_change_hist=len(self.lane_changing_hist),
-            distance_to_finish=dist,
+            distance_to_finish=dist_to_finish,
         )
         """
         print_messages(
