@@ -1,15 +1,21 @@
 from collections import Counter
 import copy
+from datetime import datetime, timedelta
 import math
+import os
+import subprocess
 import time
+import sys
+
 import carla
 from carla_birdeye_view import BirdViewProducer, BirdViewCropType, PixelDimensions
 from cv_bridge import CvBridge
 import cv2
 from geometry_msgs.msg import Twist
+from memory_profiler import profile
 import numpy as np
+import pygame
 import random
-from datetime import datetime, timedelta
 import weakref
 import rospy
 from sensor_msgs.msg import Image
@@ -29,7 +35,6 @@ from rl_studio.envs.carla.utils.visualize_multiple_sensors import (
     CustomTimer,
 )
 
-import pygame
 from rl_studio.envs.carla.utils.global_route_planner import (
     GlobalRoutePlanner,
 )
@@ -48,7 +53,7 @@ class FollowLaneQlearnStaticWeatherNoTraffic(FollowLaneEnv):
             config["carla_server"],
             config["carla_client"],
         )
-        self.client.set_timeout(5.0)
+        self.client.set_timeout(3.0)
         print(f"\n maps in carla 0.9.13: {self.client.get_available_maps()}\n")
 
         """
@@ -65,6 +70,12 @@ class FollowLaneQlearnStaticWeatherNoTraffic(FollowLaneEnv):
         """
 
         self.world = self.client.load_world(config["town"])
+        self.world.unload_map_layer(carla.MapLayer.Buildings)
+        self.world.unload_map_layer(carla.MapLayer.Decals)
+        self.world.unload_map_layer(carla.MapLayer.Foliage)
+        self.world.unload_map_layer(carla.MapLayer.Particles)
+        self.world.unload_map_layer(carla.MapLayer.Props)
+        
         self.original_settings = self.world.get_settings()
         self.traffic_manager = self.client.get_trafficmanager(8000)
         settings = self.world.get_settings()
@@ -115,9 +126,9 @@ class FollowLaneQlearnStaticWeatherNoTraffic(FollowLaneEnv):
         self.lane_changing_hist = []
         self.lane_sensor = None
         ## --------------- Obstacle sensor ---------------
-        self.obstsensor = self.world.get_blueprint_library().find(
-            "sensor.other.obstacle"
-        )
+        # self.obstsensor = self.world.get_blueprint_library().find(
+        #    "sensor.other.obstacle"
+        # )
         self.obstacle_hist = []
         self.obstacle_sensor = None
         ## --------------- RGB camera ---------------
@@ -136,6 +147,7 @@ class FollowLaneQlearnStaticWeatherNoTraffic(FollowLaneEnv):
         self.sensor_camera_red_mask = None
         self.front_red_mask_camera = None
         ## --------------- BEV camera ---------------
+        """
         self.birdview_producer = BirdViewProducer(
             self.client,  # carla.Client
             target_size=PixelDimensions(width=100, height=300),
@@ -149,7 +161,7 @@ class FollowLaneQlearnStaticWeatherNoTraffic(FollowLaneEnv):
         self.bev_cam.set_attribute("image_size_y", f"{self.height}")
         self.front_camera_bev = None
         self.front_camera_bev_mask = None
-
+        """
         ## --------------- Segmentation Camera ---------------
         self.segm_cam = self.world.get_blueprint_library().find(
             "sensor.camera.semantic_segmentation"
@@ -174,6 +186,7 @@ class FollowLaneQlearnStaticWeatherNoTraffic(FollowLaneEnv):
     #
     # Reset
     #################################################################################
+    # @profile
     def reset(self):
         ### --- stoping and destroying all actors
         # if (self.col_sensor is not None and self.col_sensor.is_listening) or (
@@ -274,10 +287,10 @@ class FollowLaneQlearnStaticWeatherNoTraffic(FollowLaneEnv):
             time.sleep(0.01)
 
         ## ---- BEV camera
-        self.setup_bev_camera_weakref()
+        # self.setup_bev_camera_weakref()
         # self.setup_bev_camera()
-        while self.sensor_bev_camera is None:
-            time.sleep(0.01)
+        # while self.sensor_bev_camera is None:
+        #    time.sleep(0.01)
 
         ## --- SEgmentation camera
         self.setup_segmentation_camera_weakref()
@@ -286,11 +299,11 @@ class FollowLaneQlearnStaticWeatherNoTraffic(FollowLaneEnv):
             time.sleep(0.01)
 
         ## --- Detectors Sensors
-        self.setup_col_sensor_weakref()
+        # self.setup_col_sensor_weakref()
         # self.setup_col_sensor()
         self.setup_lane_invasion_sensor_weakref()
         # self.setup_lane_invasion_sensor()
-        self.setup_obstacle_sensor_weakref()
+        # self.setup_obstacle_sensor_weakref()
         # self.setup_obstacle_sensor()
 
         # AutoCarlaUtils.show_images(
@@ -498,6 +511,7 @@ class FollowLaneQlearnStaticWeatherNoTraffic(FollowLaneEnv):
 
         return filtered_waypoints
 
+    # @profile
     def setup_car_pose(self, init_positions, init=None):
         if init is None:
             pose_init = np.random.randint(0, high=len(init_positions))
@@ -612,6 +626,7 @@ class FollowLaneQlearnStaticWeatherNoTraffic(FollowLaneEnv):
     # Detectors Sensors
     ##################
 
+    # @profile
     def setup_col_sensor_weakref(self):
         """weakref"""
         # colsensor = self.world.get_blueprint_library().find("sensor.other.collision")
@@ -762,6 +777,7 @@ class FollowLaneQlearnStaticWeatherNoTraffic(FollowLaneEnv):
     #
     # Cameras
     ##################
+    # @profile
     def setup_rgb_camera_weakref(self):
         """weakref"""
 
@@ -872,6 +888,8 @@ class FollowLaneQlearnStaticWeatherNoTraffic(FollowLaneEnv):
         if (
             self.world.get_map().name == "Carla/Maps/Town07"
             or self.world.get_map().name == "Carla/Maps/Town04"
+            or self.world.get_map().name == "Carla/Maps/Town07_Opt"
+            or self.world.get_map().name == "Carla/Maps/Town04_Opt"
         ):
             light_sidewalk = (42, 200, 233)
             dark_sidewalk = (44, 202, 235)
@@ -1268,12 +1286,12 @@ class FollowLaneQlearnStaticWeatherNoTraffic(FollowLaneEnv):
             600,
             500,
         )
-        # AutoCarlaUtils.show_image(
-        #    "bev",
-        #    self.front_camera_bev,
-        #    1400,
-        #    600,
-        # )
+        AutoCarlaUtils.show_image(
+            "segmentation",
+            self.segmentation_cam,
+            1400,
+            600,
+        )
 
         # error = [
         #    abs(
@@ -1316,7 +1334,7 @@ class FollowLaneQlearnStaticWeatherNoTraffic(FollowLaneEnv):
             done = True
             reward = 100
 
-        if len(self.lane_changing_hist) > 2:  # you leave the lane
+        if len(self.lane_changing_hist) > 1:  # you leave the lane
             done = True
             reward = -100
             print(f"out of lane")
@@ -1447,3 +1465,43 @@ class FollowLaneQlearnStaticWeatherNoTraffic(FollowLaneEnv):
         cv2.waitKey(1)
         time.sleep(0.1)
         self.front_camera = image3
+
+    def checking_carla_server(self):
+        # print(f"checking Carla Server...")
+
+        try:
+            ps_output = (
+                subprocess.check_output(["ps", "-Af"]).decode("utf-8").strip("\n")
+            )
+        except subprocess.CalledProcessError as ce:
+            print("SimulatorEnv: exception raised executing ps command {}".format(ce))
+            sys.exit(-1)
+
+        if (
+            (ps_output.count("CarlaUE4.sh") == 0)
+            or (ps_output.count("CarlaUE4-Linux-Shipping") == 0)
+            or (ps_output.count("CarlaUE4-Linux-") == 0)
+        ):
+            try:
+                carla_root = os.environ["CARLA_ROOT"]
+                # print(f"{carla_root = }\n")
+                carla_exec = f"{carla_root}/CarlaUE4.sh"
+
+                with open("/tmp/.carlalaunch_stdout.log", "w") as out, open(
+                    "/tmp/.carlalaunch_stderr.log", "w"
+                ) as err:
+                    print_messages(
+                        "launching Carla Server again...",
+                    )
+                    subprocess.Popen(
+                        [carla_exec, "-prefernvidia"], stdout=out, stderr=err
+                    )
+                time.sleep(5)
+                self.world = self.client.load_world(config["town"])
+
+            except subprocess.CalledProcessError as ce:
+                print(
+                    "SimulatorEnv: exception raised executing killall command for CARLA server {}".format(
+                        ce
+                    )
+                )

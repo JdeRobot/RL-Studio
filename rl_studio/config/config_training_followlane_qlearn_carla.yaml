@@ -10,7 +10,7 @@ settings:
   states: sp1 # sp1 (simplified perception with 1 point), sp3 (simplified perception with 3 points), spn (simplified perception with n points)
   rewards: follow_right_lane_only_center #
   framework: _
-  total_episodes: 1000
+  total_episodes: 3000
   training_time: 12
   models_dir: "./checkpoints"
   logs_dir: "./logs"
@@ -127,8 +127,8 @@ carla_environments:
     waypoints_road_id: 8 # Town07: (20)-920-21-39-57, #Town01: 8
     max_target_waypoint_distance: 3 # distance to finish waypoint
     waypoints_lane_id: lane-1 # lane-1 (right lane from south to north), lane1
-    town: Town07 #Town01, Town02, Town03, Town04, Town05, Town06, Town07, Town10HD, Town11
-    # Town01_Opt, Town02_Opt, Town03_Opt, Town04_Opt, Town05_Opt, Town10HD_Opt
+    town: Town07_Opt #Town01, Town02, Town03, Town04, Town05, Town06, Town07, Town10HD, Town11
+    # Town01_Opt, Town02_Opt, Town03_Opt, Town04_Opt, Town05_Opt, Town06_Opt, Town07_Opt, Town10HD_Opt
     init_pose:
       random_pose: False # random positions in the whole town
       alternate_pose: True # random positions but only for selected poses in carla_town_positions->tonwXX->laneX->init_positions
@@ -145,7 +145,7 @@ carla_town_positions:
         init_positions:
         finish_positions:
 
-  Town07:
+  Town07_Opt:
     mountain_circuit:
       lane-1:
         init_positions:

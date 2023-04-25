@@ -256,17 +256,17 @@ class TrainerFollowLaneQlearnAutoCarla:
                         f"best step so far = {best_step}\n"
                         f"best_epoch_training_time = {best_epoch_training_time}\n"
                     )
-                    print_messages(
-                        "SHOWING BATCH OF STEPS",
-                        episode=episode,
-                        step=step,
-                        cumulated_reward=cumulated_reward,
-                        epsilon=epsilon,
-                        best_epoch=best_epoch,
-                        best_step=best_step,
-                        current_max_reward=current_max_reward,
-                        best_epoch_training_time=best_epoch_training_time,
-                    )
+                    #print_messages(
+                    #    "SHOWING BATCH OF STEPS",
+                    #    episode=episode,
+                    #    step=step,
+                    #    cumulated_reward=cumulated_reward,
+                    #    epsilon=epsilon,
+                    #    best_epoch=best_epoch,
+                    #    best_step=best_step,
+                    #    current_max_reward=current_max_reward,
+                    #    best_epoch_training_time=best_epoch_training_time,
+                    #)
                 # End epoch
                 if step > self.env_params.estimated_steps:
                     done = True
@@ -288,7 +288,12 @@ class TrainerFollowLaneQlearnAutoCarla:
                         f"cumulated_reward = {cumulated_reward}\n"
                         f"epsilon = {epsilon}\n"
                     )
-
+                    
+                    
+                # check out for Carla Server (end of every step)    
+                ## ----------- checking for Carla Server is working 
+                env.checking_carla_server()
+                
             # Save best lap
             if (
                 cumulated_reward - self.environment.environment["rewards"]["penal"]
@@ -322,14 +327,14 @@ class TrainerFollowLaneQlearnAutoCarla:
                     f"steps = {step}\n"
                     f"epsilon = {epsilon}\n"
                 )
-                print_messages(
-                    "saving best lap",
-                    episode=episode,
-                    cumulated_reward=cumulated_reward,
-                    current_max_reward=current_max_reward,
-                    step=step,
-                    epsilon=epsilon,
-                )
+                #print_messages(
+                #    "saving best lap",
+                #    episode=episode,
+                #    cumulated_reward=cumulated_reward,
+                #    current_max_reward=current_max_reward,
+                #    step=step,
+                #    epsilon=epsilon,
+                #)
 
             # end of training by:
             # training time setting: 2 hours, 15 hours...
@@ -353,14 +358,14 @@ class TrainerFollowLaneQlearnAutoCarla:
                         f"step = {step}\n"
                         f"epsilon = {epsilon}\n"
                     )
-                    print_messages(
-                        "Training Time over",
-                        episode=episode,
-                        cumulated_reward=cumulated_reward,
-                        current_max_reward=current_max_reward,
-                        step=step,
-                        epsilon=epsilon,
-                    )
+                    #print_messages(
+                    #    "Training Time over",
+                    #    episode=episode,
+                    #    cumulated_reward=cumulated_reward,
+                    #    current_max_reward=current_max_reward,
+                    #    step=step,
+                    #    epsilon=epsilon,
+                    #)
                 break
 
             # save best values every save_episode times
@@ -386,13 +391,13 @@ class TrainerFollowLaneQlearnAutoCarla:
                     f"best_step = {best_step}\n"
                     f"best_epoch_training_time = {best_epoch_training_time}\n"
                 )
-                print_messages(
-                    "saving BATCH",
-                    best_epoch=best_epoch,
-                    best_epoch_training_time=best_epoch_training_time,
-                    current_max_reward=current_max_reward,
-                    best_step=best_step,
-                )
+                #print_messages(
+                #    "saving BATCH",
+                #    best_epoch=best_epoch,
+                #    best_epoch_training_time=best_epoch_training_time,
+                #    current_max_reward=current_max_reward,
+                #    best_step=best_step,
+                #)
             # updating epsilon for exploration
             if epsilon > self.environment.environment["epsilon_min"]:
                 # self.epsilon *= self.epsilon_discount
@@ -401,8 +406,8 @@ class TrainerFollowLaneQlearnAutoCarla:
                     max(self.environment.environment["epsilon_min"], epsilon)
                 )
 
-            ## ------------ destroy actors
 
+            ## ------------ destroy actors
             env.destroy_all_actors()
         # env.display_manager.destroy()
         # ----------- end for
