@@ -24,8 +24,8 @@ class AutoCarlaRewards:
         rewards = []
         done = False
         for index, _ in enumerate(dist_normalized):
-            if dist_normalized[index] > 0:
-                dist_normalized[index] = -dist_normalized[index]
+            # if dist_normalized[index] > 0:
+            #    dist_normalized[index] = -dist_normalized[index]
             if 0.2 >= abs(dist_normalized[index] - ground_truth_values[index]) >= 0:
                 rewards.append(10)
             elif 0.4 >= abs(dist_normalized[index] - ground_truth_values[index]) > 0.2:

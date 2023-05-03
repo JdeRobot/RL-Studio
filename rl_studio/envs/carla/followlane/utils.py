@@ -31,7 +31,7 @@ class AutoCarlaUtils:
 
     @staticmethod
     def show_image_with_everything(
-        name, img, waitkey, centrals_in_pixels, errors, states, x_row, x, y
+        name, img, waitkey, dist_in_pixels, dist_normalized, states, x_row, x, y
     ):
         window_name = f"{name}"
         img = np.array(img)
@@ -56,7 +56,7 @@ class AutoCarlaUtils:
             ### Points
             cv2.circle(
                 img,
-                (int(centrals_in_pixels[index]), int(x_row[index])),
+                (int(dist_in_pixels[index]), int(x_row[index])),
                 5,
                 # (150, 200, 150),
                 (255, 255, 255),
@@ -66,9 +66,10 @@ class AutoCarlaUtils:
             cv2.putText(
                 img,
                 str(
-                    f"[right_line:{int(centrals_in_pixels[index])}]-[state:{states[index]}]-[dist:{errors[index]}]"
+                    f"[right_line:{int(dist_in_pixels[index])}]-[state:{states[index]}]-[dist:{dist_normalized[index]}]"
+                    # f"[dist_norm:{int(centrals_in_pixels[index])}]-[state:{states[index]}]-[dist:{errors[index]}]"
                 ),
-                (int(centrals_in_pixels[index]) - 50, int(x_row[index]) - 5),
+                (int(dist_in_pixels[index]), int(x_row[index]) - 5),
                 cv2.FONT_HERSHEY_SIMPLEX,
                 0.4,
                 # (255, 255, 255),

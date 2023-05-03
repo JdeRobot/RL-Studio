@@ -70,11 +70,11 @@ class FollowLaneQlearnStaticWeatherNoTraffic(FollowLaneEnv):
         """
 
         self.world = self.client.load_world(config["town"])
-        self.world.unload_map_layer(carla.MapLayer.Buildings)
-        self.world.unload_map_layer(carla.MapLayer.Decals)
-        self.world.unload_map_layer(carla.MapLayer.Foliage)
-        self.world.unload_map_layer(carla.MapLayer.Particles)
-        self.world.unload_map_layer(carla.MapLayer.Props)
+        # self.world.unload_map_layer(carla.MapLayer.Buildings)
+        # self.world.unload_map_layer(carla.MapLayer.Decals)
+        # self.world.unload_map_layer(carla.MapLayer.Foliage)
+        # self.world.unload_map_layer(carla.MapLayer.Particles)
+        # self.world.unload_map_layer(carla.MapLayer.Props)
 
         self.original_settings = self.world.get_settings()
         self.traffic_manager = self.client.get_trafficmanager(8000)
@@ -126,9 +126,9 @@ class FollowLaneQlearnStaticWeatherNoTraffic(FollowLaneEnv):
         self.lane_changing_hist = []
         self.lane_sensor = None
         ## --------------- Obstacle sensor ---------------
-        # self.obstsensor = self.world.get_blueprint_library().find(
-        #    "sensor.other.obstacle"
-        # )
+        self.obstsensor = self.world.get_blueprint_library().find(
+            "sensor.other.obstacle"
+        )
         self.obstacle_hist = []
         self.obstacle_sensor = None
         ## --------------- RGB camera ---------------
@@ -293,15 +293,15 @@ class FollowLaneQlearnStaticWeatherNoTraffic(FollowLaneEnv):
         #    time.sleep(0.01)
 
         ## --- SEgmentation camera
-        self.setup_segmentation_camera_weakref()
+        # self.setup_segmentation_camera_weakref()
         # self.setup_segmentation_camera()
-        while self.sensor_camera_segmentation is None:
-            time.sleep(0.01)
+        # while self.sensor_camera_segmentation is None:
+        #    time.sleep(0.01)
 
         ## --- Detectors Sensors
-        # self.setup_col_sensor_weakref()
+        self.setup_col_sensor_weakref()
         # self.setup_col_sensor()
-        self.setup_lane_invasion_sensor_weakref()
+        # self.setup_lane_invasion_sensor_weakref()
         # self.setup_lane_invasion_sensor()
         # self.setup_obstacle_sensor_weakref()
         # self.setup_obstacle_sensor()
@@ -1299,7 +1299,7 @@ class FollowLaneQlearnStaticWeatherNoTraffic(FollowLaneEnv):
             mask,
             1,
             right_line_in_pixels,
-            dist,
+            dist_normalized,
             states,
             self.x_row,
             600,
@@ -1311,7 +1311,7 @@ class FollowLaneQlearnStaticWeatherNoTraffic(FollowLaneEnv):
             self.front_rgb_camera[(self.front_rgb_camera.shape[0] // 2) :],
             1,
             right_line_in_pixels,
-            dist,
+            dist_normalized,
             states,
             self.x_row,
             600,
@@ -1346,12 +1346,12 @@ class FollowLaneQlearnStaticWeatherNoTraffic(FollowLaneEnv):
         # )
 
         ## -------- ... or Finish by...
-        if (states_16 is not None and (states_16 >= len(states))) or (
-            states_0 is not None and (states_0 >= len(states))
-        ):  # not red right line
-            print(f"no red line detected")
-            done = True
-            reward = -100
+        # if (states_16 is not None and (states_16 >= len(states))) or (
+        #    states_0 is not None and (states_0 >= len(states))
+        # ):  # not red right line
+        #    print(f"no red line detected")
+        #    done = True
+        #    reward = -100
         if len(self.collision_hist) > 0:  # crashed you, baby
             done = True
             reward = -100
@@ -1435,23 +1435,23 @@ class FollowLaneQlearnStaticWeatherNoTraffic(FollowLaneEnv):
         steering_angle = 0
         if action == 0:
             self.car.apply_control(
-                carla.VehicleControl(throttle=0.5, steer=-0.2)
+                carla.VehicleControl(throttle=0.4, steer=-0.1)
             )  # jugamos con -0.01
             # self._control.throttle = min(self._control.throttle + 0.01, 1.00)
             # self._control.steer = -0.02
-            steering_angle = -0.2
+            steering_angle = -0.1
         elif action == 1:
-            self.car.apply_control(carla.VehicleControl(throttle=0.7, steer=0.0))
+            self.car.apply_control(carla.VehicleControl(throttle=0.6, steer=0.0))
             # self._control.throttle = min(self._control.throttle + 0.01, 1.00)
             # self._control.steer = 0.0
             steering_angle = 0
         elif action == 2:
             self.car.apply_control(
-                carla.VehicleControl(throttle=0.5, steer=0.2)
+                carla.VehicleControl(throttle=0.4, steer=0.1)
             )  # jigamos con 0.01 par ala recta
             # self._control.throttle = min(self._control.throttle + 0.01, 1.0)
             # self._control.steer = 0.02
-            steering_angle = 0.2
+            steering_angle = 0.1
 
         # self.car.apply_control(self._control)
 
