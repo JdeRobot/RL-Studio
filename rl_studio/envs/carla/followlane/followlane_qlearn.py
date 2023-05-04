@@ -144,6 +144,7 @@ class FollowLaneQlearnStaticWeatherNoTraffic(FollowLaneEnv):
         )
         self.red_mask_cam.set_attribute("image_size_x", f"{self.width}")
         self.red_mask_cam.set_attribute("image_size_y", f"{self.height}")
+        self.red_mask_cam.set_attribute("fov", f"110")
         self.sensor_camera_red_mask = None
         self.front_red_mask_camera = None
         ## --------------- BEV camera ---------------
