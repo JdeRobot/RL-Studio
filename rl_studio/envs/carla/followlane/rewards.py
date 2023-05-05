@@ -44,7 +44,7 @@ class AutoCarlaRewards:
 
         return function_reward, done
 
-    def rewards_easy(self, error, params):
+    def rewards_followlane_error_center(self, error, params):
         rewards = []
         done = False
         for i, _ in enumerate(error):
@@ -52,8 +52,8 @@ class AutoCarlaRewards:
                 rewards.append(10)
             elif 0.85 >= error[i] > 0.45:
                 rewards.append(2)
-            elif 0.45 >= error[i] > 0.1:
-                rewards.append(0.1)
+            # elif 0.45 >= error[i] > 0.1:
+            #    rewards.append(0.1)
             else:
                 rewards.append(-100)
                 done = True

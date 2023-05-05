@@ -9,10 +9,43 @@ class AutoCarlaUtils:
 
     @staticmethod
     def finish_target(current_car_pose, target_pose, max_distance):
+        """
+        working with waypoints
+        """
         current_car_pose_x = current_car_pose[0]
         current_car_pose_y = current_car_pose[1]
+
+        # in case working with waypoints, use next
         target_x = target_pose.transform.location.x
         target_y = target_pose.transform.location.y
+
+        dist = ((current_car_pose_x - target_x) ** 2) + (
+            (current_car_pose_y - target_y) ** 2
+        )
+        dist = np.sum(dist, axis=0)
+        dist = np.sqrt(dist)
+
+        # print(f"{current_car_pose = }")
+        # print(f"{target_x = }, {target_y = }")
+        # print(f"{dist = }")
+
+        # print(dist)
+        if dist < max_distance:
+            return True, dist
+        return False, dist
+
+    @staticmethod
+    def finish_fix_number_target(
+        current_car_pose, targets_set, target_pose, max_distance
+    ):
+        """
+        working with tuple 0: [19.8, -238.2, 0.5, -4.5, -150.5, -0.5]
+        """
+        current_car_pose_x = current_car_pose[0]
+        current_car_pose_y = current_car_pose[1]
+
+        target_x = targets_set[target_pose][0]
+        target_y = targets_set[target_pose][1]
 
         dist = ((current_car_pose_x - target_x) ** 2) + (
             (current_car_pose_y - target_y) ** 2
@@ -53,6 +86,29 @@ class AutoCarlaUtils:
                 color=(100, 200, 100),
                 thickness=1,
             )
+            ### left limit vertical line (40%)
+            cv2.line(
+                img,
+                (int(img.shape[1] // 2) - (int((img.shape[1] // 2) * 0.4)), 0),
+                (
+                    int(img.shape[1] // 2) - (int((img.shape[1] // 2) * 0.4)),
+                    int(img.shape[0]),
+                ),
+                color=(100, 200, 100),
+                thickness=1,
+            )
+            ### right limit vertical line
+            cv2.line(
+                img,
+                (int(img.shape[1] // 2) + (int((img.shape[1] // 2) * 0.4)), 0),
+                (
+                    int(img.shape[1] // 2) + (int((img.shape[1] // 2) * 0.4)),
+                    int(img.shape[0]),
+                ),
+                color=(100, 200, 100),
+                thickness=1,
+            )
+
             ### Points
             cv2.circle(
                 img,

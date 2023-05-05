@@ -86,6 +86,7 @@ class LoadGlobalParams:
         self.stats = {}  # epoch: steps
         self.states_counter = {}
         self.states_reward = {}
+        self.time_steps = {}
         self.ep_rewards = []
         self.actions_rewards = {
             "episode": [],
@@ -587,6 +588,9 @@ class LoadEnvVariablesQlearnCarla:
         self.environment["init_pose_number"] = config[self.environment_set][self.env][
             "init_pose"
         ]["init_pose_number"]
+        self.environment["finish_pose_number"] = config[self.environment_set][self.env][
+            "init_pose"
+        ]["finish_pose_number"]
         self.environment["start_alternate_pose"] = config["carla_town_positions"][
             self.town
         ][self.town_circuit][self.waypoints_lane_id]["init_positions"]

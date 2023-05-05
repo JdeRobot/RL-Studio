@@ -174,9 +174,12 @@ class TrainerFollowLaneQlearnAutoCarla:
                 step += 1
                 action = qlearn.selectAction(state)
                 # print(f"{action = }")
+                start_step = time.time()
                 observation, reward, done, _ = env.step(action)
                 # time.sleep(4)
-
+                end_step = time.time()
+                self.global_params.time_steps[(episode, step)] = end_step - start_step
+                print(f"\n{end_step - start_step = }")
                 cumulated_reward += reward
                 next_state = "".join(map(str, observation))
                 """
@@ -236,6 +239,7 @@ class TrainerFollowLaneQlearnAutoCarla:
                     best_epoch=best_epoch,
                     best_step=best_step,
                     done=done,
+                    time_per_step=end_step - start_step,
                 )
 
                 # best episode and step's stats

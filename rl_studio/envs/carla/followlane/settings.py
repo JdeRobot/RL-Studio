@@ -59,6 +59,7 @@ class FollowLaneCarlaConfig(BaseModel):
         self.random_pose = config["random_pose"]
         self.alternate_pose = config["alternate_pose"]
         self.init_pose_number = config["init_pose_number"]
+        self.finish_pose_number = config["finish_pose_number"]
         self.start_alternate_pose = config["start_alternate_pose"]
         self.finish_alternate_pose = config["finish_alternate_pose"]
 

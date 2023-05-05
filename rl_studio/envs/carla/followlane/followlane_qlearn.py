@@ -70,11 +70,12 @@ class FollowLaneQlearnStaticWeatherNoTraffic(FollowLaneEnv):
         """
 
         self.world = self.client.load_world(config["town"])
-        # self.world.unload_map_layer(carla.MapLayer.Buildings)
-        # self.world.unload_map_layer(carla.MapLayer.Decals)
-        # self.world.unload_map_layer(carla.MapLayer.Foliage)
-        # self.world.unload_map_layer(carla.MapLayer.Particles)
-        # self.world.unload_map_layer(carla.MapLayer.Props)
+        if config["town"] == "Town07_Opt":
+            self.world.unload_map_layer(carla.MapLayer.Buildings)
+            self.world.unload_map_layer(carla.MapLayer.Decals)
+            self.world.unload_map_layer(carla.MapLayer.Foliage)
+            self.world.unload_map_layer(carla.MapLayer.Particles)
+            self.world.unload_map_layer(carla.MapLayer.Props)
 
         self.original_settings = self.world.get_settings()
         self.traffic_manager = self.client.get_trafficmanager(8000)
@@ -300,7 +301,7 @@ class FollowLaneQlearnStaticWeatherNoTraffic(FollowLaneEnv):
         #    time.sleep(0.01)
 
         ## --- Detectors Sensors
-        self.setup_col_sensor_weakref()
+        # self.setup_col_sensor_weakref()
         # self.setup_col_sensor()
         # self.setup_lane_invasion_sensor_weakref()
         # self.setup_lane_invasion_sensor()
@@ -1278,28 +1279,60 @@ class FollowLaneQlearnStaticWeatherNoTraffic(FollowLaneEnv):
         ########### --- calculating STATES
         mask = self.preprocess_image(self.front_red_mask_camera)
 
-        # lane_centers_in_pixels = self.calculate_lane_centers(mask) # calculate center of lane
-        right_line_in_pixels = self.calculate_line_right(mask)
+        ########### --- Calculating center of 2 lines
+        lane_centers_in_pixels = self.calculate_lane_centers(
+            mask
+        )  # calculate center of lane
+
         ### errors: distance to center of image to lane center
         image_center = mask.shape[1] // 2
+
+        # calculate dist with 2 lines
         dist = [
-            image_center - right_line_in_pixels[i]
-            for i, _ in enumerate(right_line_in_pixels)
+            image_center - lane_centers_in_pixels[i]
+            for i, _ in enumerate(lane_centers_in_pixels)
         ]
-        ###
+
+        dist_normalized = [
+            float((image_center - abs(dist[i])) / image_center)
+            for i, _ in enumerate(dist)
+        ]
+
+        pixels_in_state = mask.shape[1] / self.num_regions
+        states = [
+            int(value / pixels_in_state)
+            for _, value in enumerate(lane_centers_in_pixels)
+        ]
+
+        """
+        ########### --- Calculating center ONLY with right line
+        # calculate only with right line
+        right_line_in_pixels = self.calculate_line_right(mask)        
+        # calculate dist with ONLY right line
+        dist = [
+           image_center - right_line_in_pixels[i]
+           for i, _ in enumerate(right_line_in_pixels)
+        ]        
         dist_normalized = [
             float((image_center - right_line_in_pixels[i]) / image_center)
             for i, _ in enumerate(right_line_in_pixels)
         ]
+        
         pixels_in_state = mask.shape[1] / self.num_regions
         states = [
             int(value / pixels_in_state) for _, value in enumerate(right_line_in_pixels)
         ]
+        """
+        counter_states = Counter(states)
+        states_16 = counter_states.get(self.num_regions)
+        states_0 = counter_states.get(0)
+
         AutoCarlaUtils.show_image_with_everything(
             "mask2",
             mask,
             1,
-            right_line_in_pixels,
+            lane_centers_in_pixels,
+            # right_line_in_pixels,
             dist_normalized,
             states,
             self.x_row,
@@ -1311,7 +1344,8 @@ class FollowLaneQlearnStaticWeatherNoTraffic(FollowLaneEnv):
             "front RGB",
             self.front_rgb_camera[(self.front_rgb_camera.shape[0] // 2) :],
             1,
-            right_line_in_pixels,
+            lane_centers_in_pixels,
+            # right_line_in_pixels,
             dist_normalized,
             states,
             self.x_row,
@@ -1332,35 +1366,33 @@ class FollowLaneQlearnStaticWeatherNoTraffic(FollowLaneEnv):
         #    )
         #    for index, value in enumerate(self.x_row)
         # ]
-        counter_states = Counter(states)
-        states_16 = counter_states.get(16)
-        states_0 = counter_states.get(0)
 
         ## -------- Ending Step()...
         done = False
         ## -------- Rewards
-        reward, done = self.autocarlarewards.rewards_right_line(
-            dist_normalized, self.x_row, self.params
-        )
-        # reward, done = self.rewards_followlane_error_center(
-        #    distance_to_center_normalized, self.rewards
+        # reward, done = self.autocarlarewards.rewards_right_line(
+        #    dist_normalized, self.x_row, self.params
         # )
+        reward, done = self.autocarlarewards.rewards_followlane_error_center(
+            dist_normalized, self.rewards
+        )
 
         ## -------- ... or Finish by...
-        # if (states_16 is not None and (states_16 >= len(states))) or (
-        #    states_0 is not None and (states_0 >= len(states))
-        # ):  # not red right line
-        #    print(f"no red line detected")
-        #    done = True
-        #    reward = -100
+        if (states_16 is not None and (states_16 >= len(states))) or (
+            states_0 is not None and (states_0 >= len(states))
+        ):  # not red right line
+            print(f"no lines detected")
+            done = True
+            reward = -100
         if len(self.collision_hist) > 0:  # crashed you, baby
             done = True
             reward = -100
             print(f"crash")
 
-        is_finish, dist_to_finish = AutoCarlaUtils.finish_target(
+        is_finish, dist_to_finish = AutoCarlaUtils.finish_fix_number_target(
             self.params["location"],
-            self.target_waypoint,
+            self.finish_alternate_pose,
+            self.finish_pose_number,
             self.max_target_waypoint_distance,
         )
         if is_finish:
@@ -1384,9 +1416,9 @@ class FollowLaneQlearnStaticWeatherNoTraffic(FollowLaneEnv):
             speed_kmh=self.params["speed"],
             _="------------------------",
             states=states,
-            # lane_centers_in_pixels=lane_centers_in_pixels,
+            lane_centers_in_pixels=lane_centers_in_pixels,
             image_center=image_center,
-            right_line_in_pixels=right_line_in_pixels,
+            # right_line_in_pixels=right_line_in_pixels,
             dist_to_center=dist,
             dist_normalized=dist_normalized,
             reward=reward,
