@@ -179,7 +179,7 @@ class TrainerFollowLaneQlearnAutoCarla:
                 # time.sleep(4)
                 end_step = time.time()
                 self.global_params.time_steps[(episode, step)] = end_step - start_step
-                print(f"\n{end_step - start_step = }")
+                #print(f"\n{end_step - start_step = }")
                 cumulated_reward += reward
                 next_state = "".join(map(str, observation))
                 """

@@ -1408,12 +1408,15 @@ class FollowLaneQlearnStaticWeatherNoTraffic(FollowLaneEnv):
         render_params(
             # steering_angle=self.params["steering_angle"],
             Steer=self.params["Steer"],
+            steering_angle=self.params["steering_angle"],
+            # Steering_angle=self.params["Steering_angle"],
             location=self.params["location"],
             Throttle=self.params["Throttle"],
             Brake=self.params["Brake"],
             height=self.params["height"],
             action=action,
             speed_kmh=self.params["speed"],
+            acceleration_ms2=self.params["Acceleration"],
             _="------------------------",
             states=states,
             lane_centers_in_pixels=lane_centers_in_pixels,
@@ -1423,12 +1426,12 @@ class FollowLaneQlearnStaticWeatherNoTraffic(FollowLaneEnv):
             dist_normalized=dist_normalized,
             reward=reward,
             done=done,
+            distance_to_finish=dist_to_finish,
             states_0=states_0,
             states_16=states_16,
             num_self_collision_hist=len(self.collision_hist),
             num_self_obstacle_hist=len(self.obstacle_hist),
             num_self_lane_change_hist=len(self.lane_changing_hist),
-            distance_to_finish=dist_to_finish,
         )
         """
         print_messages(
@@ -1457,53 +1460,72 @@ class FollowLaneQlearnStaticWeatherNoTraffic(FollowLaneEnv):
         """
         return states, reward, done, {}
 
-    def clip_throttle(self, throttle, curr_speed, target_speed):
-        """
-        limits throttle in function of current speed and target speed
-        """
-        clip_throttle = np.clip(throttle - 0.1 * (curr_speed - target_speed), 0.25, 1.0)
-        return clip_throttle
-
     def control(self, action):
         steering_angle = 0
         if action == 0:
-            self.car.apply_control(
-                carla.VehicleControl(throttle=0.4, steer=-0.1)
-            )  # jugamos con -0.01
+            throttle_upper_limit = 0.4
+            steer = -0.1
+            # self.car.apply_control(
+            #    carla.VehicleControl(throttle=0.4, steer=-0.1)
+            # )  # jugamos con -0.01
             # self._control.throttle = min(self._control.throttle + 0.01, 1.00)
             # self._control.steer = -0.02
             steering_angle = -0.1
         elif action == 1:
-            self.car.apply_control(carla.VehicleControl(throttle=0.6, steer=0.0))
+            throttle_upper_limit = 0.6
+            steer = 0.0
+            # self.car.apply_control(carla.VehicleControl(throttle=0.6, steer=0.0))
             # self._control.throttle = min(self._control.throttle + 0.01, 1.00)
             # self._control.steer = 0.0
             steering_angle = 0
         elif action == 2:
-            self.car.apply_control(
-                carla.VehicleControl(throttle=0.4, steer=0.1)
-            )  # jigamos con 0.01 par ala recta
+            throttle_upper_limit = 0.4
+            steer = 0.1
+            # self.car.apply_control(
+            #    carla.VehicleControl(throttle=0.4, steer=0.1)
+            # )  # jigamos con 0.01 par ala recta
             # self._control.throttle = min(self._control.throttle + 0.01, 1.0)
             # self._control.steer = 0.02
             steering_angle = 0.1
-
-        # self.car.apply_control(self._control)
 
         t = self.car.get_transform()
         v = self.car.get_velocity()
         c = self.car.get_control()
         w = self.car.get_angular_velocity()
+        a = self.car.get_acceleration()
         self.params["speed"] = int(3.6 * math.sqrt(v.x**2 + v.y**2 + v.z**2))
         self.params["steering_angle"] = w
-        # print(f"{self.params['steering_angle'].x = }")
-        # print(f"{self.params['steering_angle'].y = }")
-        # print(f"{self.params['steering_angle'].z = }")
-
         self.params["Steering_angle"] = steering_angle
         self.params["Steer"] = c.steer
         self.params["location"] = (t.location.x, t.location.y)
         self.params["Throttle"] = c.throttle
         self.params["Brake"] = c.brake
         self.params["height"] = t.location.z
+        self.params["Acceleration"] = math.sqrt(a.x**2 + a.y**2 + a.z**2)
+
+        ## Applied throttle, brake and steer
+        curr_speed = int(3.6 * math.sqrt(v.x**2 + v.y**2 + v.z**2))
+        target_speed = 4
+        throttle_low_limit = 0.1
+        clip_throttle = self.clip_throttle(
+            throttle_upper_limit, curr_speed, target_speed, throttle_low_limit
+        )
+        self.car.apply_control(
+            carla.VehicleControl(throttle=clip_throttle, steer=steer)
+        )
+
+    def clip_throttle(self, throttle, curr_speed, target_speed, low_throttle):
+        """
+        limits throttle in function of current speed and target speed
+        """
+        # clip_throttle = np.clip(
+        #    throttle - 0.1 * (curr_speed - target_speed), low_throttle, throttle
+        # )
+        threshold = 0.3
+        vel_error = curr_speed / target_speed - 1
+        clip_throttle = low_throttle if vel_error > threshold else throttle
+
+        return clip_throttle
 
     ########################################################
     #  utils

@@ -3,6 +3,7 @@ import pickle
 import random
 import time
 
+from memory_profiler import profile
 import numpy as np
 
 
@@ -332,6 +333,7 @@ class QLearnCarla:
 
         return action
 
+    #@profile
     def learn(self, state, action, reward, next_state):
         """
         Two ways of similar Q-Learn eq., and we choose 1):
