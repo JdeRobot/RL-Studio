@@ -191,6 +191,16 @@ def save_carla_dataframe_episodes(
         file_npy = f"{outdir}/{time.strftime('%Y%m%d-%H%M%S')}_Circuit-{environment['town']}_States-{environment['states']}_Actions-{environment['action_space']}_Rewards-{environment['reward_function']}.npy"
         np.save(file_npy, actions_rewards)
 
+def save_carla_latency(environment, outdir, latency):
+    for key, value in latency.items():
+        total += value
+    avg = total/len(latency)
+ 
+    os.makedirs(f"{outdir}", exist_ok=True)
+    file_excel = f"{outdir}/{time.strftime('%Y%m%d')}_Circuit-{environment['town']}_States-{environment['states']}_Actions-{environment['action_space']}_Rewards-{environment['reward_function']}.xlsx"
+    df = pd.DataFrame(avg)
+    df.to_excel(file_excel)    
+         
 
 def save_best_episode(
     global_params,

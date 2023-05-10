@@ -356,6 +356,21 @@ class InferencerFactory:
         )
 
         # =============================
+        # FollowLane - F1 - qlearn - Carla
+        # =============================
+        if (
+            task == TasksType.FOLLOWLANECARLA.value
+            and agent == AgentsType.AUTOCARLA.value
+            and algorithm == AlgorithmsType.QLEARN.value
+            and simulator == EnvsType.CARLA.value
+        ):
+            from rl_studio.agents.auto_carla.inference_followlane_qlearn_carla import (
+                InferencerFollowLaneQlearnAutoCarla,
+            )
+
+            return InferencerFollowLaneQlearnAutoCarla(config)
+        
+        # =============================
         # FollowLine - F1 - qlearn - Gazebo
         # =============================
         if (

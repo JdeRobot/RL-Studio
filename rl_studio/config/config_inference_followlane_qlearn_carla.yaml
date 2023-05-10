@@ -1,0 +1,304 @@
+settings:
+  mode: inference # training, retraining, inference
+  task: follow_lane_carla # follow_line_gazebo, follow_lane_gazebo
+  algorithm: qlearn # qlearn
+  simulator: carla # openai, carla, gazebo, sumo
+  environment_set: carla_environments # gazebo_environments, carla_environments
+  env: follow_lane # Town01, simple, nurburgring, montreal, curves, simple_laser, manual, autoparking
+  agent: auto_carla # f1, autoparkingRL, auto_carla, mountain_car, robot_mesh, cartpole, turtlebot
+  actions: carla_simple # simple, medium, hard, test, autoparking_simple
+  states: sp1 # sp1 (simplified perception with 1 point), sp3 (simplified perception with 3 points), spn (simplified perception with n points)
+  rewards: follow_right_lane_only_center #
+  framework: _
+  total_episodes: 10
+  training_time: 3
+  models_dir: "./checkpoints"
+  logs_dir: "./logs"
+  metrics_dir: "./metrics"
+  recorder_carla_dir: "./recorders"
+
+ros:
+  ros_master_uri: "11311"
+  gazebo_master_uri: "11345"
+
+carla:
+  carla_server: localhost
+  carla_client: 2000
+
+retraining:
+  qlearn:
+    retrain_qlearn_model_name:
+
+inference:
+  qlearn:
+    inference_qlearn_model_name: "20230508-160630_Circuit-Town07_Opt_States-sp1_Actions-carla_simple_Rewards-follow_right_lane_only_center_epsilon-0.863_epoch-93_step-344_reward-3358-qtable.pkl"
+
+algorithm:
+  qlearn:
+    alpha: 0.7
+    epsilon: 0.95
+    epsilon_min: 0.05
+    gamma: 0.9
+
+agents:
+  auto_carla:
+    camera_params:
+      width: 640
+      height: 480
+      center_image: 320
+      raw_image: False
+      image_resizing: 100
+      new_image_size: 32
+      num_regions: 16
+      lower_limit: 220
+
+states: # only values allowed: [10, 20, 30, 60, 80, 100, 130, 180, 200, 230]
+  sp1:
+    0: [100]
+  sp4:
+    0: [30, 60, 100, 120]
+  sp5:
+    0: [3, 5, 10, 15, 20]
+  spn:
+    0: [50, 120, 180]
+
+actions:
+  carla_simple:
+    0: [1, -0.2]
+    1: [1, 0]
+    2: [1, 0.2]
+  simple:
+    0: [2, -1]
+    1: [3, 0]
+    2: [2, 1]
+  medium:
+    0: [3, 0]
+    1: [2, 1]
+    2: [2, -1]
+    3: [1, 1.5]
+    4: [1, -1.5]
+  hard:
+    0: [3, 0]
+    1: [2, 1]
+    2: [2, -1]
+    3: [1.5, 1]
+    4: [1.5, -1]
+    5: [1, -1.5]
+    6: [1, -1.5]
+  test:
+    0: [0, 0]
+
+rewards:
+  follow_right_lane_only_center:
+    from_10: 10
+    from_02: 2
+    from_01: 1
+    penal: -100
+    min_reward: 5_000
+    highest_reward: 100
+  follow_right_lane_center_v_step:
+    from_10: 10
+    from_02: 2
+    from_01: 1
+    penal: -100
+    min_reward: 5_000
+    highest_reward: 100
+
+carla_environments:
+  follow_lane:
+    env_name: CarlaEnv-v0
+    car: model1
+    #sync_mode: True
+    weather: ClearNoon #dynamic, argparse
+    traffic_pedestrians: False
+    city_lights: False
+    car_lights: False
+    estimated_steps: 400
+    save_episodes: 10
+    save_every_step: 50
+    filter: vehicle.*
+    generation: "2"
+    rolename: "hero" #name
+    gamma: 2.2 #for camera
+    sync: True #syncronous mode or async
+    waypoints_meters: 5 #distance between waypoints in meters
+    waypoints_init: 1 #Town07: (20, -1, 945) 951, #Town01: 879 crash testing, 839 init straight lane
+    waypoints_target: 1249 #Town07: (57, -1, 1249), #Town01: 959, 961
+    waypoints_road_id: 8 # Town07: (20)-920-21-39-57, #Town01: 8
+    max_target_waypoint_distance: 3 # distance to finish waypoint
+    waypoints_lane_id: lane-1 # lane-1 (right lane from south to north), lane1
+    town: Town07_Opt #Town01, Town02, Town03, Town04, Town05, Town06, Town07, Town10HD, Town11
+    # Town01_Opt, Town02_Opt, Town03_Opt, Town04_Opt, Town05_Opt, Town06_Opt, Town07_Opt, Town10HD_Opt
+    init_pose:
+      random_pose: False # random positions in the whole town
+      alternate_pose: False # random positions but only for selected poses in carla_town_positions->tonwXX->laneX->init_positions
+      init_pose_number: 8
+      finish_pose_number: 1
+      town_circuit: mountain_circuit
+
+carla_town_positions:
+  Town04:
+    mountain_circuit:
+      lane-1:
+        init_positions:
+        finish_positions:
+      lane1:
+        init_positions:
+        finish_positions:
+
+  Town07_Opt:
+    mountain_circuit:
+      lane-1:
+        init_positions:
+          0: [73.7, -10, 0.3, 0.0, -62.5, 0.0] #x, y, z, pitch, yaw, roll
+          #1: [72.2, -38.7, 1.9, 4.4, 135.4, -0.3] #x, y, z, pitch, yaw, roll
+          #1: [71.6, -38.2, 1.9, 4.6, -132, 0] #x, y, z, pitch, yaw, roll
+          #2: [59.6, -70.8, 5.0, 4.7, -81.3, 0.0] #x, y, z, pitch, yaw, roll
+          #2: [61.3, -86.6, 6.3, 4.9, -79.1, 0.1] #x, y, z, pitch, yaw, roll
+          #3: [67.1, -112.6, 8.5, 4.5, -81.9, 0.0] #x, y, z, pitch, yaw, roll
+          1: [61.1, -137.8, 9.3, -2.2, -123.4, 0.1] #x, y, z, pitch, yaw, roll
+          2: [43.6, -193.1, 4.7, -4.5, -96.0, 0.1] #x, y, z, pitch, yaw, roll
+          #5: [19.8, -238.2, 0.5, -4.5, -150.5, -0.5] # end point also
+          #5: [19.5, -238.5, 0.5, -4.6, -155.9, -0.1] # end point also
+          3: [-13.7, -243.7, 0, 4.5, -170.9, -0.2] # init point also
+          4: [-65.5, -233.1, 4.4, 4.3, 118.5, -0.5]
+          #8: [-119, -217.4, 5.8, -5.4, -129.4, -0.4]
+          #8: [-119, -219.7, 5.5, -5.2, -125.4, -0.2]
+          5: [-165.8, -247.4, 0.9, -5.0, -173.5, 0.2]
+          #6: [-201.6, -223, 0, -0, 91.6, -0]
+          #7: [-201.8, -173.4, 0, -0, 90.1, 0]
+          8: [-13.7, -243.7, 0, 4.5, -170.9, -0.2] # init point also
+        finish_positions:
+          0: [19.8, -238.2, 0.5, -4.5, -150.5, -0.5]
+          1: [-201.6, -223, 0, -0, 91.6, -0]
+          2: [-201.8, -173.4, 0, -0, 90.1]
+      lane1:
+        init_positions:
+          0: [-198.2, -170.6, 0, 0.0, -89.4, 0.0]
+          1: [-198.3, -208.4, 0, -0.0, -89.6, 0.0]
+          2: [-161.9, -243.1, 1.3, 5.1, 9.4, 0.0]
+          3: [-127.2, -222.1, 5.1, 5.0, 52.1, -0.5]
+          #4: [-67.1, -223.6, 5.1, -4.6, -56, -0.5]
+          #5: [-19.9, -241.3, 0.4, -4.6, 12.7, -0.1] # also end point
+          4: [-23.8, -242.5, 0.8, -4.7, 11.4, 0.0] # also end point
+          5: [14.6, -237, 0.2, 4.5, 21.5, -0.2] # also init point
+          6: [40.8, -185.2, 5.3, 4.6, 86.5, -0]
+          #8: [62.9, -108.4, 8.1, -4.8, 99.3, 0.2]
+          #8: [62.9, -108.4, 8.1, -4.8, 99.3, 0.2]
+          #9: [61.3, -45.5, 2.9, -4.5, 50.3, 0.4] #
+          #9: [58.9, -50, 3.3, -4.5, 58.9, 0.5] #
+
+        finish_positions:
+          0: [-66.2, -225.2, 0.3]
+          1: [71.7, -10, 0.3] #longest finish. In alternate_pose, use it
+
+  Town07:
+    mountain_circuit:
+      lane-1:
+        init_positions:
+          0: [73.7, -10, 0.3, 0.0, -62.5, 0.0] #x, y, z, pitch, yaw, roll
+          #1: [72.2, -38.7, 1.9, 4.4, 135.4, -0.3] #x, y, z, pitch, yaw, roll
+          #1: [71.6, -38.2, 1.9, 4.6, -132, 0] #x, y, z, pitch, yaw, roll
+          #2: [59.6, -70.8, 5.0, 4.7, -81.3, 0.0] #x, y, z, pitch, yaw, roll
+          #2: [61.3, -86.6, 6.3, 4.9, -79.1, 0.1] #x, y, z, pitch, yaw, roll
+          #3: [67.1, -112.6, 8.5, 4.5, -81.9, 0.0] #x, y, z, pitch, yaw, roll
+          1: [61.1, -137.8, 9.3, -2.2, -123.4, 0.1] #x, y, z, pitch, yaw, roll
+          2: [43.6, -193.1, 4.7, -4.5, -96.0, 0.1] #x, y, z, pitch, yaw, roll
+          #5: [19.8, -238.2, 0.5, -4.5, -150.5, -0.5] # end point also
+          #5: [19.5, -238.5, 0.5, -4.6, -155.9, -0.1] # end point also
+          3: [-13.7, -243.7, 0, 4.5, -170.9, -0.2] # init point also
+          4: [-65.5, -233.1, 4.4, 4.3, 118.5, -0.5]
+          #8: [-119, -217.4, 5.8, -5.4, -129.4, -0.4]
+          #8: [-119, -219.7, 5.5, -5.2, -125.4, -0.2]
+          5: [-165.8, -247.4, 0.9, -5.0, -173.5, 0.2]
+          #6: [-201.6, -223, 0, -0, 91.6, -0]
+          #7: [-201.8, -173.4, 0, -0, 90.1, 0]
+        finish_positions:
+          0: [19.8, -238.2, 0.5, -4.5, -150.5, -0.5]
+          1: [-201.8, -173.4, 0, -0, 90.1]
+      lane1:
+        init_positions:
+          0: [-198.2, -170.6, 0, 0.0, -89.4, 0.0]
+          1: [-198.3, -208.4, 0, -0.0, -89.6, 0.0]
+          2: [-161.9, -243.1, 1.3, 5.1, 9.4, 0.0]
+          3: [-127.2, -222.1, 5.1, 5.0, 52.1, -0.5]
+          #4: [-67.1, -223.6, 5.1, -4.6, -56, -0.5]
+          #5: [-19.9, -241.3, 0.4, -4.6, 12.7, -0.1] # also end point
+          4: [-23.8, -242.5, 0.8, -4.7, 11.4, 0.0] # also end point
+          5: [14.6, -237, 0.2, 4.5, 21.5, -0.2] # also init point
+          6: [40.8, -185.2, 5.3, 4.6, 86.5, -0]
+          #8: [62.9, -108.4, 8.1, -4.8, 99.3, 0.2]
+          #8: [62.9, -108.4, 8.1, -4.8, 99.3, 0.2]
+          #9: [61.3, -45.5, 2.9, -4.5, 50.3, 0.4] #
+          #9: [58.9, -50, 3.3, -4.5, 58.9, 0.5] #
+
+        finish_positions:
+          0: [-66.2, -225.2, 0.3]
+          1: [71.7, -10, 0.3] #longest finish. In alternate_pose, use it
+  Town01_Opt:
+    mountain_circuit:
+      lane-1:
+        init_positions:
+        finish_positions:
+      lane1:
+        init_positions:
+        finish_positions:
+
+  Town02_Opt:
+    mountain_circuit:
+      lane-1:
+        init_positions:
+        finish_positions:
+      lane1:
+        init_positions:
+        finish_positions:
+
+  Town03_Opt:
+    mountain_circuit:
+      lane-1:
+        init_positions:
+        finish_positions:
+      lane1:
+        init_positions:
+        finish_positions:
+
+  Town04_Opt:
+    mountain_circuit:
+      lane-1:
+        init_positions:
+        finish_positions:
+      lane1:
+        init_positions:
+        finish_positions:
+  Town05_Opt:
+    mountain_circuit:
+      lane-1:
+        init_positions:
+        finish_positions:
+      lane1:
+        init_positions:
+        finish_positions:
+  Town06_Opt:
+    mountain_circuit:
+      lane-1:
+        init_positions:
+        finish_positions:
+      lane1:
+        init_positions:
+        finish_positions:
+  Town10HD_Opt:
+    mountain_circuit:
+      lane-1:
+        init_positions:
+        finish_positions:
+      lane1:
+        init_positions:
+        finish_positions:
+  Town11:
+    mountain_circuit:
+      lane-1:
+        init_positions:
+        finish_positions:
+      lane1:
+        init_positions:
+        finish_positions:

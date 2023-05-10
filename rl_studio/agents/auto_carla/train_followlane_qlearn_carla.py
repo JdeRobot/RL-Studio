@@ -281,6 +281,7 @@ class TrainerFollowLaneQlearnAutoCarla:
                         f"{self.global_params.models_dir}/{time.strftime('%Y%m%d-%H%M%S')}_FINISHLINE_Circuit-{self.environment.environment['town']}_States-{self.environment.environment['states']}_Actions-{self.environment.environment['action_space']}_Rewards-{self.environment.environment['reward_function']}_epsilon-{round(epsilon,3)}_epoch-{episode}_step-{step}_reward-{int(cumulated_reward)}-qtable.npy",
                         qlearn.q,
                     )
+                    qlearn.save_qtable_pickle(self.environment.environment, self.global_params.models_dir, qlearn, cumulated_reward, episode, step, epsilon)
                     #qlearn.save_model(
                     #    self.environment.environment,
                     #    self.global_params.models_dir,
@@ -314,6 +315,7 @@ class TrainerFollowLaneQlearnAutoCarla:
                         f"{self.global_params.models_dir}/{time.strftime('%Y%m%d-%H%M%S')}_Circuit-{self.environment.environment['town']}_States-{self.environment.environment['states']}_Actions-{self.environment.environment['action_space']}_Rewards-{self.environment.environment['reward_function']}_epsilon-{round(epsilon,3)}_epoch-{episode}_step-{step}_reward-{int(cumulated_reward)}-qtable.npy",
                         qlearn.q,
                     )
+                    qlearn.save_qtable_pickle(self.environment.environment, self.global_params.models_dir, qlearn, cumulated_reward, episode, step, epsilon)
                     #qlearn.save_model(
                     #    self.environment.environment,
                     #    self.global_params.models_dir,
@@ -373,6 +375,7 @@ class TrainerFollowLaneQlearnAutoCarla:
                     f"{self.global_params.models_dir}/{time.strftime('%Y%m%d-%H%M%S')}_Circuit-{self.environment.environment['town']}_States-{self.environment.environment['states']}_Actions-{self.environment.environment['action_space']}_Rewards-{self.environment.environment['reward_function']}_epsilon-{round(epsilon,3)}_epoch-{episode}_step-{step}_reward-{int(cumulated_reward - self.environment.environment['rewards']['penal'])}-qtable.npy",
                     qlearn.q,
                 )
+                qlearn.save_qtable_pickle(self.environment.environment, self.global_params.models_dir, qlearn, cumulated_reward, episode, step, epsilon)
                 log.logger.info(
                     f"\nsaving best lap\n"
                     f"in episode = {episode}\n"

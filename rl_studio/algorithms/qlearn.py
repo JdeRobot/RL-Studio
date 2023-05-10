@@ -218,7 +218,23 @@ class QLearn:
         self.q = pickle.load(qlearn_file)
 
     def load_np_model(self, file):
-        self.q = np.load(file)
+        self.q = np.load(file, allow_pickle=True)
+
+    def save_qtable_pickle(self, environment, outdir, qlearn, cumulated_reward,
+        episode,
+        step,
+        epsilon):
+
+        os.makedirs(f"{outdir}", exist_ok=True)
+        # Q TABLE PICKLE
+        # base_file_name = "_actions_set:_{}_epsilon:_{}".format(settings.actions_set, round(qlearn.epsilon, 2))
+        base_file_name = f"{outdir}/{time.strftime('%Y%m%d-%H%M%S')}_Circuit-{environment['town']}_States-{environment['states']}_Actions-{environment['action_space']}_Rewards-{environment['reward_function']}_epsilon-{round(epsilon,3)}_epoch-{episode}_step-{step}_reward-{int(cumulated_reward)}"
+        file_dump = open(
+            f"{base_file_name}_QTABLE.pkl",
+            "wb",
+        )
+        pickle.dump(qlearn.q, file_dump)
+
 
     def save_model(
         self,
