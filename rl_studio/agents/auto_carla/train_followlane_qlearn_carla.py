@@ -274,6 +274,39 @@ class TrainerFollowLaneQlearnAutoCarla:
                     #    current_max_reward=current_max_reward,
                     #    best_epoch_training_time=best_epoch_training_time,
                     #)
+                    
+                # Reach Finish Line!!!     
+                if env.is_finish:
+                    np.save(
+                        f"{self.global_params.models_dir}/{time.strftime('%Y%m%d-%H%M%S')}_FINISHLINE_Circuit-{self.environment.environment['town']}_States-{self.environment.environment['states']}_Actions-{self.environment.environment['action_space']}_Rewards-{self.environment.environment['reward_function']}_epsilon-{round(epsilon,3)}_epoch-{episode}_step-{step}_reward-{int(cumulated_reward)}-qtable.npy",
+                        qlearn.q,
+                    )
+                    #qlearn.save_model(
+                    #    self.environment.environment,
+                    #    self.global_params.models_dir,
+                    #    qlearn,
+                    #    cumulated_reward,
+                    #    episode,
+                    #    step,
+                    #    epsilon,
+                    #)
+                    
+                    print_messages(
+                        "FINISH LINE",
+                        episode=episode,
+                        step=step,
+                        cumulated_reward=cumulated_reward,
+                        epsilon=epsilon,
+                    )
+                    log.logger.info(
+                        f"\nFINISH LINE\n"
+                        f"in episode = {episode}\n"
+                        f"steps = {step}\n"
+                        f"cumulated_reward = {cumulated_reward}\n"
+                        f"epsilon = {epsilon}\n"
+                    )                        
+                    
+                    
                 # End epoch
                 if step > self.env_params.estimated_steps:
                     done = True

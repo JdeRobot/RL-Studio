@@ -183,6 +183,7 @@ class FollowLaneQlearnStaticWeatherNoTraffic(FollowLaneEnv):
         self.spectator = self.world.get_spectator()
         # self.spectator = None
         self.actor_list = []
+        self.is_finish = None
 
     #################################################################################
     #
@@ -896,11 +897,18 @@ class FollowLaneQlearnStaticWeatherNoTraffic(FollowLaneEnv):
         )
         self.actor_list.append(self.sensor_camera_red_mask)
         weak_self = weakref.ref(self)
+
+        # start_camera_red_mask = time.time()
         self.sensor_camera_red_mask.listen(
             lambda event: FollowLaneQlearnStaticWeatherNoTraffic._red_mask_semantic_image(
                 weak_self, event
             )
         )
+        # end_camera_red_mask = time.time()
+        # print(
+        #    f"\n====> sensor_camera_red_mask time processing: {end_camera_red_mask - start_camera_red_mask = }"
+        # )
+
         # self.sensor_camera_red_mask.listen(self.save_red_mask_semantic_image)
 
     @staticmethod
@@ -1277,9 +1285,15 @@ class FollowLaneQlearnStaticWeatherNoTraffic(FollowLaneEnv):
         self.control(action)
 
         ########### --- calculating STATES
+        # start_camera_red_mask = time.time()
         mask = self.preprocess_image(self.front_red_mask_camera)
+        # end_camera_red_mask = time.time()
+        # print(
+        #    f"\n====> step() sensor_camera_red_mask time processing: {end_camera_red_mask - start_camera_red_mask = }"
+        # )
 
         ########### --- Calculating center of 2 lines
+
         lane_centers_in_pixels = self.calculate_lane_centers(
             mask
         )  # calculate center of lane
@@ -1389,13 +1403,13 @@ class FollowLaneQlearnStaticWeatherNoTraffic(FollowLaneEnv):
             reward = -100
             print(f"crash")
 
-        is_finish, dist_to_finish = AutoCarlaUtils.finish_fix_number_target(
+        self.is_finish, dist_to_finish = AutoCarlaUtils.finish_fix_number_target(
             self.params["location"],
             self.finish_alternate_pose,
             self.finish_pose_number,
             self.max_target_waypoint_distance,
         )
-        if is_finish:
+        if self.is_finish:
             print(f"Finish!!!!")
             done = True
             reward = 100
