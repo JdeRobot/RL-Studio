@@ -1,3 +1,4 @@
+from collections import Counter, OrderedDict
 from datetime import datetime, timedelta
 import logging
 import os
@@ -77,7 +78,6 @@ class Bcolors:
 
 
 def print_messages(*args, **kwargs):
-
     print(f"\n\t{Bcolors.OKCYAN}====>\t{args[0]}:{Bcolors.ENDC}")
     for key, value in kwargs.items():
         print(f"{Bcolors.OKBLUE}[INFO] {key} = {value}{Bcolors.ENDC}")
@@ -148,9 +148,6 @@ def render_params_left_bottom(**kwargs):
     cv2.waitKey(100)
 
 
-6
-
-
 def save_dataframe_episodes(environment, outdir, aggr_ep_rewards, actions_rewards=None):
     """
     We save info every certains epochs in a dataframe and .npy format to export or manage
@@ -191,16 +188,17 @@ def save_carla_dataframe_episodes(
         file_npy = f"{outdir}/{time.strftime('%Y%m%d-%H%M%S')}_Circuit-{environment['town']}_States-{environment['states']}_Actions-{environment['action_space']}_Rewards-{environment['reward_function']}.npy"
         np.save(file_npy, actions_rewards)
 
+
 def save_carla_latency(environment, outdir, latency):
     for key, value in latency.items():
         total += value
-    avg = total/len(latency)
- 
+    avg = total / len(latency)
+
     os.makedirs(f"{outdir}", exist_ok=True)
     file_excel = f"{outdir}/{time.strftime('%Y%m%d')}_Circuit-{environment['town']}_States-{environment['states']}_Actions-{environment['action_space']}_Rewards-{environment['reward_function']}.xlsx"
     df = pd.DataFrame(avg)
-    df.to_excel(file_excel)    
-         
+    df.to_excel(file_excel)
+
 
 def save_best_episode(
     global_params,

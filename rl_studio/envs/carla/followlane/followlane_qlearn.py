@@ -184,6 +184,7 @@ class FollowLaneQlearnStaticWeatherNoTraffic(FollowLaneEnv):
         # self.spectator = None
         self.actor_list = []
         self.is_finish = None
+        self.dist_to_finish = None
 
     #################################################################################
     #
@@ -304,7 +305,7 @@ class FollowLaneQlearnStaticWeatherNoTraffic(FollowLaneEnv):
         ## --- Detectors Sensors
         # self.setup_col_sensor_weakref()
         # self.setup_col_sensor()
-        # self.setup_lane_invasion_sensor_weakref()
+        self.setup_lane_invasion_sensor_weakref()
         # self.setup_lane_invasion_sensor()
         # self.setup_obstacle_sensor_weakref()
         # self.setup_obstacle_sensor()
@@ -734,7 +735,7 @@ class FollowLaneQlearnStaticWeatherNoTraffic(FollowLaneEnv):
         if not self:
             return
         self.lane_changing_hist.append(event)
-        print(f"you have changed the lane")
+        # print(f"you have changed the lane")
 
     def setup_lane_invasion_sensor(self):
         transform = carla.Transform(carla.Location(x=2.5, z=0.7))
@@ -1403,7 +1404,7 @@ class FollowLaneQlearnStaticWeatherNoTraffic(FollowLaneEnv):
             reward = -100
             print(f"crash")
 
-        self.is_finish, dist_to_finish = AutoCarlaUtils.finish_fix_number_target(
+        self.is_finish, self.dist_to_finish = AutoCarlaUtils.finish_fix_number_target(
             self.params["location"],
             self.finish_alternate_pose,
             self.finish_pose_number,
@@ -1414,10 +1415,10 @@ class FollowLaneQlearnStaticWeatherNoTraffic(FollowLaneEnv):
             done = True
             reward = 100
 
-        if len(self.lane_changing_hist) > 1:  # you leave the lane
-            done = True
-            reward = -100
-            print(f"out of lane")
+        # if len(self.lane_changing_hist) > 1:  # you leave the lane
+        #    done = True
+        #    reward = -100
+        #    print(f"out of lane")
 
         render_params(
             # steering_angle=self.params["steering_angle"],
@@ -1440,7 +1441,7 @@ class FollowLaneQlearnStaticWeatherNoTraffic(FollowLaneEnv):
             dist_normalized=dist_normalized,
             reward=reward,
             done=done,
-            distance_to_finish=dist_to_finish,
+            distance_to_finish=self.dist_to_finish,
             states_0=states_0,
             states_16=states_16,
             num_self_collision_hist=len(self.collision_hist),

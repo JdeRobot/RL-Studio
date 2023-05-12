@@ -1,5 +1,7 @@
+from collections import Counter, OrderedDict
 from datetime import datetime, timedelta
 import glob
+from statistics import median
 import os
 import time
 
@@ -27,6 +29,7 @@ from rl_studio.agents.utils import (
     LoggingHandler,
     print_messages,
 )
+from rl_studio.agents.utilities.plot_stats import MetricsPlot, StatsDataFrame
 from rl_studio.algorithms.qlearn import QLearnCarla, QLearn
 from rl_studio.envs.gazebo.gazebo_envs import *
 from rl_studio.envs.carla.utils.bounding_boxes import BasicSynchronousClient
@@ -95,9 +98,9 @@ class TrainerFollowLaneQlearnAutoCarla:
         CarlaEnv.__init__(self)
 
     def main(self):
-        '''
+        """
         Qlearn dictionnary
-        '''
+        """
         log = LoggingHandler(self.log_file)
         env = gym.make(self.env_params.env_name, **self.environment.environment)
 
@@ -157,14 +160,6 @@ class TrainerFollowLaneQlearnAutoCarla:
 
             observation = env.reset()
             state = "".join(map(str, observation))
-            #print_messages(
-            #    "in episode",
-            #    episode=episode,
-            #    observation=observation,
-            #    state=state,
-                #type_observation=type(observation),
-                #type_state=type(state),
-            #)
 
             while not done:
                 # if self.environment.environment["sync"]:
@@ -178,8 +173,9 @@ class TrainerFollowLaneQlearnAutoCarla:
                 observation, reward, done, _ = env.step(action)
                 # time.sleep(4)
                 end_step = time.time()
-                self.global_params.time_steps[(episode, step)] = end_step - start_step
-                #print(f"\n{end_step - start_step = }")
+                self.global_params.time_steps[step] = end_step - start_step
+
+                # print(f"\n{end_step - start_step = }")
                 cumulated_reward += reward
                 next_state = "".join(map(str, observation))
                 """
@@ -217,7 +213,6 @@ class TrainerFollowLaneQlearnAutoCarla:
 
                 qlearn.learn(state, action, reward, next_state)
                 state = next_state
-
 
                 # print_messages(
                 #    "",
@@ -263,7 +258,7 @@ class TrainerFollowLaneQlearnAutoCarla:
                         f"best step so far = {best_step}\n"
                         f"best_epoch_training_time = {best_epoch_training_time}\n"
                     )
-                    #print_messages(
+                    # print_messages(
                     #    "SHOWING BATCH OF STEPS",
                     #    episode=episode,
                     #    step=step,
@@ -273,16 +268,24 @@ class TrainerFollowLaneQlearnAutoCarla:
                     #    best_step=best_step,
                     #    current_max_reward=current_max_reward,
                     #    best_epoch_training_time=best_epoch_training_time,
-                    #)
-                    
-                # Reach Finish Line!!!     
+                    # )
+
+                # Reach Finish Line!!!
                 if env.is_finish:
                     np.save(
                         f"{self.global_params.models_dir}/{time.strftime('%Y%m%d-%H%M%S')}_FINISHLINE_Circuit-{self.environment.environment['town']}_States-{self.environment.environment['states']}_Actions-{self.environment.environment['action_space']}_Rewards-{self.environment.environment['reward_function']}_epsilon-{round(epsilon,3)}_epoch-{episode}_step-{step}_reward-{int(cumulated_reward)}-qtable.npy",
                         qlearn.q,
                     )
-                    qlearn.save_qtable_pickle(self.environment.environment, self.global_params.models_dir, qlearn, cumulated_reward, episode, step, epsilon)
-                    #qlearn.save_model(
+                    qlearn.save_qtable_pickle(
+                        self.environment.environment,
+                        self.global_params.models_dir,
+                        qlearn,
+                        cumulated_reward,
+                        episode,
+                        step,
+                        epsilon,
+                    )
+                    # qlearn.save_model(
                     #    self.environment.environment,
                     #    self.global_params.models_dir,
                     #    qlearn,
@@ -290,8 +293,8 @@ class TrainerFollowLaneQlearnAutoCarla:
                     #    episode,
                     #    step,
                     #    epsilon,
-                    #)
-                    
+                    # )
+
                     print_messages(
                         "FINISH LINE",
                         episode=episode,
@@ -305,9 +308,8 @@ class TrainerFollowLaneQlearnAutoCarla:
                         f"steps = {step}\n"
                         f"cumulated_reward = {cumulated_reward}\n"
                         f"epsilon = {epsilon}\n"
-                    )                        
-                    
-                    
+                    )
+
                 # End epoch
                 if step > self.env_params.estimated_steps:
                     done = True
@@ -315,8 +317,16 @@ class TrainerFollowLaneQlearnAutoCarla:
                         f"{self.global_params.models_dir}/{time.strftime('%Y%m%d-%H%M%S')}_Circuit-{self.environment.environment['town']}_States-{self.environment.environment['states']}_Actions-{self.environment.environment['action_space']}_Rewards-{self.environment.environment['reward_function']}_epsilon-{round(epsilon,3)}_epoch-{episode}_step-{step}_reward-{int(cumulated_reward)}-qtable.npy",
                         qlearn.q,
                     )
-                    qlearn.save_qtable_pickle(self.environment.environment, self.global_params.models_dir, qlearn, cumulated_reward, episode, step, epsilon)
-                    #qlearn.save_model(
+                    qlearn.save_qtable_pickle(
+                        self.environment.environment,
+                        self.global_params.models_dir,
+                        qlearn,
+                        cumulated_reward,
+                        episode,
+                        step,
+                        epsilon,
+                    )
+                    # qlearn.save_model(
                     #    self.environment.environment,
                     #    self.global_params.models_dir,
                     #    qlearn,
@@ -324,8 +334,8 @@ class TrainerFollowLaneQlearnAutoCarla:
                     #    episode,
                     #    step,
                     #    epsilon,
-                    #)
-                    
+                    # )
+
                     print_messages(
                         "EPISODE COMPLETED",
                         episode=episode,
@@ -340,16 +350,76 @@ class TrainerFollowLaneQlearnAutoCarla:
                         f"cumulated_reward = {cumulated_reward}\n"
                         f"epsilon = {epsilon}\n"
                     )
-                    
-                    
-                # check out for Carla Server (end of every step)    
-                ## ----------- checking for Carla Server is working 
+
+                # check out for Carla Server (end of every step)
+                ## ----------- checking for Carla Server is working
                 env.checking_carla_server()
-                
+
+            ########################################
+            # collect stats in every epoch
+            #
+            ########################################
+
+            ############ intrinsic
+            finish_time_epoch = datetime.now()
+
+            self.global_params.im_general["episode"].append(episode)
+            self.global_params.im_general["step"].append(step)
+            self.global_params.im_general["cumulated_reward"].append(cumulated_reward)
+            self.global_params.im_general["epsilon"].append(epsilon)
+            self.global_params.im_general["epoch_time"].append(
+                finish_time_epoch - start_time_epoch
+            )
+            self.global_params.im_general["lane_changed"].append(
+                len(env.lane_changing_hist)
+            )
+            self.global_params.im_general["distance_to_finish"].append(
+                env.dist_to_finish
+            )
+
+            # print(f"{self.global_params.time_steps =}")
+
+            ### FPS
+            fps_m = [values for values in self.global_params.time_steps.values()]
+            fps_mean = sum(fps_m) / len(self.global_params.time_steps)
+
+            sorted_time_steps = OrderedDict(
+                sorted(self.global_params.time_steps.items(), key=lambda x: x[1])
+            )
+            fps_median = median(sorted_time_steps.values())
+            # print(f"{fps_mean =}")
+            # print(f"{fps_median =}")
+            self.global_params.im_general["FPS_avg"].append(fps_mean)
+            self.global_params.im_general["FPS_median"].append(fps_median)
+
+            stats_frame = StatsDataFrame()
+            stats_frame.save_dataframe_stats(
+                self.environment.environment,
+                self.global_params.metrics_graphics_dir,
+                self.global_params.im_general,
+            )
+
+            ### Q_tabla
+            for key, value in qlearn.q.items():
+                self.global_params.im_q_tabla["state"].append(key[0])
+                self.global_params.im_q_tabla["action"].append(key[1])
+                self.global_params.im_q_tabla["q_value"].append(value)
+            stats_frame.save_dataframe_stats(
+                self.environment.environment,
+                self.global_params.metrics_graphics_dir,
+                self.global_params.im_q_tabla,
+                True,
+            )
+
             ## showing q_table every determined steps
             if not episode % self.env_params.save_episodes:
                 print(f"\n\tQ-table {qlearn.q}")
-                    
+
+            ########################################
+            #
+            #
+            ########################################
+
             # Save best lap
             if (
                 cumulated_reward - self.environment.environment["rewards"]["penal"]
@@ -375,7 +445,15 @@ class TrainerFollowLaneQlearnAutoCarla:
                     f"{self.global_params.models_dir}/{time.strftime('%Y%m%d-%H%M%S')}_Circuit-{self.environment.environment['town']}_States-{self.environment.environment['states']}_Actions-{self.environment.environment['action_space']}_Rewards-{self.environment.environment['reward_function']}_epsilon-{round(epsilon,3)}_epoch-{episode}_step-{step}_reward-{int(cumulated_reward - self.environment.environment['rewards']['penal'])}-qtable.npy",
                     qlearn.q,
                 )
-                qlearn.save_qtable_pickle(self.environment.environment, self.global_params.models_dir, qlearn, cumulated_reward, episode, step, epsilon)
+                qlearn.save_qtable_pickle(
+                    self.environment.environment,
+                    self.global_params.models_dir,
+                    qlearn,
+                    cumulated_reward,
+                    episode,
+                    step,
+                    epsilon,
+                )
                 log.logger.info(
                     f"\nsaving best lap\n"
                     f"in episode = {episode}\n"
@@ -384,14 +462,14 @@ class TrainerFollowLaneQlearnAutoCarla:
                     f"steps = {step}\n"
                     f"epsilon = {epsilon}\n"
                 )
-                #print_messages(
+                # print_messages(
                 #    "saving best lap",
                 #    episode=episode,
                 #    cumulated_reward=cumulated_reward,
                 #    current_max_reward=current_max_reward,
                 #    step=step,
                 #    epsilon=epsilon,
-                #)
+                # )
 
             # end of training by:
             # training time setting: 2 hours, 15 hours...
@@ -415,14 +493,14 @@ class TrainerFollowLaneQlearnAutoCarla:
                         f"step = {step}\n"
                         f"epsilon = {epsilon}\n"
                     )
-                    #print_messages(
+                    # print_messages(
                     #    "Training Time over",
                     #    episode=episode,
                     #    cumulated_reward=cumulated_reward,
                     #    current_max_reward=current_max_reward,
                     #    step=step,
                     #    epsilon=epsilon,
-                    #)
+                    # )
                 break
 
             # save best values every save_episode times
@@ -448,13 +526,14 @@ class TrainerFollowLaneQlearnAutoCarla:
                     f"best_step = {best_step}\n"
                     f"best_epoch_training_time = {best_epoch_training_time}\n"
                 )
-                #print_messages(
+                # print_messages(
                 #    "saving BATCH",
                 #    best_epoch=best_epoch,
                 #    best_epoch_training_time=best_epoch_training_time,
                 #    current_max_reward=current_max_reward,
                 #    best_step=best_step,
-                #)
+                # )
+
             # updating epsilon for exploration
             if epsilon > self.environment.environment["epsilon_min"]:
                 # self.epsilon *= self.epsilon_discount
@@ -463,18 +542,20 @@ class TrainerFollowLaneQlearnAutoCarla:
                     max(self.environment.environment["epsilon_min"], epsilon)
                 )
 
-
             ## ------------ destroy actors
             env.destroy_all_actors()
-        # env.display_manager.destroy()
         # ----------- end for
-
         # env.close()
 
+    ####################################################################################
+    ####################################################################################
+    ####################################################################################
+    ####################################################################################
+
     def AKAKAKAAKKAKAAKmain(self):
-        '''
+        """
         QlearnCarla dictionnary
-        '''
+        """
         log = LoggingHandler(self.log_file)
         env = gym.make(self.env_params.env_name, **self.environment.environment)
 
@@ -539,8 +620,8 @@ class TrainerFollowLaneQlearnAutoCarla:
                 episode=episode,
                 observation=observation,
                 state=state,
-                #type_observation=type(observation),
-                #type_state=type(state),
+                # type_observation=type(observation),
+                # type_state=type(state),
             )
 
             while not done:
@@ -640,7 +721,7 @@ class TrainerFollowLaneQlearnAutoCarla:
                         f"best step so far = {best_step}\n"
                         f"best_epoch_training_time = {best_epoch_training_time}\n"
                     )
-                    #print_messages(
+                    # print_messages(
                     #    "SHOWING BATCH OF STEPS",
                     #    episode=episode,
                     #    step=step,
@@ -650,7 +731,7 @@ class TrainerFollowLaneQlearnAutoCarla:
                     #    best_step=best_step,
                     #    current_max_reward=current_max_reward,
                     #    best_epoch_training_time=best_epoch_training_time,
-                    #)
+                    # )
                 # End epoch
                 if step > self.env_params.estimated_steps:
                     done = True
@@ -672,12 +753,11 @@ class TrainerFollowLaneQlearnAutoCarla:
                         f"cumulated_reward = {cumulated_reward}\n"
                         f"epsilon = {epsilon}\n"
                     )
-                    
-                    
-                # check out for Carla Server (end of every step)    
-                ## ----------- checking for Carla Server is working 
+
+                # check out for Carla Server (end of every step)
+                ## ----------- checking for Carla Server is working
                 env.checking_carla_server()
-                
+
             # Save best lap
             if (
                 cumulated_reward - self.environment.environment["rewards"]["penal"]
@@ -711,14 +791,14 @@ class TrainerFollowLaneQlearnAutoCarla:
                     f"steps = {step}\n"
                     f"epsilon = {epsilon}\n"
                 )
-                #print_messages(
+                # print_messages(
                 #    "saving best lap",
                 #    episode=episode,
                 #    cumulated_reward=cumulated_reward,
                 #    current_max_reward=current_max_reward,
                 #    step=step,
                 #    epsilon=epsilon,
-                #)
+                # )
 
             # end of training by:
             # training time setting: 2 hours, 15 hours...
@@ -742,14 +822,14 @@ class TrainerFollowLaneQlearnAutoCarla:
                         f"step = {step}\n"
                         f"epsilon = {epsilon}\n"
                     )
-                    #print_messages(
+                    # print_messages(
                     #    "Training Time over",
                     #    episode=episode,
                     #    cumulated_reward=cumulated_reward,
                     #    current_max_reward=current_max_reward,
                     #    step=step,
                     #    epsilon=epsilon,
-                    #)
+                    # )
                 break
 
             # save best values every save_episode times
@@ -775,13 +855,13 @@ class TrainerFollowLaneQlearnAutoCarla:
                     f"best_step = {best_step}\n"
                     f"best_epoch_training_time = {best_epoch_training_time}\n"
                 )
-                #print_messages(
+                # print_messages(
                 #    "saving BATCH",
                 #    best_epoch=best_epoch,
                 #    best_epoch_training_time=best_epoch_training_time,
                 #    current_max_reward=current_max_reward,
                 #    best_step=best_step,
-                #)
+                # )
             # updating epsilon for exploration
             if epsilon > self.environment.environment["epsilon_min"]:
                 # self.epsilon *= self.epsilon_discount
@@ -790,15 +870,12 @@ class TrainerFollowLaneQlearnAutoCarla:
                     max(self.environment.environment["epsilon_min"], epsilon)
                 )
 
-
             ## ------------ destroy actors
             env.destroy_all_actors()
         # env.display_manager.destroy()
         # ----------- end for
 
         # env.close()
-
-
 
     def main_____(self):
         """
@@ -1064,8 +1141,6 @@ class TrainerFollowLaneQlearnAutoCarla:
 
         env.close()
 
-
-
     ###########################################################################################
     ###########################################################################################
     ###########################################################################################
@@ -1199,7 +1274,6 @@ class TrainerFollowLaneQlearnAutoCarla:
             ascii=True,
             unit="episodes",
         ):
-
             # env.display_manager.render()
             observation = env.reset()
             # if observation.any():
@@ -1615,4 +1689,3 @@ class TrainerFollowLaneQlearnAutoCarla:
 
             pygame.quit()
             env.close()
-

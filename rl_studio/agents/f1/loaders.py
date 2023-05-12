@@ -88,6 +88,24 @@ class LoadGlobalParams:
         self.states_reward = {}
         self.time_steps = {}
         self.ep_rewards = []
+
+        self.im_general = {
+            "episode": [],
+            "step": [],
+            "cumulated_reward": [],
+            "epsilon": [],
+            "FPS_avg": [],
+            "FPS_median": [],
+            "epoch_time": [],
+            "lane_changed": [],
+            "distance_to_finish": [],
+        }
+        self.im_q_tabla = {
+            "state": [],
+            "action": [],
+            "q_value": [],
+        }
+
         self.actions_rewards = {
             "episode": [],
             "step": [],
