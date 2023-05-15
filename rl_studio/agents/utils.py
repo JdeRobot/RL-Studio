@@ -143,7 +143,7 @@ def render_params_left_bottom(**kwargs):
 
     window_name = "Stats Board"
     cv2.namedWindow(window_name)  # Create a named window
-    cv2.moveWindow(window_name, 0, 650)  # Move it to (40,30)
+    cv2.moveWindow(window_name, 0, 750)  # Move it to (40,30)
     cv2.imshow(window_name, canvas)
     cv2.waitKey(100)
 
@@ -284,7 +284,7 @@ def save_batch(episode, step, start_time_epoch, start_time, global_params, env_p
     global_params.aggr_ep_rewards["max"].append(max_reward)
     global_params.aggr_ep_rewards["min"].append(min_reward)
     global_params.aggr_ep_rewards["epoch_training_time"].append(
-        (datetime.now() - start_time_epoch).total_seconds()
+        (time.time() - start_time_epoch)
     )
     global_params.aggr_ep_rewards["total_training_time"].append(
         (datetime.now() - start_time).total_seconds()

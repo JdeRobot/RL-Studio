@@ -84,7 +84,7 @@ class LoadGlobalParams:
 
     def __init__(self, config):
         self.stats = {}  # epoch: steps
-        self.states_counter = {}
+        self.states_actions_counter = {}
         self.states_reward = {}
         self.time_steps = {}
         self.ep_rewards = []
@@ -100,10 +100,16 @@ class LoadGlobalParams:
             "lane_changed": [],
             "distance_to_finish": [],
         }
-        self.im_q_tabla = {
+        self.im_q_table = {
             "state": [],
             "action": [],
             "q_value": [],
+        }
+        self.im_state_actions_counter = {
+            "epoch": [],
+            "state": [],
+            "action": [],
+            "counter": [],
         }
 
         self.actions_rewards = {

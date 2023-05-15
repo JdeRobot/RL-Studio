@@ -156,7 +156,7 @@ class TrainerFollowLaneQlearnAutoCarla:
             done = False
             cumulated_reward = 0
             step = 0
-            start_time_epoch = datetime.now()
+            start_time_epoch = time.time()  # datetime.now()
 
             observation = env.reset()
             state = "".join(map(str, observation))
@@ -214,6 +214,15 @@ class TrainerFollowLaneQlearnAutoCarla:
                 qlearn.learn(state, action, reward, next_state)
                 state = next_state
 
+                try:
+                    self.global_params.states_actions_counter[
+                        episode, state, action
+                    ] += 1
+                except KeyError:
+                    self.global_params.states_actions_counter[
+                        episode, state, action
+                    ] = 1
+
                 # print_messages(
                 #    "",
                 #    next_state=next_state,
@@ -242,7 +251,9 @@ class TrainerFollowLaneQlearnAutoCarla:
                     current_max_reward = cumulated_reward
                     best_epoch = episode
                     best_step = step
-                    best_epoch_training_time = datetime.now() - start_time_epoch
+                    best_epoch_training_time = (
+                        time.time() - start_time_epoch
+                    )  # datetime.now() - start_time_epoch
                     self.global_params.actions_rewards["episode"].append(episode)
                     self.global_params.actions_rewards["step"].append(step)
                     self.global_params.actions_rewards["reward"].append(reward)
@@ -361,7 +372,7 @@ class TrainerFollowLaneQlearnAutoCarla:
             ########################################
 
             ############ intrinsic
-            finish_time_epoch = datetime.now()
+            finish_time_epoch = time.time()  # datetime.now()
 
             self.global_params.im_general["episode"].append(episode)
             self.global_params.im_general["step"].append(step)
@@ -399,6 +410,7 @@ class TrainerFollowLaneQlearnAutoCarla:
                 self.global_params.im_general,
             )
 
+            """
             ### Q_tabla
             for key, value in qlearn.q.items():
                 self.global_params.im_q_tabla["state"].append(key[0])
@@ -410,10 +422,27 @@ class TrainerFollowLaneQlearnAutoCarla:
                 self.global_params.im_q_tabla,
                 True,
             )
+            """
+
+            """
+            ### States, Actions counter in every epoch
+            for key, value in self.global_params.states_actions_counter.items():
+                self.global_params.im_state_actions_counter["epoch"].append(key[0])
+                self.global_params.im_state_actions_counter["state"].append(key[1])
+                self.global_params.im_state_actions_counter["action"].append(key[2])
+                self.global_params.im_state_actions_counter["counter"].append(value)
+            stats_frame.save_dataframe_stats(
+                self.environment.environment,
+                self.global_params.metrics_graphics_dir,
+                self.global_params.im_state_actions_counter,
+                sac=True,
+            )
+            """
 
             ## showing q_table every determined steps
             if not episode % self.env_params.save_episodes:
                 print(f"\n\tQ-table {qlearn.q}")
+                print(f"\n\tsac {self.global_params.states_actions_counter}")
 
             ########################################
             #
@@ -470,7 +499,22 @@ class TrainerFollowLaneQlearnAutoCarla:
                 #    step=step,
                 #    epsilon=epsilon,
                 # )
-
+                ### Q_tabla
+                self.global_params.im_q_table = {
+                    "state": [],
+                    "action": [],
+                    "q_value": [],
+                }
+                for key, value in qlearn.q.items():
+                    self.global_params.im_q_table["state"].append(key[0])
+                    self.global_params.im_q_table["action"].append(key[1])
+                    self.global_params.im_q_table["q_value"].append(value)
+                stats_frame.save_dataframe_stats(
+                    self.environment.environment,
+                    self.global_params.metrics_graphics_dir,
+                    self.global_params.im_q_table,
+                    True,
+                )
             # end of training by:
             # training time setting: 2 hours, 15 hours...
             # num epochs
@@ -545,7 +589,20 @@ class TrainerFollowLaneQlearnAutoCarla:
             ## ------------ destroy actors
             env.destroy_all_actors()
         # ----------- end for
-        # env.close()
+        ### States, Actions counter in every epoch
+        for key, value in self.global_params.states_actions_counter.items():
+            self.global_params.im_state_actions_counter["epoch"].append(key[0])
+            self.global_params.im_state_actions_counter["state"].append(key[1])
+            self.global_params.im_state_actions_counter["action"].append(key[2])
+            self.global_params.im_state_actions_counter["counter"].append(value)
+        stats_frame.save_dataframe_stats(
+            self.environment.environment,
+            self.global_params.metrics_graphics_dir,
+            self.global_params.im_state_actions_counter,
+            sac=True,
+        )
+
+        env.close()
 
     ####################################################################################
     ####################################################################################

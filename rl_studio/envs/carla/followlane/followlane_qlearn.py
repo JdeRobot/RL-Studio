@@ -552,7 +552,7 @@ class FollowLaneQlearnStaticWeatherNoTraffic(FollowLaneEnv):
         else:
             pose_init = init
 
-        print(f"{pose_init =}")
+        # print(f"{pose_init =}")
         # print(f"{random_init = }")
         # print(f"{self.start_alternate_pose = }")
         # print(f"{self.start_alternate_pose[random_init][0] = }")
@@ -1364,8 +1364,8 @@ class FollowLaneQlearnStaticWeatherNoTraffic(FollowLaneEnv):
             dist_normalized,
             states,
             self.x_row,
-            600,
-            500,
+            1250,
+            10,
         )
         # AutoCarlaUtils.show_image(
         #    "segmentation",
