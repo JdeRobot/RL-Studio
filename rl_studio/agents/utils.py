@@ -190,13 +190,14 @@ def save_carla_dataframe_episodes(
 
 
 def save_carla_latency(environment, outdir, latency):
+    total = 0
     for key, value in latency.items():
         total += value
     avg = total / len(latency)
 
     os.makedirs(f"{outdir}", exist_ok=True)
     file_excel = f"{outdir}/{time.strftime('%Y%m%d')}_Circuit-{environment['town']}_States-{environment['states']}_Actions-{environment['action_space']}_Rewards-{environment['reward_function']}.xlsx"
-    df = pd.DataFrame(avg)
+    df = pd.DataFrame(latency)
     df.to_excel(file_excel)
 
 

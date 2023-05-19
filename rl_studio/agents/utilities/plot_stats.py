@@ -32,8 +32,9 @@ class StatsDataFrame:
             file_excel, engine="openpyxl", mode="a", if_sheet_exists="replace"
         ) as writer:
             df.to_excel(writer)
-            writer.save()
-            # df.close()
+
+        # writer.close()
+        # df.close()
 
 
 class MetricsPlot:

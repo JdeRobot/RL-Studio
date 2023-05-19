@@ -113,7 +113,7 @@ carla_environments:
     traffic_pedestrians: False
     city_lights: False
     car_lights: False
-    estimated_steps: 10
+    estimated_steps: 400
     save_episodes: 5
     save_every_step: 50
     filter: vehicle.*
@@ -187,7 +187,8 @@ carla_town_positions:
           #9: [58.9, -50, 3.3, -4.5, 58.9, 0.5] #
 
         finish_positions:
-          0: [-66.2, -225.2, 0.3]
+          0: [73.7, -10, 0.3, 0.0, -62.5, 0.0]
+          #0: [-66.2, -225.2, 0.3]
           1: [71.7, -10, 0.3] #longest finish. In alternate_pose, use it
 
   Town07:

@@ -142,9 +142,9 @@ class InferencerFollowLaneQlearnAutoCarla:
             f"{self.global_params.models_dir}/{self.environment.environment['inference_qlearn_model_name']}"
         )
         print(f"{qlearn.q = }")
-        #print(f"{type(qlearn.q) = }")
-        #print(f"{qlearn.q[0] = }")
-        
+        # print(f"{type(qlearn.q) = }")
+        # print(f"{qlearn.q[0] = }")
+
         # log.logger.info(
         #    f"\nqlearn.q_table = {qlearn.q_table}",
         # )
@@ -177,7 +177,7 @@ class InferencerFollowLaneQlearnAutoCarla:
 
             while not done:
                 # if self.environment.environment["sync"]:
-                env.world.tick()
+                #env.world.tick()
                 # else:
                 #    env.world.wait_for_tick()
                 step += 1
@@ -188,7 +188,7 @@ class InferencerFollowLaneQlearnAutoCarla:
                 # time.sleep(4)
                 end_step = time.time()
                 self.global_params.time_steps[(episode, step)] = end_step - start_step
-                #print(f"\n{end_step - start_step = }")
+                # print(f"\n{end_step - start_step = }")
                 cumulated_reward += reward
                 next_state = "".join(map(str, observation))
                 # qlearn.learn(state, action, reward, next_state)
@@ -289,7 +289,15 @@ class InferencerFollowLaneQlearnAutoCarla:
                         f"{self.global_params.models_dir}/{time.strftime('%Y%m%d-%H%M%S')}_FINISHLINE_Circuit-{self.environment.environment['town']}_States-{self.environment.environment['states']}_Actions-{self.environment.environment['action_space']}_Rewards-{self.environment.environment['reward_function']}_epsilon-{round(epsilon,3)}_epoch-{episode}_step-{step}_reward-{int(cumulated_reward)}-qtable.npy",
                         qlearn.q,
                     )
-                    qlearn.save_qtable_pickle(self.environment.environment, self.global_params.models_dir, qlearn, cumulated_reward, episode, step, epsilon)
+                    qlearn.save_qtable_pickle(
+                        self.environment.environment,
+                        self.global_params.models_dir,
+                        qlearn,
+                        cumulated_reward,
+                        episode,
+                        step,
+                        epsilon,
+                    )
                     # qlearn.save_model(
                     #    self.environment.environment,
                     #    self.global_params.models_dir,
@@ -322,7 +330,15 @@ class InferencerFollowLaneQlearnAutoCarla:
                         f"{self.global_params.models_dir}/{time.strftime('%Y%m%d-%H%M%S')}_Circuit-{self.environment.environment['town']}_States-{self.environment.environment['states']}_Actions-{self.environment.environment['action_space']}_Rewards-{self.environment.environment['reward_function']}_epsilon-{round(epsilon,3)}_epoch-{episode}_step-{step}_reward-{int(cumulated_reward)}-qtable.npy",
                         qlearn.q,
                     )
-                    qlearn.save_qtable_pickle(self.environment.environment, self.global_params.models_dir, qlearn, cumulated_reward, episode, step, epsilon)
+                    qlearn.save_qtable_pickle(
+                        self.environment.environment,
+                        self.global_params.models_dir,
+                        qlearn,
+                        cumulated_reward,
+                        episode,
+                        step,
+                        epsilon,
+                    )
                     # qlearn.save_model(
                     #    self.environment.environment,
                     #    self.global_params.models_dir,
@@ -376,13 +392,21 @@ class InferencerFollowLaneQlearnAutoCarla:
                     self.global_params.metrics_data_dir,
                     self.global_params.best_current_epoch,
                 )
-                save_carla_latency(self.environment.environment, self.global_params.metrics_data_dir, self.global_params.time_steps)
-                
+                # save_carla_latency(self.environment.environment, self.global_params.metrics_data_dir, self.global_params.time_steps)
+
                 np.save(
                     f"{self.global_params.models_dir}/{time.strftime('%Y%m%d-%H%M%S')}_Circuit-{self.environment.environment['town']}_States-{self.environment.environment['states']}_Actions-{self.environment.environment['action_space']}_Rewards-{self.environment.environment['reward_function']}_epsilon-{round(epsilon,3)}_epoch-{episode}_step-{step}_reward-{int(cumulated_reward - self.environment.environment['rewards']['penal'])}-qtable.npy",
                     qlearn.q,
                 )
-                qlearn.save_qtable_pickle(self.environment.environment, self.global_params.models_dir, qlearn, cumulated_reward, episode, step, epsilon)
+                qlearn.save_qtable_pickle(
+                    self.environment.environment,
+                    self.global_params.models_dir,
+                    qlearn,
+                    cumulated_reward,
+                    episode,
+                    step,
+                    epsilon,
+                )
                 log.logger.info(
                     f"\nsaving best lap\n"
                     f"in episode = {episode}\n"
@@ -415,7 +439,15 @@ class InferencerFollowLaneQlearnAutoCarla:
                         f"{self.global_params.models_dir}/{time.strftime('%Y%m%d-%H%M%S')}_Circuit-{self.environment.environment['town']}_States-{self.environment.environment['states']}_Actions-{self.environment.environment['action_space']}_Rewards-{self.environment.environment['reward_function']}_epsilon-{round(epsilon,3)}_epoch-{episode}_step-{step}_reward-{int(cumulated_reward)}-qtable.npy",
                         qlearn.q,
                     )
-                    qlearn.save_qtable_pickle(self.environment.environment, self.global_params.models_dir, qlearn, cumulated_reward, episode, step, epsilon)
+                    qlearn.save_qtable_pickle(
+                        self.environment.environment,
+                        self.global_params.models_dir,
+                        qlearn,
+                        cumulated_reward,
+                        episode,
+                        step,
+                        epsilon,
+                    )
                     log.logger.info(
                         f"\nTraining Time over\n"
                         f"current_max_reward = {current_max_reward}\n"
@@ -477,4 +509,3 @@ class InferencerFollowLaneQlearnAutoCarla:
         # ----------- end for
 
         # env.close()
-

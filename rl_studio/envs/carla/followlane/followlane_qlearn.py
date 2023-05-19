@@ -315,6 +315,9 @@ class FollowLaneQlearnStaticWeatherNoTraffic(FollowLaneEnv):
         # )
 
         time.sleep(1)
+
+        ## Autopilot
+        # self.car.set_autopilot(True)
         self.car.apply_control(carla.VehicleControl(throttle=0.0, brake=0.0))
         # self.setup_spectator()
 
@@ -1283,6 +1286,7 @@ class FollowLaneQlearnStaticWeatherNoTraffic(FollowLaneEnv):
 
     def step(self, action):
         ### -------- send action
+
         self.control(action)
 
         ########### --- calculating STATES
@@ -1442,11 +1446,11 @@ class FollowLaneQlearnStaticWeatherNoTraffic(FollowLaneEnv):
             reward=reward,
             done=done,
             distance_to_finish=self.dist_to_finish,
+            num_self_lane_change_hist=len(self.lane_changing_hist),
             states_0=states_0,
             states_16=states_16,
             num_self_collision_hist=len(self.collision_hist),
             num_self_obstacle_hist=len(self.obstacle_hist),
-            num_self_lane_change_hist=len(self.lane_changing_hist),
         )
         """
         print_messages(
@@ -1525,6 +1529,7 @@ class FollowLaneQlearnStaticWeatherNoTraffic(FollowLaneEnv):
         clip_throttle = self.clip_throttle(
             throttle_upper_limit, curr_speed, target_speed, throttle_low_limit
         )
+
         self.car.apply_control(
             carla.VehicleControl(throttle=clip_throttle, steer=steer)
         )
@@ -1536,7 +1541,7 @@ class FollowLaneQlearnStaticWeatherNoTraffic(FollowLaneEnv):
         # clip_throttle = np.clip(
         #    throttle - 0.1 * (curr_speed - target_speed), low_throttle, throttle
         # )
-        threshold = 0.3
+        threshold = 0.2  # 0.2 inference, 0.3 training
         vel_error = curr_speed / target_speed - 1
         clip_throttle = low_throttle if vel_error > threshold else throttle
 

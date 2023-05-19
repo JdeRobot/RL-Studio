@@ -126,14 +126,14 @@ carla_environments:
     waypoints_target: 1249 #Town07: (57, -1, 1249), #Town01: 959, 961
     waypoints_road_id: 8 # Town07: (20)-920-21-39-57, #Town01: 8
     max_target_waypoint_distance: 3 # distance to finish waypoint
-    waypoints_lane_id: lane-1 # lane-1 (right lane from south to north), lane1
+    waypoints_lane_id: lane1 # lane-1 (right lane from south to north), lane1
     town: Town07_Opt #Town01, Town02, Town03, Town04, Town05, Town06, Town07, Town10HD, Town11
     # Town01_Opt, Town02_Opt, Town03_Opt, Town04_Opt, Town05_Opt, Town06_Opt, Town07_Opt, Town10HD_Opt
     init_pose:
       random_pose: False # random positions in the whole town
       alternate_pose: False # random positions but only for selected poses in carla_town_positions->tonwXX->laneX->init_positions
-      init_pose_number: 8
-      finish_pose_number: 1
+      init_pose_number: 5
+      finish_pose_number: 0
       town_circuit: mountain_circuit
 
 carla_town_positions:
