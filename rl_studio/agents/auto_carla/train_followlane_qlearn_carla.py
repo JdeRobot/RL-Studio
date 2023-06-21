@@ -364,7 +364,7 @@ class TrainerFollowLaneQlearnAutoCarla:
 
                 # check out for Carla Server (end of every step)
                 ## ----------- checking for Carla Server is working
-                env.checking_carla_server()
+                env.checking_carla_server(self.environment.environment["town"])
 
             ########################################
             # collect stats in every epoch
@@ -440,9 +440,9 @@ class TrainerFollowLaneQlearnAutoCarla:
             """
 
             ## showing q_table every determined steps
-            if not episode % self.env_params.save_episodes:
-                print(f"\n\tQ-table {qlearn.q}")
-                print(f"\n\tsac {self.global_params.states_actions_counter}")
+            # if not episode % self.env_params.save_episodes:
+            # print(f"\n\tQ-table {qlearn.q}")
+            # print(f"\n\tsac {self.global_params.states_actions_counter}")
 
             ########################################
             #

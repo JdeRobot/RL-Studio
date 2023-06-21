@@ -39,6 +39,53 @@ from rl_studio.envs.carla.utils.global_route_planner import (
     GlobalRoutePlanner,
 )
 
+correct_normalized_distance = {
+    20: 0.07,
+    30: 0.1,
+    40: 0.13,
+    50: 0.17,
+    60: 0.2,
+    70: 0.23,
+    80: 0.26,
+    90: 0.3,
+    100: 0.33,
+    110: 0.36,
+    120: 0.4,
+    130: 0.42,
+    140: 0.46,
+    150: 0.49,
+    160: 0.52,
+    170: 0.56,
+    180: 0.59,
+    190: 0.62,
+    200: 0.65,
+    210: 0.69,
+    220: 0.72,
+}
+correct_pixel_distance = {
+    20: 343,
+    30: 353,
+    40: 363,
+    50: 374,
+    60: 384,
+    70: 394,
+    80: 404,
+    90: 415,
+    100: 425,
+    110: 436,
+    120: 446,
+    130: 456,
+    140: 467,
+    150: 477,
+    160: 488,
+    170: 498,
+    180: 508,
+    190: 518,
+    200: 528,
+    210: 540,
+    220: 550,
+}
+
 
 class FollowLaneQlearnStaticWeatherNoTraffic(FollowLaneEnv):
     def __init__(self, **config):
@@ -173,6 +220,14 @@ class FollowLaneQlearnStaticWeatherNoTraffic(FollowLaneEnv):
         self.sensor_camera_segmentation = None
         self.segmentation_cam = None
 
+        ## --------------- LaneDetector Camera ---------------
+        #self.lanedetector_cam = self.world.get_blueprint_library().find("sensor.camera.rgb")
+        #self.lanedetector_cam.set_attribute("image_size_x", f"{self.width}")
+        #self.lanedetector_cam.set_attribute("image_size_y", f"{self.height}")
+        #self.lanedetector_cam.set_attribute("fov", f"110")
+        #self.sensor_camera_lanedetector = None
+        #self.front_lanedetector_camera = None
+        
         ## --------------- more ---------------
         self.perfect_distance_pixels = None
         self.perfect_distance_normalized = None
@@ -191,7 +246,99 @@ class FollowLaneQlearnStaticWeatherNoTraffic(FollowLaneEnv):
     # Reset
     #################################################################################
     # @profile
+    """
     def reset(self):
+        if self.states_entry == "one_only_right_line":
+            # print("entro en one_point")
+            return self.reset_one_point_only_right_line()
+    """
+
+    # def reset_one_point_only_right_line(self):
+    def reset(self):
+        if self.sensor_camera_rgb is not None:
+            self.destroy_all_actors_apply_batch()
+
+        self.col_sensor = None
+        self.sensor_camera_rgb = None
+        self.sensor_camera_red_mask = None
+        self.front_camera_bev = None
+        self.front_camera_bev_mask = None
+        self.sensor_camera_segmentation = None
+        self.sensor_camera_lanedetector = None
+        
+        self.lane_sensor = None
+        self.obstacle_sensor = None
+        self.collision_hist = []
+        self.lane_changing_hist = []
+        self.obstacle_hist = []
+        self.actor_list = []
+
+        ## ---  Car
+        waypoints_town = self.world.get_map().generate_waypoints(5.0)
+        init_waypoint = waypoints_town[self.waypoints_init + 1]
+        filtered_waypoints = self.draw_waypoints(
+            waypoints_town,
+            self.waypoints_init,
+            self.waypoints_target,
+            self.waypoints_lane_id,
+            2000,
+        )
+        self.target_waypoint = filtered_waypoints[-1]
+
+        ## ---- random init position in the whole Town: actually for test functioning porposes
+        if self.random_pose:
+            self.setup_car_random_pose()
+        ## -- Always same init position in a circuit predefined
+        elif self.alternate_pose is False:
+            self.setup_car_pose(self.start_alternate_pose, init=self.init_pose_number)
+
+        ## -- Same circuit, but random init positions
+        else:
+            # self.setup_car_alternate_pose(self.start_alternate_pose)
+            self.setup_car_pose(self.start_alternate_pose)
+
+        ## --- Cameras
+
+        ## ---- RGB
+        # self.setup_rgb_camera()
+        self.setup_rgb_camera_weakref()
+        # self.setup_semantic_camera()
+        while self.sensor_camera_rgb is None:
+            time.sleep(0.01)
+
+        ## ---- Red Mask
+        self.setup_red_mask_camera_weakref()
+        while self.sensor_camera_red_mask is None:
+            time.sleep(0.01)
+            
+        ## ---- LAneDetector
+        #self.setup_lane_detector_camera_weakref()
+        #while self.sensor_camera_lane_detector is None:
+        #    time.sleep(0.01)            
+            
+
+        ## --- Detectors Sensors
+        self.setup_lane_invasion_sensor_weakref()
+
+        time.sleep(1)
+
+        ## Autopilot
+        # self.car.set_autopilot(True)
+        self.car.apply_control(carla.VehicleControl(throttle=0.0, brake=0.0))
+        # self.setup_spectator()
+
+        ########### --- calculating STATES
+        mask = self.preprocess_image(self.front_red_mask_camera)
+        right_line_in_pixels = self.calculate_line_right(mask)
+
+        pixels_in_state = mask.shape[1] / self.num_regions
+        states = [
+            int(value / pixels_in_state) for _, value in enumerate(right_line_in_pixels)
+        ]
+
+        return states
+
+    def reset_one_point_between_right_left_lines(self):
         ### --- stoping and destroying all actors
         # if (self.col_sensor is not None and self.col_sensor.is_listening) or (
         #    self.sensor_camera_rgb is not None and self.sensor_camera_rgb.is_listening
@@ -323,7 +470,7 @@ class FollowLaneQlearnStaticWeatherNoTraffic(FollowLaneEnv):
 
         ########### --- calculating STATES
         mask = self.preprocess_image(self.front_red_mask_camera)
-        lane_centers_in_pixels = self.calculate_lane_centers(mask)
+        lane_centers_in_pixels, _, _ = self.calculate_lane_centers(mask)
         ### errors: distance to center of image to lane center
         image_center = mask.shape[1] // 2
         # errors = [
@@ -357,6 +504,47 @@ class FollowLaneQlearnStaticWeatherNoTraffic(FollowLaneEnv):
     # Reset Methods
     ####################################################
 
+    def calculate_lane_centers_with_lane_detector(self, mask):
+        '''
+        using Lane Detector model
+        '''
+        lines = [mask[self.x_row[i], :] for i, _ in enumerate(self.x_row)]
+        index_left = [
+            np.argmax(lines[x]) for x, _ in enumerate(lines)
+        ]
+        left_offset, right_offset = 20, 10
+        index_left_plus_offset = [
+            index_left[x] + left_offset if index_left[x] != 0 else 0
+            for x, _ in enumerate(index_left)
+        ]
+        second_lines_from_left_right = [
+            lines[x][index_left_plus_offset[x] :]
+            for x, _ in enumerate(lines)
+        ]
+        ## ---------------- calculating index in second line
+        try:
+            index_right_no_offset = [
+                np.argmax(second_lines_from_left_right[x])
+                for x, _ in enumerate(second_lines_from_left_right)
+            ]
+        except:
+            secod_lines_from_left_right = [value for _, value in enumerate(self.x_row)]
+            index_right_no_offset = [
+                np.argmax(second_lines_from_left_right[x])
+                for x, _ in enumerate(second_lines_from_left_right)
+            ]
+
+        index_right_plus_offsets = [
+                index_right_no_offset[x] + left_offset + right_offset
+                for x, _ in enumerate(index_right_no_offset)
+        ]
+
+        index_right = [right + left for right, left in zip(index_right_plus_offsets, index_left)]
+        
+        centers = [((right - left) // 2 ) + left for right, left in zip(index_right, index_left)]
+        
+        return centers, index_left, index_right
+
     def calculate_line_right(self, mask):
         """
         calculates distance from center to right line
@@ -372,24 +560,28 @@ class FollowLaneQlearnStaticWeatherNoTraffic(FollowLaneEnv):
             np.argmax(lines_inversed[x]) for x, _ in enumerate(lines_inversed)
         ]
         # print(f"{inv_index_right = }")
-        offset = 20
-        inv_index_right_plus_offset = [
-            inv_index_right[x] + offset if inv_index_right[x] != 0 else 0
-            for x, _ in enumerate(inv_index_right)
-        ]
+        # offset = 10
+        # inv_index_right_plus_offset = [
+        #    inv_index_right[x] + offset if inv_index_right[x] != 0 else 0
+        #    for x, _ in enumerate(inv_index_right)
+        # ]
         # print(f"{inv_index_right = }")
+        # index_right = [
+        #    mask.shape[1] - inv_index_right_plus_offset[x]
+        #    if inv_index_right_plus_offset[x] != 0
+        #    else 0
+        #    for x, _ in enumerate(inv_index_right_plus_offset)
+        # ]
         index_right = [
-            mask.shape[1] - inv_index_right_plus_offset[x]
-            if inv_index_right_plus_offset[x] != 0
-            else 0
-            for x, _ in enumerate(inv_index_right_plus_offset)
+            mask.shape[1] - inv_index_right[x] if inv_index_right[x] != 0 else 0
+            for x, _ in enumerate(inv_index_right)
         ]
 
         return index_right
 
     def calculate_lane_centers(self, mask):
         """
-        calculating LANE CENTRAL
+        calculating LANE CENTRAL FROM RIGHT TO LEFT (using Sergio segmentation)
         """
 
         ## get total lines in every line point
@@ -402,7 +594,7 @@ class FollowLaneQlearnStaticWeatherNoTraffic(FollowLaneEnv):
             np.argmax(lines_inversed[x]) for x, _ in enumerate(lines_inversed)
         ]
         # print(f"{inv_index_right = }")
-        offset = 20
+        offset = 25  # 20
         inv_index_right_plus_offset = [
             inv_index_right[x] + offset if inv_index_right[x] != 0 else 0
             for x, _ in enumerate(inv_index_right)
@@ -425,19 +617,30 @@ class FollowLaneQlearnStaticWeatherNoTraffic(FollowLaneEnv):
                 for x, _ in enumerate(cropped_lines_inversed)
             ]
         except:
-            print(f"{cropped_lines_inversed =}")
-            cropped_lines_inversed = [0]
+            # print(f"{cropped_lines_inversed =}")
+            # print(f"{len(x_row) =}")
+            cropped_lines_inversed = [value for _, value in enumerate(self.x_row)]
+            # cropped_lines_inversed = [0]
             second_inv_index_right = [
                 np.argmax(cropped_lines_inversed[x])
                 for x, _ in enumerate(cropped_lines_inversed)
             ]
+            # print(f"{second_inv_index_right =}")
+
+        # now take off the offset
+        no_offset = offset - 5
+        second_inv_index_right = [
+            second_inv_index_right[x] + no_offset
+            for x, _ in enumerate(second_inv_index_right)
+        ]
 
         index_left = [
-            mask.shape[1] - inv_index_right[x] - second_inv_index_right[x] + offset
+            mask.shape[1] - inv_index_right[x] - second_inv_index_right[x]
             if second_inv_index_right[x] != 0
             else 0
             for x, _ in enumerate(second_inv_index_right)
         ]
+        # print(f"{index_left =}")
 
         # print(f"{index_right = }")
 
@@ -459,7 +662,7 @@ class FollowLaneQlearnStaticWeatherNoTraffic(FollowLaneEnv):
         ]
         # print(f"{centers = }")
 
-        return centers
+        return centers, index_left, index_right
 
     def calculate_states(self, mask):
         """
@@ -494,7 +697,7 @@ class FollowLaneQlearnStaticWeatherNoTraffic(FollowLaneEnv):
 
     def preprocess_image(self, red_mask):
         """
-        image is cropping from up to middle
+        image is cropping from top to middle
         """
         ## first, we cut the upper image
         height = red_mask.shape[0]
@@ -510,6 +713,21 @@ class FollowLaneQlearnStaticWeatherNoTraffic(FollowLaneEnv):
         _, white_mask = cv2.threshold(gray_mask, theshold, 255, cv2.THRESH_BINARY)
 
         return white_mask
+
+
+    def preprocess_image_lane_detector(self, image):
+        '''
+        image from lane detector
+        '''
+        kernel = np.ones((5, 5), np.uint8)
+        img_erosion = cv2.erode(image, kernel, iterations=1)
+        hsv = cv2.cvtColor(img_erosion, cv2.COLOR_RGB2HSV)
+        gray_hsv = cv2.cvtColor(hsv, cv2.COLOR_BGR2GRAY)
+        _, gray_mask = cv2.threshold(gray_hsv, 200, 255, cv2.THRESH_BINARY)
+
+        return gray_mask
+
+
 
     ########################################################
     #  waypoints, car pose, sensors
@@ -814,6 +1032,7 @@ class FollowLaneQlearnStaticWeatherNoTraffic(FollowLaneEnv):
     #
     # Cameras
     ##################
+    
     # @profile
     def setup_rgb_camera_weakref(self):
         """weakref"""
@@ -1283,30 +1502,233 @@ class FollowLaneQlearnStaticWeatherNoTraffic(FollowLaneEnv):
     #
     # Step
     ###################################################################################
-
+    """
     def step(self, action):
-        ### -------- send action
+        if self.states_entry == "one_between_right_left_lines":
+            # print("entro en one_point")
+            return self.step_one_point_between_right_left_lines(self, action)
 
+        elif self.states_entry == "one_only_right_line":
+            return self.step_one_point_only_right_line(self, action)
+    """
+
+    # def step_one_point_only_right_line(self, action):
+    def step(self, action):
+        self.control_only_right(action)
+
+        ########### --- calculating STATES
+        # start_camera_red_mask = time.time()
+        mask = self.preprocess_image(self.front_red_mask_camera)
+
+        ### errors: distance to center of image to lane center
+        image_center = mask.shape[1] // 2
+
+        ########### --- Calculating center ONLY with right line
+        # calculate only with right line
+        right_line_in_pixels = self.calculate_line_right(mask)
+        # calculate dist with ONLY right line
+        dist = [
+            right_line_in_pixels[i] - image_center
+            for i, _ in enumerate(right_line_in_pixels)
+        ]
+        dist_normalized = [
+            float((right_line_in_pixels[i] - image_center) / image_center)
+            for i, _ in enumerate(right_line_in_pixels)
+        ]
+
+        ground_truth_normalized_values = [
+            correct_normalized_distance[value] for i, value in enumerate(self.x_row)
+        ]
+        ground_truth_pixel_values = [
+            correct_pixel_distance[value] for i, value in enumerate(self.x_row)
+        ]
+        error_normalized = [
+            ground_truth_normalized_values[index] - abs(dist_normalized[index])
+            for index, _ in enumerate(self.x_row)
+        ]
+        error_pixels = [
+            right_line_in_pixels[index] - ground_truth_pixel_values[index]
+            for index, _ in enumerate(self.x_row)
+        ]
+
+        ### States
+        pixels_in_state = mask.shape[1] / self.num_regions
+        states = [
+            int(value / pixels_in_state) for _, value in enumerate(right_line_in_pixels)
+        ]
+
+        counter_states = Counter(states)
+        states_16 = counter_states.get(self.num_regions)
+        states_0 = counter_states.get(0)
+
+        # print(f"{lane_centers_in_pixels = }")
+        AutoCarlaUtils.show_image_with_center_point(
+            "mask2",
+            mask,
+            1,
+            error_pixels,
+            # right_line_in_pixels,
+            dist_normalized,
+            states,
+            self.x_row,
+            600,
+            10,
+        )
+
+        """
+        AutoCarlaUtils.show_image_with_three_points(
+            "mask3",
+            mask,
+            1,
+            lane_centers_in_pixels,
+            # right_line_in_pixels,
+            dist_normalized,
+            states,
+            self.x_row,
+            600,
+            500,
+            left_points_pixels,
+            right_points_pixels,
+        )
+        """
+        AutoCarlaUtils.show_image_with_center_point(
+            "front RGB",
+            self.front_rgb_camera[(self.front_rgb_camera.shape[0] // 2) :],
+            1,
+            error_pixels,
+            # right_line_in_pixels,
+            dist_normalized,
+            states,
+            self.x_row,
+            1250,
+            10,
+        )
+
+        # error = [
+        #    abs(
+        #        self.perfect_distance_normalized[index]
+        #        - distance_to_center_normalized[index]
+        #    )
+        #    for index, value in enumerate(self.x_row)
+        # ]
+
+        ## -------- Ending Step()...
+        done = False
+        ## -------- Rewards
+        # reward, done = self.autocarlarewards.rewards_right_line(
+        #    dist_normalized, self.params
+        # )
+        reward, done = self.autocarlarewards.rewards_right_line(
+            error_normalized, self.params
+        )
+        #reward, done = self.autocarlarewards.rewards_right_line_gazebo(
+        #    dist_normalized, self.params
+        #)        
+        
+        ## -------- ... or Finish by...
+        if (states_16 is not None and (states_16 >= len(states))) or (
+            states_0 is not None and (states_0 >= len(states))
+        ):  # not red right line
+            print(f"no lines detected")
+            done = True
+            reward = -100
+        if len(self.collision_hist) > 0:  # crashed you, baby
+            done = True
+            reward = -100
+            print(f"crash")
+
+        self.is_finish, self.dist_to_finish = AutoCarlaUtils.finish_fix_number_target(
+            self.params["location"],
+            self.finish_alternate_pose,
+            self.finish_pose_number,
+            self.max_target_waypoint_distance,
+        )
+        if self.is_finish:
+            print(f"Finish!!!!")
+            done = True
+            reward = 100
+
+        # if len(self.lane_changing_hist) > 1:  # you leave the lane
+        #    done = True
+        #    reward = -100
+        #    print(f"out of lane")
+
+        render_params(
+            # steering_angle=self.params["steering_angle"],
+            Steer=self.params["Steer"],
+            steering_angle=self.params["steering_angle"],
+            # Steering_angle=self.params["Steering_angle"],
+            location=self.params["location"],
+            Throttle=self.params["Throttle"],
+            Brake=self.params["Brake"],
+            height=self.params["height"],
+            action=action,
+            speed_kmh=self.params["speed"],
+            acceleration_ms2=self.params["Acceleration"],
+            _="------------------------",
+            states=states,
+            right_line_in_pixels=right_line_in_pixels,
+            image_center=image_center,
+            # right_line_in_pixels=right_line_in_pixels,
+            dist_to_center=dist,
+            dist_normalized=dist_normalized,
+            reward=reward,
+            done=done,
+            distance_to_finish=self.dist_to_finish,
+            num_self_lane_change_hist=len(self.lane_changing_hist),
+            states_0=states_0,
+            states_16=states_16,
+            num_self_collision_hist=len(self.collision_hist),
+            num_self_obstacle_hist=len(self.obstacle_hist),
+        )
+
+        print_messages(
+            "in step()",
+            height=mask.shape[0],
+            width=mask.shape[1],
+            action=action,
+            velocity=self.params["speed"],
+            # steering_angle=self.params["steering_angle"],
+            Steer=self.params["Steer"],
+            location=self.params["location"],
+            Throttle=self.params["Throttle"],
+            Brake=self.params["Brake"],
+            _="------------------------",
+            states=states,
+            right_line_in_pixels=right_line_in_pixels,
+            distance_to_center=dist,
+            distance_to_center_normalized=dist_normalized,
+            # self_perfect_distance_pixels=self.perfect_distance_pixels,
+            # self_perfect_distance_normalized=self.perfect_distance_normalized,
+            error_normalized=error_normalized,
+            error_pixels=error_pixels,
+            done=done,
+            reward=reward,
+            states_16=states_16,
+            states_0=states_0,
+            self_collision_hist=self.collision_hist,
+        )
+
+        return states, reward, done, {}
+
+    def step_one_point_between_right_left_lines(self, action):
         self.control(action)
 
         ########### --- calculating STATES
         # start_camera_red_mask = time.time()
         mask = self.preprocess_image(self.front_red_mask_camera)
-        # end_camera_red_mask = time.time()
-        # print(
-        #    f"\n====> step() sensor_camera_red_mask time processing: {end_camera_red_mask - start_camera_red_mask = }"
-        # )
 
         ########### --- Calculating center of 2 lines
-
-        lane_centers_in_pixels = self.calculate_lane_centers(
-            mask
-        )  # calculate center of lane
+        (
+            lane_centers_in_pixels,
+            left_points_pixels,
+            right_points_pixels,
+        ) = self.calculate_lane_centers(mask)
 
         ### errors: distance to center of image to lane center
         image_center = mask.shape[1] // 2
 
-        # calculate dist with 2 lines
+        # calculate dist from center in pixels
         dist = [
             image_center - lane_centers_in_pixels[i]
             for i, _ in enumerate(lane_centers_in_pixels)
@@ -1346,7 +1768,8 @@ class FollowLaneQlearnStaticWeatherNoTraffic(FollowLaneEnv):
         states_16 = counter_states.get(self.num_regions)
         states_0 = counter_states.get(0)
 
-        AutoCarlaUtils.show_image_with_everything(
+        # print(f"{lane_centers_in_pixels = }")
+        AutoCarlaUtils.show_image_with_center_point(
             "mask2",
             mask,
             1,
@@ -1359,7 +1782,22 @@ class FollowLaneQlearnStaticWeatherNoTraffic(FollowLaneEnv):
             10,
         )
 
-        AutoCarlaUtils.show_image_with_everything(
+        AutoCarlaUtils.show_image_with_three_points(
+            "mask3",
+            mask,
+            1,
+            lane_centers_in_pixels,
+            # right_line_in_pixels,
+            dist_normalized,
+            states,
+            self.x_row,
+            600,
+            500,
+            left_points_pixels,
+            right_points_pixels,
+        )
+
+        AutoCarlaUtils.show_image_with_center_point(
             "front RGB",
             self.front_rgb_camera[(self.front_rgb_camera.shape[0] // 2) :],
             1,
@@ -1371,12 +1809,6 @@ class FollowLaneQlearnStaticWeatherNoTraffic(FollowLaneEnv):
             1250,
             10,
         )
-        # AutoCarlaUtils.show_image(
-        #    "segmentation",
-        #    self.segmentation_cam,
-        #    1400,
-        #    600,
-        # )
 
         # error = [
         #    abs(
@@ -1392,7 +1824,7 @@ class FollowLaneQlearnStaticWeatherNoTraffic(FollowLaneEnv):
         # reward, done = self.autocarlarewards.rewards_right_line(
         #    dist_normalized, self.x_row, self.params
         # )
-        reward, done = self.autocarlarewards.rewards_followlane_error_center(
+        reward, done = self.autocarlarewards.rewards_followlane_error_center_n_points(
             dist_normalized, self.rewards
         )
 
@@ -1466,46 +1898,56 @@ class FollowLaneQlearnStaticWeatherNoTraffic(FollowLaneEnv):
             Brake=self.params["Brake"],
             _="------------------------",
             states=states,
-            distance_to_center=distance_to_center,
-            distance_to_center_normalized=distance_to_center_normalized,
-            self_perfect_distance_pixels=self.perfect_distance_pixels,
-            self_perfect_distance_normalized=self.perfect_distance_normalized,
-            error=error,
+            lane_centers_in_pixels=lane_centers_in_pixels,
+            distance_to_center=dist,
+            distance_to_center_normalized=dist_normalized,
+            # self_perfect_distance_pixels=self.perfect_distance_pixels,
+            # self_perfect_distance_normalized=self.perfect_distance_normalized,
+            # error=error,
             done=done,
             reward=reward,
             states_16=states_16,
+            states_0=states_0,
             self_collision_hist=self.collision_hist,
         )
         """
         return states, reward, done, {}
 
-    def control(self, action):
+    def control_only_right(self, action):
         steering_angle = 0
         if action == 0:
-            throttle_upper_limit = 0.4
-            steer = -0.1
+            throttle = 0.6
+            steer = -0.08
             # self.car.apply_control(
             #    carla.VehicleControl(throttle=0.4, steer=-0.1)
             # )  # jugamos con -0.01
             # self._control.throttle = min(self._control.throttle + 0.01, 1.00)
             # self._control.steer = -0.02
-            steering_angle = -0.1
+            steering_angle = -0.08
         elif action == 1:
-            throttle_upper_limit = 0.6
+            throttle = 0.7
             steer = 0.0
             # self.car.apply_control(carla.VehicleControl(throttle=0.6, steer=0.0))
             # self._control.throttle = min(self._control.throttle + 0.01, 1.00)
             # self._control.steer = 0.0
             steering_angle = 0
         elif action == 2:
-            throttle_upper_limit = 0.4
-            steer = 0.1
+            throttle = 0.6
+            steer = 0.08
             # self.car.apply_control(
             #    carla.VehicleControl(throttle=0.4, steer=0.1)
             # )  # jigamos con 0.01 par ala recta
             # self._control.throttle = min(self._control.throttle + 0.01, 1.0)
             # self._control.steer = 0.02
-            steering_angle = 0.1
+            steering_angle = 0.08
+        elif action == 3:
+            throttle = 0.4
+            steer = 0.2
+            steering_angle = 0.2
+        elif action == 4:
+            throttle = 0.4
+            steer = -0.2
+            steering_angle = -0.2
 
         t = self.car.get_transform()
         v = self.car.get_velocity()
@@ -1524,14 +1966,103 @@ class FollowLaneQlearnStaticWeatherNoTraffic(FollowLaneEnv):
 
         ## Applied throttle, brake and steer
         curr_speed = int(3.6 * math.sqrt(v.x**2 + v.y**2 + v.z**2))
-        target_speed = 4
-        throttle_low_limit = 0.1
-        clip_throttle = self.clip_throttle(
-            throttle_upper_limit, curr_speed, target_speed, throttle_low_limit
-        )
+        target_speed = 20
+        # throttle_low_limit = 0.0 #0.1 for low speeds
+        brake = 0
+        vel_error = curr_speed / target_speed - 1
+        limit = 0.0
+        if vel_error > limit:
+            # brake = 1
+            throttle = 0.2
+        else:
+            throttle = 0.7
+
+        # clip_throttle = self.clip_throttle(
+        #    throttle_upper_limit, curr_speed, target_speed, throttle_low_limit
+        # )
+
+        # self.car.apply_control(
+        #    carla.VehicleControl(throttle=clip_throttle, steer=steer)
+        # )
 
         self.car.apply_control(
-            carla.VehicleControl(throttle=clip_throttle, steer=steer)
+            carla.VehicleControl(throttle=throttle, steer=steer, brake=brake)
+        )
+
+    def control(self, action):
+        steering_angle = 0
+        if action == 0:
+            throttle = 0.7
+            steer = -0.08
+            # self.car.apply_control(
+            #    carla.VehicleControl(throttle=0.4, steer=-0.1)
+            # )  # jugamos con -0.01
+            # self._control.throttle = min(self._control.throttle + 0.01, 1.00)
+            # self._control.steer = -0.02
+            steering_angle = -0.08
+        elif action == 1:
+            throttle = 0.7
+            steer = 0.0
+            # self.car.apply_control(carla.VehicleControl(throttle=0.6, steer=0.0))
+            # self._control.throttle = min(self._control.throttle + 0.01, 1.00)
+            # self._control.steer = 0.0
+            steering_angle = 0
+        elif action == 2:
+            throttle = 0.7
+            steer = 0.08
+            # self.car.apply_control(
+            #    carla.VehicleControl(throttle=0.4, steer=0.1)
+            # )  # jigamos con 0.01 par ala recta
+            # self._control.throttle = min(self._control.throttle + 0.01, 1.0)
+            # self._control.steer = 0.02
+            steering_angle = 0.08
+        elif action == 3:
+            throttle = 0.4
+            steer = 0.2
+            steering_angle = 0.2
+        elif action == 4:
+            throttle = 0.4
+            steer = -0.2
+            steering_angle = -0.2
+
+        t = self.car.get_transform()
+        v = self.car.get_velocity()
+        c = self.car.get_control()
+        w = self.car.get_angular_velocity()
+        a = self.car.get_acceleration()
+        self.params["speed"] = int(3.6 * math.sqrt(v.x**2 + v.y**2 + v.z**2))
+        self.params["steering_angle"] = w
+        self.params["Steering_angle"] = steering_angle
+        self.params["Steer"] = c.steer
+        self.params["location"] = (t.location.x, t.location.y)
+        self.params["Throttle"] = c.throttle
+        self.params["Brake"] = c.brake
+        self.params["height"] = t.location.z
+        self.params["Acceleration"] = math.sqrt(a.x**2 + a.y**2 + a.z**2)
+
+        ## Applied throttle, brake and steer
+        curr_speed = int(3.6 * math.sqrt(v.x**2 + v.y**2 + v.z**2))
+        target_speed = 20
+        # throttle_low_limit = 0.0 #0.1 for low speeds
+        brake = 0
+        vel_error = curr_speed / target_speed - 1
+        limit = 0.0
+        if vel_error > limit:
+            # brake = 1
+            throttle = 0.1
+        else:
+            throttle = 0.7
+
+        # clip_throttle = self.clip_throttle(
+        #    throttle_upper_limit, curr_speed, target_speed, throttle_low_limit
+        # )
+
+        # self.car.apply_control(
+        #    carla.VehicleControl(throttle=clip_throttle, steer=steer)
+        # )
+
+        self.car.apply_control(
+            carla.VehicleControl(throttle=throttle, steer=steer, brake=brake)
         )
 
     def clip_throttle(self, throttle, curr_speed, target_speed, low_throttle):
@@ -1576,7 +2107,7 @@ class FollowLaneQlearnStaticWeatherNoTraffic(FollowLaneEnv):
         time.sleep(0.1)
         self.front_camera = image3
 
-    def checking_carla_server(self):
+    def checking_carla_server(self, town):
         # print(f"checking Carla Server...")
 
         try:
@@ -1607,7 +2138,7 @@ class FollowLaneQlearnStaticWeatherNoTraffic(FollowLaneEnv):
                         [carla_exec, "-prefernvidia"], stdout=out, stderr=err
                     )
                 time.sleep(5)
-                self.world = self.client.load_world(config["town"])
+                self.world = self.client.load_world(town)
 
             except subprocess.CalledProcessError as ce:
                 print(

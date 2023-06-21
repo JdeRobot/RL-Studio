@@ -40,6 +40,7 @@ class FollowLaneCarlaConfig(BaseModel):
 
         # States
         self.state_space = config["states"]
+        self.states_entry = config["states_entry"]
         if self.state_space == "spn":
             self.x_row = [i for i in range(1, int(self.height / 2) - 1)]
         else:

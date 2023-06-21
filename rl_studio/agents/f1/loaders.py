@@ -650,6 +650,7 @@ class LoadEnvVariablesQlearnCarla:
         # States
         self.environment["states"] = config["settings"]["states"]
         self.environment["x_row"] = config["states"][self.states][0]
+        self.environment["states_entry"] = config["states"]["states_entry"]
 
         # Actions
         self.environment["action_space"] = config["settings"]["actions"]

@@ -23,7 +23,7 @@ class StatsDataFrame:
             file_excel = f"{outdir}/{time.strftime('%Y%m%d')}_Circuit-{environment['town']}_States-{environment['states']}_Actions-{environment['action_space']}_Rewards-{environment['reward_function']}.xlsx"
 
         df = pd.DataFrame(stats)
-        df.to_csv(file_csv, mode="w", index=False, header=None)
+        #df.to_csv(file_csv, mode="w", index=False, header=None)
 
         # with pd.ExcelWriter(file_excel, mode="a") as writer:
         #    df.to_excel(writer)

@@ -5,7 +5,7 @@ import random
 import sys
 import time
 
-import matplotlib as plt
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 
@@ -56,7 +56,7 @@ def plot_ie_metrics(file):
         color="red",
         linewidth=2,
         linestyle="-",
-        label="rewards",
+        label="distance",
     )  # Plot some data on the (implicit)axes.
     ax[1, 0].set_xlabel("episodes")
     ax[1, 0].set_ylabel("distance")
@@ -68,7 +68,7 @@ def plot_ie_metrics(file):
         color="black",
         linewidth=2,
         linestyle="-",
-        label="rewards",
+        label="time",
     )  # Plot some data on the (implicit) axes.
     ax[1, 1].set_xlabel("episodes")
     ax[1, 1].set_ylabel("time")
@@ -133,7 +133,7 @@ def plot_ie_metrics(file):
         color="red",
         linewidth=2,
         linestyle="-",
-        label="rewards",
+        label="distance",
     )  # Plot some data on the (implicit)axes.
     axs3.set_xlabel("episodes")
     axs3.set_ylabel("distance")
@@ -151,7 +151,7 @@ def plot_ie_metrics(file):
         color="black",
         linewidth=2,
         linestyle="-",
-        label="rewards",
+        label="epoch time",
     )  # Plot some data on the (implicit) axes.
     axs4.set_xlabel("episodes")
     axs4.set_ylabel("time")
@@ -161,32 +161,39 @@ def plot_ie_metrics(file):
     plt.savefig(f"{file_time}.png", dpi=600)
     plt.savefig(f"{file_time}.jpg", dpi=600)
 
+    # lane changed
+    fig5, axs5 = plt.subplots(1, 1, sharey=True, tight_layout=True)
+    axs5.plot(
+        df["episode"],
+        df["lane_changed"],
+        color="green",
+        linewidth=2,
+        linestyle="-",
+        label="lane changed",
+    )  # Plot some data on the (implicit) axes.
+    axs5.set_xlabel("episodes")
+    axs5.set_ylabel("lane changed")
+    axs5.set_title("Lane changed in every epoch")
+
+    file_lane_changed = f"{time.strftime('%Y%m%d-%H%M%S')}_lane_changed"
+    plt.savefig(f"{file_lane_changed}.png", dpi=600)
+    plt.savefig(f"{file_lane_changed}.jpg", dpi=600)
+
 
 def plot_sac_metrics(file):
     df_sac = pd.read_excel(file, usecols=[1, 2, 3, 4])
     print(df_sac)
 
-    num_states = 16
+    ### STATES
+    num_states = 8
     list_states = [
         df_sac[df_sac["state"] == i][["counter"]].sum() for i in range(0, num_states)
     ]
-    # print(lista_states)
 
     states_df = pd.DataFrame(list_states, columns=["state", "counter"])
     # print(states_df)
     states_df["state"] = states_df.index
     # print(states_df)
-
-    num_actions = 3
-    list_actions = [
-        df_sac[df_sac["action"] == i][["counter"]].sum() for i in range(0, num_actions)
-    ]
-    # print(lista_acciones)
-
-    actions_df = pd.DataFrame(list_actions, columns=["action", "counter"])
-    # print(states_df)
-    actions_df["action"] = actions_df.index
-    # print(actions_df)
 
     fig1, axs1 = plt.subplots(1, 1, figsize=(10, 6), sharey=True, tight_layout=True)
     axs1.bar(states_df["state"], states_df["counter"], color="dodgerblue")
@@ -194,6 +201,21 @@ def plot_sac_metrics(file):
     axs1.set_ylabel("frequency")
     axs1.set_title("Histogram of States")
     axs1.set_xticks(states_df["state"])
+
+    file_states = f"{time.strftime('%Y%m%d-%H%M%S')}_histogram_states"
+    plt.savefig(f"{file_states}.png", dpi=600)
+    plt.savefig(f"{file_states}.jpg", dpi=600)
+
+    #### ACTIONS
+    num_actions = 3
+    list_actions = [
+        df_sac[df_sac["action"] == i][["counter"]].sum() for i in range(0, num_actions)
+    ]
+
+    actions_df = pd.DataFrame(list_actions, columns=["action", "counter"])
+    # print(states_df)
+    actions_df["action"] = actions_df.index
+    # print(actions_df)
 
     fig2, axs2 = plt.subplots(1, 1, sharey=True, tight_layout=True)
     axs2.bar(
@@ -207,10 +229,6 @@ def plot_sac_metrics(file):
     axs2.set_title("Histogram of Actions")
     axs2.set_xticks(actions_df["action"])
 
-    file_states = f"{time.strftime('%Y%m%d-%H%M%S')}_histogram_states"
-    plt.savefig(f"{file_states}.png", dpi=600)
-    plt.savefig(f"{file_states}.jpg", dpi=600)
-
     file_actions = f"{time.strftime('%Y%m%d-%H%M%S')}_histogram_actions"
     plt.savefig(f"{file_actions}.png", dpi=600)
     plt.savefig(f"{file_actions}.jpg", dpi=600)
@@ -223,14 +241,15 @@ def plot_qtable(file):
     dataf_size = df_qtable.shape[0]
 
     actions = [0, 1, 2]
-    states = [i for i in range(0, 16)]
+    states = [i for i in range(0, 8)]
+    z_pos = np.where(df_qtable["q_value"] >= 0, df_qtable["q_value"], 0)
+    z_neg = np.where(df_qtable["q_value"] < 0, df_qtable["q_value"], 0)
     fig = plt.figure(figsize=(10, 10))
+
     ax1 = fig.add_subplot(111, projection="3d")
     # ax1.bar3d(df_qtable['state'], df_qtable['action'], np.zeros(dataf_size), np.ones(dataf_size), np.ones(dataf_size), df_qtable['q_value'])
-    ax1.bar3d(
-        df_qtable["state"], df_qtable["action"], 0.1, 0.1, 0.1, df_qtable["q_value"]
-    )
-
+    ax1.bar3d(df_qtable["state"], df_qtable["action"], 0.1, 0.1, 0.1, z_pos)
+    ax1.bar3d(df_qtable["state"], df_qtable["action"], 0.1, 0.1, 0.1, z_neg)
     # for y in enumerate(actions):
     #  ax1.bar(df_qtable['state'], df_qtable['q_value'], zs=y, zdir='y')
 
@@ -253,21 +272,20 @@ def plot_qtable(file):
 def generate_plotter(args):
     # print(f"{args=}")
     if args.type == "ie_metrics":
-        print("me meti ie_metrics")
         # df = pd.read_excel(args.file)
         # print(f"{df=}")
         """
-        aqui es dibujar las metricas extrinsecas e intrinsecas
+        ie_metrics means for intrinsic and extrinsic metrics
         """
         plot_ie_metrics(args.file)
 
     elif args.type == "sac":
         print("SAC")
-        """aqi funcion de sac"""
+        """sac stands for states and actions counter"""
         plot_sac_metrics(args.file)
     else:
         print("q_table")
-        """ funcion q-table"""
+        """q-table"""
         plot_qtable(args.file)
 
 

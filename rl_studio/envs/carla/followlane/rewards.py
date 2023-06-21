@@ -4,37 +4,22 @@ import numpy as np
 
 
 class AutoCarlaRewards:
-    def rewards_right_line(self, dist_normalized, x_row, params):
-        normalized_distance = {
-            10: 0,
-            20: 0,
-            30: -0.1,
-            60: -0.1,
-            80: -0.2,
-            100: -0.3,
-            130: -0.5,
-            180: -0.5,
-            200: -0.5,
-            230: -0.6,
-        }
-        ground_truth_values = [
-            normalized_distance[value] for i, value in enumerate(x_row)
-        ]
-
+    
+    def rewards_right_line_gazebo(self, dist_normalized, params):
         rewards = []
         done = False
         for index, _ in enumerate(dist_normalized):
             # if dist_normalized[index] > 0:
             #    dist_normalized[index] = -dist_normalized[index]
-            if 0.2 >= abs(dist_normalized[index] - ground_truth_values[index]) >= 0:
+            if 0.65 >= abs(dist_normalized[index]) >= 0.25:
                 rewards.append(10)
-            elif 0.4 >= abs(dist_normalized[index] - ground_truth_values[index]) > 0.2:
+            elif (0.9 > abs(dist_normalized[index]) > 0.65) or (0.25 >= abs(dist_normalized[index]) > 0):
                 rewards.append(2)
-            elif 0.8 >= abs(dist_normalized[index] - ground_truth_values[index]) > 0.4:
-                rewards.append(0.1)
+            # elif 0.0 >= dist_normalized[index] > -0.2:
+            #    rewards.append(0.1)
             else:
-                rewards.append(-100)
-                done = True
+                rewards.append(0)
+                # done = True
 
         function_reward = sum(rewards) / len(rewards)
 
@@ -42,9 +27,47 @@ class AutoCarlaRewards:
         # function_reward += params["velocity"] * 0.5
         # function_reward -= params["steering_angle"] * 1.02
 
+        if function_reward < 0.5:
+            done = True
+
+        return function_reward, done
+    
+    
+        
+    def rewards_right_line(self, dist_normalized, params):
+        rewards = []
+        done = False
+        for index, _ in enumerate(dist_normalized):
+            # if dist_normalized[index] > 0:
+            #    dist_normalized[index] = -dist_normalized[index]
+            if 0.2 >= abs(dist_normalized[index]) >= 0:
+                rewards.append(10)
+            elif 0.5 >= abs(dist_normalized[index]) > 0.2:
+                rewards.append(2)
+            # elif 0.0 >= dist_normalized[index] > -0.2:
+            #    rewards.append(0.1)
+            else:
+                rewards.append(-10)
+                # done = True
+
+        function_reward = sum(rewards) / len(rewards)
+
+        # TODO: remove next comments
+        # function_reward += params["velocity"] * 0.5
+        # function_reward -= params["steering_angle"] * 1.02
+
+        #if function_reward < 0.5:
+        if function_reward < -7:
+            done = True
+
         return function_reward, done
 
     def rewards_followlane_error_center(self, error, params):
+        """
+        Center, taken from 2 lines: left and right
+        1 point1 of perception
+        """
+
         rewards = []
         done = False
         for i, _ in enumerate(error):
@@ -59,6 +82,34 @@ class AutoCarlaRewards:
                 done = True
 
         function_reward = sum(rewards) / len(rewards)
+
+        # TODO: remove next comments
+        # function_reward += params["velocity"] * 0.5
+        # function_reward -= params["steering_angle"] * 1.02
+
+        return function_reward, done
+
+    def rewards_followlane_error_center_n_points(self, error, params):
+        """
+        N points of perception
+        """
+
+        rewards = []
+        done = False
+        for i, _ in enumerate(error):
+            if error[i] > 0.85:
+                rewards.append(10)
+            elif 0.85 >= error[i] > 0.45:
+                rewards.append(2)
+            # elif 0.45 >= error[i] > 0.1:
+            #    rewards.append(0.1)
+            else:
+                rewards.append(0)
+                # done = True
+
+        function_reward = sum(rewards) / len(rewards)
+        if function_reward < 0.5:
+            done = True
 
         # TODO: remove next comments
         # function_reward += params["velocity"] * 0.5
