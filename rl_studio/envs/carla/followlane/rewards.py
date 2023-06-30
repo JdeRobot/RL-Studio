@@ -3,8 +3,55 @@ import math
 import numpy as np
 
 
+CND = {
+    20: -0.07,
+    30: -0.1,
+    40: -0.13,
+    50: -0.17,
+    60: -0.2,
+    70: -0.23,
+    80: -0.26,
+    90: -0.3,
+    100: -0.33,
+    110: -0.36,
+    120: -0.4,
+    130: -0.42,
+    140: -0.46,
+    150: -0.49,
+    160: -0.52,
+    170: -0.56,
+    180: -0.59,
+    190: -0.62,
+    200: -0.65,
+    210: -0.69,
+    220: -0.72,
+}
+CPD = {
+    20: 343,
+    30: 353,
+    40: 363,
+    50: 374,
+    60: 384,
+    70: 394,
+    80: 404,
+    90: 415,
+    100: 425,
+    110: 436,
+    120: 446,
+    130: 456,
+    140: 467,
+    150: 477,
+    160: 488,
+    170: 498,
+    180: 508,
+    190: 518,
+    200: 528,
+    210: 540,
+    220: 550,
+}
+
+
 class AutoCarlaRewards:
-    
     def rewards_right_line_gazebo(self, dist_normalized, params):
         rewards = []
         done = False
@@ -13,7 +60,9 @@ class AutoCarlaRewards:
             #    dist_normalized[index] = -dist_normalized[index]
             if 0.65 >= abs(dist_normalized[index]) >= 0.25:
                 rewards.append(10)
-            elif (0.9 > abs(dist_normalized[index]) > 0.65) or (0.25 >= abs(dist_normalized[index]) > 0):
+            elif (0.9 > abs(dist_normalized[index]) > 0.65) or (
+                0.25 >= abs(dist_normalized[index]) > 0
+            ):
                 rewards.append(2)
             # elif 0.0 >= dist_normalized[index] > -0.2:
             #    rewards.append(0.1)
@@ -31,21 +80,24 @@ class AutoCarlaRewards:
             done = True
 
         return function_reward, done
-    
-    
-        
-    def rewards_right_line(self, dist_normalized, params):
+
+    def rewards_right_line(self, dist_normalized, ground_truth_normalized, params):
         rewards = []
         done = False
+        # ground_truth_values = [CND[value] for i, value in enumerate(x_row)]
+
         for index, _ in enumerate(dist_normalized):
-            # if dist_normalized[index] > 0:
-            #    dist_normalized[index] = -dist_normalized[index]
-            if 0.2 >= abs(dist_normalized[index]) >= 0:
+            if 0.2 >= ground_truth_normalized[index] - dist_normalized[index] >= 0 or (
+                0 > ground_truth_normalized[index] - dist_normalized[index] >= -0.2
+            ):
                 rewards.append(10)
-            elif 0.5 >= abs(dist_normalized[index]) > 0.2:
+            elif (
+                0.4 >= ground_truth_normalized[index] - dist_normalized[index] > 0.2
+            ) or (
+                -0.2 >= ground_truth_normalized[index] - dist_normalized[index] > -0.4
+            ):
                 rewards.append(2)
-            # elif 0.0 >= dist_normalized[index] > -0.2:
-            #    rewards.append(0.1)
+
             else:
                 rewards.append(-10)
                 # done = True
@@ -56,7 +108,7 @@ class AutoCarlaRewards:
         # function_reward += params["velocity"] * 0.5
         # function_reward -= params["steering_angle"] * 1.02
 
-        #if function_reward < 0.5:
+        # if function_reward < 0.5:
         if function_reward < -7:
             done = True
 

@@ -63,6 +63,67 @@ class AutoCarlaUtils:
         return False, dist
 
     @staticmethod
+    def show_image_only_right_line(
+        name,
+        img,
+        waitkey,
+        dist_in_pixels,
+        ground_truth_pixel_values,
+        dist_normalized,
+        states,
+        x_row,
+        x,
+        y,
+    ):
+        """
+        shows image with 1 point in center of lane
+        """
+        window_name = f"{name}"
+        img = np.array(img)
+
+        for index, _ in enumerate(x_row):
+            ### Points
+            cv2.circle(
+                img,
+                (
+                    int(dist_in_pixels[index]),
+                    int(x_row[index]),
+                ),
+                5,
+                # (150, 200, 150),
+                (255, 255, 255),
+                2,
+            )
+            cv2.circle(
+                img,
+                (int(ground_truth_pixel_values[index]), int(x_row[index])),
+                4,
+                # (150, 200, 150),
+                (255, 255, 255),
+                1,
+            )
+
+            cv2.putText(
+                img,
+                str(
+                    f"[right_line:{int(dist_in_pixels[index])}]-[state:{states[index]}]-[dist:{dist_normalized[index]}]"
+                    # f"[dist_norm:{int(centrals_in_pixels[index])}]-[state:{states[index]}]-[dist:{errors[index]}]"
+                ),
+                (int(dist_in_pixels[index]), int(x_row[index]) - 5),
+                cv2.FONT_HERSHEY_SIMPLEX,
+                0.4,
+                # (255, 255, 255),
+                (255, 255, 255),
+                1,
+                cv2.LINE_AA,
+            )
+
+        cv2.namedWindow(window_name)  # Create a named window
+        cv2.moveWindow(window_name, x, y)  # Move it to (40,30)
+        cv2.imshow(window_name, img)
+        cv2.waitKey(waitkey)
+
+    @staticmethod
     def show_image_with_three_points(
         name,
         img,
