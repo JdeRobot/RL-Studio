@@ -154,15 +154,15 @@ def save_dataframe_episodes(environment, outdir, aggr_ep_rewards, actions_reward
     """
     os.makedirs(f"{outdir}", exist_ok=True)
 
-    file_csv = f"{outdir}/{time.strftime('%Y%m%d-%H%M%S')}_Circuit-{environment['circuit_name']}_States-{environment['states']}_Actions-{environment['action_space']}_Rewards-{environment['reward_function']}.csv"
-    file_excel = f"{outdir}/{time.strftime('%Y%m%d-%H%M%S')}_Circuit-{environment['circuit_name']}_States-{environment['states']}_Actions-{environment['action_space']}_Rewards-{environment['reward_function']}.xlsx"
+    file_csv = f"{outdir}/{time.strftime('%Y%m%d-%H%M%S')}_town-{environment['town']}_States-{environment['states']}_Actions-{environment['action_space']}_Rewards-{environment['reward_function']}.csv"
+    file_excel = f"{outdir}/{time.strftime('%Y%m%d-%H%M%S')}_town-{environment['town']}_States-{environment['states']}_Actions-{environment['action_space']}_Rewards-{environment['reward_function']}.xlsx"
 
     df = pd.DataFrame(aggr_ep_rewards)
-    #df.to_csv(file_csv, mode="a", index=False, header=None)
+    # df.to_csv(file_csv, mode="a", index=False, header=None)
     df.to_excel(file_excel)
 
     if actions_rewards is not None:
-        file_npy = f"{outdir}/{time.strftime('%Y%m%d-%H%M%S')}_Circuit-{environment['circuit_name']}_States-{environment['states']}_Actions-{environment['action_space']}_Rewards-{environment['reward_function']}.npy"
+        file_npy = f"{outdir}/{time.strftime('%Y%m%d-%H%M%S')}_town-{environment['town']}_States-{environment['states']}_Actions-{environment['action_space']}_Rewards-{environment['reward_function']}.npy"
         np.save(file_npy, actions_rewards)
 
 
@@ -178,7 +178,7 @@ def save_carla_dataframe_episodes(
     file_excel = f"{outdir}/{time.strftime('%Y%m%d')}_Circuit-{environment['town']}_States-{environment['states']}_Actions-{environment['action_space']}_Rewards-{environment['reward_function']}.xlsx"
 
     df = pd.DataFrame(aggr_ep_rewards)
-    #df.to_csv(file_csv, mode="a", index=False, header=None)
+    # df.to_csv(file_csv, mode="a", index=False, header=None)
 
     # with pd.ExcelWriter(file_excel, mode="a") as writer:
     #    df.to_excel(writer)

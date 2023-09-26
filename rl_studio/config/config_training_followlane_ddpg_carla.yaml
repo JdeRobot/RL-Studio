@@ -1,17 +1,17 @@
 settings:
-  mode: retraining # training, retraining
-  task: follow_lane_carla # follow_line_gazebo, follow_lane_gazebo
-  algorithm: qlearn # qlearn
+  mode: training # training, retraining, inference
+  task: follow_lane_carla # follow_line_gazebo, follow_lane_gazebo, autoparking_gazebo
+  algorithm: ddpg # qlearn, dqn, ddpg, ppo
   simulator: carla # openai, carla, gazebo, sumo
   environment_set: carla_environments # gazebo_environments, carla_environments
-  env: follow_lane # Town01, simple, nurburgring, montreal, curves, simple_laser, manual, autoparking
+  env: follow_lane # simple, nurburgring, montreal, curves, simple_laser, manual, autoparking
   agent: auto_carla # f1, autoparkingRL, auto_carla, mountain_car, robot_mesh, cartpole, turtlebot
-  actions: carla_simple # simple, medium, hard, test, autoparking_simple
-  states: sp4 # sp1 (simplified perception with 1 point), sp3 (simplified perception with 3 points), spn (simplified perception with n points)
-  rewards: rewards_sigmoid_only_right_line #
-  framework: _
-  total_episodes: 1000
-  training_time: 12
+  actions: continuous # continuous, simple, medium, hard, test, autoparking_simple
+  states: sp1 #sp4 #image, sp1 (simplified perception with 1 point), sp3 (simplified perception with 3 points), spn (simplified perception with n points)
+  rewards: rewards_sigmoid_only_right_line # follow_right_lane_only_center, follow_right_lane_center_v_step, follow_right_lane_center_v_w_linear
+  framework: TensorFlow # TensorFlow, Pytorch
+  total_episodes: 5000
+  training_time: 16
   models_dir: "./checkpoints"
   logs_dir: "./logs"
   metrics_dir: "./metrics"
@@ -26,57 +26,63 @@ carla:
   carla_client: 2000
 
 retraining:
-  qlearn:
-    retrain_qlearn_model_name: "20230715-171404_Circuit-Town04_Opt_States-sp4_Actions-carla_simple_Rewards-rewards_sigmoid_only_right_line_epsilon-0.779_epoch-181_step-301_reward-2987_QTABLE.pkl"
+  ddpg:
+    retrain_ddpg_tf_actor_model_name: "20230111_DDPG_Actor_conv2d32x64_Critic_conv2d32x64_BESTLAP_ACTOR_Max-69_Epoch-4_State-image_Actions-continuous_Rewards-follow_right_lane_center_v_w_linear_inTime-20230111-200026.h5"
+    retrain_ddpg_tf_critic_model_name: "20230111_DDPG_Actor_conv2d32x64_Critic_conv2d32x64_BESTLAP_CRITIC_Max-69_Epoch-4_State-image_Actions-continuous_Rewards-follow_right_lane_center_v_w_linear_inTime-20230111-200026.h5"
 
 inference:
-  qlearn:
-    inference_qlearn_model_name:
+  ddpg:
+    inference_ddpg_tf_actor_model_name:
+    inference_ddpg_tf_critic_model_name:
 
 algorithm:
-  qlearn:
-    alpha: 0.7
-    epsilon: 0.95
-    epsilon_min: 0.05
-    gamma: 0.9
+  ddpg:
+    gamma: 0.99
+    tau: 0.005
+    std_dev: 0.2
+    model_name: DDPG_Actor_conv2d32x64_Critic_conv2d32x64
+    replay_memory_size: 50_000
+    memory_fraction: 0.20
+    critic_lr: 0.002
+    actor_lr: 0.001
+    buffer_capacity: 100_000
+    batch_size: 64
 
 agents:
   auto_carla:
     camera_params:
-      width: 640 #1024 #640
-      height: 480 #512 #480
+      width: 640
+      height: 480
       center_image: 320
       raw_image: False
       image_resizing: 100
       new_image_size: 32
-      num_regions: 7
+      num_regions: 16
       lower_limit: 220
 
-states: # only values allowed: [10, 20, 30, 60, 80, 100, 130, 180, 200, 230]
+states:
+  image:
+    0: [30, 40, 50, 60] # try up to 4 points
   sp1:
-    0: [60] #100 works well
+    0: [50]
+  sp3:
+    0: [5, 15, 22]
   sp4:
     0: [30, 40, 50, 60] #[50, 70, 90, 120] #[30, 50, 70, 90] #[90, 130, 170, 210] #[30, 60, 100, 120]
   sp5:
     0: [3, 5, 10, 15, 20]
   spn:
-    0: [50, 120, 180]
-  states_entry: one_only_right_line # one_only_right_line, one_between_right_left_lines
+    0: [10]
+  states_entry: only_right_line # only_right_line, between_right_left_lines, lane_detector_pytorch
 
 actions:
-  carla_simple:
-    0: [0.5, -0.03] #turn left
-    1: [0.55, 0.0] #straight forward
-    2: [0.5, 0.03] #turn right
-    3: [0.45, -0.07] #turn left hard
-    4: [0.45, 0.07] #turn right hard
-    #5: [0.4, -0.1] #turn left
-    #6: [0.4, 0.1] #straight forward
-
+  continuous:
+    v: [0.4, 0.4] #throttle
+    w: [-0.07000, 0.07000] #steering
   simple:
-    0: [2, -1]
-    1: [3, 0]
-    2: [2, 1]
+    0: [3, 0]
+    1: [2, 1]
+    2: [2, -1]
   medium:
     0: [3, 0]
     1: [2, 1]
@@ -116,6 +122,12 @@ rewards:
     penal: -100
     min_reward: 5_000
     highest_reward: 100
+  follow_right_lane_center_v_w_linear: # only for continuous actions
+    beta_0: 3
+    beta_1: -0.1
+    penal: 0
+    min_reward: 1_000
+    highest_reward: 100
 
 carla_environments:
   follow_lane:
@@ -144,7 +156,7 @@ carla_environments:
     # Town01_Opt, Town02_Opt, Town03_Opt, Town04_Opt, Town05_Opt, Town06_Opt, Town07_Opt, Town10HD_Opt
     init_pose:
       random_pose: False # random positions in the whole town
-      alternate_pose: True # random positions but only for selected poses in carla_town_positions->tonwXX->laneX->init_positions
+      alternate_pose: False # random positions but only for selected poses in carla_town_positions->tonwXX->laneX->init_positions
       init_pose_number: 0
       finish_pose_number: 0
       town_circuit: highway_circuit

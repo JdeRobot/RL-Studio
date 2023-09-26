@@ -142,10 +142,15 @@ class QLearn:
         self.alpha = alpha  # discount constant
         self.gamma = gamma  # discount factor
         self.actions = actions
+        print(f"{self.gamma = } and {self.alpha = }")
 
     def getQValues(self, state, action):
         return self.q.get((state, action), 0.0)
 
+    def learn(self, state1, action1, reward, state2):
+        maxqnew = max([self.getQValues(state2, a) for a in self.actions])
+        self.learnQ(state1, action1, reward, reward + self.gamma * maxqnew)
+        
     def learnQ(self, state, action, reward, value):
         """
         Q-learning:
@@ -185,9 +190,6 @@ class QLearn:
             return action, q
         return action
 
-    def learn(self, state1, action1, reward, state2):
-        maxqnew = max([self.getQValues(state2, a) for a in self.actions])
-        self.learnQ(state1, action1, reward, reward + self.gamma * maxqnew)
 
     def reset(self):
         self.state = self.np_random.uniform(low=-0.05, high=0.05, size=(4,))
@@ -213,18 +215,18 @@ class QLearn:
         return action
 
     def load_pickle_model(self, file_path):
-
         qlearn_file = open(file_path, "rb")
         self.q = pickle.load(qlearn_file)
+
+    def load_table(self, file):
+        self.q_table = np.load(file)
 
     def load_np_model(self, file):
         self.q = np.load(file, allow_pickle=True)
 
-    def save_qtable_pickle(self, environment, outdir, qlearn, cumulated_reward,
-        episode,
-        step,
-        epsilon):
-
+    def save_qtable_pickle(
+        self, environment, outdir, qlearn, cumulated_reward, episode, step, epsilon
+    ):
         os.makedirs(f"{outdir}", exist_ok=True)
         # Q TABLE PICKLE
         # base_file_name = "_actions_set:_{}_epsilon:_{}".format(settings.actions_set, round(qlearn.epsilon, 2))
@@ -234,7 +236,6 @@ class QLearn:
             "wb",
         )
         pickle.dump(qlearn.q, file_dump)
-
 
     def save_model(
         self,
@@ -296,7 +297,6 @@ class QLearn:
         # np.save(np_file, qtable)
 
     def load_qmodel_actionsmodel(self, file_path, actions_path):
-
         qlearn_file = open(file_path, "rb")
         actions_file = open(actions_path, "rb")
 
@@ -349,7 +349,7 @@ class QLearnCarla:
 
         return action
 
-    #@profile
+    # @profile
     def learn(self, state, action, reward, next_state):
         """
         Two ways of similar Q-Learn eq., and we choose 1):
@@ -428,7 +428,6 @@ class QLearnCarlaTable:
         self.actions_len = actions_len
 
     def select_action(self, state):
-
         # print(f"in selec_action()")
         # print(f"qlearn.q_table = {self.q_table}")
         # print(f"len qlearn.q_table = {len(self.q_table)}")

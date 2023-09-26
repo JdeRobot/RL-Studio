@@ -74,6 +74,7 @@ class AutoCarlaUtils:
         x_row,
         x,
         y,
+        state_right_lines,
     ):
         """
         shows image with 1 point in center of lane
@@ -81,7 +82,18 @@ class AutoCarlaUtils:
         window_name = f"{name}"
         img = np.array(img)
 
-        for index, _ in enumerate(x_row):
+        ## vertical lines for states: 5, 7, 8, 16...
+        for index, _ in enumerate(state_right_lines): 
+            cv2.line(
+                img,
+                (state_right_lines[index], 0),
+                (state_right_lines[index], int(img.shape[0])),
+                color=(100, 200, 100),
+                thickness=1,
+            )        
+
+
+        for index, _ in enumerate(x_row):            
             ### Points
             cv2.circle(
                 img,
@@ -106,7 +118,7 @@ class AutoCarlaUtils:
             cv2.putText(
                 img,
                 str(
-                    f"[right_line:{int(dist_in_pixels[index])}]-[state:{states[index]}]-[dist:{dist_normalized[index]}]"
+                    f"[right_line:{int(dist_in_pixels[index])}]-[dist:{dist_normalized[index]}]"
                     # f"[dist_norm:{int(centrals_in_pixels[index])}]-[state:{states[index]}]-[dist:{errors[index]}]"
                 ),
                 (int(dist_in_pixels[index]), int(x_row[index]) - 5),

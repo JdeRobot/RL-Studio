@@ -80,7 +80,24 @@ def plot_ie_metrics(file):
     plt.savefig(f"{file_saved}.jpg", dpi=600)
 
     ### individuals #####
+    # a, b = np.polyfit(df["episode"], df["cumulated_reward"], deg=1)
+    a, b, c = np.polyfit(df["episode"], df["cumulated_reward"], deg=2)
+    # a, b, c, d = np.polyfit(df["episode"], df["cumulated_reward"], deg=3)
+    # y_est = a * df["episode"] + b
+    y_est = a * np.square(df["episode"]) + b * df["episode"] + c
+    # y_est = (
+    #    a * (df["episode"] ** 3) + b * np.square(df["episode"]) + c * df["episode"] + d
+    # )
+    y_err = df["episode"].std() * np.sqrt(
+        1 / len(df["episode"])
+        + (df["episode"] - df["episode"].mean()) ** 2
+        / np.sum((df["episode"] - df["episode"].mean()) ** 2)
+    )
+
     fig1, axs1 = plt.subplots(1, 1, sharey=True, tight_layout=True)
+    axs1.plot(df["episode"], y_est, color="red", linestyle="-")
+    axs1.fill_between(df["episode"], y_est - y_err, y_est + y_err, alpha=0.2)
+
     axs1.plot(
         df["episode"],
         df["cumulated_reward"],
@@ -96,7 +113,8 @@ def plot_ie_metrics(file):
         linewidth=2,
         linestyle="--",
         label="steps",
-    )  # Plot some data on the (implicit) axes.
+    )
+    # Plot some data on the (implicit) axes.
     axs1.set_xlabel("episodes")
     axs1.set_ylabel("value")
     axs1.set_title("Rewards/steps per epoch")
@@ -185,7 +203,7 @@ def plot_sac_metrics(file):
     print(df_sac)
 
     ### STATES
-    num_states = 8
+    num_states = 5
     list_states = [
         df_sac[df_sac["state"] == i][["counter"]].sum() for i in range(0, num_states)
     ]
@@ -207,7 +225,7 @@ def plot_sac_metrics(file):
     plt.savefig(f"{file_states}.jpg", dpi=600)
 
     #### ACTIONS
-    num_actions = 3
+    num_actions = 5
     list_actions = [
         df_sac[df_sac["action"] == i][["counter"]].sum() for i in range(0, num_actions)
     ]
@@ -221,7 +239,13 @@ def plot_sac_metrics(file):
     axs2.bar(
         actions_df["action"],
         actions_df["counter"],
-        tick_label=["0", "1", "2"],
+        tick_label=[
+            "0",
+            "1",
+            "2",
+            "3",
+            "4",
+        ],  # change in function of line 228, var num_actions
         color="teal",
     )
     axs2.set_xlabel("actions")

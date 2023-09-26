@@ -126,7 +126,7 @@ class TrainerFollowLaneQlearnAutoCarla:
             "main()",
             actions_len=len(self.global_params.actions_set),
             actions_range=range(len(self.global_params.actions_set)),
-            actions=self.global_params.actions_set,
+            actions_set=self.global_params.actions_set,
             epsilon=epsilon,
             epsilon_decay=epsilon_decay,
             alpha=self.environment.environment["alpha"],
@@ -146,7 +146,16 @@ class TrainerFollowLaneQlearnAutoCarla:
         #    "",
         #    qlearn_q_table=qlearn.q_table,
         # )
-        ## -------------    START TRAINING --------------------
+        ## retraining q model
+        if self.environment.environment["mode"] == "retraining":
+            qlearn.load_pickle_model(
+                f"{self.global_params.models_dir}/{self.environment.environment['retrain_qlearn_model_name']}"
+            )
+            # using epsilon reduced
+            epsilon = epsilon / 10
+            print(f"{qlearn.q = }")
+
+            ## -------------    START TRAINING --------------------
         for episode in tqdm(
             range(1, self.env_params.total_episodes + 1),
             ascii=True,
@@ -167,17 +176,19 @@ class TrainerFollowLaneQlearnAutoCarla:
                 # else:
                 #    env.world.wait_for_tick()
                 step += 1
+                start_step = time.time()
+
                 action = qlearn.selectAction(state)
                 # print(f"{action = }")
-                start_step = time.time()
                 observation, reward, done, _ = env.step(action)
                 # time.sleep(4)
-                end_step = time.time()
-                self.global_params.time_steps[step] = end_step - start_step
 
                 # print(f"\n{end_step - start_step = }")
                 cumulated_reward += reward
                 next_state = "".join(map(str, observation))
+                end_step = time.time()
+                self.global_params.time_steps[step] = end_step - start_step
+                
                 """
                 print_messages(
                     "",
@@ -244,6 +255,7 @@ class TrainerFollowLaneQlearnAutoCarla:
                     best_step=best_step,
                     done=done,
                     time_per_step=end_step - start_step,
+                    FPS=1/(end_step - start_step),
                 )
 
                 # best episode and step's stats

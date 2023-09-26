@@ -6,7 +6,6 @@ from rl_studio.envs.gazebo.f1.exceptions import NoValidEnvironmentType
 
 class Carla:
     def __new__(cls, **environment):
-
         algorithm = environment["algorithm"]
         task = environment["task"]
         framework = environment["framework"]
@@ -28,5 +27,20 @@ class Carla:
 
             return FollowLaneQlearnStaticWeatherNoTraffic(**environment)
 
+        # =============================
+        # FollowLane - DDPG - weather: static - traffic and pedestrians: No - TensorFlow
+        # =============================
+        if (
+            task == TasksType.FOLLOWLANECARLA.value
+            and algorithm == AlgorithmsType.DDPG.value
+            and weather != "dynamic"
+            and traffic_pedestrians is False
+            and framework == FrameworksType.TF.value
+        ):
+            from rl_studio.envs.carla.followlane.followlane_ddpg import (
+                FollowLaneDDPGStaticWeatherNoTraffic,
+            )
+
+            return FollowLaneDDPGStaticWeatherNoTraffic(**environment)
         else:
             raise NoValidEnvironmentType(task)

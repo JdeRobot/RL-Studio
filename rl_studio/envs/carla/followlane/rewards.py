@@ -52,6 +52,41 @@ CPD = {
 
 
 class AutoCarlaRewards:
+    def rewards_sigmoid_only_right_line(self, dist_normalized, ground_truth_normalized):
+        """
+        ONLY FOR PERCEPTION WITH RIGHT LINE
+
+        rewards in x = [0, 1] and y = [0, 10]
+        10.099 - (1.1 /(0.1089 + 10e(-12 * dist)))
+        """
+
+        a = 10.099
+        b = 1.1
+        c = 0.1089
+        d = 10
+        e = 12
+
+        rewards = []
+        done = False
+        for index, _ in enumerate(dist_normalized):
+            dist = dist_normalized[index] - ground_truth_normalized[index]
+            rewards.append(a - (b / (c + d * math.exp(-e * abs(dist)))))
+
+        function_reward = sum(rewards) / len(rewards)
+
+        # TODO: remove next comments
+        # function_reward += params["velocity"] * 0.5
+        # function_reward -= params["steering_angle"] * 1.02
+
+        dist_normaliz_mean = sum(dist_normalized) / len(dist_normalized)
+        if (
+            function_reward < 0.3 or dist_normaliz_mean >= 0.16 or dist_normaliz_mean <= -0.5
+        ):  # distance of -0.8 to right, and 0.6 to left
+            done = True
+            function_reward = 0
+
+        return function_reward, done
+
     def rewards_right_line_gazebo(self, dist_normalized, params):
         rewards = []
         done = False
@@ -76,7 +111,7 @@ class AutoCarlaRewards:
         # function_reward += params["velocity"] * 0.5
         # function_reward -= params["steering_angle"] * 1.02
 
-        if function_reward < 0.5:
+        if function_reward < 0.06:  # when distance = 0.8
             done = True
 
         return function_reward, done

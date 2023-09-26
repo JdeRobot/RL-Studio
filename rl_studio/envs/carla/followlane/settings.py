@@ -1,11 +1,10 @@
 from pydantic import BaseModel
 
-from rl_studio.envs.carla.followlane.images import AutoCarlaImages
-from rl_studio.envs.carla.followlane.utils import AutoCarlaUtils
 from rl_studio.envs.carla.followlane.rewards import AutoCarlaRewards
 from rl_studio.envs.carla.followlane.simplified_perception import (
     AutoCarlaSimplifiedPerception,
 )
+from rl_studio.envs.carla.followlane.utils import AutoCarlaUtils
 
 
 class FollowLaneCarlaConfig(BaseModel):
@@ -13,7 +12,8 @@ class FollowLaneCarlaConfig(BaseModel):
         self.simplifiedperception = AutoCarlaSimplifiedPerception()
         self.autocarlarewards = AutoCarlaRewards()
         self.autocarlautils = AutoCarlaUtils()
-        self.autocarlaimages = AutoCarlaImages()
+        # self.autocarlalanedetector = LaneDetector()
+        # self.autocarlainitcarpose = AutoCarlaInitCarPose()
 
         # self.image = ImageF1()
         # self.image = ListenerCamera("/F1ROS/cameraL/image_raw")

@@ -9,7 +9,6 @@ from rl_studio.envs.envs_type import EnvsType
 
 class TrainerFactory:
     def __new__(cls, config):
-
         """
         There are many options:
 
@@ -54,7 +53,23 @@ class TrainerFactory:
             framework=framework,
         )
         # =============================
-        # FollowLane - F1 - qlearn - Carla
+        # Follow Lane - AutoCarla - DDPG - Carla - TF
+        # =============================
+        if (
+            task == TasksType.FOLLOWLANECARLA.value
+            and agent == AgentsType.AUTOCARLA.value
+            and algorithm == AlgorithmsType.DDPG.value
+            and simulator == EnvsType.CARLA.value
+            and framework == FrameworksType.TF.value
+        ):
+            from rl_studio.agents.auto_carla.train_followlane_ddpg_carla_tf import (
+                TrainerFollowLaneDDPGAutoCarlaTF,
+            )
+
+            return TrainerFollowLaneDDPGAutoCarlaTF(config)
+
+        # =============================
+        # FollowLane - AutoCarla - qlearn - Carla
         # =============================
         if (
             task == TasksType.FOLLOWLANECARLA.value
@@ -340,7 +355,6 @@ class TrainerFactory:
 
 class InferencerFactory:
     def __new__(cls, config):
-
         agent = config["settings"]["agent"]
         algorithm = config["settings"]["algorithm"]
         task = config["settings"].get("task")
@@ -356,7 +370,23 @@ class InferencerFactory:
         )
 
         # =============================
-        # FollowLane - F1 - qlearn - Carla
+        # Follow Lane - AutoCarla - DDPG - Carla - TF
+        # =============================
+        if (
+            task == TasksType.FOLLOWLANECARLA.value
+            and agent == AgentsType.AUTOCARLA.value
+            and algorithm == AlgorithmsType.DDPG.value
+            and simulator == EnvsType.CARLA.value
+            and framework == FrameworksType.TF.value
+        ):
+            from rl_studio.agents.auto_carla.inference_followlane_ddpg_carla_tf import (
+                InferencerFollowLaneDDPGAutoCarlaTF,
+            )
+
+            return InferencerFollowLaneDDPGAutoCarlaTF(config)
+
+        # =============================
+        # FollowLane - AutoCarla - qlearn - Carla
         # =============================
         if (
             task == TasksType.FOLLOWLANECARLA.value
@@ -369,7 +399,7 @@ class InferencerFactory:
             )
 
             return InferencerFollowLaneQlearnAutoCarla(config)
-        
+
         # =============================
         # FollowLine - F1 - qlearn - Gazebo
         # =============================
