@@ -861,3 +861,182 @@ class LoadEnvVariablesDDPGCarla:
         # CARLA
         self.environment["carla_server"] = config["carla"]["carla_server"]
         self.environment["carla_client"] = config["carla"]["carla_client"]
+
+
+class LoadEnvVariablesDQNCarla:
+    """
+    ONLY FOR DQN algorithm
+    Creates a new variable 'environment', which contains Carla env values
+    """
+
+    def __init__(self, config) -> None:
+        """environment variable for reset(), step() methods"""
+        # self.agent = config["settings"]["agent"]
+        # self.algorithm = config["settings"]["algorithm"]
+        # self.task = config["settings"]["task"]
+        # self.framework = config["settings"]["framework"]
+        self.environment_set = config["settings"]["environment_set"]
+        self.env = config["settings"]["env"]
+        self.agent = config["settings"]["agent"]
+        self.states = config["settings"]["states"]
+        self.actions = config["settings"]["actions"]
+        self.actions_set = config["actions"][self.actions]
+        self.rewards = config["settings"]["rewards"]
+        self.town = config[self.environment_set][self.env]["town"]
+        self.waypoints_lane_id = config[self.environment_set][self.env][
+            "waypoints_lane_id"
+        ]
+        self.town_circuit = config[self.environment_set][self.env]["init_pose"][
+            "town_circuit"
+        ]
+        ##### environment variable
+        self.environment = {}
+        self.environment["agent"] = config["settings"]["agent"]
+        self.environment["algorithm"] = config["settings"]["algorithm"]
+        self.environment["task"] = config["settings"]["task"]
+        self.environment["framework"] = config["settings"]["framework"]
+
+        # Training/inference
+        self.environment["mode"] = config["settings"]["mode"]
+        self.environment["retrain_dqn_tf_model_name"] = config["retraining"]["dqn"][
+            "retrain_dqn_tf_model_name"
+        ]
+        self.environment["inference_dqn_tf_model_name"] = config["inference"]["dqn"][
+            "inference_dqn_tf_model_name"
+        ]
+
+        # Env
+        self.environment["env"] = config["settings"]["env"]
+        self.environment["town"] = config[self.environment_set][self.env]["town"]
+        self.environment["car"] = config[self.environment_set][self.env]["car"]
+        self.environment["weather"] = config[self.environment_set][self.env]["weather"]
+        self.environment["traffic_pedestrians"] = config[self.environment_set][
+            self.env
+        ]["traffic_pedestrians"]
+        self.environment["city_lights"] = config[self.environment_set][self.env][
+            "city_lights"
+        ]
+        self.environment["car_lights"] = config[self.environment_set][self.env][
+            "car_lights"
+        ]
+        self.environment["save_episodes"] = config[self.environment_set][self.env][
+            "save_episodes"
+        ]
+        self.environment["save_every_step"] = config[self.environment_set][self.env][
+            "save_every_step"
+        ]
+        self.environment["filter"] = config[self.environment_set][self.env]["filter"]
+        self.environment["generation"] = config[self.environment_set][self.env][
+            "generation"
+        ]
+        self.environment["rolename"] = config[self.environment_set][self.env][
+            "rolename"
+        ]
+        self.environment["gamma"] = config[self.environment_set][self.env]["gamma"]
+        self.environment["sync"] = config[self.environment_set][self.env]["sync"]
+        self.environment["waypoints_meters"] = config[self.environment_set][self.env][
+            "waypoints_meters"
+        ]
+        self.environment["waypoints_init"] = config[self.environment_set][self.env][
+            "waypoints_init"
+        ]
+        self.environment["waypoints_target"] = config[self.environment_set][self.env][
+            "waypoints_target"
+        ]
+        self.environment["waypoints_lane_id"] = config[self.environment_set][self.env][
+            "waypoints_lane_id"
+        ]
+        self.environment["waypoints_road_id"] = config[self.environment_set][self.env][
+            "waypoints_road_id"
+        ]
+        self.environment["max_target_waypoint_distance"] = config[self.environment_set][
+            self.env
+        ]["max_target_waypoint_distance"]
+
+        self.environment["alternate_pose"] = config[self.environment_set][self.env][
+            "init_pose"
+        ]["alternate_pose"]
+        self.environment["random_pose"] = config[self.environment_set][self.env][
+            "init_pose"
+        ]["random_pose"]
+        self.environment["init_pose_number"] = config[self.environment_set][self.env][
+            "init_pose"
+        ]["init_pose_number"]
+        self.environment["finish_pose_number"] = config[self.environment_set][self.env][
+            "init_pose"
+        ]["finish_pose_number"]
+        self.environment["start_alternate_pose"] = config["carla_town_positions"][
+            self.town
+        ][self.town_circuit][self.waypoints_lane_id]["init_positions"]
+        self.environment["finish_alternate_pose"] = config["carla_town_positions"][
+            self.town
+        ][self.town_circuit][self.waypoints_lane_id]["finish_positions"]
+
+        # --------- Image
+        self.environment["height_image"] = config["agents"][self.agent][
+            "camera_params"
+        ]["height"]
+        self.environment["width_image"] = config["agents"][self.agent]["camera_params"][
+            "width"
+        ]
+        self.environment["center_image"] = config["agents"][self.agent][
+            "camera_params"
+        ]["center_image"]
+        self.environment["image_resizing"] = config["agents"][self.agent][
+            "camera_params"
+        ]["image_resizing"]
+        self.environment["new_image_size"] = config["agents"][self.agent][
+            "camera_params"
+        ]["new_image_size"]
+        self.environment["raw_image"] = config["agents"][self.agent]["camera_params"][
+            "raw_image"
+        ]
+        self.environment["num_regions"] = config["agents"][self.agent]["camera_params"][
+            "num_regions"
+        ]
+        self.environment["lower_limit"] = config["agents"][self.agent]["camera_params"][
+            "lower_limit"
+        ]
+        # States
+        self.environment["states"] = config["settings"]["states"]
+        self.environment["x_row"] = config["states"][self.states][0]
+        self.environment["states_entry"] = config["states"]["states_entry"]
+
+        # Actions
+        self.environment["action_space"] = config["settings"]["actions"]
+        self.environment["actions"] = config["actions"][self.actions]
+
+        # Rewards
+        self.environment["reward_function"] = config["settings"]["rewards"]
+        self.environment["rewards"] = config["rewards"][self.rewards]
+        self.environment["min_reward"] = config["rewards"][self.rewards]["min_reward"]
+
+        # Algorithm
+        self.environment["alpha"] = config["algorithm"]["dqn"]["alpha"]
+        self.environment["gamma"] = config["algorithm"]["dqn"]["gamma"]
+        self.environment["epsilon"] = config["algorithm"]["dqn"]["epsilon"]
+        self.environment["epsilon_discount"] = config["algorithm"]["dqn"][
+            "epsilon_discount"
+        ]
+        self.environment["epsilon_min"] = config["algorithm"]["dqn"]["epsilon_min"]
+        self.environment["model_name"] = config["algorithm"]["dqn"]["model_name"]
+        self.environment["replay_memory_size"] = config["algorithm"]["dqn"][
+            "replay_memory_size"
+        ]
+        self.environment["min_replay_memory_size"] = config["algorithm"]["dqn"][
+            "min_replay_memory_size"
+        ]
+        self.environment["minibatch_size"] = config["algorithm"]["dqn"][
+            "minibatch_size"
+        ]
+        self.environment["memory_fraction"] = config["algorithm"]["dqn"][
+            "memory_fraction"
+        ]
+        self.environment["buffer_capacity"] = config["algorithm"]["dqn"][
+            "buffer_capacity"
+        ]
+        self.environment["batch_size"] = config["algorithm"]["dqn"]["batch_size"]
+
+        # CARLA
+        self.environment["carla_server"] = config["carla"]["carla_server"]
+        self.environment["carla_client"] = config["carla"]["carla_client"]

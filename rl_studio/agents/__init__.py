@@ -52,10 +52,43 @@ class TrainerFactory:
             agent=agent,
             framework=framework,
         )
+
+        # =============================
+        # PROBANDOOOOOOOO --- Follow Lane - AutoCarla - DQN - Carla - TF
+        # =============================
+        if (
+            task == TasksType.FOLLOWLANECARLA.value
+            and agent == AgentsType.AUTOCARLA.value
+            and algorithm == AlgorithmsType.DQN.value
+            and simulator == EnvsType.CARLA.value
+            and framework == FrameworksType.TF.value
+        ):
+            from rl_studio.agents.auto_carla.train_followlane_dqn_carla_tf import (
+                TrainerFollowLaneDQNAutoCarlaTF,
+            )
+
+            return TrainerFollowLaneDQNAutoCarlaTF(config)
+
+        # =============================
+        # Follow Lane - AutoCarla - DQN - Carla - TF
+        # =============================
+        # if (
+        #    task == TasksType.FOLLOWLANECARLA.value
+        #    and agent == AgentsType.AUTOCARLA.value
+        #    and algorithm == AlgorithmsType.DQN.value
+        #    and simulator == EnvsType.CARLA.value
+        #    and framework == FrameworksType.TF.value
+        # ):
+        #    from rl_studio.agents.auto_carla.train_followlane_dqn_carla_tf import (
+        #        TrainerFollowLaneDQNAutoCarlaTF,
+        #    )
+
+        #    return TrainerFollowLaneDQNAutoCarlaTF(config)
+
         # =============================
         # Follow Lane - AutoCarla - DDPG - Carla - TF
         # =============================
-        if (
+        elif (
             task == TasksType.FOLLOWLANECARLA.value
             and agent == AgentsType.AUTOCARLA.value
             and algorithm == AlgorithmsType.DDPG.value
@@ -71,7 +104,7 @@ class TrainerFactory:
         # =============================
         # FollowLane - AutoCarla - qlearn - Carla
         # =============================
-        if (
+        elif (
             task == TasksType.FOLLOWLANECARLA.value
             and agent == AgentsType.AUTOCARLA.value
             and algorithm == AlgorithmsType.QLEARN.value
@@ -86,7 +119,7 @@ class TrainerFactory:
         # =============================
         # FollowLine - F1 - qlearn - Gazebo
         # =============================
-        if (
+        elif (
             task == TasksType.FOLLOWLINEGAZEBO.value
             and agent == AgentsType.F1GAZEBO.value
             and algorithm == AlgorithmsType.QLEARN.value
