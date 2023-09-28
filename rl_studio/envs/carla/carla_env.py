@@ -210,7 +210,7 @@ class CarlaEnv(gym.Env):
             with open("/tmp/.carlalaunch_stdout.log", "w") as out, open(
                 "/tmp/.carlalaunch_stderr.log", "w"
             ) as err:
-                print(f"CarlaEnv has been launched in other terminal\n")
+                print(f"\nCarlaEnv has been launched in other terminal\n")
                 # subprocess.Popen([carla_exec, "-prefernvidia"], stdout=out, stderr=err)
                 # subprocess.Popen(["/home/jderobot/Documents/Projects/carla_simulator_0_9_13/CarlaUE4.sh", "-RenderOffScreen"], stdout=out, stderr=err)
                 # subprocess.Popen(["/home/jderobot/Documents/Projects/carla_simulator_0_9_13/CarlaUE4.sh", "-RenderOffScreen", "-quality-level=Low"], stdout=out, stderr=err)

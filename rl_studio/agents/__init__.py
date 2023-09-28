@@ -54,7 +54,23 @@ class TrainerFactory:
         )
 
         # =============================
-        # PROBANDOOOOOOOO --- Follow Lane - AutoCarla - DQN - Carla - TF
+        # Follow Lane - AutoCarla - Carla - Stable-baselines3
+        # =============================
+        if (
+            task == TasksType.FOLLOWLANECARLA.value
+            and agent == AgentsType.AUTOCARLA.value
+            # and algorithm == AlgorithmsType.DQN.value
+            and simulator == EnvsType.CARLA.value
+            and framework == FrameworksType.STABLE_BASELINES3.value
+        ):
+            from rl_studio.agents.auto_carla.train_followlane_carla_sb3 import (
+                TrainerFollowLaneAutoCarlaSB3,
+            )
+
+            return TrainerFollowLaneAutoCarlaSB3(config)
+
+        # =============================
+        # Follow Lane - AutoCarla - DQN - Carla - TF
         # =============================
         if (
             task == TasksType.FOLLOWLANECARLA.value
@@ -68,22 +84,6 @@ class TrainerFactory:
             )
 
             return TrainerFollowLaneDQNAutoCarlaTF(config)
-
-        # =============================
-        # Follow Lane - AutoCarla - DQN - Carla - TF
-        # =============================
-        # if (
-        #    task == TasksType.FOLLOWLANECARLA.value
-        #    and agent == AgentsType.AUTOCARLA.value
-        #    and algorithm == AlgorithmsType.DQN.value
-        #    and simulator == EnvsType.CARLA.value
-        #    and framework == FrameworksType.TF.value
-        # ):
-        #    from rl_studio.agents.auto_carla.train_followlane_dqn_carla_tf import (
-        #        TrainerFollowLaneDQNAutoCarlaTF,
-        #    )
-
-        #    return TrainerFollowLaneDQNAutoCarlaTF(config)
 
         # =============================
         # Follow Lane - AutoCarla - DDPG - Carla - TF

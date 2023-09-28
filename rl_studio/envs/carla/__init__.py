@@ -61,5 +61,21 @@ class Carla:
 
             return FollowLaneDQNStaticWeatherNoTraffic(**environment)
 
+        # =============================
+        # FollowLane - weather: static - traffic and pedestrians: No - Stable-Baselines3
+        # =============================
+        if (
+            task == TasksType.FOLLOWLANECARLA.value
+            # and algorithm == AlgorithmsType.DQN.value
+            and weather != "dynamic"
+            and traffic_pedestrians is False
+            and framework == FrameworksType.STABLE_BASELINES3.value
+        ):
+            from rl_studio.envs.carla.followlane.followlane_sb3 import (
+                FollowLaneStaticWeatherNoTrafficSB3,
+            )
+
+            return FollowLaneStaticWeatherNoTrafficSB3(**environment)
+
         else:
             raise NoValidEnvironmentType(task)
