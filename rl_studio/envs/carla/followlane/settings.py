@@ -47,7 +47,7 @@ class FollowLaneCarlaConfig(BaseModel):
             self.x_row = config["x_row"]
 
         # Actions
-        self.action_space = config["action_space"]
+        self.actions_space = config["action_space"]
         self.actions = config["actions"]
 
         # Rewards

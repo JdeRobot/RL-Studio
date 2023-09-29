@@ -8,6 +8,7 @@ import time
 import carla
 import cv2
 import gymnasium as gym
+from gymnasium import spaces
 import numpy as np
 import pygame
 from reloading import reloading
@@ -60,6 +61,7 @@ from rl_studio.envs.carla.utils.synchronous_mode import (
     should_quit,
 )
 from rl_studio.envs.carla.carla_env import CarlaEnv
+from stable_baselines3.common.env_checker import check_env
 
 try:
     sys.path.append(
@@ -110,6 +112,7 @@ class TrainerFollowLaneAutoCarlaSB3:
         """ """
         log = LoggingHandler(self.log_file)
         env = gym.make(self.env_params.env_name, **self.environment.environment)
+        # check_env(env, warn=True)
 
         random.seed(1)
         np.random.seed(1)
@@ -124,6 +127,7 @@ class TrainerFollowLaneAutoCarlaSB3:
         ## Reset env
         state, state_size = env.reset()
 
+        """
         print_messages(
             "main()",
             states=self.global_params.states,
@@ -139,3 +143,6 @@ class TrainerFollowLaneAutoCarlaSB3:
             logs_tensorboard_dir=self.global_params.logs_tensorboard_dir,
             rewards=self.environment.environment["rewards"],
         )
+        """
+
+        env.world.tick()
