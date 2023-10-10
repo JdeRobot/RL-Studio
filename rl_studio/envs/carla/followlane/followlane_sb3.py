@@ -3,6 +3,7 @@ import copy
 from datetime import datetime, timedelta
 import math
 import os
+import queue
 import subprocess
 import time
 import sys
@@ -147,17 +148,225 @@ class FollowLaneStaticWeatherNoTrafficSB3(FollowLaneEnv):
         # Vector State
 
         ## --------------------------------------------------
+
+    #####################################################################################
+    #
+    #                                       RESET
+    #
+    #####################################################################################
+    def reset(self, seed=None, options=None):
+        """
+        state = vector / simplified perception
+        actions = discrete
+        """
+
+        if self.sensor_camera_rgb is not None:
+            self.destroy_all_actors_apply_batch()
+
+        self.sensor_camera_rgb = None
+        self.sensor_camera_red_mask = None
+
+        self.actor_list = []
+
+        # self.world.tick()
+
+        ## ---  Car
+        waypoints_town = self.world.get_map().generate_waypoints(5.0)
+        init_waypoint = waypoints_town[self.waypoints_init + 1]
+        filtered_waypoints = self.draw_waypoints(
+            waypoints_town,
+            self.waypoints_init,
+            self.waypoints_target,
+            self.waypoints_lane_id,
+            2000,
+        )
+        self.target_waypoint = filtered_waypoints[-1]
+
+        ## ---- random init position in the whole Town: actually for test functioning porposes
+        if self.random_pose:
+            self.setup_car_random_pose()
+        ## -- Always same init position in a circuit predefined
+        elif self.alternate_pose is False:
+            self.setup_car_pose(self.start_alternate_pose, init=self.init_pose_number)
+
+        ## -- Same circuit, but random init positions
+        else:
+            self.setup_car_pose(self.start_alternate_pose)
+
+        ## -------------------------Sensors
+
+        self.world.tick()
+
+        ########### --- calculating STATES
+
+        mask = self.preprocess_image(self.front_red_mask_camera)
+        right_line_in_pixels = self.simplifiedperception.calculate_right_line(
+            mask, self.x_row
+        )
+
+        pixels_in_state = mask.shape[1] / self.num_regions
+        states = [
+            int(value / pixels_in_state) for _, value in enumerate(right_line_in_pixels)
+        ]
+        # states = [5, 5, 5, 5]
+        states_size = len(states)
+
+        # print(f"{states =} and {states_size =}")
+        return states, states_size
+
+    def preprocess_image(self, img):
+        """
+        image is trimming from top to middle
+        """
+        ## first, we cut the upper image
+        height = img.shape[0]
+        image_middle_line = (height) // 2
+        img_sliced = img[image_middle_line:]
+        ## calculating new image measurements
+        # height = img_sliced.shape[0]
+        ## -- convert to GRAY
+        gray_mask = cv2.cvtColor(img_sliced, cv2.COLOR_BGR2GRAY)
+        ## --  apply mask to convert in Black and White
+        theshold = 50
+        # _, white_mask = cv2.threshold(gray_mask, 10, 255, cv2.THRESH_BINARY)
+        _, white_mask = cv2.threshold(gray_mask, theshold, 255, cv2.THRESH_BINARY)
+
+        return white_mask
+
+
+class CarlaSyncMode(object):
+    """
+    Context manager to synchronize output from different sensors. Synchronous
+    mode is enabled as long as we are inside this context
+
+        with CarlaSyncMode(world, sensors) as sync_mode:
+            while True:
+                data = sync_mode.tick(timeout=1.0)
+
+    """
+
+    def __init__(self, world, *sensors, **kwargs):
+        self.world = world
+        self.sensors = sensors
+        self.frame = None
+        self.delta_seconds = 1.0 / kwargs.get("fps", 20)
+        self._queues = []
+        self._settings = None
+
+    def __enter__(self):
+        self._settings = self.world.get_settings()
+        self.frame = self.world.apply_settings(
+            carla.WorldSettings(
+                # no_rendering_mode=False,
+                synchronous_mode=True,
+                fixed_delta_seconds=self.delta_seconds,
+            )
+        )
+
+        def make_queue(register_event):
+            q = queue.Queue()
+            register_event(q.put)
+            self._queues.append(q)
+
+        make_queue(self.world.on_tick)
+        for sensor in self.sensors:
+            make_queue(sensor.listen)
+        return self
+
+    def tick(self, timeout):
+        print("yahora")
+        print(f"{self.world = }")
+        print(f"{self.world.tick() = }")
+        self.frame = self.world.tick()
+        print("paso por aqui")
+        data = [self._retrieve_data(q, timeout) for q in self._queues]
+        assert all(x.frame == self.frame for x in data)
+        return data
+
+    def __exit__(self, *args, **kwargs):
+        self.world.apply_settings(self._settings)
+
+    def _retrieve_data(self, sensor_queue, timeout):
+        while True:
+            data = sensor_queue.get(timeout=timeout)
+            if data.frame == self.frame:
+                return data
+
+
+class XXXXXXFollowLaneStaticWeatherNoTrafficSB3(FollowLaneEnv):
+    def __init__(self, **config):
+        ## --------------- init env
+        FollowLaneEnv.__init__(self, **config)
+        ## --------------- init class variables
+        FollowLaneCarlaConfig.__init__(self, **config)
+
+        ################################## gym/stable-baselines3 interface
+
+        ######## Actions Gym based
+        print(f"{self.state_space = } and {self.actions_space =}")
+        # print(f"{len(self.actions) =}")
+        # print(f"{type(self.actions) =}")
+        # print(f"{self.actions =}")
+        # Discrete Actions
+        if self.actions_space == "carla_discrete":
+            self.action_space = spaces.Discrete(len(self.actions))
+        else:  # Continuous Actions
+            actions_to_array = np.array(
+                [list(self.actions["v"]), list(self.actions["w"])]
+            )
+            print(f"{actions_to_array =}")
+            print(f"{actions_to_array[0] =}")
+            print(f"{actions_to_array[1] =}")
+            self.action_space = spaces.Box(
+                low=actions_to_array[0],
+                high=actions_to_array[1],
+                shape=(2,),
+                dtype=np.float32,
+            )
+            print(f"{self.action_space.low = }")
+            print(f"{self.action_space.high = }")
+            print(f"{self.action_space.low[0] = }")
+            print(f"{self.action_space.high[0] = }")
+
+        print(f"{self.action_space =}")
+
+        ######## observations Gym based
+        # image
+        if self.state_space == "image":
+            self.observation_space = spaces.Box(
+                low=0, high=255, shape=(self.height, self.width, 3), dtype=np.uint8
+            )
+        else:  # Discrete observations vector = [0.0, 3.6, 8.9]
+            # TODO: change x_row for other list
+            self.observation_space = spaces.Discrete(len(self.x_row))  # temporary
+
+        print(f"{self.observation_space = }")
+        # print(f"{self.state.high = }")
+        # print(f"{self.state.low[0] = }")
+        # print(f"{self.state.high[0] = }")
+
+        # Vector State
+
+        ## --------------------------------------------------
         self.timer = CustomTimer()
 
         self.client = carla.Client(
             config["carla_server"],
             config["carla_client"],
         )
-        self.client.set_timeout(3.0)
+        # self.client = CarlaClient(
+        #    config["carla_server"],
+        #    config["carla_client"],
+        # )
+
+        # self.client.connect(connection_attempts=100)
+        self.client.set_timeout(10.0)
+        # print(f"\n maps in carla 0.9.13: {self.client.get_available_maps()}\n")
 
         # print(f"\n entre en DQN\n")
 
-        self.world = self.client.load_world(config["town"])
+        # self.traffic_manager = self.client.get_trafficmanager(8000)
+
         if config["town"] == "Town07_Opt":
             self.world.unload_map_layer(carla.MapLayer.Buildings)
             self.world.unload_map_layer(carla.MapLayer.Decals)
@@ -168,26 +377,46 @@ class FollowLaneStaticWeatherNoTrafficSB3(FollowLaneEnv):
         # self.client.set_timeout(20.0)
         # self.original_settings = self.world.get_settings()
 
-        # TODO: si algo se jode hay que quitar esta linea
-        self.traffic_manager = self.client.get_trafficmanager(8000)
-        settings = self.world.get_settings()
-        settings.fixed_delta_seconds = 0.1  # 0.05
-        if config["sync"]:
-            print(f"{config['sync'] =}")
-            # TODO: si algo se jode hay que quitar esta linea
-            # settings.synchronous_mode = True  ####OJOOO
-            self.traffic_manager.set_synchronous_mode(True)
-        else:
-            # settings.synchronous_mode = False  ###OJOJOOO
-            self.traffic_manager.set_synchronous_mode(False)
+        self.world = self.client.load_world(config["town"])
+        # self.world = self.client.get_world()
+        # self.client.load_world(config["town"])
 
+        # TODO: si algo se jode hay que quitar esta linea
+        # self.traffic_manager = self.client.get_trafficmanager(8000)
+        settings = self.world.get_settings()
+        settings.synchronous_mode = True
+        settings.fixed_delta_seconds = 0.1  # 0.05
         self.world.apply_settings(settings)
+        self.world.tick()
+
+        # Set up the traffic manager
+        self.traffic_manager = self.client.get_trafficmanager(8000)
+        self.traffic_manager.set_synchronous_mode(True)
+        self.traffic_manager.set_random_device_seed(0)  # define TM seed for determinism
+
+        # if config["sync"]:
+        #    print(f"{config['sync'] =}")
+        # TODO: si algo se jode hay que quitar esta linea
+        #    settings.synchronous_mode = True  ####OJOOO
+        # self.traffic_manager.set_synchronous_mode(True)
+        # else:
+        #    settings.synchronous_mode = False  ###OJOJOOO
+        # self.traffic_manager.set_synchronous_mode(False)
+
+        # self.world.apply_settings(settings)
+
+        self.client.reload_world(False)
+
+        # Set up the traffic manager
+        # traffic_manager = self.client.get_trafficmanager(8000)
+        # traffic_manager.set_synchronous_mode(True)
+        # traffic_manager.set_random_device_seed(0)  # define TM seed for determinism
 
         ### Weather
-        weather = carla.WeatherParameters(
-            cloudiness=70.0, precipitation=0.0, sun_altitude_angle=70.0
-        )
-        self.world.set_weather(weather)
+        # weather = carla.WeatherParameters(
+        #    cloudiness=70.0, precipitation=0.0, sun_altitude_angle=70.0
+        # )
+        # self.world.set_weather(weather)
 
         ## --------------- Blueprint ---------------
         self.blueprint_library = self.world.get_blueprint_library()
@@ -227,7 +456,7 @@ class FollowLaneStaticWeatherNoTrafficSB3(FollowLaneEnv):
         self.red_mask_cam.set_attribute("image_size_y", f"{self.height}")
         self.red_mask_cam.set_attribute("fov", f"110")
         self.sensor_camera_red_mask = None
-        self.front_red_mask_camera = None
+        # self.front_red_mask_camera = None
 
         ## --------------- Segmentation Camera ---------------
         self.segm_cam = self.world.get_blueprint_library().find(
@@ -259,7 +488,7 @@ class FollowLaneStaticWeatherNoTrafficSB3(FollowLaneEnv):
     #####################################################################################
     def reset(self, seed=None, options=None):
         """
-        state = image
+        state = vector / simplified perception
         actions = discrete
         """
 
@@ -280,6 +509,8 @@ class FollowLaneStaticWeatherNoTrafficSB3(FollowLaneEnv):
         self.lane_changing_hist = []
         self.obstacle_hist = []
         self.actor_list = []
+
+        # self.world.tick()
 
         ## ---  Car
         waypoints_town = self.world.get_map().generate_waypoints(5.0)
@@ -304,21 +535,50 @@ class FollowLaneStaticWeatherNoTrafficSB3(FollowLaneEnv):
         else:
             self.setup_car_pose(self.start_alternate_pose)
 
+        ## -------------------------Sensors
         ## --- Cameras
 
         ## ---- RGB
         # self.setup_rgb_camera()
         self.setup_rgb_camera_weakref()
         # self.setup_semantic_camera()
-        while self.sensor_camera_rgb is None:
+        while self.sensor_camera_rgb is None:  # or self.front_rgb_camera is None:
+            # print(f"self.front_rgb_camera esperando sync {time.time()}")
             time.sleep(0.01)
 
-        time.sleep(1)
+        ## ---- Red Mask
+        self.setup_red_mask_camera_weakref()
+        while (
+            self.sensor_camera_red_mask is None
+        ):  # or self.front_red_mask_camera is None:
+            # print(f"self.front_red_mask_camera esperando sync {time.time()}")
+            time.sleep(0.01)
 
-        self.car.apply_control(carla.VehicleControl(throttle=0.0, brake=0.0))
+        ## --- SEgmentation camera
+        self.setup_segmentation_camera_weakref()
+        # self.setup_segmentation_camera()
+        while self.sensor_camera_segmentation is None:
+            time.sleep(0.01)
+
+        # ## ---- LAneDetector
+        # self.setup_lane_detector_camera_weakref()
+        # while self.sensor_camera_lane_detector is None:
+        #    time.sleep(0.01)
+
+        ## --- Detectors Sensors
+        self.setup_lane_invasion_sensor_weakref()
+
+        # time.sleep(1)
+        self.world.tick()
+
+        # self.car.apply_control(carla.VehicleControl(throttle=0.0, brake=0.0))
 
         ########### --- calculating STATES
-        mask = self.simplifiedperception.preprocess_image(self.front_red_mask_camera)
+        # print("time.sleep(4)")
+        # time.sleep(4)
+        # print("salimos time.sleep(4)")
+
+        mask = self.preprocess_image(self.front_red_mask_camera)
         right_line_in_pixels = self.simplifiedperception.calculate_right_line(
             mask, self.x_row
         )
@@ -327,11 +587,68 @@ class FollowLaneStaticWeatherNoTrafficSB3(FollowLaneEnv):
         states = [
             int(value / pixels_in_state) for _, value in enumerate(right_line_in_pixels)
         ]
-
+        # states = [5, 5, 5, 5]
         states_size = len(states)
 
         # print(f"{states =} and {states_size =}")
         return states, states_size
+
+        """
+        print("estoy aqui en reset()")
+        with CarlaSyncMode(self.world, self.sensor_camera_rgb, fps=30) as sync_mode:
+            # Advance the simulation and wait for the data.
+            print(f"entro")
+            snapshot, image_rgb = sync_mode.tick(timeout=2.0)
+            print("Aquieee")
+            fps = round(1.0 / snapshot.timestamp.delta_seconds)
+            print(f"{fps = }")
+
+            time.sleep(1)
+
+            self.car.apply_control(carla.VehicleControl(throttle=0.0, brake=0.0))
+
+            ########### --- calculating STATES
+            print("time.sleep(4)")
+            time.sleep(4)
+            print("salimos time.sleep(4)")
+
+            mask = self.simplifiedperception.preprocess_image(
+                self.front_red_mask_camera
+            )
+            right_line_in_pixels = self.simplifiedperception.calculate_right_line(
+                mask, self.x_row
+            )
+
+            pixels_in_state = mask.shape[1] / self.num_regions
+            states = [
+                int(value / pixels_in_state)
+                for _, value in enumerate(right_line_in_pixels)
+            ]
+            # states = [5, 5, 5, 5]
+            states_size = len(states)
+
+            # print(f"{states =} and {states_size =}")
+        return states, states_size
+        """
+
+    def preprocess_image(self, img):
+        """
+        image is trimming from top to middle
+        """
+        ## first, we cut the upper image
+        height = img.shape[0]
+        image_middle_line = (height) // 2
+        img_sliced = img[image_middle_line:]
+        ## calculating new image measurements
+        # height = img_sliced.shape[0]
+        ## -- convert to GRAY
+        gray_mask = cv2.cvtColor(img_sliced, cv2.COLOR_BGR2GRAY)
+        ## --  apply mask to convert in Black and White
+        theshold = 50
+        # _, white_mask = cv2.threshold(gray_mask, 10, 255, cv2.THRESH_BINARY)
+        _, white_mask = cv2.threshold(gray_mask, theshold, 255, cv2.THRESH_BINARY)
+
+        return white_mask
 
     ###########################################
     #
@@ -341,14 +658,15 @@ class FollowLaneStaticWeatherNoTrafficSB3(FollowLaneEnv):
 
     def step(self, action):
         """
-        state: Image
-        actions: continuous
+        state: vector / simplified percepction
+        actions: discrete
         only right line
         """
 
         self.control_discrete_actions_only_right(action)
 
         ########### --- calculating STATES
+        time.sleep(0.1)
         mask = self.simplifiedperception.preprocess_image(self.front_red_mask_camera)
 
         ########### --- Calculating center ONLY with right line
@@ -373,9 +691,9 @@ class FollowLaneStaticWeatherNoTrafficSB3(FollowLaneEnv):
 
         ## STATES
 
-        states = np.array(
-            self.simplifiedperception.resize_and_trimming_right_line_mask(mask)
-        )
+        states = [
+            int(value / pixels_in_state) for _, value in enumerate(right_line_in_pixels)
+        ]
 
         ## -------- Ending Step()...
         done = False
