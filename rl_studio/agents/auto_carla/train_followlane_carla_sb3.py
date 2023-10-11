@@ -81,7 +81,7 @@ except IndexError:
 
 
 class CarlaEnv(gym.Env):
-    def __init__(self, **config):
+    def __init__(self, sensor_camera_red_mask, **config):
         super(CarlaEnv, self).__init__()
         ## --------------- init env
         # FollowLaneEnv.__init__(self, **config)
@@ -137,8 +137,8 @@ class CarlaEnv(gym.Env):
         self.start_alternate_pose = config["start_alternate_pose"]
         self.finish_alternate_pose = config["finish_alternate_pose"]
 
-        print(f"{self.alternate_pose =}\n")
-        print(f"{self.start_alternate_pose =}\n")
+        # print(f"{self.alternate_pose =}\n")
+        # print(f"{self.start_alternate_pose =}\n")
 
         self.waypoints_meters = config["waypoints_meters"]
         self.waypoints_init = config["waypoints_init"]
@@ -191,65 +191,13 @@ class CarlaEnv(gym.Env):
             self.observation_space = spaces.Discrete(len(self.x_row))  # temporary
 
         print(f"{self.observation_space = }")
-        # print(f"{self.state.high = }")
-        # print(f"{self.state.low[0] = }")
-        # print(f"{self.state.high[0] = }")
-
-        # Vector State
 
         #########################################################################
-        # ## --------------------------------------------------
-
-        """
-        self.client = carla.Client(
-            config["carla_server"],
-            config["carla_client"],
-        )
-        self.client.set_timeout(10.0)
-        print(f"\n maps in carla 0.9.13: {self.client.get_available_maps()}\n")
-
-        self.world = self.client.load_world(config["town"])
-
-        # Sync mode
-        settings = self.world.get_settings()
-        settings.synchronous_mode = True
-        settings.fixed_delta_seconds = 0.1  # 0.05
-        self.world.apply_settings(settings)
-
-        # Set up the traffic manager
-        self.traffic_manager = self.client.get_trafficmanager(8000)
-        self.traffic_manager.set_synchronous_mode(True)
-        self.traffic_manager.set_random_device_seed(0)  # define TM seed for determinism
-
-        self.client.reload_world(False)
-
-        print(f"{settings.synchronous_mode =}")
-        self.world.tick()
-        # print(f"{self.world.tick()=}")
-
-        # Town07 take layers off
-        if config["town"] == "Town07_Opt":
-            self.world.unload_map_layer(carla.MapLayer.Buildings)
-            self.world.unload_map_layer(carla.MapLayer.Decals)
-            self.world.unload_map_layer(carla.MapLayer.Foliage)
-            self.world.unload_map_layer(carla.MapLayer.Particles)
-            self.world.unload_map_layer(carla.MapLayer.Props)
-
-        """
 
         self.params = config
+        # print(f"{self.params =}\n")
 
-        self.world = self.params["world"]
-        # self.actor_list = self.params["actor_list"]
-        self.client = self.params["client"]
-        self.vehicle = self.params["vehicle"]
-        self.car = self.params["car"]
-        self.front_red_mask_camera = self.params["front_red_mask_camera"]
-        print(f"{self.front_red_mask_camera=}")
-        # self.car = None
-        # self.actor_list = []
-        # self.front_rgb_camera = None
-        # self.front_red_mask_camera = None
+        self.sensor_camera_red_mask = sensor_camera_red_mask
 
     #####################################################################################
     #
@@ -262,26 +210,6 @@ class CarlaEnv(gym.Env):
         actions = discrete
         """
 
-        # self.client.apply_batch(
-        #    [carla.command.DestroyActor(x) for x in self.actor_list[::-1]]
-        # )
-
-        ############################################################################
-        ## --------------- Car ---------------
-        ## ---- random init position in the whole Town: actually for test functioning purposes
-        if self.random_pose:
-            self.setup_car_random_pose()
-        ## -- Always same init position in a circuit predefined
-        elif self.alternate_pose is False:
-            self.setup_car_pose(self.start_alternate_pose, init=self.init_pose_number)
-
-        ## -- Same circuit, but random init positions
-        else:
-            # self.setup_car_alternate_pose(self.start_alternate_pose)
-            self.setup_car_pose(self.start_alternate_pose)
-
-        ############################################################################
-
         ############################################################################
         ########### --- calculating STATES
         # while self.front_red_mask_camera is None:
@@ -289,7 +217,7 @@ class CarlaEnv(gym.Env):
         #    time.sleep(1)
 
         # mask = self.preprocess_image(self.front_red_mask_camera)
-        mask = self.preprocess_image(self.front_red_mask_camera)
+        mask = self.preprocess_image(self.sensor_camera_red_mask.front_red_mask_camera)
         right_line_in_pixels = self.calculate_right_line(mask, self.x_row)
 
         pixels_in_state = mask.shape[1] / self.num_regions
@@ -303,48 +231,8 @@ class CarlaEnv(gym.Env):
         return states, states_size
 
     #####################################################################################
-    #
-    #   methods
+    # ---   methods
     #####################################################################################
-
-    def setup_car_pose(self, init_positions, init=None):
-        if init is None:
-            pose_init = np.random.randint(0, high=len(init_positions))
-        else:
-            pose_init = init
-
-        location = carla.Transform(
-            carla.Location(
-                x=self.start_alternate_pose[pose_init][0],
-                y=self.start_alternate_pose[pose_init][1],
-                z=self.start_alternate_pose[pose_init][2],
-            ),
-            carla.Rotation(
-                pitch=self.start_alternate_pose[pose_init][3],
-                yaw=self.start_alternate_pose[pose_init][4],
-                roll=self.start_alternate_pose[pose_init][5],
-            ),
-        )
-
-        """ original """
-        self.car = self.world.spawn_actor(self.vehicle, location)
-        while self.car is None:
-            self.car = self.world.spawn_actor(self.vehicle, location)
-
-        # self.actor_list.append(self.car)
-
-        time.sleep(1)
-
-    def setup_car_random_pose(self):
-        # car_bp = self.world.get_blueprint_library().filter("vehicle.*")[0]
-        location = random.choice(self.world.get_map().get_spawn_points())
-        self.car = self.world.try_spawn_actor(self.vehicle, location)
-        while self.car is None:
-            self.car = self.world.try_spawn_actor(self.vehicle, location)
-
-        # self.batch.append(self.car)
-        self.actor_list.append(self.car)
-        time.sleep(1)
 
     def preprocess_image(self, img):
         """
@@ -379,19 +267,7 @@ class CarlaEnv(gym.Env):
         inv_index_right = [
             np.argmax(lines_inversed[x]) for x, _ in enumerate(lines_inversed)
         ]
-        # print(f"{inv_index_right = }")
-        # offset = 10
-        # inv_index_right_plus_offset = [
-        #    inv_index_right[x] + offset if inv_index_right[x] != 0 else 0
-        #    for x, _ in enumerate(inv_index_right)
-        # ]
-        # print(f"{inv_index_right = }")
-        # index_right = [
-        #    mask.shape[1] - inv_index_right_plus_offset[x]
-        #    if inv_index_right_plus_offset[x] != 0
-        #    else 0
-        #    for x, _ in enumerate(inv_index_right_plus_offset)
-        # ]
+
         index_right = [
             mask.shape[1] - inv_index_right[x] if inv_index_right[x] != 0 else 0
             for x, _ in enumerate(inv_index_right)
@@ -401,7 +277,7 @@ class CarlaEnv(gym.Env):
 
 
 # ==============================================================================
-# -- RGB CameraManager -------------------------------------------------------------
+# -- class RGB CameraManager -------------------------------------------------------------
 # ==============================================================================
 class CameraRGBSensor(object):
     def __init__(self, parent_actor):
@@ -557,28 +433,27 @@ class CameraRedMaskSemanticSensor(object):
 # -- New Car -------------------------------------------------------------
 # ==============================================================================
 class NewCar(object):
-    def __init__(self, parent_actor, alternate_pose, start_alternate_pose):
+    def __init__(self, parent_actor, init_positions, init=None):
         self.car = None
         self._parent = parent_actor
-
-        # self.world = self._parent.get_world()
         self.world = self._parent
         vehicle = self.world.get_blueprint_library().filter("vehicle.*")[0]
-        if alternate_pose is None:
-            pose_init = np.random.randint(0, high=len(start_alternate_pose))
+
+        if init is None:
+            pose_init = np.random.randint(0, high=len(init_positions))
         else:
-            pose_init = alternate_pose
+            pose_init = init
 
         location = carla.Transform(
             carla.Location(
-                x=start_alternate_pose[pose_init][0],
-                y=start_alternate_pose[pose_init][1],
-                z=start_alternate_pose[pose_init][2],
+                x=init_positions[pose_init][0],
+                y=init_positions[pose_init][1],
+                z=init_positions[pose_init][2],
             ),
             carla.Rotation(
-                pitch=start_alternate_pose[pose_init][3],
-                yaw=start_alternate_pose[pose_init][4],
-                roll=start_alternate_pose[pose_init][5],
+                pitch=init_positions[pose_init][3],
+                yaw=init_positions[pose_init][4],
+                roll=init_positions[pose_init][5],
             ),
         )
 
@@ -632,7 +507,6 @@ class TrainerFollowLaneAutoCarlaSB3:
         self.actor_list = []
 
     #########################################################################
-    #
     # Main
     #########################################################################
 
@@ -640,7 +514,6 @@ class TrainerFollowLaneAutoCarlaSB3:
         """ """
 
         #########################################################################
-        #
         # Vars
         #########################################################################
 
@@ -657,7 +530,6 @@ class TrainerFollowLaneAutoCarlaSB3:
 
         try:
             #########################################################################
-            #
             # Vars
             #########################################################################
             print(f"\n al inicio de Main() {self.environment.environment =}\n")
@@ -695,24 +567,20 @@ class TrainerFollowLaneAutoCarlaSB3:
                 self.world.unload_map_layer(carla.MapLayer.Particles)
                 self.world.unload_map_layer(carla.MapLayer.Props)
 
-            ######################### car, sensors
-            #
-            #
-            ###########################################
-            # actor_list = []
-            ## --------------- Blueprint ---------------
+            #####################################################
+            # car, sensors
+            #####################################################
 
             self.new_car = NewCar(
                 self.world,
-                self.environment.environment["alternate_pose"],
                 self.environment.environment["start_alternate_pose"],
+                self.environment.environment["alternate_pose"],
             )
             self.actor_list.append(self.new_car.car)
 
             ############################################
-            #
             ## --------------- Sensors ---------------
-            #################################
+            ############################################
 
             ## --------------- RGB camera ---------------
             self.sensor_camera_rgb = CameraRGBSensor(self.new_car.car)
@@ -722,9 +590,8 @@ class TrainerFollowLaneAutoCarlaSB3:
             self.sensor_camera_red_mask = CameraRedMaskSemanticSensor(self.new_car.car)
             self.actor_list.append(self.sensor_camera_red_mask.sensor)
 
+            # time.sleep(1)
             self.world.tick()
-
-            ############################################################################
 
             print(
                 f"in main() {self.sensor_camera_rgb.front_rgb_camera} in {time.time()}"
@@ -733,28 +600,61 @@ class TrainerFollowLaneAutoCarlaSB3:
                 f"in main() {self.sensor_camera_red_mask.front_red_mask_camera} in {time.time()}"
             )
 
-            # env = CarlaEnv(**self.environment.environment)
+            ############################################################################
+            # ENV, RESET, DQN-AGENT, FOR
+            ############################################################################
+
+            env = CarlaEnv(self.sensor_camera_red_mask, **self.environment.environment)
             # env = gym.make(self.env_params.env_name, **self.environment.environment)
             # check_env(env, warn=True)
-
-            ############################################################################
-            #
-            # RESET, AGENT, FOR
-            ############################################################################
 
             ## Reset env
             # self.world.tick()
             # state, state_size = env.reset()
+            # print(f"{state = } and {state_size = }")
             # print(
             #    f"Again in main() {self.sensor_camera_red_mask.front_red_mask_camera} in {time.time()}"
             # )
 
-            """
-            dentro del for, previo al reset posicionaos el car
-            """
-
-            while True:
+            for episode in tqdm(
+                range(1, 10),
+                ascii=True,
+                unit="episodes",
+            ):
                 self.world.tick()
+
+                """esto es lo nuevo"""
+                """
+                # 1. eliminamos actor_list
+                # 2. new car
+                # 3. ubicamos new car
+                self.client.apply_batch(
+                    [carla.command.DestroyActor(x) for x in self.actor_list[::-1]]
+                )
+                self.new_car = NewCar(
+                    self.world,
+                    self.environment.environment["start_alternate_pose"],
+                    self.environment.environment["alternate_pose"],
+                )
+                self.actor_list.append(self.new_car.car)
+
+                ## --------------- RGB camera ---------------
+                self.sensor_camera_rgb = CameraRGBSensor(self.new_car.car)
+                self.actor_list.append(self.sensor_camera_rgb.sensor)
+
+                ## --------------- RedMask Camera ---------------
+                self.sensor_camera_red_mask = CameraRedMaskSemanticSensor(
+                    self.new_car.car
+                )
+                self.actor_list.append(self.sensor_camera_red_mask.sensor)
+
+                self.world.tick()
+                """
+                """ hasta aqui """
+                ############
+                state, state_size = env.reset()
+                print(f"{state = } and {state_size = }")
+
                 if self.sensor_camera_rgb.front_rgb_camera is not None:
                     print(
                         f"Again in main() self.sensor_camera_rgb.front_rgb_camera in {time.time()}"
@@ -762,6 +662,7 @@ class TrainerFollowLaneAutoCarlaSB3:
                 if self.sensor_camera_red_mask.front_red_mask_camera is not None:
                     print(f"Again in main() in {time.time()}")
 
+                """
                 AutoCarlaUtils.show_image(
                     "RGB",
                     self.sensor_camera_rgb.front_rgb_camera,
@@ -774,6 +675,7 @@ class TrainerFollowLaneAutoCarlaSB3:
                     400,
                     400,
                 )
+                """
         ############################################################################
         #
         # finally
@@ -786,7 +688,7 @@ class TrainerFollowLaneAutoCarlaSB3:
                 settings.fixed_delta_seconds = None
                 self.world.apply_settings(settings)
                 traffic_manager.set_synchronous_mode(True)
-                print(f"enro?")
+                print(f"ending training...bye!!")
 
             # destroy_all_actors()
             for actor in self.actor_list[::-1]:
