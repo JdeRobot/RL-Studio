@@ -1,6 +1,7 @@
 from collections import Counter, OrderedDict
 from datetime import datetime, timedelta
 import glob
+import math
 from statistics import median
 import os
 import time
@@ -79,9 +80,56 @@ try:
 except IndexError:
     pass
 
+correct_normalized_distance = {
+    20: -0.07,
+    30: -0.1,
+    40: -0.13,
+    50: -0.17,
+    60: -0.2,
+    70: -0.23,
+    80: -0.26,
+    90: -0.3,
+    100: -0.33,
+    110: -0.36,
+    120: -0.4,
+    130: -0.42,
+    140: -0.46,
+    150: -0.49,
+    160: -0.52,
+    170: -0.56,
+    180: -0.59,
+    190: -0.62,
+    200: -0.65,
+    210: -0.69,
+    220: -0.72,
+}
+correct_pixel_distance = {
+    20: 343,
+    30: 353,
+    40: 363,
+    50: 374,
+    60: 384,
+    70: 394,
+    80: 404,
+    90: 415,
+    100: 425,
+    110: 436,
+    120: 446,
+    130: 456,
+    140: 467,
+    150: 477,
+    160: 488,
+    170: 498,
+    180: 508,
+    190: 518,
+    200: 528,
+    210: 540,
+    220: 550,
+}
+
 
 class CarlaEnv(gym.Env):
-    def __init__(self, sensor_camera_red_mask, **config):
+    def __init__(self, car, sensor_camera_red_mask, config):
         super(CarlaEnv, self).__init__()
         ## --------------- init env
         # FollowLaneEnv.__init__(self, **config)
@@ -194,9 +242,10 @@ class CarlaEnv(gym.Env):
 
         #########################################################################
 
-        self.params = config
+        # self.params = config
         # print(f"{self.params =}\n")
 
+        self.car = car
         self.sensor_camera_red_mask = sensor_camera_red_mask
 
     #####################################################################################
@@ -229,6 +278,112 @@ class CarlaEnv(gym.Env):
 
         # print(f"{states =} and {states_size =}")
         return states, states_size
+
+    #####################################################################################
+    #
+    #                                       STEP
+    #
+    #####################################################################################
+    def step(self, action):
+        """
+        state: sp
+        actions: continuous
+        only right line
+        """
+
+        self.control_discrete_actions_only_right(action)
+
+        ########### --- calculating STATES
+        mask = self.preprocess_image(self.sensor_camera_red_mask.front_red_mask_camera)
+
+        ########### --- Calculating center ONLY with right line
+        right_line_in_pixels = self.calculate_right_line(mask, self.x_row)
+
+        image_center = mask.shape[1] // 2
+        # dist = [
+        #    image_center - right_line_in_pixels[i]
+        #    for i, _ in enumerate(right_line_in_pixels)
+        # ]
+        dist_normalized = [
+            float((image_center - right_line_in_pixels[i]) / image_center)
+            for i, _ in enumerate(right_line_in_pixels)
+        ]
+
+        ## STATES
+        pixels_in_state = mask.shape[1] // self.num_regions
+        states = [
+            int(value / pixels_in_state) for _, value in enumerate(right_line_in_pixels)
+        ]
+
+        ## -------- Ending Step()...
+        done = False
+        ground_truth_normal_values = [
+            correct_normalized_distance[value] for i, value in enumerate(self.x_row)
+        ]
+        # reward, done = self.autocarlarewards.rewards_right_line(
+        #    dist_normalized, ground_truth_normal_values, self.params
+        # )
+        reward, done = self.autocarlarewards.rewards_sigmoid_only_right_line(
+            dist_normalized, ground_truth_normal_values
+        )
+
+        ## -------- ... or Finish by...
+        if len(self.collision_hist) > 0:  # crashed you, baby
+            done = True
+            # reward = -100
+            print(f"crash")
+
+        self.is_finish, self.dist_to_finish = AutoCarlaUtils.finish_fix_number_target(
+            self.params["location"],
+            self.finish_alternate_pose,
+            self.finish_pose_number,
+            self.max_target_waypoint_distance,
+        )
+        if self.is_finish:
+            print(f"Finish!!!!")
+            done = True
+
+        ground_truth_pixel_values = [
+            correct_pixel_distance[value] for i, value in enumerate(self.x_row)
+        ]
+
+        return states, reward, done, {}
+
+    ##################################################
+    #
+    #   Control
+    ###################################################
+
+    def control_discrete_actions_only_right(self, action):
+        t = self.car.car.get_transform()
+        v = self.car.car.get_velocity()
+        c = self.car.car.get_control()
+        w = self.car.car.get_angular_velocity()
+        a = self.car.car.get_acceleration()
+        self.params["speed"] = int(3.6 * math.sqrt(v.x**2 + v.y**2 + v.z**2))
+        self.params["steering_angle"] = w
+        # self.params["Steering_angle"] = steering_angle
+        self.params["Steer"] = c.steer
+        self.params["location"] = (t.location.x, t.location.y)
+        self.params["Throttle"] = c.throttle
+        self.params["Brake"] = c.brake
+        self.params["height"] = t.location.z
+        self.params["Acceleration"] = math.sqrt(a.x**2 + a.y**2 + a.z**2)
+
+        ## Applied throttle, brake and steer
+        curr_speed = int(3.6 * math.sqrt(v.x**2 + v.y**2 + v.z**2))
+        target_speed = 30
+        # throttle_low_limit = 0.0 #0.1 for low speeds
+        brake = 0
+        throttle = self.actions[action][0]
+        steer = self.actions[action][1]
+
+        if curr_speed > target_speed:
+            throttle = 0.45
+
+        self.car.car.apply_control(
+            carla.VehicleControl(throttle=throttle, steer=steer, brake=brake)
+        )
 
     #####################################################################################
     # ---   methods
@@ -568,75 +723,24 @@ class TrainerFollowLaneAutoCarlaSB3:
                 self.world.unload_map_layer(carla.MapLayer.Props)
 
             #####################################################
-            # car, sensors
+            # FOR
             #####################################################
 
-            self.new_car = NewCar(
-                self.world,
-                self.environment.environment["start_alternate_pose"],
-                self.environment.environment["alternate_pose"],
-            )
-            self.actor_list.append(self.new_car.car)
-
-            ############################################
-            ## --------------- Sensors ---------------
-            ############################################
-
-            ## --------------- RGB camera ---------------
-            self.sensor_camera_rgb = CameraRGBSensor(self.new_car.car)
-            self.actor_list.append(self.sensor_camera_rgb.sensor)
-
-            ## --------------- RedMask Camera ---------------
-            self.sensor_camera_red_mask = CameraRedMaskSemanticSensor(self.new_car.car)
-            self.actor_list.append(self.sensor_camera_red_mask.sensor)
-
-            # time.sleep(1)
-            self.world.tick()
-
-            print(
-                f"in main() {self.sensor_camera_rgb.front_rgb_camera} in {time.time()}"
-            )
-            print(
-                f"in main() {self.sensor_camera_red_mask.front_red_mask_camera} in {time.time()}"
-            )
-
-            ############################################################################
-            # ENV, RESET, DQN-AGENT, FOR
-            ############################################################################
-
-            env = CarlaEnv(self.sensor_camera_red_mask, **self.environment.environment)
-            # env = gym.make(self.env_params.env_name, **self.environment.environment)
-            # check_env(env, warn=True)
-
-            ## Reset env
-            # self.world.tick()
-            # state, state_size = env.reset()
-            # print(f"{state = } and {state_size = }")
-            # print(
-            #    f"Again in main() {self.sensor_camera_red_mask.front_red_mask_camera} in {time.time()}"
-            # )
-
             for episode in tqdm(
-                range(1, 10),
+                range(1, 5),
                 ascii=True,
                 unit="episodes",
             ):
-                self.world.tick()
-
-                """esto es lo nuevo"""
-                """
-                # 1. eliminamos actor_list
-                # 2. new car
-                # 3. ubicamos new car
-                self.client.apply_batch(
-                    [carla.command.DestroyActor(x) for x in self.actor_list[::-1]]
-                )
                 self.new_car = NewCar(
                     self.world,
                     self.environment.environment["start_alternate_pose"],
                     self.environment.environment["alternate_pose"],
                 )
                 self.actor_list.append(self.new_car.car)
+
+                ############################################
+                ## --------------- Sensors ---------------
+                ############################################
 
                 ## --------------- RGB camera ---------------
                 self.sensor_camera_rgb = CameraRGBSensor(self.new_car.car)
@@ -648,34 +752,70 @@ class TrainerFollowLaneAutoCarlaSB3:
                 )
                 self.actor_list.append(self.sensor_camera_red_mask.sensor)
 
+                # time.sleep(1)
                 self.world.tick()
-                """
-                """ hasta aqui """
-                ############
+
+                print(
+                    f"in main() {self.sensor_camera_rgb.front_rgb_camera} in {time.time()}"
+                )
+                print(
+                    f"in main() {self.sensor_camera_red_mask.front_red_mask_camera} in {time.time()}"
+                )
+
+                ############################################################################
+                # ENV, RESET, DQN-AGENT, FOR
+                ############################################################################
+
+                env = CarlaEnv(
+                    self.new_car,
+                    self.sensor_camera_red_mask,
+                    self.environment.environment,
+                )
+                # env = gym.make(self.env_params.env_name, **self.environment.environment)
+                # check_env(env, warn=True)
+
+                self.world.tick()
+
+                ############################
                 state, state_size = env.reset()
                 print(f"{state = } and {state_size = }")
 
-                if self.sensor_camera_rgb.front_rgb_camera is not None:
-                    print(
-                        f"Again in main() self.sensor_camera_rgb.front_rgb_camera in {time.time()}"
-                    )
-                if self.sensor_camera_red_mask.front_red_mask_camera is not None:
-                    print(f"Again in main() in {time.time()}")
+                for step in tqdm(
+                    range(1, 10),
+                    ascii=True,
+                    unit="episodes",
+                ):
+                    self.world.tick()
 
-                """
-                AutoCarlaUtils.show_image(
-                    "RGB",
-                    self.sensor_camera_rgb.front_rgb_camera,
-                    1200,
-                    400,
-                )
-                AutoCarlaUtils.show_image(
-                    "segmentation_cam",
-                    self.sensor_camera_red_mask.front_red_mask_camera,
-                    400,
-                    400,
-                )
-                """
+                    ############################
+                    # state, reward, done, _ = env.step(action)
+
+                    if self.sensor_camera_rgb.front_rgb_camera is not None:
+                        print(
+                            f"Again in main() self.sensor_camera_rgb.front_rgb_camera in {time.time()}"
+                        )
+                    if self.sensor_camera_red_mask.front_red_mask_camera is not None:
+                        print(f"Again in main() in {time.time()}")
+
+                    AutoCarlaUtils.show_image(
+                        "RGB",
+                        self.sensor_camera_rgb.front_rgb_camera,
+                        50,
+                        50,
+                    )
+                    AutoCarlaUtils.show_image(
+                        "segmentation_cam",
+                        self.sensor_camera_red_mask.front_red_mask_camera,
+                        50,
+                        400,
+                    )
+
+                if episode < 4:
+                    self.client.apply_batch(
+                        [carla.command.DestroyActor(x) for x in self.actor_list[::-1]]
+                    )
+                    self.actor_list = []
+
         ############################################################################
         #
         # finally
