@@ -4,6 +4,7 @@ import glob
 import math
 from statistics import median
 import os
+import random
 import time
 import weakref
 
@@ -16,6 +17,8 @@ import pygame
 from reloading import reloading
 import tensorflow as tf
 from tqdm import tqdm
+from stable_baselines3.common.env_checker import check_env
+import sys
 
 from rl_studio.agents.f1.loaders import (
     LoadAlgorithmParams,
@@ -48,8 +51,11 @@ from rl_studio.algorithms.dqn_keras import (
 from rl_studio.algorithms.utils import (
     save_actorcritic_model,
 )
-from rl_studio.envs.gazebo.gazebo_envs import *
+
+# from rl_studio.envs.gazebo.gazebo_envs import *
+from rl_studio.envs.carla.carla_env import CarlaEnv
 from rl_studio.envs.carla.followlane.utils import AutoCarlaUtils
+from rl_studio.envs.carla.followlane.settings import FollowLaneCarlaConfig
 from rl_studio.envs.carla.utils.bounding_boxes import BasicSynchronousClient
 from rl_studio.envs.carla.utils.logger import logger
 from rl_studio.envs.carla.utils.manual_control import HUD, World
@@ -63,8 +69,7 @@ from rl_studio.envs.carla.utils.synchronous_mode import (
     get_font,
     should_quit,
 )
-from rl_studio.envs.carla.carla_env import CarlaEnv
-from stable_baselines3.common.env_checker import check_env
+
 
 try:
     sys.path.append(
@@ -134,7 +139,7 @@ class CarlaEnv(gym.Env):
         ## --------------- init env
         # FollowLaneEnv.__init__(self, **config)
         ## --------------- init class variables
-        # FollowLaneCarlaConfig.__init__(self, **config)
+        FollowLaneCarlaConfig.__init__(self, **config)
 
         # print(f"{config =}")
 
@@ -247,6 +252,10 @@ class CarlaEnv(gym.Env):
 
         self.car = car
         self.sensor_camera_red_mask = sensor_camera_red_mask
+        self.params = {}
+        self.is_finish = None
+        self.dist_to_finish = None
+        self.collision_hist = []
 
     #####################################################################################
     #
@@ -261,9 +270,11 @@ class CarlaEnv(gym.Env):
 
         ############################################################################
         ########### --- calculating STATES
-        # while self.front_red_mask_camera is None:
-        #    print(f"{self.front_red_mask_camera = }")
-        #    time.sleep(1)
+        while self.sensor_camera_red_mask.front_red_mask_camera is None:
+            print(
+                f"RESET() ----> {self.sensor_camera_red_mask.front_red_mask_camera = }"
+            )
+            time.sleep(1)
 
         # mask = self.preprocess_image(self.front_red_mask_camera)
         mask = self.preprocess_image(self.sensor_camera_red_mask.front_red_mask_camera)
@@ -581,7 +592,7 @@ class CameraRedMaskSemanticSensor(object):
         if self.front_red_mask_camera is not None:
             #    time.sleep(0.01)
             #    print(f"self.front_red_mask_camera leyendo")
-            print(f"in callback() {time.time()}")
+            print(f"in _red_mask_semantic_image_callback() {time.time()}")
 
 
 # ==============================================================================
@@ -682,17 +693,30 @@ class TrainerFollowLaneAutoCarlaSB3:
         current_max_reward = 0
         best_step = 0
         best_epoch_training_time = 0
+        epsilon = self.algoritmhs_params.epsilon
+        epsilon_discount = self.algoritmhs_params.epsilon_discount
+        epsilon_min = self.algoritmhs_params.epsilon_min
+        epsilon_decay = epsilon / (self.env_params.total_episodes // 2)
+
+        dqn_agent = DQN(
+            self.environment.environment,
+            self.algoritmhs_params,
+            len(self.global_params.actions_set),
+            4,
+            self.global_params.models_dir,
+            self.global_params,
+        )
 
         try:
             #########################################################################
             # Vars
             #########################################################################
-            print(f"\n al inicio de Main() {self.environment.environment =}\n")
+            # print(f"\n al inicio de Main() {self.environment.environment =}\n")
             self.client = carla.Client(
                 self.environment.environment["carla_server"],
                 self.environment.environment["carla_client"],
             )
-            self.client.set_timeout(5.0)
+            self.client.set_timeout(3.0)
             print(f"\n maps in carla 0.9.13: {self.client.get_available_maps()}\n")
 
             self.world = self.client.load_world(self.environment.environment["town"])
@@ -710,8 +734,8 @@ class TrainerFollowLaneAutoCarlaSB3:
 
             self.client.reload_world(False)
 
-            print(f"{settings.synchronous_mode =}")
-            self.world.tick()
+            # print(f"{settings.synchronous_mode =}")
+            # self.world.tick()
             # print(f"{self.world.tick()=}")
 
             # Town07 take layers off
@@ -722,6 +746,25 @@ class TrainerFollowLaneAutoCarlaSB3:
                 self.world.unload_map_layer(carla.MapLayer.Particles)
                 self.world.unload_map_layer(carla.MapLayer.Props)
 
+            # Init Agent
+
+            """
+            dqn_agent = DQN(
+                self.environment.environment,
+                self.algoritmhs_params,
+                len(self.global_params.actions_set),
+                4,
+                self.global_params.models_dir,
+                self.global_params,
+            )
+            self.world.tick()
+            """
+
+            ##############
+            # Init ego car, sensors
+
+            #################
+
             #####################################################
             # FOR
             #####################################################
@@ -731,6 +774,8 @@ class TrainerFollowLaneAutoCarlaSB3:
                 ascii=True,
                 unit="episodes",
             ):
+                self.world.tick()
+
                 self.new_car = NewCar(
                     self.world,
                     self.environment.environment["start_alternate_pose"],
@@ -753,7 +798,7 @@ class TrainerFollowLaneAutoCarlaSB3:
                 self.actor_list.append(self.sensor_camera_red_mask.sensor)
 
                 # time.sleep(1)
-                self.world.tick()
+                # self.world.tick()
 
                 print(
                     f"in main() {self.sensor_camera_rgb.front_rgb_camera} in {time.time()}"
@@ -780,22 +825,51 @@ class TrainerFollowLaneAutoCarlaSB3:
                 state, state_size = env.reset()
                 print(f"{state = } and {state_size = }")
 
+                # self.world.tick()
+
+                ##################################################################
+                #
+                # STEPS
+                ##################################################################
+
                 for step in tqdm(
                     range(1, 10),
                     ascii=True,
                     unit="episodes",
                 ):
+                    print(f"\n{episode =} , {step = }")
+
                     self.world.tick()
 
+                    if np.random.random() > epsilon:
+                        # Get action from Q table
+                        # action = np.argmax(agent_dqn.get_qs(state))
+                        action = np.argmax(dqn_agent.get_qs(state))
+                    else:
+                        # Get random action
+                        action = np.random.randint(
+                            0, len(self.global_params.actions_set)
+                        )
                     ############################
-                    # state, reward, done, _ = env.step(action)
+
+                    new_state, reward, done, _ = env.step(action)
+
+                    self.world.tick()
+
+                    state = new_state
+
+                    ########################
+                    ### solo para chequear que funcione
+                    #########################
 
                     if self.sensor_camera_rgb.front_rgb_camera is not None:
                         print(
                             f"Again in main() self.sensor_camera_rgb.front_rgb_camera in {time.time()}"
                         )
                     if self.sensor_camera_red_mask.front_red_mask_camera is not None:
-                        print(f"Again in main() in {time.time()}")
+                        print(
+                            f"Again in main() self.sensor_camera_red_mask.front_red_mask_camera in {time.time()}"
+                        )
 
                     AutoCarlaUtils.show_image(
                         "RGB",
@@ -810,11 +884,11 @@ class TrainerFollowLaneAutoCarlaSB3:
                         400,
                     )
 
-                if episode < 4:
-                    self.client.apply_batch(
-                        [carla.command.DestroyActor(x) for x in self.actor_list[::-1]]
-                    )
-                    self.actor_list = []
+                # if episode < 4:
+                self.client.apply_batch(
+                    [carla.command.DestroyActor(x) for x in self.actor_list[::-1]]
+                )
+                self.actor_list = []
 
         ############################################################################
         #
@@ -831,7 +905,8 @@ class TrainerFollowLaneAutoCarlaSB3:
                 print(f"ending training...bye!!")
 
             # destroy_all_actors()
-            for actor in self.actor_list[::-1]:
+            # for actor in self.actor_list[::-1]:
+            for actor in self.actor_list:
                 actor.destroy()
 
             # env.close()
