@@ -2,6 +2,7 @@ import torch
 import torch.nn as nn
 from torch.distributions import MultivariateNormal
 from torch.distributions import Categorical
+from rl_studio.wrappers.inference_rlstudio import InferencerWrapper
 
 ################################## set device ##################################
 print("============================================================================================")
@@ -133,7 +134,6 @@ class PPO:
         self.K_epochs = K_epochs
 
         self.buffer = RolloutBuffer()
-
         self.policy = ActorCritic(state_dim, action_dim, has_continuous_action_space, action_std_init).to(device)
         self.optimizer = torch.optim.Adam([
             {'params': self.policy.actor.parameters(), 'lr': lr_actor},
@@ -175,7 +175,9 @@ class PPO:
 
         if self.has_continuous_action_space:
             with torch.no_grad():
-                state = torch.FloatTensor(state).to(device)
+                # state = torch.FloatTensor(state).to(device)
+                numpy_array = state.numpy()
+                state = torch.from_numpy(numpy_array).to(device)
                 action, action_logprob = self.policy_old.act(state)
 
             self.buffer.states.append(state)

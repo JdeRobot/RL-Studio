@@ -15,6 +15,18 @@ class LoadAlgorithmParams:
             self.buffer_capacity = config["algorithm"]["ddpg"]["buffer_capacity"]
             self.batch_size = config["algorithm"]["ddpg"]["batch_size"]
 
+        if config["settings"]["algorithm"] == "ppo_continuous":
+            self.gamma = config["algorithm"]["ppo"]["gamma"]
+            self.tau = config["algorithm"]["ppo"]["tau"]
+            self.std_dev = config["algorithm"]["ppo"]["std_dev"]
+            self.model_name = config["algorithm"]["ppo"]["model_name"]
+            self.buffer_capacity = config["algorithm"]["ppo"]["buffer_capacity"]
+            self.batch_size = config["algorithm"]["ppo"]["batch_size"]
+            self.episodes_update = config["algorithm"]["ppo"]["episodes_update"]
+            self.actor_lr = config["algorithm"]["ppo"]["actor_lr"]
+            self.critic_lr = config["algorithm"]["ppo"]["critic_lr"]
+            self.epsilon = config["algorithm"]["ppo"]["epsilon"]
+
         elif config["settings"]["algorithm"] == "dqn":
             self.alpha = config["algorithm"]["dqn"]["alpha"]
             self.gamma = config["algorithm"]["dqn"]["gamma"]
@@ -374,6 +386,130 @@ class LoadEnvVariablesDDPGGazebo:
         self.environment["ROS_MASTER_URI"] = config["ros"]["ros_master_uri"]
         self.environment["GAZEBO_MASTER_URI"] = config["ros"]["gazebo_master_uri"]
 
+
+class LoadEnvVariablesPPOGazebo:
+    """
+    ONLY FOR DDPG algorithm
+    Creates a new variable 'environment', which contains values to Gazebo env, Carla env ...
+    """
+
+    def __init__(self, config) -> None:
+        """environment variable for reset(), step() methods"""
+        self.environment_set = config["settings"]["environment_set"]
+        self.env = config["settings"]["env"]
+        self.agent = config["settings"]["agent"]
+        self.states = config["settings"]["states"]
+        self.actions = config["settings"]["actions"]
+        self.actions_set = config["actions"][self.actions]
+        self.rewards = config["settings"]["rewards"]
+        ##### environment variable
+        self.environment = {}
+        self.environment["agent"] = config["settings"]["agent"]
+        self.environment["algorithm"] = config["settings"]["algorithm"]
+        self.environment["task"] = config["settings"]["task"]
+        self.environment["framework"] = config["settings"]["framework"]
+        self.environment["model_state_name"] = config[self.environment_set][self.env][
+            "model_state_name"
+        ]
+        self.environment["sleep"] = config[self.environment_set][self.env][
+            "sleep"
+        ]
+        self.environment["punish_ineffective_vel"] = config["settings"]["reward_params"]["punish_ineffective_vel"]
+        self.environment["punish_zig_zag_value"] = config["settings"]["reward_params"]["punish_zig_zag_value"]
+        self.environment["reward_function_tuning"] = config["settings"]["reward_params"]["function"]
+        self.environment["beta_1"] = config["settings"]["reward_params"]["beta_1"]
+
+
+        # Training/inference
+        self.environment["mode"] = config["settings"]["mode"]
+        self.environment["retrain_ppo_tf_actor_model_name"] = f"{config['retraining']['ppo']['retrain_ppo_tf_model_name']}/ACTOR"
+        self.environment["retrain_ppo_tf_critic_model_name"] = f"{config['retraining']['ppo']['retrain_ppo_tf_model_name']}/CRITIC"
+        self.environment["inference_ppo_tf_actor_model_name"] = config["inference"][
+            "ppo"
+        ]["inference_ppo_tf_actor_model_name"]
+        self.environment["inference_ppo_tf_critic_model_name"] = config["inference"][
+            "ppo"
+        ]["inference_ppo_tf_critic_model_name"]
+
+        # Env
+        self.environment["env"] = config["settings"]["env"]
+        self.environment["circuit_name"] = config[self.environment_set][self.env][
+            "circuit_name"
+        ]
+        self.environment["launchfile"] = config[self.environment_set][self.env][
+            "launchfile"
+        ]
+        self.environment["environment_folder"] = config[self.environment_set][self.env][
+            "environment_folder"
+        ]
+        self.environment["robot_name"] = config[self.environment_set][self.env][
+            "robot_name"
+        ]
+        self.environment["estimated_steps"] = config[self.environment_set][self.env][
+            "estimated_steps"
+        ]
+        self.environment["alternate_pose"] = config[self.environment_set][self.env][
+            "alternate_pose"
+        ]
+        self.environment["sensor"] = config[self.environment_set][self.env]["sensor"]
+        self.environment["gazebo_start_pose"] = [
+            config[self.environment_set][self.env]["circuit_positions_set"][0]
+        ]
+        self.environment["gazebo_random_start_pose"] = config[self.environment_set][
+            self.env
+        ]["circuit_positions_set"]
+        self.environment["telemetry_mask"] = config[self.environment_set][self.env][
+            "telemetry_mask"
+        ]
+        self.environment["telemetry"] = config[self.environment_set][self.env][
+            "telemetry"
+        ]
+
+        # Image
+        self.environment["height_image"] = config["agents"][self.agent][
+            "camera_params"
+        ]["height"]
+        self.environment["width_image"] = config["agents"][self.agent]["camera_params"][
+            "width"
+        ]
+        self.environment["center_image"] = config["agents"][self.agent][
+            "camera_params"
+        ]["center_image"]
+        self.environment["image_resizing"] = config["agents"][self.agent][
+            "camera_params"
+        ]["image_resizing"]
+        self.environment["new_image_size"] = config["agents"][self.agent][
+            "camera_params"
+        ]["new_image_size"]
+        self.environment["raw_image"] = config["agents"][self.agent]["camera_params"][
+            "raw_image"
+        ]
+        self.environment["num_regions"] = config["agents"][self.agent]["camera_params"][
+            "num_regions"
+        ]
+        self.environment["lower_limit"] = config["agents"][self.agent]["camera_params"][
+            "lower_limit"
+        ]
+        # States
+        self.environment["states"] = config["settings"]["states"]
+        self.environment["x_row"] = config["states"][self.states][0]
+
+        # Actions
+        self.environment["action_space"] = config["settings"]["actions"]
+        self.environment["actions"] = config["actions"][self.actions]
+
+        # Rewards
+        self.environment["reward_function"] = config["settings"]["rewards"]
+        self.environment["rewards"] = config["rewards"][self.rewards]
+        self.environment["min_reward"] = config["rewards"][self.rewards]["min_reward"]
+
+        # Algorithm
+        self.environment["critic_lr"] = config["algorithm"]["ppo"]["critic_lr"]
+        self.environment["actor_lr"] = config["algorithm"]["ppo"]["actor_lr"]
+        self.environment["model_name"] = config["algorithm"]["ppo"]["model_name"]
+        #
+        self.environment["ROS_MASTER_URI"] = config["ros"]["ros_master_uri"]
+        self.environment["GAZEBO_MASTER_URI"] = config["ros"]["gazebo_master_uri"]
 
 class LoadEnvVariablesQlearnGazebo:
     """
