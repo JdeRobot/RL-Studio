@@ -74,7 +74,8 @@ class AutoCarlaUtils:
         x_row,
         x,
         y,
-        state_right_lines,
+        line_states,
+        number_states,
     ):
         """
         shows image with 1 point in center of lane
@@ -82,18 +83,41 @@ class AutoCarlaUtils:
         window_name = f"{name}"
         img = np.array(img)
 
+        ## vertical line in the center of image, showing car position
+        cv2.line(
+            img,
+            (int(img.shape[1] // 2), int(img.shape[0] // 2)),
+            (int(img.shape[1] // 2), int(img.shape[0])),
+            # (320, 120),
+            # (320, 480),
+            color=(200, 100, 100),
+            thickness=4,
+        )
+
+        line_states.append(640)
         ## vertical lines for states: 5, 7, 8, 16...
-        for index, _ in enumerate(state_right_lines): 
+        for index, _ in enumerate(line_states):
             cv2.line(
                 img,
-                (state_right_lines[index], 0),
-                (state_right_lines[index], int(img.shape[0])),
+                (line_states[index], 0),
+                (line_states[index], int(img.shape[0])),
                 color=(100, 200, 100),
                 thickness=1,
-            )        
+            )
+            ## writing number state into lines
+            # for index, value in enumerate(number_states):
+            cv2.putText(
+                img,
+                str(f"{number_states[index]}"),
+                (line_states[index] - 30, 15),
+                cv2.FONT_HERSHEY_SIMPLEX,
+                0.4,
+                (0, 0, 0),
+                1,
+                cv2.LINE_AA,
+            )
 
-
-        for index, _ in enumerate(x_row):            
+        for index, _ in enumerate(x_row):
             ### Points
             cv2.circle(
                 img,

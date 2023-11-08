@@ -85,6 +85,13 @@ try:
 except IndexError:
     pass
 
+
+# Sharing GPU
+gpus = tf.config.experimental.list_physical_devices("GPU")
+for gpu in gpus:
+    tf.config.experimental.set_memory_growth(gpu, True)
+
+
 correct_normalized_distance = {
     20: -0.07,
     30: -0.1,
@@ -257,6 +264,14 @@ class CarlaEnv(gym.Env):
         self.dist_to_finish = None
         self.collision_hist = []
 
+        self.right_line_in_pixels = None
+        self.ground_truth_pixel_values = None
+        self.dist_normalized = None
+        self.states = None
+        self.state_right_lines = None
+        self.drawing_lines_states = []
+        self.drawing_numbers_states = []
+
     #####################################################################################
     #
     #                                       RESET
@@ -278,17 +293,18 @@ class CarlaEnv(gym.Env):
 
         # mask = self.preprocess_image(self.front_red_mask_camera)
         mask = self.preprocess_image(self.sensor_camera_red_mask.front_red_mask_camera)
-        right_line_in_pixels = self.calculate_right_line(mask, self.x_row)
+        self.right_line_in_pixels = self.calculate_right_line(mask, self.x_row)
 
         pixels_in_state = mask.shape[1] / self.num_regions
-        states = [
-            int(value / pixels_in_state) for _, value in enumerate(right_line_in_pixels)
+        self.states = [
+            int(value / pixels_in_state)
+            for _, value in enumerate(self.right_line_in_pixels)
         ]
         # states = [5, 5, 5, 5]
-        states_size = len(states)
+        states_size = len(self.states)
 
         # print(f"{states =} and {states_size =}")
-        return states, states_size
+        return self.states, states_size
 
     #####################################################################################
     #
@@ -308,23 +324,56 @@ class CarlaEnv(gym.Env):
         mask = self.preprocess_image(self.sensor_camera_red_mask.front_red_mask_camera)
 
         ########### --- Calculating center ONLY with right line
-        right_line_in_pixels = self.calculate_right_line(mask, self.x_row)
+        self.right_line_in_pixels = self.calculate_right_line(mask, self.x_row)
 
         image_center = mask.shape[1] // 2
         # dist = [
         #    image_center - right_line_in_pixels[i]
         #    for i, _ in enumerate(right_line_in_pixels)
         # ]
-        dist_normalized = [
-            float((image_center - right_line_in_pixels[i]) / image_center)
-            for i, _ in enumerate(right_line_in_pixels)
+        self.dist_normalized = [
+            float((image_center - self.right_line_in_pixels[i]) / image_center)
+            for i, _ in enumerate(self.right_line_in_pixels)
         ]
 
         ## STATES
-        pixels_in_state = mask.shape[1] // self.num_regions
-        states = [
-            int(value / pixels_in_state) for _, value in enumerate(right_line_in_pixels)
+
+        # pixels_in_state = mask.shape[1] // self.num_regions
+        # self.state_right_lines = [
+        #    i for i in range(1, mask.shape[1]) if i % pixels_in_state == 0
+        # ]
+        # self.states = [
+        #    int(value / pixels_in_state)
+        #    for _, value in enumerate(self.right_line_in_pixels)
+        # ]
+
+        # non regular states: 1 to n-2 in center. n-1 right, n left
+        size_lateral_states = 140
+        size_center_states = mask.shape[1] - (size_lateral_states * 2)
+        pixel_center_states = int(size_center_states / (self.num_regions - 2))
+
+        self.states = [
+            int(((value - size_lateral_states) / pixel_center_states) + 1)
+            if (mask.shape[1] - size_lateral_states) > value > size_lateral_states
+            else self.num_regions - 1
+            if value >= (mask.shape[1] - size_lateral_states)
+            else self.num_regions
+            for _, value in enumerate(self.right_line_in_pixels)
         ]
+
+        # drawing lines and numbers states in image
+        self.drawing_lines_states = [
+            size_lateral_states + (i * pixel_center_states)
+            for i in range(1, self.num_regions - 1)
+        ]
+        # self.drawing_lines_states.append(size_lateral_states)
+        self.drawing_lines_states.insert(0, size_lateral_states)
+
+        self.drawing_numbers_states = [
+            i if i > 0 else self.num_regions for i in range(0, self.num_regions)
+        ]
+        # print(f"\n{self.drawing_lines_states}")
+        # print(f"\n{self.drawing_numbers_states}")
 
         ## -------- Ending Step()...
         done = False
@@ -335,7 +384,7 @@ class CarlaEnv(gym.Env):
         #    dist_normalized, ground_truth_normal_values, self.params
         # )
         reward, done = self.autocarlarewards.rewards_sigmoid_only_right_line(
-            dist_normalized, ground_truth_normal_values
+            self.dist_normalized, ground_truth_normal_values
         )
 
         ## -------- ... or Finish by...
@@ -354,11 +403,11 @@ class CarlaEnv(gym.Env):
             print(f"Finish!!!!")
             done = True
 
-        ground_truth_pixel_values = [
+        self.ground_truth_pixel_values = [
             correct_pixel_distance[value] for i, value in enumerate(self.x_row)
         ]
 
-        return states, reward, done, {}
+        return self.states, reward, done, {}
 
     ##################################################
     #
@@ -704,7 +753,7 @@ class TrainerFollowLaneAutoCarlaSB3:
             self.environment.environment,
             self.algoritmhs_params,
             len(self.global_params.actions_set),
-            len(self.environment.environment['x_row']),
+            len(self.environment.environment["x_row"]),
             self.global_params.models_dir,
             self.global_params,
         )
@@ -758,7 +807,7 @@ class TrainerFollowLaneAutoCarlaSB3:
             ####################################################################################
 
             for episode in tqdm(
-                range(1, 5),
+                range(1, self.env_params.total_episodes + 1),
                 ascii=True,
                 unit="episodes",
             ):
@@ -829,21 +878,21 @@ class TrainerFollowLaneAutoCarlaSB3:
                     ascii=True,
                     unit="episodes",
                 ):
-                    #print(f"\n{episode =} , {step = }")
-                    #print(f"{state = } and {state_size = }")
+                    # print(f"\n{episode =} , {step = }")
+                    # print(f"{state = } and {state_size = }")
 
                     self.world.tick()
 
                     if np.random.random() > epsilon:
                         # Get action from Q table
                         # action = np.argmax(agent_dqn.get_qs(state))
-                        print(f"\n{state =}")
-                        print(f"\n{np.array(state) =}")
-                        print(f"\n{type(np.array(state)) =}")
-                        print(f"\n{tf.convert_to_tensor(state) =}")
-                        print(f"\n{tf.convert_to_tensor(state)[0] =}")
-                        print(f"\n{tf.convert_to_tensor(state)[:] =}")
-                        
+                        # print(f"\n{state =}")
+                        # print(f"\n{np.array(state) =}")
+                        # print(f"\n{type(np.array(state)) =}")
+                        # print(f"\n{tf.convert_to_tensor(state) =}")
+                        # print(f"\n{tf.convert_to_tensor(state)[0] =}")
+                        # print(f"\n{tf.convert_to_tensor(state)[:] =}")
+
                         action = np.argmax(dqn_agent.get_qs(state))
                     else:
                         # Get random action
@@ -851,12 +900,12 @@ class TrainerFollowLaneAutoCarlaSB3:
                             0, len(self.global_params.actions_set)
                         )
 
-                    #print(f"{action = }\n")
+                    # print(f"{action = }\n")
 
                     ############################
 
                     new_state, reward, done, _ = env.step(action)
-                    #print(f"{new_state = } and {reward = } and {done =}")
+                    # print(f"{new_state = } and {reward = } and {done =}")
 
                     # Every step we update replay memory and train main network
                     # agent_dqn.update_replay_memory((state, action, reward, nextState, done))
@@ -902,9 +951,9 @@ class TrainerFollowLaneAutoCarlaSB3:
                         best_episode_until_now=best_epoch,
                         in_best_step=best_step,
                         with_highest_reward=int(current_max_reward),
-                        #in_best_epoch_training_time=best_epoch_training_time,
+                        # in_best_epoch_training_time=best_epoch_training_time,
                     )
-                
+
                     AutoCarlaUtils.show_image(
                         "RGB",
                         self.sensor_camera_rgb.front_rgb_camera,
@@ -914,17 +963,37 @@ class TrainerFollowLaneAutoCarlaSB3:
                     AutoCarlaUtils.show_image(
                         "segmentation_cam",
                         self.sensor_camera_red_mask.front_red_mask_camera,
+                        500,
                         50,
-                        400,
                     )
 
+                    AutoCarlaUtils.show_image_only_right_line(
+                        "front RGB",
+                        # self.front_rgb_camera[(self.front_rgb_camera.shape[0] // 2) :],
+                        self.sensor_camera_rgb.front_rgb_camera[
+                            (self.sensor_camera_rgb.front_rgb_camera.shape[0] // 2) :
+                        ],
+                        1,
+                        env.right_line_in_pixels,
+                        env.ground_truth_pixel_values,
+                        env.dist_normalized,
+                        new_state,
+                        env.x_row,
+                        1250,
+                        10,
+                        env.drawing_lines_states,
+                        env.drawing_numbers_states,
+                    )
+
+                #######################################################
+                #
+                # End render
+                #######################################################
 
                 ### reducing epsilon
                 if epsilon > epsilon_min:
-                # epsilon *= epsilon_discount
-                    epsilon -= epsilon_decay               
-                
-
+                    # epsilon *= epsilon_discount
+                    epsilon -= epsilon_decay
 
                 # if episode < 4:
                 # self.client.apply_batch(
