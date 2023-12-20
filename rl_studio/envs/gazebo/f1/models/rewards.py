@@ -111,7 +111,7 @@ class F1GazeboRewards:
 
         # penalizing steering to avoid zig-zag
         w_punish = self.normalize_range(abs(w), 0, abs(range_w[1])) * self.punish_zig_zag_value
-        reward = reward - (p_reward * w_punish)
+        reward = reward - (reward * w_punish)
 
         # penalizing accelerating on bad positions
         v_punish = reward * (1 - p_reward) * v_norm * self.punish_ineffective_vel

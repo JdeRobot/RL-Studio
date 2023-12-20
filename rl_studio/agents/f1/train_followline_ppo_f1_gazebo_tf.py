@@ -93,6 +93,7 @@ class TrainerFollowLinePPOF1GazeboTF:
 
         tensorboard.update_hyperparams(hyperparams)
 
+        std_init = self.algoritmhs_params.std_dev
         ## Load Environment
         env = gym.make(self.env_params.env_name, **self.environment.environment)
 
@@ -105,13 +106,19 @@ class TrainerFollowLinePPOF1GazeboTF:
         current_max_reward = 0
         best_epoch_training_time = 0
         all_steps = 0
+        loss = 0
         ## Reset env
-        K_epochs = 80
+        K_epochs = 8
         _, state_size = env.reset()
 
         self.ppo_agent = PPO(state_size, len(self.global_params.actions_set), self.algoritmhs_params.actor_lr,
-                             self.algoritmhs_params.critic_lr, self.algoritmhs_params.gamma,
-                             K_epochs, self.algoritmhs_params.epsilon)
+             self.algoritmhs_params.critic_lr, self.algoritmhs_params.gamma,
+             K_epochs, self.algoritmhs_params.epsilon, True, std_init)
+
+        if self.global_params.mode == "retraining":
+            checkpoint = self.environment.environment["retrain_ppo_tf_model_name"]
+            trained_agent=f"{self.global_params.models_dir}/{checkpoint}"
+            self.ppo_agent.load(trained_agent)
 
         log.logger.info(
             f"\nstates = {self.global_params.states}\n"
@@ -121,7 +128,6 @@ class TrainerFollowLinePPOF1GazeboTF:
             f"actions set = {self.global_params.actions_set}\n"
             f"actions_len = {len(self.global_params.actions_set)}\n"
             f"actions_range = {range(len(self.global_params.actions_set))}\n"
-            f"batch_size = {self.algoritmhs_params.batch_size}\n"
             f"logs_tensorboard_dir = {self.global_params.logs_tensorboard_dir}\n"
         )
 
@@ -143,7 +149,8 @@ class TrainerFollowLinePPOF1GazeboTF:
                 tf_prev_state = tf.expand_dims(tf.convert_to_tensor(prev_state), 0)
 
                 action = self.ppo_agent.select_action(tf_prev_state)
-                action[0] = action[0] + 1 * 4 # TODO scale it propperly
+                action[0] = (action[0] + 1) * 4 # TODO scale it propperly
+                action[1] = action[1] * 1.5 # TODO scale it propperly
                 tensorboard.update_actions(action, all_steps)
 
                 state, reward, done, info = env.step([action], step)
@@ -153,7 +160,7 @@ class TrainerFollowLinePPOF1GazeboTF:
 
                 # update PPO agent
                 if all_steps % self.algoritmhs_params.episodes_update == 0:
-                    self.ppo_agent.update()
+                    loss = self.ppo_agent.update()
 
                 if all_steps % self.global_params.steps_to_decrease == 0:
                     self.ppo_agent.decay_action_std(self.global_params.decrease_substraction,
@@ -212,7 +219,6 @@ class TrainerFollowLinePPOF1GazeboTF:
                         self.environment.environment,
                         self.global_params.metrics_data_dir,
                         self.global_params.aggr_ep_rewards,
-                        self.global_params.actions_rewards,
                     )
                     plot_rewards(
                         self.global_params.metrics_data_dir,
@@ -253,33 +259,7 @@ class TrainerFollowLinePPOF1GazeboTF:
             if current_max_reward <= cumulated_reward:
                 current_max_reward = cumulated_reward
                 best_epoch = episode
-                # best_epoch_training_time = datetime.now() - start_time_epoch
-                # # saving params to show
-                # self.global_params.actions_rewards["episode"].append(episode)
-                # self.global_params.actions_rewards["step"].append(step)
-                # # For continuous actions
-                # # self.actions_rewards["v"].append(action[0][0])
-                # # self.actions_rewards["w"].append(action[0][1])
-                # self.global_params.actions_rewards["reward"].append(reward)
-                # self.global_params.actions_rewards["center"].append(
-                #     env.image_center
-                # )
-                # self.global_params.best_current_epoch["best_epoch"].append(best_epoch)
-                # self.global_params.best_current_epoch["highest_reward"].append(
-                #     current_max_reward
-                # )
-                # self.global_params.best_current_epoch[
-                #     "best_epoch_training_time"
-                # ].append(best_epoch_training_time)
-                # self.global_params.best_current_epoch[
-                #     "current_total_training_time"
-                # ].append(datetime.now() - start_time)
 
-                # save_dataframe_episodes(
-                #     self.environment.environment,
-                #     self.global_params.metrics_data_dir,
-                #     self.global_params.best_current_epoch,
-                # )
                 self.ppo_agent.save(
                     f"{self.global_params.models_dir}/"
                     f"{time.strftime('%Y%m%d-%H%M%S')}-IMPROVED"
@@ -305,23 +285,30 @@ class TrainerFollowLinePPOF1GazeboTF:
                     f"epoch = {episode}\n"
                     f"step = {step}\n"
                 )
-                # if cumulated_reward > current_max_reward:
-                # save_actorcritic_model(
-                #     ac_agent,
-                #     self.global_params,
-                #     self.algoritmhs_params,
-                #     cumulated_reward,
-                #     episode,
-                #     "FINISHTIME",
-                # )
-
                 break
 
+            self.global_params.ep_rewards.append(cumulated_reward)
+
+            if not episode % self.env_params.save_episodes:
+                average_reward = sum(self.global_params.ep_rewards[-self.env_params.save_episodes:]) / len(
+                    self.global_params.ep_rewards[-self.env_params.save_episodes:]
+                )
+                min_reward = min(self.global_params.ep_rewards[-self.env_params.save_episodes:])
+                max_reward = max(self.global_params.ep_rewards[-self.env_params.save_episodes:])
+                tensorboard.update_stats(
+                    cum_rewards=average_reward,
+                    reward_min=min_reward,
+                    reward_max=max_reward,
+                    actor_loss=loss if isinstance(loss, int) else loss.mean().detach().numpy(),
+                )
+
+                self.global_params.aggr_ep_rewards["episode"].append(episode)
+                self.global_params.aggr_ep_rewards["avg"].append(average_reward)
+                self.global_params.aggr_ep_rewards["max"].append(max_reward)
+                self.global_params.aggr_ep_rewards["min"].append(min_reward)
+                self.global_params.aggr_ep_rewards["epoch_training_time"].append(
+                    (datetime.now() - start_time_epoch).total_seconds()
+                )
         #####################################################
         ### save last episode, not neccesarily the best one
-        save_dataframe_episodes(
-            self.environment.environment,
-            self.global_params.metrics_data_dir,
-            self.global_params.aggr_ep_rewards,
-        )
         env.close()

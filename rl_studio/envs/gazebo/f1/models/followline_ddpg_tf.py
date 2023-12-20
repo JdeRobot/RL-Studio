@@ -8,10 +8,14 @@
 
 from rl_studio.envs.gazebo.f1.models.f1_env import F1Env
 from rl_studio.envs.gazebo.f1.models.settings import F1GazeboTFConfig
-
+from gym import spaces
+import numpy as np
 
 class FollowLineDDPGF1GazeboTF(F1Env):
     def __init__(self, **config):
+        # Define the observation space TODO do it wih **config and compatible from sac and the rest
+        # self.observation_space = spaces.Box(low=-1, high=1, shape=(8,), dtype=float)
+        # self.action_space = spaces.Box(low=np.array([0, -1.5]), high=np.array([10, 1.5]), dtype=np.float32)
 
         ###### init F1env
         F1Env.__init__(self, **config)

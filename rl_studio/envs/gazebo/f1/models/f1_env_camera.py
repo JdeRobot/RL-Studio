@@ -120,7 +120,7 @@ class F1CameraEnv(F1Env):
         vel_cmd.linear.x = self.actions[action][0]
         vel_cmd.angular.z = self.actions[action][1]
         self.vel_pub.publish(vel_cmd)
-        
+        self._gazebo_pause()
         # Get camera info
         f1_image_camera = None
         start = time.time()
@@ -130,17 +130,12 @@ class F1CameraEnv(F1Env):
 
         
         while np.array_equal(self.previous_image, f1_image_camera.data):
-            if (time.time() - start) > 0.1:
-                vel_cmd = Twist()
-                vel_cmd.linear.x = 0
-                vel_cmd.angular.z = 0
-                self.vel_pub.publish(vel_cmd)
             f1_image_camera = self.image.getImage()
         
         end = time.time()
         #print(end - start)
         
-        self._gazebo_pause()
+
         points = self.processed_image(f1_image_camera.data)
         state = self.calculate_observation(points)
         center = float(self.config.center_image - points[0]) / (

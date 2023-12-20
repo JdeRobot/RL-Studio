@@ -146,7 +146,7 @@ class DQN:
         loss = "mse"
         optimizing = 0.005
 
-        inputs = layers.Input(shape=(self.STATE_SIZE))
+        inputs = layers.Input(shape=(self.STATE_SIZE,))
         out = layers.Dense(neurons1, activation="relu")(inputs)
         out = layers.Dense(neurons2, activation="relu")(out)
         outputs = layers.Dense(self.ACTION_SIZE, activation="linear")(out)
@@ -223,7 +223,7 @@ class DQN:
                 0
             ]
         else:
-            return self.model.predict(state)[0]
+            return self.model(np.array(state).reshape(1, -1))[0]
 
     # Trains main network every step during episode
     def train(self, terminal_state, step):
@@ -235,13 +235,13 @@ class DQN:
         # Get a minibatch of random samples from memory replay table
         minibatch = random.sample(self.replay_memory, self.MINIBATCH_SIZE)
         # Get current states from minibatch, then query NN model for Q values
-        current_states = np.array([transition[0] for transition in minibatch]) / 255
-        current_qs_list = self.model.predict(current_states)
+        current_states = np.array([transition[0] for transition in minibatch])
+        current_qs_list = self.model(current_states)
 
         # Get future states from minibatch, then query NN model for Q values
         # When using target network, query it, otherwise main network should be queried
-        new_current_states = np.array([transition[3] for transition in minibatch]) / 255
-        future_qs_list = self.target_model.predict(new_current_states)
+        new_current_states = np.array([transition[3] for transition in minibatch])
+        future_qs_list = self.target_model(new_current_states)
 
         X = []  # thats the image input
         y = []  # thats the label or action to take
@@ -265,7 +265,9 @@ class DQN:
 
             # Update Q value for given state
             current_qs = current_qs_list[index]
+            current_qs = current_qs.numpy()
             current_qs[action] = new_q
+            current_qs = tf.constant(current_qs)
 
             # And append to our training data
             X.append(current_state)  # image
@@ -273,7 +275,7 @@ class DQN:
 
         # Fit on all samples as one batch, log only on terminal state
         self.model.fit(
-            np.array(X) / 255,
+            np.array(X),
             np.array(y),
             batch_size=self.MINIBATCH_SIZE,
             verbose=0,

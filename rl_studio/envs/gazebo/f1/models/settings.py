@@ -46,7 +46,7 @@ class F1GazeboTFConfig(BaseModel):
         else:
             self.x_row = config["x_row"]
 
-        # Actions
+        # Actions TODO incompatible with baselines way to go
         self.action_space = config["action_space"]
         self.actions = config["actions"]
 

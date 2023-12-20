@@ -56,7 +56,9 @@ class StepFollowLine(F1Env):
         vel_cmd = Twist()
         vel_cmd.linear.x = self.actions[action][0]
         vel_cmd.angular.z = self.actions[action][1]
+        time.sleep(self.sleep)
         self.vel_pub.publish(vel_cmd)
+
         self._gazebo_pause()
 
         start = time.time()
@@ -67,12 +69,15 @@ class StepFollowLine(F1Env):
         f1_image_camera, _ = self.f1gazeboimages.get_camera_info()
         self.previous_image = f1_image_camera.data
 
-        while np.array_equal(self.previous_image, f1_image_camera.data):
+        max_attempts = 5
+        for _ in range(max_attempts):
             f1_image_camera, _ = self.f1gazeboimages.get_camera_info()
+            if not np.array_equal(self.previous_image, f1_image_camera.data):
+                break
 
         ##==== get center
         points_in_red_line, centrals_normalized = self.simplifiedperception.processed_image(
-            f1_image_camera.data, self.height, self.width, self.x_row, self.center_image, show_monitoring
+            f1_image_camera.data, self.height, self.width, self.x_row, self.center_image
         )
 
         ##==== get State
@@ -81,7 +86,7 @@ class StepFollowLine(F1Env):
         ##==== get Rewards
         if self.reward_function == "followline_center":
             reward, done = self.f1gazeborewards.rewards_followline_velocity_center(
-                vel_cmd.linear.x, vel_cmd.angular.z, state, self.rewards
+                vel_cmd.linear.x, vel_cmd.angular.z, state, [1, 9], [-1.5, 1.5]
             )
 
         return state, reward, done, {"fps": fps}
@@ -187,14 +192,6 @@ class StepFollowLane(F1Env):
             self.point = centrals_in_lane[self.poi]
         else:
             self.point = centrals_in_lane[0]
-
-        # center = abs(float(self.center_image - self.point) / (float(self.width) // 2))
-        #center = float(self.center_image - self.point) / (float(self.width) // 2)
-
-        #print(f"\n{centrals_in_lane = }")
-        #print(f"\n{centrals_in_lane_normalized = }")
-        #print(f"\n{self.point = }")
-        #print(f"\n{center = }")
 
         ##==== get State
         ##==== simplified perception as observation
