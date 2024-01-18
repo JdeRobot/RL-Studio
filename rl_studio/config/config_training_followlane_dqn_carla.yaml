@@ -7,10 +7,10 @@ settings:
   env: follow_lane # simple, nurburgring, montreal, curves, simple_laser, manual, autoparking
   agent: auto_carla # f1, autoparkingRL, auto_carla, mountain_car, robot_mesh, cartpole, turtlebot
   actions: carla_discrete # continuous, simple, medium, hard, test, autoparking_simple, carla_discrete
-  states: image #sp4 #image, sp1 (simplified perception with 1 point), sp3 (simplified perception with 3 points), spn (simplified perception with n points)
+  states: sp4 #sp4 #image, sp1 (simplified perception with 1 point), sp3 (simplified perception with 3 points), spn (simplified perception with n points)
   rewards: rewards_sigmoid_only_right_line # follow_right_lane_only_center, follow_right_lane_center_v_step, follow_right_lane_center_v_w_linear
   framework: TensorFlow # TensorFlow, Pytorch
-  total_episodes: 5000
+  total_episodes: 1000
   training_time: 16
   models_dir: "./checkpoints"
   logs_dir: "./logs"
@@ -41,15 +41,15 @@ inference:
 
 algorithm:
   dqn:
-    alpha: 0.8
-    gamma: 0.9
+    alpha: 0.95
+    gamma: 0.5
     epsilon: 0.99 # in Retraining mode is convenient to reduce, i.e. 0.45
     epsilon_discount: 0.9986
     epsilon_min: 0.00
     model_name: DQN_sp_16x16 #DQN_im_32x64
     replay_memory_size: 50_000
     min_replay_memory_size: 1000
-    minibatch_size: 64
+    minibatch_size: 4 # original 64
     update_target_every: 5
     memory_fraction: 0.20
     buffer_capacity: 100_000
@@ -75,10 +75,10 @@ agents:
       raw_image: False
       image_resizing: 100
       new_image_size: 32
-      num_regions: 16
+      num_regions: 23 # this should be named states!!!
       lower_limit: 220
 
-states:
+states: # should be named as points of percepction (states is wrong)
   image:
     0: [30, 40, 50, 60] # try up to 4 points
   sp1:
@@ -95,11 +95,34 @@ states:
 
 actions:
   carla_discrete:
-    0: [0.5, -0.03] #turn left
-    1: [0.55, 0.0] #straight forward
-    2: [0.5, 0.03] #turn right
-    3: [0.45, -0.07] #turn left hard
-    4: [0.45, 0.07] #turn right hard
+    0: [0.6, 0.0] #straight forward
+    1: [0.2, 0.1]
+    2: [0.2, 0.2]
+    3: [0.2, -0.1]
+    4: [0.2, -0.2]
+    5: [0.3, 0.07]
+    6: [0.3, 0.1]
+    7: [0.3, -0.07]
+    8: [0.3, -0.1]
+    9: [0.4, 0.03]
+    10: [0.4, 0.05]
+    11: [0.4, 0.07]
+    12: [0.4, -0.03]
+    13: [0.4, -0.05]
+    14: [0.4, -0.7]
+    15: [0.5, 0.03]
+    16: [0.5, 0.05]
+    17: [0.5, -0.03]
+    18: [0.5, -0.05]
+    19: [0.55, 0.01]
+    20: [0.55, 0.03]
+    21: [0.55, -0.01]
+    22: [0.55, -0.03]
+    #0: [0.5, -0.03] #turn left
+    #1: [0.55, 0.0] #straight forward
+    #2: [0.5, 0.03] #turn right
+    #3: [0.45, -0.07] #turn left hard
+    #4: [0.45, 0.07] #turn right hard
     #5: [0.4, -0.1] #turn left
     #6: [0.4, 0.1] #straight forward
   continuous:
@@ -182,7 +205,7 @@ carla_environments:
     # Town01_Opt, Town02_Opt, Town03_Opt, Town04_Opt, Town05_Opt, Town06_Opt, Town07_Opt, Town10HD_Opt
     init_pose:
       random_pose: False # random positions in the whole town
-      alternate_pose: False # random positions but only for selected poses in carla_town_positions->tonwXX->laneX->init_positions
+      alternate_pose: True #random positions but only for selected poses in carla_town_positions->tonwXX->laneX->init_positions
       init_pose_number: 0
       finish_pose_number: 0
       town_circuit: highway_circuit
