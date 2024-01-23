@@ -63,6 +63,105 @@ class AutoCarlaUtils:
         return False, dist
 
     @staticmethod
+    def show_image_lines_centers_borders(
+        name,
+        img,
+        x_row,
+        x,
+        y,
+        index_right,
+        index_left,
+        centers,
+        drawing_lines_states,
+        drawing_numbers_states,
+    ):
+        """
+        show image RGB with:
+            x_row lines + centers lanes + center image + lane borders
+
+        """
+
+        window_name = f"{name}"
+        img = np.array(img)
+
+        ## vertical line in the center of image, showing car position
+        cv2.line(
+            img,
+            (int(img.shape[1] // 2), int(img.shape[0] // 2)),
+            (int(img.shape[1] // 2), int(img.shape[0])),
+            # (320, 120),
+            # (320, 480),
+            color=(200, 100, 100),
+            thickness=4,
+        )
+
+        drawing_lines_states.append(640)
+        ## vertical lines for states: 5, 7, 8, 16...
+        for index, _ in enumerate(drawing_lines_states):
+            cv2.line(
+                img,
+                (drawing_lines_states[index], 0),
+                (drawing_lines_states[index], int(img.shape[0])),
+                color=(100, 200, 100),
+                thickness=1,
+            )
+            ## writing number state into lines
+            cv2.putText(
+                img,
+                str(f"{drawing_numbers_states[index]}"),
+                (
+                    drawing_lines_states[index] - 15,
+                    15,
+                ),  ## -15 is the distance to the its left line
+                cv2.FONT_HERSHEY_SIMPLEX,
+                0.4,
+                (0, 0, 0),
+                1,
+                cv2.LINE_AA,
+            )
+
+        for index, _ in enumerate(x_row):
+            ### HORIZONTAL LINES x_row
+            cv2.line(
+                img,
+                (0, int(x_row[index])),
+                (int(img.shape[1]), int(x_row[index])),
+                color=(100, 200, 100),
+                thickness=1,
+            )
+
+            ### Points
+            cv2.circle(
+                img,
+                (int(index_right[index]), x_row[index]),
+                5,
+                # (150, 200, 150),
+                (0, 0, 255),
+                2,
+            )
+            cv2.circle(
+                img,
+                (int(index_left[index]), int(x_row[index])),
+                4,
+                # (150, 200, 150),
+                (0, 0, 255),
+                1,
+            )
+            cv2.circle(
+                img,
+                (int(centers[index]), int(x_row[index])),
+                4,
+                # (150, 200, 150),
+                (0, 0, 0),
+                1,
+            )
+
+        cv2.namedWindow(window_name)  # Create a named window
+        cv2.moveWindow(window_name, x, y)  # Move it to (40,30)
+        cv2.imshow(window_name, img)
+        cv2.waitKey(1)
+
+    @staticmethod
     def show_image_only_right_line(
         name,
         img,
