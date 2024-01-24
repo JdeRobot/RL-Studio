@@ -9,7 +9,6 @@ from rl_studio.envs.envs_type import EnvsType
 
 class TrainerFactory:
     def __new__(cls, config):
-
         """
         There are many options:
 
@@ -53,10 +52,59 @@ class TrainerFactory:
             agent=agent,
             framework=framework,
         )
+
         # =============================
-        # FollowLane - F1 - qlearn - Carla
+        # Follow Lane - AutoCarla - Carla - Stable-baselines3
         # =============================
         if (
+            task == TasksType.FOLLOWLANECARLA.value
+            and agent == AgentsType.AUTOCARLA.value
+            # and algorithm == AlgorithmsType.DQN.value
+            and simulator == EnvsType.CARLA.value
+            and framework == FrameworksType.STABLE_BASELINES3.value
+        ):
+            from rl_studio.agents.auto_carla.train_followlane_carla_sb3 import (
+                TrainerFollowLaneAutoCarlaSB3,
+            )
+
+            return TrainerFollowLaneAutoCarlaSB3(config)
+
+        # =============================
+        # Follow Lane - AutoCarla - DQN - Carla - TF
+        # =============================
+        if (
+            task == TasksType.FOLLOWLANECARLA.value
+            and agent == AgentsType.AUTOCARLA.value
+            and algorithm == AlgorithmsType.DQN.value
+            and simulator == EnvsType.CARLA.value
+            and framework == FrameworksType.TF.value
+        ):
+            from rl_studio.agents.auto_carla.train_followlane_dqn_carla_tf import (
+                TrainerFollowLaneDQNAutoCarlaTF,
+            )
+
+            return TrainerFollowLaneDQNAutoCarlaTF(config)
+
+        # =============================
+        # Follow Lane - AutoCarla - DDPG - Carla - TF
+        # =============================
+        elif (
+            task == TasksType.FOLLOWLANECARLA.value
+            and agent == AgentsType.AUTOCARLA.value
+            and algorithm == AlgorithmsType.DDPG.value
+            and simulator == EnvsType.CARLA.value
+            and framework == FrameworksType.TF.value
+        ):
+            from rl_studio.agents.auto_carla.train_followlane_ddpg_carla_tf import (
+                TrainerFollowLaneDDPGAutoCarlaTF,
+            )
+
+            return TrainerFollowLaneDDPGAutoCarlaTF(config)
+
+        # =============================
+        # FollowLane - AutoCarla - qlearn - Carla
+        # =============================
+        elif (
             task == TasksType.FOLLOWLANECARLA.value
             and agent == AgentsType.AUTOCARLA.value
             and algorithm == AlgorithmsType.QLEARN.value
@@ -71,7 +119,7 @@ class TrainerFactory:
         # =============================
         # FollowLine - F1 - qlearn - Gazebo
         # =============================
-        if (
+        elif (
             task == TasksType.FOLLOWLINEGAZEBO.value
             and agent == AgentsType.F1GAZEBO.value
             and algorithm == AlgorithmsType.QLEARN.value
@@ -340,7 +388,6 @@ class TrainerFactory:
 
 class InferencerFactory:
     def __new__(cls, config):
-
         agent = config["settings"]["agent"]
         algorithm = config["settings"]["algorithm"]
         task = config["settings"].get("task")
@@ -354,6 +401,37 @@ class InferencerFactory:
             agent=agent,
             framework=framework,
         )
+
+        # =============================
+        # Follow Lane - AutoCarla - DDPG - Carla - TF
+        # =============================
+        if (
+            task == TasksType.FOLLOWLANECARLA.value
+            and agent == AgentsType.AUTOCARLA.value
+            and algorithm == AlgorithmsType.DDPG.value
+            and simulator == EnvsType.CARLA.value
+            and framework == FrameworksType.TF.value
+        ):
+            from rl_studio.agents.auto_carla.inference_followlane_ddpg_carla_tf import (
+                InferencerFollowLaneDDPGAutoCarlaTF,
+            )
+
+            return InferencerFollowLaneDDPGAutoCarlaTF(config)
+
+        # =============================
+        # FollowLane - AutoCarla - qlearn - Carla
+        # =============================
+        if (
+            task == TasksType.FOLLOWLANECARLA.value
+            and agent == AgentsType.AUTOCARLA.value
+            and algorithm == AlgorithmsType.QLEARN.value
+            and simulator == EnvsType.CARLA.value
+        ):
+            from rl_studio.agents.auto_carla.inference_followlane_qlearn_carla import (
+                InferencerFollowLaneQlearnAutoCarla,
+            )
+
+            return InferencerFollowLaneQlearnAutoCarla(config)
 
         # =============================
         # FollowLine - F1 - qlearn - Gazebo

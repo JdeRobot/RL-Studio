@@ -29,9 +29,9 @@ from rl_studio.envs.carla.utils.environment import (
 
 
 class CarlaEnv(gym.Env):
-    def CFCCCSF__init__(self, **config):
+    def __init__(self, **config):
         """Constructor of the class."""
-        print(f"in CarlaEnv\n")
+        # print(f"in CarlaEnv\n")
         self.carla_map = None
         self.client = None
         self.world = None
@@ -210,7 +210,7 @@ class CarlaEnv(gym.Env):
             with open("/tmp/.carlalaunch_stdout.log", "w") as out, open(
                 "/tmp/.carlalaunch_stderr.log", "w"
             ) as err:
-                print(f"hola estoy en CarlaEnv \n")
+                print(f"\nCarlaEnv has been launched in other terminal\n")
                 # subprocess.Popen([carla_exec, "-prefernvidia"], stdout=out, stderr=err)
                 # subprocess.Popen(["/home/jderobot/Documents/Projects/carla_simulator_0_9_13/CarlaUE4.sh", "-RenderOffScreen"], stdout=out, stderr=err)
                 # subprocess.Popen(["/home/jderobot/Documents/Projects/carla_simulator_0_9_13/CarlaUE4.sh", "-RenderOffScreen", "-quality-level=Low"], stdout=out, stderr=err)
@@ -230,7 +230,7 @@ class CarlaEnv(gym.Env):
 
         time.sleep(5)
 
-    def __init__(self, **config):
+    def __CWFDSSFFSFDinit__(self, **config):
         """Constructor of the class."""
         self.carla_map = None
         self.client = None

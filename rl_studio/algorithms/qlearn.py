@@ -3,6 +3,7 @@ import pickle
 import random
 import time
 
+from memory_profiler import profile
 import numpy as np
 
 
@@ -141,10 +142,15 @@ class QLearn:
         self.alpha = alpha  # discount constant
         self.gamma = gamma  # discount factor
         self.actions = actions
+        print(f"{self.gamma = } and {self.alpha = }")
 
     def getQValues(self, state, action):
         return self.q.get((state, action), 0.0)
 
+    def learn(self, state1, action1, reward, state2):
+        maxqnew = max([self.getQValues(state2, a) for a in self.actions])
+        self.learnQ(state1, action1, reward, reward + self.gamma * maxqnew)
+        
     def learnQ(self, state, action, reward, value):
         """
         Q-learning:
@@ -184,9 +190,6 @@ class QLearn:
             return action, q
         return action
 
-    def learn(self, state1, action1, reward, state2):
-        maxqnew = max([self.getQValues(state2, a) for a in self.actions])
-        self.learnQ(state1, action1, reward, reward + self.gamma * maxqnew)
 
     def reset(self):
         self.state = self.np_random.uniform(low=-0.05, high=0.05, size=(4,))
@@ -212,12 +215,27 @@ class QLearn:
         return action
 
     def load_pickle_model(self, file_path):
-
         qlearn_file = open(file_path, "rb")
         self.q = pickle.load(qlearn_file)
 
+    def load_table(self, file):
+        self.q_table = np.load(file)
+
     def load_np_model(self, file):
-        self.q = np.load(file)
+        self.q = np.load(file, allow_pickle=True)
+
+    def save_qtable_pickle(
+        self, environment, outdir, qlearn, cumulated_reward, episode, step, epsilon
+    ):
+        os.makedirs(f"{outdir}", exist_ok=True)
+        # Q TABLE PICKLE
+        # base_file_name = "_actions_set:_{}_epsilon:_{}".format(settings.actions_set, round(qlearn.epsilon, 2))
+        base_file_name = f"{outdir}/{time.strftime('%Y%m%d-%H%M%S')}_Circuit-{environment['town']}_States-{environment['states']}_Actions-{environment['action_space']}_Rewards-{environment['reward_function']}_epsilon-{round(epsilon,3)}_epoch-{episode}_step-{step}_reward-{int(cumulated_reward)}"
+        file_dump = open(
+            f"{base_file_name}_QTABLE.pkl",
+            "wb",
+        )
+        pickle.dump(qlearn.q, file_dump)
 
     def save_model(
         self,
@@ -279,7 +297,6 @@ class QLearn:
         # np.save(np_file, qtable)
 
     def load_qmodel_actionsmodel(self, file_path, actions_path):
-
         qlearn_file = open(file_path, "rb")
         actions_file = open(actions_path, "rb")
 
@@ -314,15 +331,17 @@ class QLearnCarla:
         q_list = [self.q_table.get((state, a), 0.0) for a in self.actions]
         # print(f"\n{q_list = }")
         max_q = max(q_list)
-        # print(f"{max_q}")
+        # print(f"{max_q = }")
         count_max = q_list.count(max_q)
-        # print(f"{count_max}")
+        # print(f"{count_max= }")
+        best_index = [index for index, value in enumerate(q_list) if value == max_q]
+
         if count_max > 1:
-            best = [i for i in range(len(q_list)) if q_list[i] == max_q]
-            max_q = random.choice(best)
-        # print(f"{len(self.actions)=}")
-        if np.random.random() > self.epsilon:
-            action = q_list.index(max_q)
+            # best = [i for i in range(len(q_list)) if q_list[i] == max_q]
+            action = random.choice(best_index)
+        elif np.random.random() > self.epsilon:
+            # action = max_q
+            action = random.choice(best_index)
         else:
             action = np.random.randint(0, len(self.actions))
 
@@ -330,6 +349,7 @@ class QLearnCarla:
 
         return action
 
+    # @profile
     def learn(self, state, action, reward, next_state):
         """
         Two ways of similar Q-Learn eq., and we choose 1):
@@ -338,7 +358,7 @@ class QLearnCarla:
 
         2) Q(s, a) = Q(s,a) + alpha * (reward(s,a) + gamma * Q(s',a) - Q(s,a))
         """
-        # print(f"q_table al entrar al learn() = {self.q_table}")
+        # print(f"init q_table in learn() = {self.q_table}")
         # print(f"{state = }")
         # print(f"{next_state = }")
 
@@ -361,7 +381,7 @@ class QLearnCarla:
             self.q_table[(state, action)] = (
                 1 - self.alpha
             ) * current_q + self.alpha * (reward + self.gamma * max_q_new)
-        # print(f"q_table al salir del learn() {self.q_table = }")
+        # print(f"output q_table learn() {self.q_table = }")
 
     def inference(self, state):
         return np.argmax(self.q_table[state])
@@ -408,7 +428,6 @@ class QLearnCarlaTable:
         self.actions_len = actions_len
 
     def select_action(self, state):
-
         # print(f"in selec_action()")
         # print(f"qlearn.q_table = {self.q_table}")
         # print(f"len qlearn.q_table = {len(self.q_table)}")

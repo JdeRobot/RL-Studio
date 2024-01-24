@@ -74,6 +74,8 @@ class DQN:
         self.ACTION_SIZE = actions_size
         self.STATE_SIZE = state_size
         # self.OBSERVATION_SPACE_SHAPE = config.OBSERVATION_SPACE_SHAPE
+        print(f"\n{self.ACTION_SIZE =} and {self.STATE_SIZE =}")
+
 
         # DQN settings
         self.REPLAY_MEMORY_SIZE = (
@@ -223,8 +225,11 @@ class DQN:
                 0
             ]
         else:
-            return self.model.predict(state)[0]
-
+            #print(f"\n\n{self.model.predict(state)[0] = }, {self.model.predict(state) = }")
+            return self.model.predict(np.array([state]) / 255)
+            
+            #return self.model.predict(tf.convert_to_tensor(state))
+            
     # Trains main network every step during episode
     def train(self, terminal_state, step):
 

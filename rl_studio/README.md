@@ -42,7 +42,8 @@ There are several config files to take as example. If you need more information 
 
 The following graph shows a conceptual diagram of the operation of RL-Studio in training mode. In the case of making inference or retraining, the process is similar
 
-![](../rl_studio/docs/rls-diagram.svg)
+![](../rl_studio/docs/rls-diagram.png)
+
 
 
 # Run RL Studio
@@ -92,6 +93,7 @@ Remaining params should be adjusted too. There are many working yaml files in co
 > need extend the rl-studio.py to listen for inputs in a port and execute the loaded brain/algorithm to provide
 > outputs in the desired way.
 
+
 More info about how to config and launch any task, please go to [agents](agents/README.md) section.
 
 
@@ -107,10 +109,5 @@ Launch it with `python plot_waypoints.py -t <town>` where `<town>` could be Town
 - `plot_topology.py` generates the connected waypoints to build routes. Launch it with `python plot_topology.py -t <town>` and generates next image 
   
 ![](../rl_studio/docs/Town01_topology.png)
-
-
-
-
-
 
 

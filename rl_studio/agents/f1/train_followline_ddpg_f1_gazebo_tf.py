@@ -163,8 +163,8 @@ class TrainerFollowLineDDPGF1GazeboTF:
                 )
                 render_params(
                     task=self.global_params.task,
-                    v=action[0][0],  # for continuous actions
-                    w=action[0][1],  # for continuous actions
+                    # v=action[0][0],  # for continuous actions
+                    # w=action[0][1],  # for continuous actions
                     episode=episode,
                     step=step,
                     state=state,
@@ -273,6 +273,7 @@ class TrainerFollowLineDDPGF1GazeboTF:
                     ac_agent,
                     self.global_params,
                     self.algoritmhs_params,
+                    self.environment.environment,
                     cumulated_reward,
                     episode,
                     "BESTLAP",
@@ -301,6 +302,7 @@ class TrainerFollowLineDDPGF1GazeboTF:
                         ac_agent,
                         self.global_params,
                         self.algoritmhs_params,
+                        self.environment.environment,
                         cumulated_reward,
                         episode,
                         "FINISHTIME",
@@ -341,6 +343,7 @@ class TrainerFollowLineDDPGF1GazeboTF:
                     ac_agent,
                     self.global_params,
                     self.algoritmhs_params,
+                    self.environment.environment,
                     cumulated_reward,
                     episode,
                     "BATCH",

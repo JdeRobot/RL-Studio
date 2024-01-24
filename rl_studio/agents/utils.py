@@ -1,3 +1,4 @@
+from collections import Counter, OrderedDict
 from datetime import datetime, timedelta
 import logging
 import os
@@ -21,12 +22,12 @@ class LoggingHandler:
         c_handler = logging.StreamHandler()
         f_handler = logging.FileHandler(log_file)
 
-        c_handler.setLevel(logging.INFO)
+        c_handler.setLevel(logging.DEBUG)
         f_handler.setLevel(logging.INFO)
 
         # Create formatters and add it to handlers
         c_format = logging.Formatter("%(name)s - %(levelname)s - %(message)s")
-        f_format: Formatter = logging.Formatter(
+        f_format = logging.Formatter(
             "[%(levelname)s] - %(asctime)s, filename: %(filename)s, funcname: %(funcName)s, line: %(lineno)s\n messages ---->\n %(message)s"
         )
         c_handler.setFormatter(c_format)
@@ -77,7 +78,6 @@ class Bcolors:
 
 
 def print_messages(*args, **kwargs):
-
     print(f"\n\t{Bcolors.OKCYAN}====>\t{args[0]}:{Bcolors.ENDC}")
     for key, value in kwargs.items():
         print(f"{Bcolors.OKBLUE}[INFO] {key} = {value}{Bcolors.ENDC}")
@@ -92,7 +92,7 @@ def print_dictionary(dic):
 
 def render_params(**kwargs):
     font = cv2.FONT_HERSHEY_SIMPLEX
-    canvas = np.zeros((400, 400, 3), dtype="uint8")
+    canvas = np.zeros((570, 500, 3), dtype="uint8")
     # blue = (255, 0, 0)
     # green = (0, 255, 0)
     # red = (0, 0, 255)
@@ -112,7 +112,39 @@ def render_params(**kwargs):
         )
         i += 25
 
-    cv2.imshow("Control Board", canvas)
+    window_name = "Control Board"
+    cv2.namedWindow(window_name)  # Create a named window
+    cv2.moveWindow(window_name, 0, 0)  # Move it to (40,30)
+    cv2.imshow(window_name, canvas)
+    cv2.waitKey(100)
+
+
+def render_params_left_bottom(**kwargs):
+    font = cv2.FONT_HERSHEY_SIMPLEX
+    canvas = np.zeros((400, 450, 3), dtype="uint8")
+    # blue = (255, 0, 0)
+    # green = (0, 255, 0)
+    # red = (0, 0, 255)
+    white = (255, 255, 255)
+    # white_darkness = (200, 200, 200)
+    i = 10
+    for key, value in kwargs.items():
+        cv2.putText(
+            canvas,
+            str(f"{key}: {value}"),
+            (20, i + 25),
+            font,
+            0.5,
+            white,
+            1,
+            cv2.LINE_AA,
+        )
+        i += 25
+
+    window_name = "Stats Board"
+    cv2.namedWindow(window_name)  # Create a named window
+    cv2.moveWindow(window_name, 0, 750)  # Move it to (40,30)
+    cv2.imshow(window_name, canvas)
     cv2.waitKey(100)
 
 
@@ -122,16 +154,51 @@ def save_dataframe_episodes(environment, outdir, aggr_ep_rewards, actions_reward
     """
     os.makedirs(f"{outdir}", exist_ok=True)
 
-    file_csv = f"{outdir}/{time.strftime('%Y%m%d-%H%M%S')}_Circuit-{environment['circuit_name']}_States-{environment['states']}_Actions-{environment['action_space']}_Rewards-{environment['reward_function']}.csv"
-    file_excel = f"{outdir}/{time.strftime('%Y%m%d-%H%M%S')}_Circuit-{environment['circuit_name']}_States-{environment['states']}_Actions-{environment['action_space']}_Rewards-{environment['reward_function']}.xlsx"
+    file_csv = f"{outdir}/{time.strftime('%Y%m%d-%H%M%S')}_town-{environment['town']}_States-{environment['states']}_Actions-{environment['action_space']}_Rewards-{environment['reward_function']}.csv"
+    file_excel = f"{outdir}/{time.strftime('%Y%m%d-%H%M%S')}_town-{environment['town']}_States-{environment['states']}_Actions-{environment['action_space']}_Rewards-{environment['reward_function']}.xlsx"
 
     df = pd.DataFrame(aggr_ep_rewards)
-    df.to_csv(file_csv, mode="a", index=False, header=None)
+    # df.to_csv(file_csv, mode="a", index=False, header=None)
     df.to_excel(file_excel)
 
     if actions_rewards is not None:
-        file_npy = f"{outdir}/{time.strftime('%Y%m%d-%H%M%S')}_Circuit-{environment['circuit_name']}_States-{environment['states']}_Actions-{environment['action_space']}_Rewards-{environment['reward_function']}.npy"
+        file_npy = f"{outdir}/{time.strftime('%Y%m%d-%H%M%S')}_town-{environment['town']}_States-{environment['states']}_Actions-{environment['action_space']}_Rewards-{environment['reward_function']}.npy"
         np.save(file_npy, actions_rewards)
+
+
+def save_carla_dataframe_episodes(
+    environment, outdir, aggr_ep_rewards, actions_rewards=None
+):
+    """
+    We save info every certains epochs in a dataframe and .npy format to export or manage
+    """
+    os.makedirs(f"{outdir}", exist_ok=True)
+
+    file_csv = f"{outdir}/{time.strftime('%Y%m%d-%H%M%S')}_Circuit-{environment['town']}_States-{environment['states']}_Actions-{environment['action_space']}_Rewards-{environment['reward_function']}.csv"
+    file_excel = f"{outdir}/{time.strftime('%Y%m%d')}_Circuit-{environment['town']}_States-{environment['states']}_Actions-{environment['action_space']}_Rewards-{environment['reward_function']}.xlsx"
+
+    df = pd.DataFrame(aggr_ep_rewards)
+    # df.to_csv(file_csv, mode="a", index=False, header=None)
+
+    # with pd.ExcelWriter(file_excel, mode="a") as writer:
+    #    df.to_excel(writer)
+    df.to_excel(file_excel)
+
+    if actions_rewards is not None:
+        file_npy = f"{outdir}/{time.strftime('%Y%m%d-%H%M%S')}_Circuit-{environment['town']}_States-{environment['states']}_Actions-{environment['action_space']}_Rewards-{environment['reward_function']}.npy"
+        np.save(file_npy, actions_rewards)
+
+
+def save_carla_latency(environment, outdir, latency):
+    total = 0
+    for key, value in latency.items():
+        total += value
+    avg = total / len(latency)
+
+    os.makedirs(f"{outdir}", exist_ok=True)
+    file_excel = f"{outdir}/{time.strftime('%Y%m%d')}_Circuit-{environment['town']}_States-{environment['states']}_Actions-{environment['action_space']}_Rewards-{environment['reward_function']}.xlsx"
+    df = pd.DataFrame(latency)
+    df.to_excel(file_excel)
 
 
 def save_best_episode(
@@ -218,7 +285,7 @@ def save_batch(episode, step, start_time_epoch, start_time, global_params, env_p
     global_params.aggr_ep_rewards["max"].append(max_reward)
     global_params.aggr_ep_rewards["min"].append(min_reward)
     global_params.aggr_ep_rewards["epoch_training_time"].append(
-        (datetime.now() - start_time_epoch).total_seconds()
+        (time.time() - start_time_epoch)
     )
     global_params.aggr_ep_rewards["total_training_time"].append(
         (datetime.now() - start_time).total_seconds()

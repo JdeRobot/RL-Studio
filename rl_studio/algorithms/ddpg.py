@@ -1,6 +1,7 @@
 import time
 
 import numpy as np
+from keras import backend as K
 import tensorflow as tf
 from tensorflow.keras import Input, Model, layers
 from tensorflow.keras.callbacks import TensorBoard
@@ -12,10 +13,11 @@ from tensorflow.keras.layers import (
     Activation,
     Flatten,
     Rescaling,
+    Layer,
 )
 from tensorflow.keras.models import Sequential, load_model
 from tensorflow.keras.optimizers import Adam
-
+from tensorflow.keras.utils import get_custom_objects
 
 # Sharing GPU
 gpus = tf.config.experimental.list_physical_devices("GPU")
@@ -25,7 +27,6 @@ for gpu in gpus:
 
 # Own Tensorboard class
 class ModifiedTensorBoard(TensorBoard):
-
     # Overriding init to set initial step and writer (we want one log file for all .fit() calls)
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -140,7 +141,12 @@ class Buffer:
 
         else:
             self.state_buffer[index] = obs_tuple[0]
-            self.next_state_buffer[index] = obs_tuple[3]
+            obs_tuple_3 = np.array(obs_tuple[3])
+            # self.next_state_buffer[index] = obs_tuple[3]
+            self.next_state_buffer[index] = np.reshape(
+                obs_tuple_3, obs_tuple_3.shape[0]
+            )
+
             if self.action_space == "continuous":
                 self.action_buffer[index] = [
                     obs_tuple[1][0][i] for i in range(len(obs_tuple[1][0]))
@@ -161,7 +167,6 @@ class Buffer:
         reward_batch,
         next_state_batch,
     ):
-
         with tf.GradientTape() as tape:
             target_actions = actor_critic.target_actor(next_state_batch, training=True)
             y = reward_batch + gamma * actor_critic.target_critic(
@@ -263,7 +268,6 @@ class Buffer:
 
 class DDPGAgent:
     def __init__(self, config, action_space_size, observation_space_values, outdir):
-
         self.ACTION_SPACE_SIZE = action_space_size
         self.OBSERVATION_SPACE_VALUES = observation_space_values
         if config["states"] == "image":
@@ -392,11 +396,10 @@ class DDPGAgent:
     # Based on rate `tau`, which is much less than one.
     @tf.function
     def update_target(self, target_weights, weights, tau):
-        for (a, b) in zip(target_weights, weights):
+        for a, b in zip(target_weights, weights):
             a.assign(b * tau + a * (1 - tau))
 
     def policy(self, state, noise_object, action_space):
-
         if action_space == "continuous":
             return self.policy_continuous_actions(state, noise_object)
         else:
@@ -479,25 +482,67 @@ class DDPGAgent:
         sampled_actions = tf.squeeze(self.actor_model(state))
         noise = noise_object()
         # Adding noise to action
+
+        print(f"{sampled_actions.numpy()[0] = } and {sampled_actions.numpy()[1] = }")
+
         sampled_actions = sampled_actions.numpy() + noise
         # we can discretized the actions values with round(,0)
-        legal_action_v = round(
-            np.clip(sampled_actions[0], self.V_LOWER_BOUND, self.V_UPPER_BOUND), 1
+        # legal_action_v = round(
+        #    np.clip(sampled_actions[0], self.V_LOWER_BOUND, self.V_UPPER_BOUND), 3
+        # )
+        # legal_action_w = round(
+        #    np.clip(sampled_actions[1], self.W_RIGHT_BOUND, self.W_LEFT_BOUND), 3
+        # )
+
+        print(
+            f"sampled action + noise : {sampled_actions[0] = } and {sampled_actions[1] = }"
         )
-        legal_action_w = round(
-            np.clip(sampled_actions[1], self.W_RIGHT_BOUND, self.W_LEFT_BOUND), 1
+        legal_action_v = np.clip(
+            sampled_actions[0], self.V_LOWER_BOUND, self.V_UPPER_BOUND
         )
+        legal_action_w = np.clip(
+            sampled_actions[1], self.W_RIGHT_BOUND, self.W_LEFT_BOUND
+        )
+        print(f"{legal_action_v = } and {legal_action_w = }")
+
         legal_action = np.array([legal_action_v, legal_action_w])
 
         return [np.squeeze(legal_action)]
 
+    def XXX_get_actor_model_image_continuous_actions(self):
+        # inputs = Input(shape=self.OBSERVATION_SPACE_VALUES)
+        model = Sequential()
+        # Agregar capas al modelo
+        model.add(
+            Flatten(input_shape=self.OBSERVATION_SPACE_VALUES)
+        )  # Capa para aplanar la imagen 32x32
+        model.add(
+            Dense(64, activation="relu")
+        )  # Capa completamente conectada con 64 neuronas y función de activación ReLU
+        model.add(
+            Dense(32, activation="relu")
+        )  # Capa completamente conectada con 32 neuronas y función de activación ReLU
+        model.add(
+            Dense(2, activation="linear")
+        )  # Capa completamente conectada con 1 neurona y función de activación sigmoid para el rango [0, 1])
+
+        # Compilar el modelo
+        model.compile(optimizer="adam", loss="mse", metrics=["accuracy"])
+        return model
+
     def get_actor_model_image_continuous_actions(self):
         # inputShape = (96, 128, 3)
         inputs = Input(shape=self.OBSERVATION_SPACE_VALUES)
-        v_branch = self.build_branch_images(inputs, "v_output")
-        w_branch = self.build_branch_images(inputs, "w_output")
+        # v_branch = self.build_branch_images(inputs, "v_output")
+        # w_branch = self.build_branch_images(inputs, "w_output")
+        v_branch = self.v_branch_nn(inputs, "v_output")
+        # v_branch = self.v_branch_nn_custom_activation(inputs, "v_output")
+        w_branch = self.w_branch_nn(inputs, "w_output")
+
+        # normalizing into the actions range
         v_branch = abs(v_branch) * self.V_UPPER_BOUND
         w_branch = w_branch * self.W_LEFT_BOUND
+
         # create the model using our input (the batch of images) and
         # two separate outputs --
         model = Model(
@@ -508,9 +553,89 @@ class DDPGAgent:
         # return the constructed network architecture
         return model
 
+    def v_branch_nn_custom_activation(self, inputs, action_name):
+        """linear velocity"""
+        neuron1 = 64  # 32, 64, 128
+        neuron2 = 32  # 64, 128, 256
+        last_init = tf.random_uniform_initializer(minval=-0.01, maxval=0.01)
+
+        # get_custom_objects().update({'custom_activation': Activation(self.k_relu_max1)})
+        # K.register_activation('my_activation', self.k_relu_max1)
+
+        x = Rescaling(1.0 / 255)(inputs)
+        x = Conv2D(neuron1, (3, 3), padding="same")(x)
+        # x = Conv2D(32, (3, 3), padding="same")(inputs)
+        x = Activation(CustomActivation())(x)
+        x = MaxPooling2D(pool_size=(3, 3))(x)
+        x = Dropout(0.25)(x)
+
+        x = Conv2D(neuron2, (3, 3), padding="same")(x)
+        x = Activation(CustomActivation())(x)
+        x = MaxPooling2D(pool_size=(2, 2))(x)
+        x = Dropout(0.25)(x)
+
+        x = Flatten()(x)
+        x = Dense(neuron2)(x)
+
+        x = Dense(1, activation=CustomActivation(), kernel_initializer=last_init)(x)
+        x = Activation(CustomActivation(), name=action_name)(x)
+
+        return x
+
+    def v_branch_nn(self, inputs, action_name):
+        """linear velocity"""
+        neuron1 = 64  # 32, 64, 128
+        neuron2 = 32  # 64, 128, 256
+        last_init = tf.random_uniform_initializer(minval=-0.01, maxval=0.01)
+        x = Rescaling(1.0 / 255)(inputs)
+        x = Conv2D(neuron1, (3, 3), padding="same")(x)
+        # x = Conv2D(32, (3, 3), padding="same")(inputs)
+        x = Activation("relu")(x)
+        x = MaxPooling2D(pool_size=(3, 3))(x)
+        x = Dropout(0.25)(x)
+
+        x = Conv2D(neuron2, (3, 3), padding="same")(x)
+        x = Activation("relu")(x)
+        x = MaxPooling2D(pool_size=(2, 2))(x)
+        x = Dropout(0.25)(x)
+
+        x = Flatten()(x)
+        x = Dense(neuron2)(x)
+
+        x = Dense(1, activation="sigmoid", kernel_initializer=last_init)(x)
+        x = Activation("sigmoid", name=action_name)(x)
+
+        return x
+
+    def w_branch_nn(self, inputs, action_name):
+        """angular velocity"""
+        neuron1 = 64  # 32, 64, 128
+        neuron2 = 32  # 64, 128, 256
+        last_init = tf.random_uniform_initializer(minval=-0.01, maxval=0.01)
+        x = Rescaling(1.0 / 255)(inputs)
+        x = Conv2D(neuron1, (3, 3), padding="same")(x)
+        # x = Conv2D(32, (3, 3), padding="same")(inputs)
+        x = Activation("relu")(x)
+        x = MaxPooling2D(pool_size=(3, 3))(x)
+        x = Dropout(0.25)(x)
+
+        x = Conv2D(neuron2, (3, 3), padding="same")(x)
+        x = Activation("relu")(x)
+        x = MaxPooling2D(pool_size=(2, 2))(x)
+        x = Dropout(0.25)(x)
+
+        x = Flatten()(x)
+        x = Dense(neuron2)(x)
+
+        x = Dense(1, activation="tanh", kernel_initializer=last_init)(x)
+        x = Activation("tanh", name=action_name)(x)
+
+        return x
+
     def build_branch_images(self, inputs, action_name):
-        neuron1 = 32  # 32, 64, 128
-        neuron2 = 64  # 64, 128, 256
+        """works in Gazebo"""
+        neuron1 = 256  # 32, 64, 128
+        neuron2 = 256  # 64, 128, 256
         last_init = tf.random_uniform_initializer(minval=-0.01, maxval=0.01)
         x = Rescaling(1.0 / 255)(inputs)
         x = Conv2D(neuron1, (3, 3), padding="same")(x)
@@ -635,8 +760,8 @@ class DDPGAgent:
     def build_branch(self, inputs, action_name):
         last_init = tf.random_uniform_initializer(minval=-0.01, maxval=0.01)
         # inputs = layers.Input(shape=(self.OBSERVATION_SPACE_VALUES))
-        x = Dense(128, activation="relu")(inputs)  # 8, 16, 32 neurons
-        x = Dense(128, activation="relu")(x)  # 8, 16, 32 neurons
+        x = Dense(16, activation="relu")(inputs)  # 8, 16, 32 neurons
+        x = Dense(16, activation="relu")(x)  # 8, 16, 32 neurons
 
         x = Dense(1, activation="tanh", kernel_initializer=last_init)(x)
         x = Activation("tanh", name=action_name)(x)
@@ -670,3 +795,30 @@ class DDPGAgent:
         model.compile(loss="mse", optimizer=Adam(0.005))
 
         return model
+
+
+def relu_max1(x):
+    return tf.minimum(tf.maximum(x, 0), 1)
+
+
+@tf.function
+def relu_sigmoid(x):
+    return tf.nn.relu(x) * tf.sigmoid(x)
+
+
+def tanh_relu(x):
+    return tf.tanh(x) * tf.nn.relu(x)
+
+
+class CustomActivation(layers.Layer):
+    def __init__(self):
+        super(CustomActivation, self).__init__()
+        self.custom_activation = relu_max1
+
+    def call(self, inputs):
+        # return tf.minimum(tf.maximum(inputs, 0), 1)
+        return self.custom_activation(inputs)
+
+
+def k_relu_max1(x):
+    return K.min(K.max(x, 0), 1)

@@ -342,4 +342,5 @@ class SensorManager:
 
     def destroy(self):
         # print(f"in DisplayManeger.destroy - self.sensor = {self.sensor}")
+        print(f"destroying actor {self.sensor}")
         self.sensor.destroy()
