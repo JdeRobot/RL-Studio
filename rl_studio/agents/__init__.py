@@ -31,6 +31,7 @@ class TrainerFactory:
            - DQN
            - DDPG
            - PPO
+           - SAC
 
          Simulators:
            - Gazebo
@@ -98,6 +99,39 @@ class TrainerFactory:
             )
 
             return TrainerFollowLineDDPGF1GazeboTF(config)
+
+        # =============================
+        # FollowLine - F1 - SAC - Gazebo - TensorFlow
+        # =============================
+        elif (
+            task == TasksType.FOLLOWLINEGAZEBO.value
+            and agent == AgentsType.F1GAZEBO.value
+            and algorithm == AlgorithmsType.SAC.value
+            and simulator == EnvsType.GAZEBO.value
+            and framework == FrameworksType.TF.value
+        ):
+            from rl_studio.agents.f1.train_followline_sac_f1_gazebo_tf import (
+                TrainerFollowLineSACF1GazeboTF,
+            )
+
+            return TrainerFollowLineSACF1GazeboTF(config)
+
+        # =============================
+        # FollowLine - F1 - PPO - Gazebo - TensorFlow
+        # =============================
+        elif (
+                task == TasksType.FOLLOWLINEGAZEBO.value
+                and agent == AgentsType.F1GAZEBO.value
+                and algorithm == AlgorithmsType.PPO_CONTINIUOUS.value
+                and simulator == EnvsType.GAZEBO.value
+                and framework == FrameworksType.TF.value
+        ):
+            from rl_studio.agents.f1.train_followline_ppo_f1_gazebo_tf import (
+                TrainerFollowLinePPOF1GazeboTF
+            )
+
+            return TrainerFollowLinePPOF1GazeboTF(config)
+
 
         # =============================
         # FollowLine - F1 - DQN - Gazebo - TensorFlow
@@ -385,6 +419,23 @@ class InferencerFactory:
             )
 
             return InferencerFollowLineDDPGF1GazeboTF(config)
+
+        # =============================
+        # FollowLine - F1 - PPO - Gazebo - TF
+        # =============================
+        elif (
+                task == TasksType.FOLLOWLINEGAZEBO.value
+                and agent == AgentsType.F1GAZEBO.value
+                and algorithm == AlgorithmsType.PPO_CONTINIUOUS.value
+                and simulator == EnvsType.GAZEBO.value
+                and framework == FrameworksType.TF.value
+        ):
+            from rl_studio.agents.f1.inference_ppo_continuous import (
+                InferencerFollowLinePPOF1GazeboTF,
+            )
+
+            return InferencerFollowLinePPOF1GazeboTF(config)
+
 
         # =============================
         # FollowLine - F1 - DQN - Gazebo - TensorFlow

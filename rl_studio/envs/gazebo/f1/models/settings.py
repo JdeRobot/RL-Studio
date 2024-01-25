@@ -12,7 +12,7 @@ from rl_studio.envs.gazebo.f1.models.simplified_perception import (
 class F1GazeboTFConfig(BaseModel):
     def __init__(self, **config):
         self.simplifiedperception = F1GazeboSimplifiedPerception()
-        self.f1gazeborewards = F1GazeboRewards()
+        self.f1gazeborewards = F1GazeboRewards(**config)
         self.f1gazeboutils = F1GazeboUtils()
         self.f1gazeboimages = F1GazeboImages()
 
@@ -46,7 +46,7 @@ class F1GazeboTFConfig(BaseModel):
         else:
             self.x_row = config["x_row"]
 
-        # Actions
+        # Actions TODO incompatible with baselines way to go
         self.action_space = config["action_space"]
         self.actions = config["actions"]
 

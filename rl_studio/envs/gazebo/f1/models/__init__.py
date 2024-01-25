@@ -91,6 +91,34 @@ class F1Env:
             return FollowLineDDPGF1GazeboTF(**environment)
 
         # =============================
+        # FollowLine - SAC - TensorFlow
+        # =============================
+        elif (
+            task == TasksType.FOLLOWLINEGAZEBO.value
+            and algorithm == AlgorithmsType.SAC.value
+            and framework == FrameworksType.TF.value
+        ):
+            from rl_studio.envs.gazebo.f1.models.followline_ddpg_tf import (
+                FollowLineDDPGF1GazeboTF,
+            )
+
+            return FollowLineDDPGF1GazeboTF(**environment)
+
+        # =============================
+        # FollowLine - PPO - TensorFlow
+        # =============================
+        elif (
+            task == TasksType.FOLLOWLINEGAZEBO.value
+            and algorithm == AlgorithmsType.PPO_CONTINIUOUS.value
+            and framework == FrameworksType.TF.value
+        ):
+            from rl_studio.envs.gazebo.f1.models.followline_ddpg_tf import (
+                FollowLineDDPGF1GazeboTF,
+            )
+
+            return FollowLineDDPGF1GazeboTF(**environment)
+
+        # =============================
         # FollowLane - DDPG - TensorFlow
         # =============================
         # DDPG F1 FollowLane

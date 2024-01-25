@@ -9,12 +9,12 @@ import numpy as np
 import tensorflow as tf
 from tqdm import tqdm
 from rl_studio.agents.utilities.plot_npy_dataset import plot_rewards
-from  rl_studio.agents.utilities.push_git_repo import git_add_commit_push
+from rl_studio.agents.utilities.push_git_repo import git_add_commit_push
 
 from rl_studio.agents.f1.loaders import (
     LoadAlgorithmParams,
     LoadEnvParams,
-    LoadEnvVariablesDDPGGazebo,
+    LoadEnvVariablesPPOGazebo,
     LoadGlobalParams,
 )
 from rl_studio.agents.utils import (
@@ -25,10 +25,10 @@ from rl_studio.agents.utils import (
 )
 from rl_studio.algorithms.ddpg import (
     ModifiedTensorBoard,
-    OUActionNoise,
-    Buffer,
-    DDPGAgent,
 )
+
+from rl_studio.algorithms.ppo_continuous import PPO
+
 from rl_studio.algorithms.utils import (
     save_actorcritic_model,
 )
@@ -56,7 +56,7 @@ def combine_attributes(obj1, obj2, obj3):
     return combined_dict
 
 
-class TrainerFollowLineDDPGF1GazeboTF:
+class TrainerFollowLinePPOF1GazeboTF:
     """
     Mode: training
     Task: Follow Line
@@ -69,7 +69,7 @@ class TrainerFollowLineDDPGF1GazeboTF:
     def __init__(self, config):
         self.algoritmhs_params = LoadAlgorithmParams(config)
         self.env_params = LoadEnvParams(config)
-        self.environment = LoadEnvVariablesDDPGGazebo(config)
+        self.environment = LoadEnvVariablesPPOGazebo(config)
         self.global_params = LoadGlobalParams(config)
 
         os.makedirs(f"{self.global_params.models_dir}", exist_ok=True)
@@ -88,11 +88,12 @@ class TrainerFollowLineDDPGF1GazeboTF:
         )
 
         hyperparams = combine_attributes(self.algoritmhs_params,
-                                       self.environment,
-                                       self.global_params)
+                                         self.environment,
+                                         self.global_params)
 
         tensorboard.update_hyperparams(hyperparams)
 
+        std_init = self.algoritmhs_params.std_dev
         ## Load Environment
         env = gym.make(self.env_params.env_name, **self.environment.environment)
 
@@ -100,15 +101,24 @@ class TrainerFollowLineDDPGF1GazeboTF:
         np.random.seed(1)
         tf.compat.v1.random.set_random_seed(1)
 
-        actor_loss = 0
-        critic_loss = 0
         start_time = datetime.now()
         best_epoch = 1
         current_max_reward = 0
         best_epoch_training_time = 0
         all_steps = 0
+        loss = 0
         ## Reset env
-        state, state_size = env.reset()
+        K_epochs = 8
+        _, state_size = env.reset()
+
+        self.ppo_agent = PPO(state_size, len(self.global_params.actions_set), self.algoritmhs_params.actor_lr,
+             self.algoritmhs_params.critic_lr, self.algoritmhs_params.gamma,
+             K_epochs, self.algoritmhs_params.epsilon, True, std_init)
+
+        if self.global_params.mode == "retraining":
+            checkpoint = self.environment.environment["retrain_ppo_tf_model_name"]
+            trained_agent=f"{self.global_params.models_dir}/{checkpoint}"
+            self.ppo_agent.load(trained_agent)
 
         log.logger.info(
             f"\nstates = {self.global_params.states}\n"
@@ -118,37 +128,12 @@ class TrainerFollowLineDDPGF1GazeboTF:
             f"actions set = {self.global_params.actions_set}\n"
             f"actions_len = {len(self.global_params.actions_set)}\n"
             f"actions_range = {range(len(self.global_params.actions_set))}\n"
-            f"batch_size = {self.algoritmhs_params.batch_size}\n"
             f"logs_tensorboard_dir = {self.global_params.logs_tensorboard_dir}\n"
         )
 
-        ## --------------------- Deep Nets ------------------
-        exploration = self.algoritmhs_params.std_dev
-        ou_noise = OUActionNoise(
-            mean=np.zeros(1),
-            std_deviation=float(exploration) * np.ones(1),
-        )
-        # Init Agents
-        ac_agent = DDPGAgent(
-            self.environment.environment,
-            len(self.global_params.actions_set),
-            state_size,
-            self.global_params.models_dir,
-        )
-        # init Buffer
-        buffer = Buffer(
-            state_size,
-            len(self.global_params.actions_set),
-            self.global_params.states,
-            self.global_params.actions,
-            self.algoritmhs_params.buffer_capacity,
-            self.algoritmhs_params.batch_size,
-        )
-
-
         ## -------------    START TRAINING --------------------
         for episode in tqdm(
-            range(1, self.env_params.total_episodes + 1), ascii=True, unit="episodes"
+                range(1, self.env_params.total_episodes + 1), ascii=True, unit="episodes"
         ):
             tensorboard.step = episode
             done = False
@@ -160,43 +145,28 @@ class TrainerFollowLineDDPGF1GazeboTF:
 
             while not done:
                 all_steps += 1
-                if not all_steps % self.global_params.steps_to_decrease:
-                    exploration = max(self.global_params.decrease_min, exploration - self.global_params.decrease_substraction)
-                    log.logger.debug("decreasing exploration to exploration")
-                    ou_noise = OUActionNoise(
-                        mean=np.zeros(1),
-                        std_deviation=float(exploration) * np.ones(1),
-                    )
 
                 tf_prev_state = tf.expand_dims(tf.convert_to_tensor(prev_state), 0)
-                action = ac_agent.policy(
-                    tf_prev_state, ou_noise, self.global_params.actions
-                )
-                tensorboard.update_actions(action[0], all_steps)
-                state, reward, done, info = env.step(action, step)
-                fps = info["fps"]
-                # print(fps)
+
+                action = self.ppo_agent.select_action(tf_prev_state)
+                action[0] = (action[0] + 1) * 4 # TODO scale it propperly
+                action[1] = action[1] * 1.5 # TODO scale it propperly
+                tensorboard.update_actions(action, all_steps)
+
+                state, reward, done, info = env.step([action], step)
+                # fps = info["fps"]
+                self.ppo_agent.buffer.rewards.append(reward)
+                self.ppo_agent.buffer.is_terminals.append(done)
+
+                # update PPO agent
+                if all_steps % self.algoritmhs_params.episodes_update == 0:
+                    loss = self.ppo_agent.update()
+
+                if all_steps % self.global_params.steps_to_decrease == 0:
+                    self.ppo_agent.decay_action_std(self.global_params.decrease_substraction,
+                                                    self.global_params.decrease_min)
+
                 cumulated_reward += reward
-
-                # learn and update
-                # env._gazebo_pause()
-
-                buffer.record((prev_state, action, reward, state))
-                actor_loss, critic_loss = buffer.learn(ac_agent, self.algoritmhs_params.gamma)
-                ac_agent.update_target(
-                    ac_agent.target_actor.variables,
-                    ac_agent.actor_model.variables,
-                    self.algoritmhs_params.tau,
-                )
-                ac_agent.update_target(
-                    ac_agent.target_critic.variables,
-                    ac_agent.critic_model.variables,
-                    self.algoritmhs_params.tau,
-                )
-
-                #
-                prev_state = state
-                step += 1
 
                 if self.global_params.show_monitoring:
                     log.logger.debug(
@@ -208,24 +178,6 @@ class TrainerFollowLineDDPGF1GazeboTF:
                         f"prev_state = {type(prev_state)}\n"
                         f"action = {action}\n"
                         f"actions type = {type(action)}\n"
-                    )
-                    render_params(
-                        task=self.global_params.task,
-                        v=action[0][0],  # for continuous actions
-                        w=action[0][1],  # for continuous actions
-                        episode=episode,
-                        step=step,
-                        state=state,
-                        reward_in_step=reward,
-                        cumulated_reward_in_this_episode=cumulated_reward,
-                        _="--------------------------",
-                        # fps=fps,
-                        exploration=exploration,
-                        best_episode_until_now=best_epoch,
-                        with_highest_reward=int(current_max_reward),
-                        in_best_epoch_training_time=best_epoch_training_time,
-                    )
-                    log.logger.debug(
                         f"\nepisode = {episode}\n"
                         f"step = {step}\n"
                         f"actions_len = {len(self.global_params.actions_set)}\n"
@@ -235,13 +187,39 @@ class TrainerFollowLineDDPGF1GazeboTF:
                         f"cumulated_reward = {cumulated_reward}\n"
                         f"done = {done}\n"
                     )
+                    render_params(
+                        task=self.global_params.task,
+                        v=action[0],  # for continuous actions
+                        w=action[1],  # for continuous actions
+                        episode=episode,
+                        step=step,
+                        state=state,
+                        # v=self.global_params.actions_set[action][
+                        #    0
+                        # ],  # this case for discrete
+                        # w=self.global_params.actions_set[action][
+                        #    1
+                        # ],  # this case for discrete
+                        reward_in_step=reward,
+                        cumulated_reward_in_this_episode=cumulated_reward,
+                        _="--------------------------",
+                        # fps=fps,
+                        exploration=self.ppo_agent.action_std,
+                        best_episode_until_now=best_epoch,
+                        with_highest_reward=int(current_max_reward),
+                        in_best_epoch_training_time=best_epoch_training_time,
+                    )
+
+                prev_state = state
+                step += 1
 
                 # Showing stats in screen for monitoring. Showing every 'save_every_step' value
                 if not all_steps % self.env_params.save_every_step:
                     file_name = save_dataframe_episodes(
                         self.environment.environment,
                         self.global_params.metrics_data_dir,
-                        self.global_params.aggr_ep_rewards)
+                        self.global_params.aggr_ep_rewards,
+                    )
                     plot_rewards(
                         self.global_params.metrics_data_dir,
                         file_name
@@ -266,17 +244,15 @@ class TrainerFollowLineDDPGF1GazeboTF:
                         episode_reward=int(cumulated_reward),
                         with_steps=step,
                     )
-                    save_actorcritic_model(
-                        ac_agent,
-                        self.global_params,
-                        self.algoritmhs_params,
-                        self.environment.environment,
-                        current_max_reward,
-                        episode,
-                        "LAPCOMPLETED",
-                    )
+                    self.ppo_agent.save(
+                        f"{self.global_params.models_dir}/"
+                        f"{time.strftime('%Y%m%d-%H%M%S')}_LAPCOMPLETED"
+                        f"MaxReward-{int(cumulated_reward)}_"
+                        f"Epoch-{episode}")
 
-
+                    # save_agent_physics(
+                    #     self.environment, self.outdir, self.actions_rewards, start_time
+                    # )
 
             #####################################################
             #### save best lap in episode
@@ -284,15 +260,12 @@ class TrainerFollowLineDDPGF1GazeboTF:
                 current_max_reward = cumulated_reward
                 best_epoch = episode
 
-                save_actorcritic_model(
-                    ac_agent,
-                    self.global_params,
-                    self.algoritmhs_params,
-                    self.environment.environment,
-                    current_max_reward,
-                    episode,
-                    "IMPROVED",
-                )
+                self.ppo_agent.save(
+                    f"{self.global_params.models_dir}/"
+                    f"{time.strftime('%Y%m%d-%H%M%S')}-IMPROVED"
+                    f"MaxReward-{int(cumulated_reward)}_"
+                    f"Epoch-{episode}")
+
                 log.logger.info(
                     f"\nsaving best lap\n"
                     f"in episode = {episode}\n"
@@ -303,8 +276,8 @@ class TrainerFollowLineDDPGF1GazeboTF:
             #####################################################
             ### end episode in time settings: 2 hours, 15 hours...
             if (
-                datetime.now() - timedelta(hours=self.global_params.training_time)
-                > start_time
+                    datetime.now() - timedelta(hours=self.global_params.training_time)
+                    > start_time
             ) or (episode > self.env_params.total_episodes):
                 log.logger.info(
                     f"\nTraining Time over\n"
@@ -314,9 +287,8 @@ class TrainerFollowLineDDPGF1GazeboTF:
                 )
                 break
 
-            #####################################################
-            ### save every save_episode times
             self.global_params.ep_rewards.append(cumulated_reward)
+
             if not episode % self.env_params.save_episodes:
                 average_reward = sum(self.global_params.ep_rewards[-self.env_params.save_episodes:]) / len(
                     self.global_params.ep_rewards[-self.env_params.save_episodes:]
@@ -327,8 +299,7 @@ class TrainerFollowLineDDPGF1GazeboTF:
                     cum_rewards=average_reward,
                     reward_min=min_reward,
                     reward_max=max_reward,
-                    actor_loss=actor_loss,
-                    critic_loss=critic_loss
+                    actor_loss=loss if isinstance(loss, int) else loss.mean().detach().numpy(),
                 )
 
                 self.global_params.aggr_ep_rewards["episode"].append(episode)
@@ -338,4 +309,6 @@ class TrainerFollowLineDDPGF1GazeboTF:
                 self.global_params.aggr_ep_rewards["epoch_training_time"].append(
                     (datetime.now() - start_time_epoch).total_seconds()
                 )
+        #####################################################
+        ### save last episode, not neccesarily the best one
         env.close()

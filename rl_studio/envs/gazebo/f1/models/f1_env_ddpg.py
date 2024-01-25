@@ -51,7 +51,6 @@ class DDPGF1FollowLineEnvGazebo(F1Env):
         self.actions = config["actions"]
 
         # Rewards
-        self.reward_function = config["reward_function"]
         self.rewards = config["rewards"]
         self.min_reward = config["min_reward"]
         self.beta_1 = config["beta_1"]
@@ -454,7 +453,7 @@ class DDPGF1FollowLineEnvGazebo(F1Env):
     # step
     #################################################################################
 
-    def step(self, action):
+    def step(self, action, show_monitoring=True):
         self._gazebo_unpause()
         vel_cmd = Twist()
 
@@ -471,7 +470,7 @@ class DDPGF1FollowLineEnvGazebo(F1Env):
         self._gazebo_pause()
 
         ######### center
-        points = self.processed_image(f1_image_camera.data)
+        points = self.processed_image(f1_image_camera.data, show_monitoring)
         if self.state_space == "spn":
             self.point = points[self.poi]
         else:

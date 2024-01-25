@@ -92,12 +92,8 @@ def print_dictionary(dic):
 
 def render_params(**kwargs):
     font = cv2.FONT_HERSHEY_SIMPLEX
-    canvas = np.zeros((400, 400, 3), dtype="uint8")
-    # blue = (255, 0, 0)
-    # green = (0, 255, 0)
-    # red = (0, 0, 255)
+    canvas = np.zeros((400, 900, 3), dtype="uint8")
     white = (255, 255, 255)
-    # white_darkness = (200, 200, 200)
     i = 10
     for key, value in kwargs.items():
         cv2.putText(
@@ -116,22 +112,21 @@ def render_params(**kwargs):
     cv2.waitKey(100)
 
 
-def save_dataframe_episodes(environment, outdir, aggr_ep_rewards, actions_rewards=None):
+def save_dataframe_episodes(environment, outdir, aggr_ep_rewards):
     """
     We save info every certains epochs in a dataframe and .npy format to export or manage
     """
     os.makedirs(f"{outdir}", exist_ok=True)
-
-    file_csv = f"{outdir}/{time.strftime('%Y%m%d-%H%M%S')}_Circuit-{environment['circuit_name']}_States-{environment['states']}_Actions-{environment['action_space']}_Rewards-{environment['reward_function']}.csv"
-    file_excel = f"{outdir}/{time.strftime('%Y%m%d-%H%M%S')}_Circuit-{environment['circuit_name']}_States-{environment['states']}_Actions-{environment['action_space']}_Rewards-{environment['reward_function']}.xlsx"
+    file_name = f"{time.strftime('%Y%m%d-%H%M%S')}_Circuit-{environment['circuit_name']}_States-{environment['states']}_Actions-{environment['action_space']}_Rewards-{environment['reward_function']}"
+    file_csv = f"{outdir}/{file_name}.csv"
+    file_excel = f"{outdir}/{file_name}.xlsx"
 
     df = pd.DataFrame(aggr_ep_rewards)
     df.to_csv(file_csv, mode="a", index=False, header=None)
     df.to_excel(file_excel)
-
-    if actions_rewards is not None:
-        file_npy = f"{outdir}/{time.strftime('%Y%m%d-%H%M%S')}_Circuit-{environment['circuit_name']}_States-{environment['states']}_Actions-{environment['action_space']}_Rewards-{environment['reward_function']}.npy"
-        np.save(file_npy, actions_rewards)
+    file_npy = f"{outdir}/{file_name}.npy"
+    np.save(file_npy, aggr_ep_rewards)
+    return f"{file_name}.npy"
 
 
 def save_best_episode(

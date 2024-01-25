@@ -15,8 +15,8 @@ catkin_ws
 output
 recorders
 logs
-
-
+checkpoints
+metrics
 
 ### Images ###
  JPEG

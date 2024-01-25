@@ -1,7 +1,7 @@
 settings:
   mode: training # training, retraining, inference
   task: follow_line_gazebo # follow_line_gazebo, follow_lane_gazebo, autoparking_gazebo
-  algorithm: ddpg # qlearn, dqn, ddpg, ppo
+  algorithm: sac # qlearn, dqn, sac, ppo
   simulator: gazebo # openai, carla, gazebo, sumo
   environment_set: gazebo_environments # gazebo_environments, carla_environments
   env: simple # simple, nurburgring, montreal, curves, simple_laser, manual, autoparking
@@ -18,8 +18,8 @@ settings:
   recorder_carla_dir:
   debug_stats: false
   show_monitoring: true
-  steps_to_decrease: 20000
-  decrease_substraction: 0.01
+  steps_to_decrease: 50000
+  decrease_substraction: 0.02
   decrease_min: 0.03
   reward_params:
     function: pow
@@ -32,19 +32,19 @@ ros:
   gazebo_master_uri: "11345"
 
 retraining:
-  ddpg:
-    retrain_ddpg_tf_model_name: "20231117-050532_LAPCOMPLETED_C-simple_S-sp5_A-continuous_MR-1961_E-181"
+  sac:
+    retrain_sac_tf_model_name: "20231104-003119_LAPCOMPLETEDCircuit-simple_States-sp5_Actions-continuous_BATCH_Rewards-followline_center_MaxReward-3096_Epoch-277"
 inference:
-  ddpg:
-    inference_ddpg_tf_actor_model_name:
-    inference_ddpg_tf_critic_model_name:
+  sac:
+    inference_sac_tf_actor_model_name:
+    inference_sac_tf_critic_model_name:
 
 algorithm:
-  ddpg:
+  sac:
     gamma: 0.9
     tau: 0.01
-    std_dev: 0.2
-    model_name: DDPG_Actor_conv2d32x64_Critic_conv2d32x64
+    std_dev: 0
+    model_name: sac_Actor_conv2d32x64_Critic_conv2d32x64
     replay_memory_size: 50_000
     memory_fraction: 0.20
     critic_lr: 0.003
@@ -72,7 +72,7 @@ states:
   sp3:
     0: [10, 50, 150]
   sp5:
-    0: [10, 40, 70, 90, 130]
+    0: [10, 40, 70, 90, 130, 170, 190, 220]
   sp10:
     0: [3, 15, 30, 45, 50, 70, 100, 120, 150, 190]
   spn:
@@ -100,8 +100,8 @@ actions:
   test:
     0: [0, 0]
   continuous:
-    v: [1, 20]
-    w: [-2, 2]
+    v: [1, 9]
+    w: [-1.5, 1.5]
 
 rewards:
   followline_center:
@@ -143,4 +143,4 @@ gazebo_environments:
       2: [39.712, -30.741, 0.004, 0, 0, 1.56, 1.56]
       3: [-6.861, -36.481, 0.004, 0, 0.01, -0.858, 0.613]
       4: [20.043, 37.130, 0.003, 0, 0.103, -1.4383, -1.4383]
-    sleep: 0.05
+    sleep: 0.08
