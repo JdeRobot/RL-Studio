@@ -132,6 +132,21 @@ class TrainerFactory:
 
             return TrainerFollowLinePPOF1GazeboTF(config)
 
+        # =============================
+        # FollowLane - F1 - qlearn - Carla
+        # =============================
+        elif (
+            task == TasksType.FOLLOWLANECARLA.value
+            and agent == AgentsType.AUTOCARLA.value
+            and algorithm == AlgorithmsType.PPO_CONTINIUOUS.value
+            and simulator == EnvsType.CARLA.value
+        ):
+            from rl_studio.agents.auto_carla.train_followlane_ppo_carla_tf import (
+                TrainerFollowLanePPOCarla,
+            )
+
+            return TrainerFollowLanePPOCarla(config)
+
 
         # =============================
         # FollowLine - F1 - DQN - Gazebo - TensorFlow
