@@ -1,5 +1,5 @@
 settings:
-  mode: retraining # training, retraining, inference
+  mode: training # training, retraining, inference
   task: follow_line_gazebo # follow_line_gazebo, follow_lane_gazebo, autoparking_gazebo
   algorithm: ppo_continuous # qlearn, dqn, ddpg, ppo
   simulator: gazebo # openai, carla, gazebo, sumo

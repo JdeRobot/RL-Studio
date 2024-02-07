@@ -1,5 +1,5 @@
 settings:
-  mode: retraining # training, retraining, inference
+  mode: training # training, retraining, inference
   task: follow_lane_carla # follow_line_gazebo, follow_lane_gazebo, autoparking_gazebo
   algorithm: ppo_continuous # qlearn, dqn, ddpg, ppo
   simulator: carla # openai, carla, gazebo, sumo
@@ -7,7 +7,7 @@ settings:
   env: follow_lane # Town01, simple, nurburgring, montreal, curves, simple_laser, manual, autoparking
   agent: auto_carla # f1, autoparkingRL, auto_carla, mountain_car, robot_mesh, cartpole, turtlebot
   actions: slow # slow, fast
-  states: sp5 #image, sp1 (simplified perception with 1 point), sp3 (simplified perception with 3 points), spn (simplified perception with n points)
+  states: sp10 #image, sp1 (simplified perception with 1 point), sp3 (simplified perception with 3 points), spn (simplified perception with n points)
   rewards: followline_center # followline_center, followline_center_v_w_linear
   framework: TensorFlow # TensorFlow, Pytorch
   total_episodes: 500000
@@ -45,7 +45,7 @@ algorithm:
     gamma: 0.9
     epsilon: 0.1
     std_dev: 0.2
-    episodes_update: 1_000
+    episodes_update: 100
     replay_memory_size: 50_000
     memory_fraction: 0.20
     critic_lr: 0.003
@@ -53,7 +53,7 @@ algorithm:
     model_name: PPO_Actor_conv2d32x64_Critic_conv2d32x64
 
 agents:
-  f1:
+  auto_carla:
     camera_params:
       width: 640
       height: 480
@@ -71,10 +71,10 @@ states:
     0: [40] #TODO
   sp3:
     0: [10, 50, 150]
-  sp5:
-    0: [10, 40, 70, 100, 130, 160, 190, 220]
+  sp4:
+    0: [ 30, 60, 100, 120 ]
   sp10:
-    0: [3, 15, 30, 45, 50, 70, 100, 120, 150, 190]
+    0: [250, 270, 290, 320, 330, 350, 360, 370, 380, 400]
   spn:
     0: [10]
 
@@ -96,31 +96,34 @@ rewards:
     min_reward: 1_000
     highest_reward: 100
 
-gazebo_environments:
-  simple:
-    env_name: F1Env-v0
-    circuit_name: simple
-    launchfile: simple_circuit.launch
-    environment_folder: f1
-    robot_name: f1_renault
-    model_state_name: f1_renault # f1_renault_multicamera_multilaser
-    start_pose: 0 # 0, 1, 2, 3, 4
-    alternate_pose: True
-    estimated_steps: 5000
-    sensor: camera
-    save_episodes: 1
-    save_every_step: 20000
-    lap_completed: False
-    save_model: True
-    save_positions: True
-    debug_level: DEBUG
-    telemetry: False
-    telemetry_mask: False
-    plotter_graphic: False
-    circuit_positions_set:
-      0: [53.462, -41.988, 0.004, 0, 0, 1.57, -1.57]
-      1: [53.462, -8.734, 0.004, 0, 0, 1.57, -1.57] #finish line
-      2: [39.712, -30.741, 0.004, 0, 0, 1.56, 1.56]
-      3: [-6.861, -36.481, 0.004, 0, 0.01, -0.858, 0.613]
-      4: [20.043, 37.130, 0.003, 0, 0.103, -1.4383, -1.4383]
-    sleep: 0.05
+carla_environments:
+  follow_lane:
+    env_name: CarlaEnv-v0
+    town: Town04 #Town01, Town02, Town03, Town04, Town05, Town10HD
+    # Town01_Opt, Town02_Opt, Town03_Opt, Town04_Opt, Town05_Opt, Town10HD_Opt
+    car: model1
+    weather: ClearNoon #dynamic, argparse
+    traffic_pedestrians: False
+    city_lights: False
+    car_lights: False
+    estimated_steps: 10000
+    save_episodes: 10
+    save_every_step: 100
+    init_pose:
+    goal_pose:
+    filter: vehicle.*
+    generation: "2"
+    rolename: "hero" #name
+    gamma: 2.2 #for camera
+    sync: True #syncronous mode or async
+    alternate_pose: False
+    waypoints_meters: 5 #distance between waypoints in meters
+    waypoints_init: 839
+    waypoints_target: 959 #961
+    waypoints_lane_id: -1
+    waypoints_road_id: 8
+
+carla:
+  carla_server: localhost
+  carla_client: 2000
+

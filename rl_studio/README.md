@@ -108,6 +108,21 @@ Launch it with `python plot_waypoints.py -t <town>` where `<town>` could be Town
   
 ![](../rl_studio/docs/Town01_topology.png)
 
+- `get_spectator_location.py` print the location where the current spectator is located in carla with `python get_spectator_location.py` 
+
+
+*Note:* If you encounter the problem in which tour simulator crashes after some training time with:
+
+```
+Failed to find symbol file, expected location:
+"/opt/carla-simulator/CarlaUE4/Binaries/Linux/CarlaUE4-Linux-Shipping.sym"
+Malloc Size=131160 LargeMemoryPoolOffset=196744 
+Malloc Size=131160 LargeMemoryPoolOffset=327928 
+Engine crash handling finished; re-raising signal 11 for the default handler. Good bye.
+```
+
+follow the instrictions in [this thread](https://github.com/carla-simulator/carla/issues/2138) to fix the issue.
+
 
 
 

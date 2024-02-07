@@ -117,7 +117,7 @@ def save_dataframe_episodes(environment, outdir, aggr_ep_rewards):
     We save info every certains epochs in a dataframe and .npy format to export or manage
     """
     os.makedirs(f"{outdir}", exist_ok=True)
-    file_name = f"{time.strftime('%Y%m%d-%H%M%S')}_Circuit-{environment['circuit_name']}_States-{environment['states']}_Actions-{environment['action_space']}_Rewards-{environment['reward_function']}"
+    file_name = f"{time.strftime('%Y%m%d-%H%M%S')}__States-{environment['states']}_Actions-{environment['action_space']}_Rewards-{environment['reward_function']}"
     file_csv = f"{outdir}/{file_name}.csv"
     file_excel = f"{outdir}/{file_name}.xlsx"
 

@@ -8,8 +8,8 @@ markdownTable==6.0.0
 matplotlib==3.3.2
 networkx==2.5.1
 numpy==1.22.0
-opencv_python==4.2.0.34
-opencv_python_headless==4.2.0.34
+opencv_python==4.5.5.64
+#opencv_python_headless==4.5.5.64
 optuna==3.1.0
 pandas==1.5.3
 Pillow==10.1.0
@@ -34,7 +34,9 @@ tensorboardX==2.6.2.2
 tensorflow==2.9.1
 tensorflow_gpu==2.11.0
 tf==1.13.2
-torch==1.11.0
+torch==2.1.2
 tqdm==4.64.0
 protobuf==3.20.1
-rospkg
+rospkg==1.5.0
+torchvision==0.16.2
+prefetch_generator

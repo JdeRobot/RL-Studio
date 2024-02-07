@@ -34,11 +34,23 @@ class Carla:
             and weather != "dynamic"
             and traffic_pedestrians is False
         ):
-            from rl_studio.envs.carla.followlane.followlane_qlearn import (
-                FollowLaneQlearnStaticWeatherNoTraffic,
+            from rl_studio.envs.carla.followlane.followlane_ppo import (
+                FollowLaneStaticWeatherNoTraffic,
             )
 
-            return FollowLaneQlearnStaticWeatherNoTraffic(**environment)
+            return FollowLaneStaticWeatherNoTraffic(**environment)
+
+        elif (
+            task == TasksType.FOLLOWLANECARLA.value
+            and algorithm == AlgorithmsType.MANUAL.value
+            and weather != "dynamic"
+            and traffic_pedestrians is False
+        ):
+            from rl_studio.envs.carla.followlane.followlane_ppo import (
+                FollowLaneStaticWeatherNoTraffic,
+            )
+
+            return FollowLaneStaticWeatherNoTraffic(**environment)
 
         else:
             raise NoValidEnvironmentType(task)
