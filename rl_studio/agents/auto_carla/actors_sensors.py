@@ -197,26 +197,9 @@ class LaneDetector:
         torch.cuda.empty_cache()
         self.__model: torch.nn.Module = torch.load(model_path)
         self.__model.eval()
-
-    def get_prediction(self, img_array):
-        with torch.no_grad():
-            image_tensor = img_array.transpose(2, 0, 1).astype("float32") / 255
-            x_tensor = torch.from_numpy(image_tensor).to("cuda").unsqueeze(0)
-            model_output = (
-                torch.softmax(self.__model.forward(x_tensor), dim=1).cpu().numpy()
-            )
-        return model_output
-
-    def lane_detection_overlay(self, image, left_mask, right_mask):
-        res = np.copy(image)
-        # We show only points with probability higher than 0.5
-        res[left_mask > 0.07, :] = [255, 0, 0]
-        res[right_mask > 0.07, :] = [0, 0, 255]
-
-        cv2.erode(left_mask, (7, 7), 4)
-        cv2.dilate(left_mask, (7, 7), 4)
-
-        return res
+        self.__threshold = 0.1
+        self.__kernel = np.ones((7, 7), np.uint8)
+        self.__iterations = 4
 
     def detect(self, img_array: np.array) -> tuple:
         with torch.no_grad():
@@ -240,24 +223,25 @@ class LaneDetector:
         """
         res = np.copy(image)
 
-        cv2.erode(left_mask, (7, 7), 4)
-        cv2.dilate(left_mask, (7, 7), 4)
+        cv2.erode(left_mask, self.__kernel, self.__iterations)
+        cv2.dilate(left_mask, self.__kernel, self.__iterations)
 
-        cv2.erode(right_mask, (7, 7), 4)
-        cv2.dilate(right_mask, (7, 7), 4)
+        cv2.erode(left_mask, self.__kernel, self.__iterations)
+        cv2.dilate(left_mask, self.__kernel, self.__iterations)
 
         left_mask = self._image_polyfit(left_mask)
         right_mask = self._image_polyfit(right_mask)
 
         # We show only points with probability higher than 0.07
-        res[left_mask > 0.1, :] = [255, 0, 0]
-        res[right_mask > 0.1, :] = [0, 0, 255]
+        # show lines in BLUE
+        res[left_mask > self.__threshold, :] = [255, 0, 0]  # [255, 0, 0]
+        res[right_mask > self.__threshold, :] = [255, 0, 0]  # [0, 0, 255]
 
         return res, left_mask, right_mask
 
     def _image_polyfit(self, image: np.ndarray) -> np.ndarray:
         img = np.copy(image)
-        img[image > 0.1] = 255
+        img[image > self.__threshold] = 255
 
         indices = np.where(img == 255)
 
@@ -282,3 +266,29 @@ class LaneDetector:
         polyfitted[tuple(valid_points.T)] = 255
 
         return polyfitted
+
+    def get_prediction(self, img_array):
+        """
+        original version, not using it
+        """
+        with torch.no_grad():
+            image_tensor = img_array.transpose(2, 0, 1).astype("float32") / 255
+            x_tensor = torch.from_numpy(image_tensor).to("cuda").unsqueeze(0)
+            model_output = (
+                torch.softmax(self.__model.forward(x_tensor), dim=1).cpu().numpy()
+            )
+        return model_output
+
+    def lane_detection_overlay(self, image, left_mask, right_mask):
+        """
+        original version, not using it
+        """
+        res = np.copy(image)
+        # We show only points with probability higher than 0.5
+        res[left_mask > 0.07, :] = [255, 0, 0]
+        res[right_mask > 0.07, :] = [0, 0, 255]
+
+        cv2.erode(left_mask, (7, 7), 4)
+        cv2.dilate(left_mask, (7, 7), 4)
+
+        return res

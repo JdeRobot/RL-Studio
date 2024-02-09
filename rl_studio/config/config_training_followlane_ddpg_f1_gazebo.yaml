@@ -34,14 +34,14 @@ algorithm:
   ddpg:
     gamma: 0.9
     tau: 0.005
-    std_dev: 0.2
+    std_dev: 0.01
     model_name: DDPG_Actor_conv2d32x64_Critic_conv2d32x64
     replay_memory_size: 50_000
     memory_fraction: 0.20
     critic_lr: 0.002
     actor_lr: 0.001
     buffer_capacity: 100_000
-    batch_size: 64
+    batch_size: 32
 
 agents:
   f1:

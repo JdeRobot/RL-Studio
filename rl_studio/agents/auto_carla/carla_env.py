@@ -222,24 +222,77 @@ class CarlaEnv(gym.Env):
     #
     #####################################################################################
     def reset(self, seed=None, options=None):
-        """
-        state = vector / simplified perception
-        """
 
-        ############################################################################
-        ########### --- calculating STATES
-
-        ##### EATA PARTE NOS SIRVE PARA ENCONTRAR EL CENTRO SOLO CON LA LINEA DERECHA
         while self.sensor_camera_rgb.front_rgb_camera is None:
             print(f"RESET() ----> {self.sensor_camera_rgb.front_rgb_camera = }")
             time.sleep(0.2)
 
         # TODO: spawning car
 
-        self.states = [self.num_regions // 2 for i, _ in enumerate(self.x_row)]
-        print(f"\n\t{self.states =}")
-        # states_size = len(self.states)
+        ## IMPLEMENTING STATES FOR SIMPLIFIED PERCEPTION
+        ## STATES = V + W + ANGLE + CENTERS + LINE BORDERS (+ POSE_X + POSE_Y OPTIONALS)
+        ## NUMBER OF PARAMETERS = X_ROW * 3 + 3 WHICH IS THE INPUT_SIZE IN NN
+        ## FOR RESET() :
+        ##      V = 0
+        ##      W = 0
+        ##      ANGLE = 0
+        ##      CENTERS = STATES IN PIXELS (DEPENDS ON X_ROW)
+        ##      LINE BORDERS =
+        ##      POSE_X, POSE_Y = SPAWNING CAR POINTS IN THE MAP (IT IS A POSSIBILITY, NOT IMPLEMENTED RIGHT NOW)
+        ##
+        ## EXAMPLE -> states = [V=0, W=0, ANGLE=0, CENTERS=300, 320, 350, LINE_BORDERS = 200, 180, 150, 350, 400, 500]
+        ##                          12 VALUES WHEN X_ROW = 3
 
+        # back, left, right = self.sensor_camera_lanedetector.get_prediction(
+        #    self.sensor_camera_rgb.front_rgb_camera
+        # )[0]
+        # image_rgb_lanedetector = self.sensor_camera_lanedetector.lane_detection_overlay(
+        #    self.sensor_camera_rgb.front_rgb_camera, left, right
+        # )
+
+        ####################################### LANEDETECTOR + REGRESSION
+        image_copy = np.copy(self.sensor_camera_rgb.front_rgb_camera)
+        (
+            image_rgb_lanedetector_regression,
+            _,
+            _,
+        ) = self.sensor_camera_lanedetector.detect(image_copy)
+
+        mask = self.preprocess_image_lane_detector(image_rgb_lanedetector_regression)
+
+        (
+            lane_centers_in_pixels,
+            errors,
+            errors_normalized,
+            index_right,
+            index_left,
+        ) = self.calculate_lane_centers_with_lane_detector(mask)
+
+        # print(
+        #    f"\n\t{lane_centers_in_pixels = }\n\t{errors =}\n\t{errors_normalized =}\n\t{index_right = }\n\t{index_left =}"
+        # )
+        # AutoCarlaUtils.show_image(
+        #    "LaneDetector RGB Regression",
+        # image_rgb_lanedetector[(image_rgb_lanedetector.shape[0] // 2) :],
+        #    image_rgb_lanedetector_regression[
+        #        (image_rgb_lanedetector_regression.shape[0] // 2) :
+        #    ],
+        #    1400,
+        #    800,
+        # )
+
+        ### CALCULATING STATES AS [lane_centers_in_pixels, index_right, index_left, V, W, ANGLE]
+        self.states = []
+        self.states.extend(lane_centers_in_pixels)
+        self.states.extend(index_right)
+        self.states.extend(index_left)
+        self.states.append(0)  # v
+        self.states.append(0)  # w
+        self.states.append(0)  # angle
+        # print(f"\n\tIn Reset() {self.states =}")
+
+        # states_size = len(self.states)
+        # input("Enter....")
         return self.states  # , states_size
 
     #####################################################################################
@@ -302,25 +355,6 @@ class CarlaEnv(gym.Env):
             f"\n\t{self.states = }\n\t{drawing_lines_states =}\n\t{drawing_numbers_states =}"
         )
 
-        ############################################
-        #
-        #   DRWAWING LINES
-        #############################################
-
-        (
-            self.states,
-            drawing_lines_states,
-            drawing_numbers_states,
-        ) = self.calculate_states(
-            mask.shape[1],
-            dist_to_center,
-            self.num_regions,
-            size_lateral_states=140,
-        )
-        print(
-            f"\n\t{self.states = }\n\t{drawing_lines_states =}\n\t{drawing_numbers_states =}"
-        )
-
         index_left = [0 for i, _ in enumerate(index_right)]  # only for drawing
         AutoCarlaUtils.show_image_lines_centers_borders(
             "Front Camera",
@@ -344,14 +378,8 @@ class CarlaEnv(gym.Env):
         ###################################
 
         done = False
-        # ground_truth_normal_values = [
-        #    correct_normalized_distance[value] for i, value in enumerate(self.x_row)
-        # ]
-        # reward, done = self.autocarlarewards.rewards_right_line(
-        #    dist_normalized, ground_truth_normal_values, self.params
-        # )
         reward, done = self.autocarlarewards.rewards_sigmoid_only_right_line(
-            self.dist_normalized, ground_truth_normal_values
+            self.dist_normalized, ground_truth_normal_values, self.params
         )
 
         return self.states, reward, done, {}
@@ -366,18 +394,18 @@ class CarlaEnv(gym.Env):
         self.control_discrete_actions(action)
 
         ####################################### ---- original LANEDETECTOR
-        back, left, right = self.sensor_camera_lanedetector.get_prediction(
-            self.sensor_camera_rgb.front_rgb_camera
-        )[0]
-        image_rgb_lanedetector = self.sensor_camera_lanedetector.lane_detection_overlay(
-            self.sensor_camera_rgb.front_rgb_camera, left, right
-        )
-        AutoCarlaUtils.show_image(
-            "LaneDetector RGB",
-            image_rgb_lanedetector[(image_rgb_lanedetector.shape[0] // 2) :],
-            600,
-            800,
-        )
+        # back, left, right = self.sensor_camera_lanedetector.get_prediction(
+        #    self.sensor_camera_rgb.front_rgb_camera
+        # )[0]
+        # image_rgb_lanedetector = self.sensor_camera_lanedetector.lane_detection_overlay(
+        #    self.sensor_camera_rgb.front_rgb_camera, left, right
+        # )
+        # AutoCarlaUtils.show_image(
+        #    "LaneDetector RGB",
+        #    image_rgb_lanedetector[(image_rgb_lanedetector.shape[0] // 2) :],
+        #    600,
+        #    800,
+        # )
 
         ####################################### LANEDETECTOR + REGRESSION
         image_copy = np.copy(self.sensor_camera_rgb.front_rgb_camera)
@@ -386,15 +414,15 @@ class CarlaEnv(gym.Env):
             left_mask,
             right_mask,
         ) = self.sensor_camera_lanedetector.detect(image_copy)
-        AutoCarlaUtils.show_image(
-            "LaneDetector RGB Regression",
-            # image_rgb_lanedetector[(image_rgb_lanedetector.shape[0] // 2) :],
-            image_rgb_lanedetector_regression[
-                (image_rgb_lanedetector_regression.shape[0] // 2) :
-            ],
-            1400,
-            800,
-        )
+        # AutoCarlaUtils.show_image(
+        #    "LaneDetector RGB Regression",
+        # image_rgb_lanedetector[(image_rgb_lanedetector.shape[0] // 2) :],
+        #    image_rgb_lanedetector_regression[
+        #        (image_rgb_lanedetector_regression.shape[0] // 2) :
+        #    ],
+        #    1400,
+        #    800,
+        # )
 
         mask = self.preprocess_image_lane_detector(image_rgb_lanedetector_regression)
         AutoCarlaUtils.show_image(
@@ -413,7 +441,7 @@ class CarlaEnv(gym.Env):
         ) = self.calculate_lane_centers_with_lane_detector(mask)
 
         print(
-            f"\n\t{lane_centers_in_pixels = }\n\t{errors =}\n{errors_normalized =}\n\t{index_right = }\n\t{index_left =}"
+            f"\n\t{lane_centers_in_pixels = }\n\t{errors =}\n\t{errors_normalized =}\n\t{index_right = }\n\t{index_left =}"
         )
 
         (
@@ -443,6 +471,13 @@ class CarlaEnv(gym.Env):
             drawing_lines_states,
             drawing_numbers_states,
         )
+        input("press ...")
+        ############ ESTABLECER LAS CONDICIONES DE SALIDA:
+        ## 1. NO HAY LINEAS. DEBO DECIDIR CUANTOS PUNTOS PARA SALIR
+        ## 2. REWARD: DECIDIR SI LE DEJO POCO/MUCHO MARGEN DE MANIOBRA EN EL CENTRO
+        ## 3. LLEGA META
+        ## 4. COLLISION
+        ##
 
         ## -------- Step() over...
         done = False
@@ -588,6 +623,50 @@ class CarlaEnv(gym.Env):
         image_middle_line = (height) // 2
         img_sliced = image[image_middle_line:]
 
+        kernel = np.ones((3, 3), np.uint8)
+        img_erosion = cv2.erode(img_sliced, kernel, iterations=2)
+
+        # Convertir la imagen de BGR a RGB
+        image_rgb = cv2.cvtColor(img_erosion, cv2.COLOR_BGR2RGB)
+
+        # Definir un rango de color azul en el formato HSV
+        lower_blue = np.array([100, 50, 50])
+        upper_blue = np.array([130, 255, 255])
+
+        # Convertir la imagen RGB a HSV
+        image_hsv = cv2.cvtColor(image_rgb, cv2.COLOR_RGB2HSV)
+
+        # Crear una máscara para los píxeles azules
+        mask = cv2.inRange(image_hsv, lower_blue, upper_blue)
+
+        # Convertir la máscara a una máscara de tres canales
+        # mask_rgb = cv2.cvtColor(mask, cv2.COLOR_GRAY2RGB)
+
+        # Copiar la imagen original
+        # imagen_rgb = np.copy(imagen_rgb)
+
+        # Reemplazar los píxeles azules con blanco en la imagen resultante
+        # image_rgb[mask == 255] = [255, 255, 255]
+        # imagen_resultado[mask_rgb == 255] = [255, 255, 255]
+
+        # Mostrar la imagen original y la imagen resultante
+        # image_rgb = cv2.cvtColor(image_rgb, cv2.COLOR_RGB2BGR)
+        # image_bgr = cv2.cvtColor(image_rgb, cv2.COLOR_RGB2BGR)
+
+        # cv2.imshow("RGB", image_rgb)
+        # cv2.imshow("BGR", image_bgr)
+
+        return mask
+
+    def __preprocess_image_lane_detector(self, image):
+        """
+        image from lane detector with regression
+        """
+        ## first, we cut the upper image
+        height = image.shape[0]
+        image_middle_line = (height) // 2
+        img_sliced = image[image_middle_line:]
+
         kernel = np.ones((5, 5), np.uint8)
         img_erosion = cv2.erode(img_sliced, kernel, iterations=3)
         hsv = cv2.cvtColor(img_erosion, cv2.COLOR_RGB2HSV)
@@ -608,6 +687,11 @@ class CarlaEnv(gym.Env):
         index_left = [np.argmax(lines[x]) for x, _ in enumerate(lines)]
         # print(f"{index_left = }")
 
+        # substituting 0's by -1
+        index_left = [
+            index_left[x] if index_left[x] != 0 else 0 for x, _ in enumerate(index_left)
+        ]
+
         # calculamos la linea derecha desde la columna 640, desde la derecha
         lines_inversed = [list(reversed(lines[x])) for x, _ in enumerate(lines)]
         # print(f"{lines_inversed = }")
@@ -622,13 +706,21 @@ class CarlaEnv(gym.Env):
         # print(f"{index_right = }")
 
         centers = [
-            ((right - left) // 2) + left for right, left in zip(index_right, index_left)
+            ((right - left) // 2) + left if right != 0 and left != 0 else 0
+            for right, left in zip(index_right, index_left)
         ]
         dist_to_center = [
-            abs(centers[i] - gray_mask.shape[1] // 2) for i, _ in enumerate(centers)
+            abs(centers[i] - gray_mask.shape[1] // 2) if centers[i] != 0 else 0
+            for i, _ in enumerate(centers)
         ]
         dist_to_center_normalized = [
-            float(((gray_mask.shape[1] // 2) - centers[i]) / (gray_mask.shape[1] // 2))
+            (
+                float(
+                    ((gray_mask.shape[1] // 2) - centers[i]) / (gray_mask.shape[1] // 2)
+                )
+                if dist_to_center[i] != 0
+                else 0
+            )
             for i, _ in enumerate(dist_to_center)
         ]
         return (
@@ -647,13 +739,20 @@ class CarlaEnv(gym.Env):
         pixel_center_states = int(size_center_states / (num_regions - 2))
 
         states = [
-            int(((value - size_lateral_states) / pixel_center_states) + 1)
-            if (width - size_lateral_states) > value > size_lateral_states
-            else num_regions - 1
-            if value >= (width - size_lateral_states)
-            else num_regions
+            (
+                int(((value - size_lateral_states) / pixel_center_states) + 1)
+                if (width - size_lateral_states) > value > size_lateral_states
+                else (
+                    num_regions - 1
+                    if value >= (width - size_lateral_states)
+                    else num_regions
+                )
+            )
             for _, value in enumerate(lane_centers_in_pixels)
         ]
+
+        ## negatives states due to 0's convert in 0
+        states = [states[i] if states[i] > 0 else 0 for i, _ in enumerate(states)]
 
         # drawing lines and numbers states in image
         drawing_lines_states = [
