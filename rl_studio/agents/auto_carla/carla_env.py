@@ -7,6 +7,7 @@ import cv2
 import gymnasium as gym
 from gymnasium import spaces
 import numpy as np
+from sklearn.preprocessing import StandardScaler, MinMaxScaler
 import torch
 
 from rl_studio.agents.auto_carla.actors_sensors import LaneDetector
@@ -302,87 +303,13 @@ class CarlaEnv(gym.Env):
     #####################################################################################
 
     def step(self, action):
+
         lane_detector_pytorch = True
         if lane_detector_pytorch:
             return self.step_lane_detector_pytorch(action)
 
         else:
             return self.step_only_right_line(action)
-
-    def step_only_right_line(self, action):
-        """
-        state: sp
-        actions: discretes
-                Only Right Line
-        """
-
-        self.control_discrete_actions(action)
-
-        ########### --- calculating STATES
-        mask = self.preprocess_image(self.sensor_camera_red_mask.front_red_mask_camera)
-        AutoCarlaUtils.show_image(
-            "mask",
-            mask,
-            300,
-            10,
-        )
-
-        ########### --- Calculating center ONLY with right line
-        (
-            errors,
-            dist_to_center,
-            dist_to_center_normalized,
-            index_right,
-            ground_truth_normal_values,
-        ) = self.calculate_lane_centers_with_only_right_line(mask)
-
-        print(
-            f"\n\t{errors = }\n\t{dist_to_center =}\n{dist_to_center_normalized =}\n\t{index_right = }\n\t{ground_truth_normal_values =}"
-        )
-
-        ## STATES
-        (
-            self.states,
-            drawing_lines_states,
-            drawing_numbers_states,
-        ) = self.calculate_states(
-            mask.shape[1],
-            dist_to_center,
-            self.num_regions,
-            size_lateral_states=140,
-        )
-        print(
-            f"\n\t{self.states = }\n\t{drawing_lines_states =}\n\t{drawing_numbers_states =}"
-        )
-
-        index_left = [0 for i, _ in enumerate(index_right)]  # only for drawing
-        AutoCarlaUtils.show_image_lines_centers_borders(
-            "Front Camera",
-            self.sensor_camera_rgb.front_rgb_camera[
-                (self.sensor_camera_rgb.front_rgb_camera.shape[0] // 2) :
-            ],
-            self.x_row,
-            800,
-            10,
-            index_right,
-            index_left,
-            dist_to_center,
-            drawing_lines_states,
-            drawing_numbers_states,
-        )
-
-        ## -------- Ending Step()...
-        ###################################
-        #
-        #       REWARDS
-        ###################################
-
-        done = False
-        reward, done = self.autocarlarewards.rewards_sigmoid_only_right_line(
-            self.dist_normalized, ground_truth_normal_values, self.params
-        )
-
-        return self.states, reward, done, {}
 
     def step_lane_detector_pytorch(self, action):
         """
@@ -393,20 +320,6 @@ class CarlaEnv(gym.Env):
 
         self.control_discrete_actions(action)
 
-        ####################################### ---- original LANEDETECTOR
-        # back, left, right = self.sensor_camera_lanedetector.get_prediction(
-        #    self.sensor_camera_rgb.front_rgb_camera
-        # )[0]
-        # image_rgb_lanedetector = self.sensor_camera_lanedetector.lane_detection_overlay(
-        #    self.sensor_camera_rgb.front_rgb_camera, left, right
-        # )
-        # AutoCarlaUtils.show_image(
-        #    "LaneDetector RGB",
-        #    image_rgb_lanedetector[(image_rgb_lanedetector.shape[0] // 2) :],
-        #    600,
-        #    800,
-        # )
-
         ####################################### LANEDETECTOR + REGRESSION
         image_copy = np.copy(self.sensor_camera_rgb.front_rgb_camera)
         (
@@ -414,15 +327,6 @@ class CarlaEnv(gym.Env):
             left_mask,
             right_mask,
         ) = self.sensor_camera_lanedetector.detect(image_copy)
-        # AutoCarlaUtils.show_image(
-        #    "LaneDetector RGB Regression",
-        # image_rgb_lanedetector[(image_rgb_lanedetector.shape[0] // 2) :],
-        #    image_rgb_lanedetector_regression[
-        #        (image_rgb_lanedetector_regression.shape[0] // 2) :
-        #    ],
-        #    1400,
-        #    800,
-        # )
 
         mask = self.preprocess_image_lane_detector(image_rgb_lanedetector_regression)
         AutoCarlaUtils.show_image(
@@ -431,7 +335,14 @@ class CarlaEnv(gym.Env):
             300,
             10,
         )
-
+        AutoCarlaUtils.show_image(
+            "LaneDetector",
+            image_rgb_lanedetector_regression[
+                (image_rgb_lanedetector_regression.shape[0] // 2) :
+            ],
+            300,
+            350,
+        )
         (
             lane_centers_in_pixels,
             errors,
@@ -455,7 +366,8 @@ class CarlaEnv(gym.Env):
             size_lateral_states=140,
         )
         print(
-            f"\n\t{self.states = }\n\t{drawing_lines_states =}\n\t{drawing_numbers_states =}"
+            # f"\n\t{self.states = }\n\t{drawing_lines_states =}\n\t{drawing_numbers_states =}"
+            f"\n\t{self.states = }"
         )
         AutoCarlaUtils.show_image_lines_centers_borders(
             "Front Camera",
@@ -463,7 +375,7 @@ class CarlaEnv(gym.Env):
                 (self.sensor_camera_rgb.front_rgb_camera.shape[0] // 2) :
             ],
             self.x_row,
-            800,
+            900,
             10,
             index_right,
             index_left,
@@ -471,18 +383,31 @@ class CarlaEnv(gym.Env):
             drawing_lines_states,
             drawing_numbers_states,
         )
+
+        ################# Heading
+        angle_height_image = self.sensor_camera_rgb.front_rgb_camera.shape[0] // 2
+        angle_weight_image = self.sensor_camera_rgb.front_rgb_camera.shape[1] // 2
+        central_line_points = [
+            (angle_weight_image, 0),
+            [angle_weight_image, angle_height_image],
+        ]
+        # centers_lines_points = [(320, 20), (340, 160), (360, 300), (400, 480)]
+        centers_lines_points = list(zip(lane_centers_in_pixels, self.x_row))
+        angle = self.heading_car(central_line_points, centers_lines_points)
+        print(f"\n\t{angle =}")
         input("press ...")
-        ############ ESTABLECER LAS CONDICIONES DE SALIDA:
-        ## 1. NO HAY LINEAS. DEBO DECIDIR CUANTOS PUNTOS PARA SALIR
-        ## 2. REWARD: DECIDIR SI LE DEJO POCO/MUCHO MARGEN DE MANIOBRA EN EL CENTRO
-        ## 3. LLEGA META
-        ## 4. COLLISION
+
+        ############ RESET by:
+        ## 1. No lateral lines detected
+        ## 2. REWARD: far from center
+        ## 3. reach FINISH line
+        ## 4. Collision
         ##
 
         ## -------- Step() over...
         done = False
-        reward, done = self.autocarlarewards.rewards_followlane_two_lines(
-            errors_normalized, self.center_image, self.params
+        reward, done = self.autocarlarewards.rewards_followlane_center_velocity_angle(
+            errors_normalized, self.params["speed"], self.params["target_veloc"], angle
         )
 
         ## -------- ... or Finish by...
@@ -501,7 +426,38 @@ class CarlaEnv(gym.Env):
             print(f"Finish!!!!")
             done = True
 
-        return self.states, reward, done, {}
+        #### STATE = DQN INPUTS:
+        ## CENTERS +
+        ## LINE BORDERS +
+        ## V +
+        ## W +
+        ## ANGLE
+
+        ## ALL NORMALIZED IN THEIR PARTICULAR RANGES
+
+        v_normal = self.normalizing_DQN_values(
+            self.params["speed"],
+            self.params["target_veloc"],
+            0,
+            is_list=False,
+        )
+        w_normal = self.normalizing_DQN_values(
+            self.params["steering_angle"], 3, 0, is_list=False
+        )
+        angle_normal = self.normalizing_DQN_values(angle, 30, 0, is_list=False)
+        states_normal = self.normalizing_DQN_values(
+            lane_centers_in_pixels, 640, 0, is_list=True
+        )
+        line_borders_normal = self.normalizing_DQN_values(
+            index_right + index_left, 640, 0, is_list=True
+        )
+
+        DQN_input = (
+            states_normal + line_borders_normal + v_normal + w_normal + angle_normal
+        )
+
+        print(f"\n\t{DQN_input = }")
+        return DQN_input, reward, done, {}
 
     ##################################################
     #
@@ -517,7 +473,17 @@ class CarlaEnv(gym.Env):
         c = self.car.car.get_control()
         w = self.car.car.get_angular_velocity()  # returns in deg/sec
         a = self.car.car.get_acceleration()
-        self.params["speed"] = int(3.6 * math.sqrt(v.x**2 + v.y**2 + v.z**2))
+
+        ## Applied throttle, brake and steer
+        curr_speed = int(3.6 * math.sqrt(v.x**2 + v.y**2 + v.z**2))
+        throttle = self.actions[action][0]
+        steer = self.actions[action][1]
+        # print(f"in STEP() {throttle = } and {steer = }")
+
+        target_veloc = 30
+        brake = 0
+
+        self.params["speed"] = curr_speed
         self.params["steering_angle"] = w
         # self.params["Steering_angle"] = steering_angle
         self.params["Steer"] = c.steer
@@ -526,19 +492,11 @@ class CarlaEnv(gym.Env):
         self.params["Brake"] = c.brake
         self.params["height"] = t.location.z
         self.params["Acceleration"] = math.sqrt(a.x**2 + a.y**2 + a.z**2)
-
-        ## Applied throttle, brake and steer
-        curr_speed = int(3.6 * math.sqrt(v.x**2 + v.y**2 + v.z**2))
-        throttle = self.actions[action][0]
-        steer = self.actions[action][1]
-        # print(f"in STEP() {throttle = } and {steer = }")
-
-        target_speed = 30
-        brake = 0
+        self.params["target_veloc"] = target_veloc
 
         # Limiting Velocity up to target_speed = 30 (or any other)
-        if curr_speed > target_speed:
-            throttle = 0.45
+        if curr_speed > target_veloc:
+            throttle = 0.0
 
         self.car.car.apply_control(
             carla.VehicleControl(throttle=throttle, steer=steer, brake=brake)
@@ -547,6 +505,17 @@ class CarlaEnv(gym.Env):
     #####################################################################################
     # ---   methods
     #####################################################################################
+
+    def normalizing_DQN_values(self, values, max_value, min_value=0, is_list=True):
+        # values_ = abs(values)
+        # values_ = values
+        values = np.array(values).reshape(-1, 1)
+        min_max_scaler = MinMaxScaler(feature_range=(0, 1))
+        min_max_scaler.fit([[min_value], [max_value]])
+        data_min_max_scaled = min_max_scaler.transform(values)
+        values_normal = data_min_max_scaled.flatten().tolist()
+
+        return values_normal
 
     def preprocess_image(self, img):
         """
@@ -567,52 +536,6 @@ class CarlaEnv(gym.Env):
         _, white_mask = cv2.threshold(gray_mask, theshold, 255, cv2.THRESH_BINARY)
 
         return white_mask
-
-    def calculate_lane_centers_with_only_right_line(self, mask):
-        ## get total lines in every line point
-        lines = [mask[self.x_row[i], :] for i, _ in enumerate(self.x_row)]
-
-        ### ----------------- from right to left
-        lines_inversed = [list(reversed(lines[x])) for x, _ in enumerate(lines)]
-        # print(f"{lines_inversed = }")
-        inv_index_right = [
-            np.argmax(lines_inversed[x]) for x, _ in enumerate(lines_inversed)
-        ]
-
-        index_right = [
-            mask.shape[1] - inv_index_right[x] if inv_index_right[x] != 0 else 0
-            for x, _ in enumerate(inv_index_right)
-        ]
-
-        image_center = mask.shape[1] // 2
-
-        # TODO: OJO HAY Q DISTINGUIR + Y - DEL CENTRO
-        dist_to_center = [
-            image_center - index_right[i] for i, _ in enumerate(index_right)
-        ]
-
-        # TODO: VERIFICAR ESTE VALOR
-        dist_to_center_normalized = [
-            float((image_center - index_right[i]) / image_center)
-            for i, _ in enumerate(index_right)
-        ]
-
-        ground_truth_normal_values = [
-            correct_normalized_distance[value] for i, value in enumerate(self.x_row)
-        ]
-
-        errors = [
-            dist_to_center_normalized[index] - ground_truth_normal_values[index]
-            for index, _ in enumerate(dist_to_center_normalized)
-        ]
-
-        return (
-            errors,
-            dist_to_center,
-            dist_to_center_normalized,
-            index_right,
-            ground_truth_normal_values,
-        )
 
     def preprocess_image_lane_detector(self, image):
         """
@@ -768,6 +691,118 @@ class CarlaEnv(gym.Env):
 
         return states, drawing_lines_states, drawing_numbers_states
 
+    def heading_car(self, central_line_points, centers_lines_points):
+        """
+        in general form
+        central_line_points = [(image.shape[1] //2, 0), [image.shape[1] // 2, image.shape[0]]]
+
+        central_line_points = [(320, 0), [320, 480]] for an image of 480 x 640 dimensions
+
+
+        centers_lines_points is variable in size, allows different dimensions
+        """
+        # slope
+        centers_slope = [
+            np.arctan2(y2 - y1, x2 - x1)
+            for (x1, y1), (x2, y2) in zip(
+                centers_lines_points[:-1], centers_lines_points[1:]
+            )
+        ]
+
+        # mean angle between 2 lines, central and centers
+        # angulo_entre_lineas = np.abs(np.degrees(np.mean(pendientes_linea2) - np.arctan2(y2_linea1 - y1_linea1, x2_linea1 - x1_linea1)))
+        angle = np.abs(
+            np.degrees(
+                np.mean(centers_slope)
+                - np.arctan2(
+                    central_line_points[1][1] - central_line_points[0][1],
+                    central_line_points[1][0] - central_line_points[0][0],
+                )
+            )
+        )
+
+        return angle
+
+    ##################
+    #
+    # ONLY RIGHT LANE
+    ####################################################################################
+
+    def step_only_right_line(self, action):
+        """
+        state: sp
+        actions: discretes
+                Only Right Line
+        """
+
+        self.control_discrete_actions(action)
+
+        ########### --- calculating STATES
+        mask = self.preprocess_image(self.sensor_camera_red_mask.front_red_mask_camera)
+        AutoCarlaUtils.show_image(
+            "mask",
+            mask,
+            300,
+            10,
+        )
+
+        ########### --- Calculating center ONLY with right line
+        (
+            errors,
+            dist_to_center,
+            dist_to_center_normalized,
+            index_right,
+            ground_truth_normal_values,
+        ) = self.calculate_lane_centers_with_only_right_line(mask)
+
+        print(
+            f"\n\t{errors = }\n\t{dist_to_center =}\n{dist_to_center_normalized =}\n\t{index_right = }\n\t{ground_truth_normal_values =}"
+        )
+
+        ## STATES
+        (
+            self.states,
+            drawing_lines_states,
+            drawing_numbers_states,
+        ) = self.calculate_states(
+            mask.shape[1],
+            dist_to_center,
+            self.num_regions,
+            size_lateral_states=140,
+        )
+        print(
+            f"\n\t{self.states = }\n\t{drawing_lines_states =}\n\t{drawing_numbers_states =}"
+        )
+
+        index_left = [0 for i, _ in enumerate(index_right)]  # only for drawing
+        AutoCarlaUtils.show_image_lines_centers_borders(
+            "Front Camera",
+            self.sensor_camera_rgb.front_rgb_camera[
+                (self.sensor_camera_rgb.front_rgb_camera.shape[0] // 2) :
+            ],
+            self.x_row,
+            800,
+            10,
+            index_right,
+            index_left,
+            dist_to_center,
+            drawing_lines_states,
+            drawing_numbers_states,
+        )
+
+        ## -------- Ending Step()...
+        ###################################
+        #
+        #       REWARDS
+        ###################################
+
+        done = False
+        reward, done = self.autocarlarewards.rewards_sigmoid_only_right_line(
+            self.dist_normalized, ground_truth_normal_values, self.params
+        )
+
+        return self.states, reward, done, {}
+
     def calculate_right_line(self, mask, x_row):
         """
         All below code has been merged into calculate_lane_centers_with_only_right_line() method
@@ -790,3 +825,49 @@ class CarlaEnv(gym.Env):
         ]
 
         return index_right
+
+    def calculate_lane_centers_with_only_right_line(self, mask):
+        ## get total lines in every line point
+        lines = [mask[self.x_row[i], :] for i, _ in enumerate(self.x_row)]
+
+        ### ----------------- from right to left
+        lines_inversed = [list(reversed(lines[x])) for x, _ in enumerate(lines)]
+        # print(f"{lines_inversed = }")
+        inv_index_right = [
+            np.argmax(lines_inversed[x]) for x, _ in enumerate(lines_inversed)
+        ]
+
+        index_right = [
+            mask.shape[1] - inv_index_right[x] if inv_index_right[x] != 0 else 0
+            for x, _ in enumerate(inv_index_right)
+        ]
+
+        image_center = mask.shape[1] // 2
+
+        # TODO: OJO HAY Q DISTINGUIR + Y - DEL CENTRO
+        dist_to_center = [
+            image_center - index_right[i] for i, _ in enumerate(index_right)
+        ]
+
+        # TODO: VERIFICAR ESTE VALOR
+        dist_to_center_normalized = [
+            float((image_center - index_right[i]) / image_center)
+            for i, _ in enumerate(index_right)
+        ]
+
+        ground_truth_normal_values = [
+            correct_normalized_distance[value] for i, value in enumerate(self.x_row)
+        ]
+
+        errors = [
+            dist_to_center_normalized[index] - ground_truth_normal_values[index]
+            for index, _ in enumerate(dist_to_center_normalized)
+        ]
+
+        return (
+            errors,
+            dist_to_center,
+            dist_to_center_normalized,
+            index_right,
+            ground_truth_normal_values,
+        )

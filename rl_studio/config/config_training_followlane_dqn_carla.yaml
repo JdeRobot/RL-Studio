@@ -7,7 +7,7 @@ settings:
   env: follow_lane # simple, nurburgring, montreal, curves, simple_laser, manual, autoparking
   agent: auto_carla # f1, autoparkingRL, auto_carla, mountain_car, robot_mesh, cartpole, turtlebot
   actions: carla_discrete # continuous, simple, medium, hard, test, autoparking_simple, carla_discrete
-  states: sp4 #sp4 #image, sp1 (simplified perception with 1 point), sp3 (simplified perception with 3 points), spn (simplified perception with n points)
+  states: sp7 #sp4 #image, sp1 (simplified perception with 1 point), sp3 (simplified perception with 3 points), spn (simplified perception with n points)
   rewards: rewards_sigmoid_only_right_line # follow_right_lane_only_center, follow_right_lane_center_v_step, follow_right_lane_center_v_w_linear
   framework: TensorFlow # TensorFlow, Pytorch
   total_episodes: 1000
@@ -78,7 +78,7 @@ agents:
       num_regions: 23 # this should be named states!!!
       lower_limit: 220
 
-states: # should be named as points of percepction (states is wrong)
+states: # should be named as points of percepction (states name is wrong)
   image:
     0: [30, 40, 50, 60] # try up to 4 points
   sp1:
@@ -87,11 +87,11 @@ states: # should be named as points of percepction (states is wrong)
     0: [5, 15, 22]
   sp4:
     0: [30, 40, 50, 60] #[50, 70, 90, 120] #[30, 50, 70, 90] #[90, 130, 170, 210] #[30, 60, 100, 120]
-  sp5:
-    0: [3, 5, 10, 15, 20]
+  sp7:
+    0: [30, 40, 50, 60, 100, 160, 200] #[30, 35, 40, 45, 50, 55, 60]
   spn:
     0: [10]
-  states_entry: only_right_line # only_right_line, between_right_left_lines, lane_detector_pytorch
+  states_entry: lane_detector_pytorch # only_right_line, between_right_left_lines, lane_detector_pytorch
 
 actions:
   carla_discrete:
