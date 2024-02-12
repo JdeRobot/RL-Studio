@@ -514,6 +514,10 @@ class CarlaEnv(gym.Env):
         min_max_scaler.fit([[min_value], [max_value]])
         data_min_max_scaled = min_max_scaler.transform(values)
         values_normal = data_min_max_scaled.flatten().tolist()
+        values_normal = [
+            values_normal[i] if values_normal[i] >= 0 else -1
+            for i, _ in enumerate(values_normal)
+        ]
 
         return values_normal
 

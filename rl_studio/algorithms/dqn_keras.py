@@ -17,6 +17,8 @@ from tensorflow.keras.layers import (
     Convolution2D,
     ZeroPadding2D,
     Rescaling,
+    Masking,
+    SimpleRNN,
 )
 from tensorflow.keras.models import Sequential, load_model
 from tensorflow.keras.optimizers import Adam, RMSprop
@@ -73,9 +75,6 @@ class ModifiedTensorBoard(TensorBoard):
 
 
 class DQN:
-    """
-    We need a NN with variable inputs. Lane Detectors not always return the same lenght information
-    """
 
     def __init__(
         self,
@@ -146,6 +145,33 @@ class DQN:
 
     def get_model_simplified_perception(self):
         """
+        RECURRENT NN WITH INPUT VARIABLE AND
+        A MASK FOR MISSING VALUES (WHICH COME IN VALUES SUCH AS -1 OR 0
+        Lane Detectors not always return the same lenght information. IN A PREVIOUS STEP
+        WE TRANSFOR MISSING VALUES INTO -1, 0 OR ANYTHING ELSE
+        """
+
+        ## mask_value = -1
+        # model
+        model = Sequential()
+        # Masking layer for missing values (-1)
+        model.add(Masking(mask_value=-1, input_shape=(None, 1)))
+        # RNN recurrent layer with N units
+        model.add(SimpleRNN(units=32, return_sequences=True))
+        model.add(SimpleRNN(units=32))
+        # Dense layer with relu activation
+        model.add(Dense(units=32, activation="relu"))
+        # last layer with 2 neurons (v and w) and linear activation which gets negative values
+        # Relu only releases positive values
+        model.add(Dense(units=2, activation="linear"))
+
+        model.compile(optimizer="adam", loss="mse", metrics=["accuracy"])
+        # model.compile(optimizer=Adam(0.005), loss="mse", metrics=["accuracy"])
+
+        return model
+
+    def get_model_simple_simplified_perception(self):
+        """
         simple model with 2 layers. Using for Simplified Perception
         """
         neurons1 = 16  # 32, 64, 256, 400...
@@ -182,12 +208,12 @@ class DQN:
 
     def get_qs(self, state):
         if self.state_space == "image":
-            return self.model.predict(np.array(state).reshape(-1, *state.shape) / 255)[
-                0
-            ]
+            # return self.model.predict(np.array(state).reshape(-1, *state.shape) / 255)[0]
+            return self.model.predict(np.array(state).reshape(-1, *state.shape))[0]
         else:
             # print(f"\n\n{self.model.predict(state)[0] = }, {self.model.predict(state) = }")
-            return self.model.predict(np.array([state]) / 255)
+            # return self.model.predict(np.array([state]) / 255)
+            return self.model.predict(np.array([state]))
 
             # return self.model.predict(tf.convert_to_tensor(state))
 
@@ -201,12 +227,14 @@ class DQN:
         # Get a minibatch of random samples from memory replay table
         minibatch = random.sample(self.replay_memory, self.MINIBATCH_SIZE)
         # Get current states from minibatch, then query NN model for Q values
-        current_states = np.array([transition[0] for transition in minibatch]) / 255
+        # current_states = np.array([transition[0] for transition in minibatch]) / 255
+        current_states = np.array([transition[0] for transition in minibatch])
         current_qs_list = self.model.predict(current_states)
 
         # Get future states from minibatch, then query NN model for Q values
         # When using target network, query it, otherwise main network should be queried
-        new_current_states = np.array([transition[3] for transition in minibatch]) / 255
+        # new_current_states = np.array([transition[3] for transition in minibatch]) / 255
+        new_current_states = np.array([transition[3] for transition in minibatch])
         future_qs_list = self.target_model.predict(new_current_states)
 
         X = []  # thats the image input
@@ -239,7 +267,8 @@ class DQN:
 
         # Fit on all samples as one batch, log only on terminal state
         self.model.fit(
-            np.array(X) / 255,
+            # np.array(X) / 255, # FOR IMAGES
+            np.array(X),
             np.array(y),
             batch_size=self.MINIBATCH_SIZE,
             verbose=0,
@@ -274,7 +303,7 @@ class DQN:
 class DQN_PP:
     """
     this version is based on Python Programming where is developed in other case but well functionning
-
+    WORKS ONLY WITH IMAGES, NORMALIZED TO 255 VALUE
     """
 
     def __init__(
