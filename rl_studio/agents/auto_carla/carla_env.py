@@ -199,12 +199,13 @@ class CarlaEnv(gym.Env):
         self.lane_centers_in_pixels = None
         self.ground_truth_pixel_values = None
         self.dist_normalized = None
-        self.states = None
+        self.state = None
         self.state_right_lines = None
         self.drawing_lines_states = []
         self.drawing_numbers_states = []
 
         self.lane_changing_hist = []
+        self.target_veloc = 30
 
         ######################################################################
 
@@ -223,35 +224,33 @@ class CarlaEnv(gym.Env):
     #
     #####################################################################################
     def reset(self, seed=None, options=None):
+        """
+        In Reset() and step():
+        IMPLEMENTING STATES FOR SIMPLIFIED PERCEPTION
+        STATES = V + W + ANGLE + CENTERS + LINE BORDERS (+ POSE_X + POSE_Y OPTIONALS)
+        NUMBER OF PARAMETERS = X_ROW * 3 + 3 WHICH IS THE INPUT_SIZE IN NN
+        FOR RESET() :
+              V = 0
+              W = 0
+              ANGLE = 0
+              CENTERS = STATES IN PIXELS (DEPENDS ON X_ROW)
+              LINE BORDERS =
+              POSE_X, POSE_Y = SPAWNING CAR POINTS IN THE MAP (IT IS A POSSIBILITY, NOT IMPLEMENTED RIGHT NOW)
+
+        EXAMPLE -> states = [V=0, W=0, ANGLE=0, CENTERS=300, 320, 350, LINE_BORDERS = 200, 180, 150, 350, 400, 500]
+                                  12 VALUES WHEN X_ROW = 3
+
+        """
 
         while self.sensor_camera_rgb.front_rgb_camera is None:
-            print(f"RESET() ----> {self.sensor_camera_rgb.front_rgb_camera = }")
+            print(
+                f"\n\treset() ----> {self.sensor_camera_rgb.front_rgb_camera = } ---> waiting for image"
+            )
             time.sleep(0.2)
 
         # TODO: spawning car
 
-        ## IMPLEMENTING STATES FOR SIMPLIFIED PERCEPTION
-        ## STATES = V + W + ANGLE + CENTERS + LINE BORDERS (+ POSE_X + POSE_Y OPTIONALS)
-        ## NUMBER OF PARAMETERS = X_ROW * 3 + 3 WHICH IS THE INPUT_SIZE IN NN
-        ## FOR RESET() :
-        ##      V = 0
-        ##      W = 0
-        ##      ANGLE = 0
-        ##      CENTERS = STATES IN PIXELS (DEPENDS ON X_ROW)
-        ##      LINE BORDERS =
-        ##      POSE_X, POSE_Y = SPAWNING CAR POINTS IN THE MAP (IT IS A POSSIBILITY, NOT IMPLEMENTED RIGHT NOW)
-        ##
-        ## EXAMPLE -> states = [V=0, W=0, ANGLE=0, CENTERS=300, 320, 350, LINE_BORDERS = 200, 180, 150, 350, 400, 500]
-        ##                          12 VALUES WHEN X_ROW = 3
-
-        # back, left, right = self.sensor_camera_lanedetector.get_prediction(
-        #    self.sensor_camera_rgb.front_rgb_camera
-        # )[0]
-        # image_rgb_lanedetector = self.sensor_camera_lanedetector.lane_detection_overlay(
-        #    self.sensor_camera_rgb.front_rgb_camera, left, right
-        # )
-
-        ####################################### LANEDETECTOR + REGRESSION
+        #### LANEDETECTOR + REGRESSION
         image_copy = np.copy(self.sensor_camera_rgb.front_rgb_camera)
         (
             image_rgb_lanedetector_regression,
@@ -272,29 +271,24 @@ class CarlaEnv(gym.Env):
         # print(
         #    f"\n\t{lane_centers_in_pixels = }\n\t{errors =}\n\t{errors_normalized =}\n\t{index_right = }\n\t{index_left =}"
         # )
-        # AutoCarlaUtils.show_image(
-        #    "LaneDetector RGB Regression",
-        # image_rgb_lanedetector[(image_rgb_lanedetector.shape[0] // 2) :],
-        #    image_rgb_lanedetector_regression[
-        #        (image_rgb_lanedetector_regression.shape[0] // 2) :
-        #    ],
-        #    1400,
-        #    800,
-        # )
 
         ### CALCULATING STATES AS [lane_centers_in_pixels, index_right, index_left, V, W, ANGLE]
-        self.states = []
-        self.states.extend(lane_centers_in_pixels)
-        self.states.extend(index_right)
-        self.states.extend(index_left)
-        self.states.append(0)  # v
-        self.states.append(0)  # w
-        self.states.append(0)  # angle
-        # print(f"\n\tIn Reset() {self.states =}")
 
+        self.state = self.DQN_states_simplified_perception_normalized(
+            0,
+            self.target_veloc,
+            0,
+            0,
+            lane_centers_in_pixels,
+            index_right,
+            index_left,
+            mask.shape[1],
+        )
+        # print(f"\n\t{self.state = }")
+        # input("En Reset ------")
         # states_size = len(self.states)
         # input("Enter....")
-        return self.states  # , states_size
+        return self.state  # , states_size
 
     #####################################################################################
     #
@@ -352,7 +346,7 @@ class CarlaEnv(gym.Env):
         ) = self.calculate_lane_centers_with_lane_detector(mask)
 
         print(
-            f"\n\t{lane_centers_in_pixels = }\n\t{errors =}\n\t{errors_normalized =}\n\t{index_right = }\n\t{index_left =}"
+            f"\n\tin step()...\n\t{lane_centers_in_pixels = }\n\t{errors =}\n\t{errors_normalized =}\n\t{index_right = }\n\t{index_left =}"
         )
 
         (
@@ -394,8 +388,8 @@ class CarlaEnv(gym.Env):
         # centers_lines_points = [(320, 20), (340, 160), (360, 300), (400, 480)]
         centers_lines_points = list(zip(lane_centers_in_pixels, self.x_row))
         angle = self.heading_car(central_line_points, centers_lines_points)
-        print(f"\n\t{angle =}")
-        input("press ...")
+        # print(f"\n\t{angle =}")
+        # input("press ...")
 
         ############ RESET by:
         ## 1. No lateral lines detected
@@ -406,9 +400,20 @@ class CarlaEnv(gym.Env):
 
         ## -------- Step() over...
         done = False
-        reward, done = self.autocarlarewards.rewards_followlane_center_velocity_angle(
-            errors_normalized, self.params["speed"], self.params["target_veloc"], angle
+        print(
+            f"\n\t{errors_normalized = }\n\t{self.params['current_speed']=}\n\t{self.params['target_veloc']=},\n\t{angle=}"
         )
+
+        reward, done, centers_rewards_list = (
+            self.autocarlarewards.rewards_followlane_center_velocity_angle(
+                errors_normalized,
+                self.params["current_speed"],
+                self.params["target_veloc"],
+                angle,
+            )
+        )
+        print(f"\n\t{reward = }\t{done=}\t{centers_rewards_list=}")
+        input(f"\n\tin step() after rewards... waiting")
 
         ## -------- ... or Finish by...
         if len(self.collision_hist) > 0:  # crashed you, baby
@@ -435,29 +440,41 @@ class CarlaEnv(gym.Env):
 
         ## ALL NORMALIZED IN THEIR PARTICULAR RANGES
 
-        v_normal = self.normalizing_DQN_values(
-            self.params["speed"],
+        # v_normal = self.normalizing_DQN_values(
+        #    self.params["speed"],
+        #    self.params["target_veloc"],
+        #    0,
+        #    is_list=False,
+        # )
+        # w_normal = self.normalizing_DQN_values(
+        #    self.params["steering_angle"], 3, 0, is_list=False
+        # )
+        # angle_normal = self.normalizing_DQN_values(angle, 30, 0, is_list=False)
+        # states_normal = self.normalizing_DQN_values(
+        #    lane_centers_in_pixels, 640, 0, is_list=True
+        # )
+        # line_borders_normal = self.normalizing_DQN_values(
+        #    index_right + index_left, 640, 0, is_list=True
+        # )
+
+        # DQN_input = (
+        #    states_normal + line_borders_normal + v_normal + w_normal + angle_normal
+        # )
+
+        print(f"\t{self.params['current_steering_angle'] =}")
+        self.state = self.DQN_states_simplified_perception_normalized(
+            self.params["current_speed"],
             self.params["target_veloc"],
-            0,
-            is_list=False,
+            self.params["current_steering_angle"],
+            angle,
+            lane_centers_in_pixels,
+            index_right,
+            index_left,
+            mask.shape[1],
         )
-        w_normal = self.normalizing_DQN_values(
-            self.params["steering_angle"], 3, 0, is_list=False
-        )
-        angle_normal = self.normalizing_DQN_values(angle, 30, 0, is_list=False)
-        states_normal = self.normalizing_DQN_values(
-            lane_centers_in_pixels, 640, 0, is_list=True
-        )
-        line_borders_normal = self.normalizing_DQN_values(
-            index_right + index_left, 640, 0, is_list=True
-        )
-
-        DQN_input = (
-            states_normal + line_borders_normal + v_normal + w_normal + angle_normal
-        )
-
-        print(f"\n\t{DQN_input = }")
-        return DQN_input, reward, done, {}
+        print(f"\n\t{self.state = }")
+        input(f"\n\tin step() after state... waiting")
+        return self.state, reward, done, {}
 
     ##################################################
     #
@@ -470,28 +487,34 @@ class CarlaEnv(gym.Env):
         """
         t = self.car.car.get_transform()
         v = self.car.car.get_velocity()  # returns in m/sec
-        c = self.car.car.get_control()
-        w = self.car.car.get_angular_velocity()  # returns in deg/sec
+        c = (
+            self.car.car.get_control()
+        )  # returns values in [-1, 1] range for throttle, steer,...(https://carla.readthedocs.io/en/0.9.13/python_api/#carla.VehicleControl)
+        w = self.car.car.get_angular_velocity()  # returns in deg/sec in a 3D vector
         a = self.car.car.get_acceleration()
 
         ## Applied throttle, brake and steer
         curr_speed = int(3.6 * math.sqrt(v.x**2 + v.y**2 + v.z**2))
-        throttle = self.actions[action][0]
-        steer = self.actions[action][1]
+        curr_steer = math.sqrt(w.x**2 + w.y**2 + w.z**2)
+        acceleration = math.sqrt(a.x**2 + a.y**2 + a.z**2)
         # print(f"in STEP() {throttle = } and {steer = }")
 
-        target_veloc = 30
+        throttle = self.actions[action][0]
+        steer = self.actions[action][1]
+        target_veloc = self.target_veloc
         brake = 0
 
-        self.params["speed"] = curr_speed
-        self.params["steering_angle"] = w
         # self.params["Steering_angle"] = steering_angle
-        self.params["Steer"] = c.steer
         self.params["location"] = (t.location.x, t.location.y)
-        self.params["Throttle"] = c.throttle
-        self.params["Brake"] = c.brake
         self.params["height"] = t.location.z
-        self.params["Acceleration"] = math.sqrt(a.x**2 + a.y**2 + a.z**2)
+
+        self.params["Throttle"] = c.throttle
+        self.params["Steer"] = c.steer
+        self.params["Brake"] = c.brake
+
+        self.params["current_speed"] = curr_speed
+        self.params["current_steering_angle"] = curr_steer
+        self.params["acceleration"] = acceleration
         self.params["target_veloc"] = target_veloc
 
         # Limiting Velocity up to target_speed = 30 (or any other)
@@ -505,6 +528,34 @@ class CarlaEnv(gym.Env):
     #####################################################################################
     # ---   methods
     #####################################################################################
+
+    def DQN_states_simplified_perception_normalized(
+        self,
+        speed,
+        target_veloc,
+        steering,
+        angle,
+        lane_centers_in_pixels,
+        index_right,
+        index_left,
+        width,
+    ):
+
+        v_normal = self.normalizing_DQN_values(speed, target_veloc, 0, is_list=True)
+        w_normal = self.normalizing_DQN_values(steering, 3, 0, is_list=False)
+        angle_normal = self.normalizing_DQN_values(angle, 30, 0, is_list=False)
+        states_normal = self.normalizing_DQN_values(
+            lane_centers_in_pixels, width, 0, is_list=True
+        )
+        line_borders_normal = self.normalizing_DQN_values(
+            index_right + index_left, width, 0, is_list=True
+        )
+
+        DQN_states_normalized = (
+            states_normal + line_borders_normal + v_normal + w_normal + angle_normal
+        )
+
+        return DQN_states_normalized
 
     def normalizing_DQN_values(self, values, max_value, min_value=0, is_list=True):
         # values_ = abs(values)

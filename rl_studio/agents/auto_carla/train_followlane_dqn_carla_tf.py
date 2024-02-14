@@ -242,11 +242,18 @@ class TrainerFollowLaneDQNAutoCarlaTF:
         epsilon_min = self.algoritmhs_params.epsilon_min
         epsilon_decay = epsilon / (self.env_params.total_episodes // 2)
 
+        ### DQN declaration
+        ### DQN size: [centers_n, line_borders_n * 2, v, w, angle, pose_x, pose_y]
+        ### DQN size = (x_row * 3) + 5
+        ### DQN_size = (len(self.environment.environment["x_row"]) * 3) + 5
+        DQN_size = (len(self.environment.environment["x_row"]) * 3) + 5
+
         dqn_agent = DQN(
             self.environment.environment,
             self.algoritmhs_params,
             len(self.global_params.actions_set),
-            len(self.environment.environment["x_row"]),
+            # len(self.environment.environment["x_row"]),
+            DQN_size,
             self.global_params.models_dir,
             self.global_params,
         )
@@ -339,19 +346,6 @@ class TrainerFollowLaneDQNAutoCarlaTF:
                 )
                 self.actor_list.append(self.sensor_camera_red_mask.sensor)
 
-                ## LaneDetector Camera ---------------
-                # self.sensor_camera_lanedetector = LaneDetector(
-                #    "models/fastai_torch_lane_detector_model.pth"
-                # )
-                # self.actor_list.append(self.sensor_camera_lanedetector)
-
-                # print(
-                #    f"in main() {self.sensor_camera_rgb.front_rgb_camera} in {time.time()}"
-                # )
-                # print(
-                #    f"in main() {self.sensor_camera_red_mask.front_red_mask_camera} in {time.time()}"
-                # )
-
                 ############################################################################
                 # ENV, RESET, DQN-AGENT, FOR
                 ############################################################################
@@ -359,20 +353,12 @@ class TrainerFollowLaneDQNAutoCarlaTF:
                 env = CarlaEnv(
                     self.new_car,
                     self.sensor_camera_rgb,  # img to process
-                    # self.sensor_camera_red_mask, # sensor to process image
-                    # self.sensor_camera_lanedetector,  # sensor to process image
+                    self.sensor_camera_red_mask,  # sensor to process image
                     self.environment.environment,
                 )
-                # env = gym.make(self.env_params.env_name, **self.environment.environment)
-                # check_env(env, warn=True)
-
                 self.world.tick()
 
-                ############################
                 state = env.reset()
-                # print(f"{state = } and {state_size = }")
-
-                # self.world.tick()
 
                 ######################################################################################
                 #
@@ -439,8 +425,8 @@ class TrainerFollowLaneDQNAutoCarlaTF:
                         steer=self.global_params.actions_set[action][
                             1
                         ],  # this case for discrete
-                        v_km_h=env.params["speed"],
-                        w_deg_sec=env.params["steering_angle"],
+                        v_km_h=env.params["current_speed"],
+                        w_deg_sec=env.params["current_steering_angle"],
                         epsilon=epsilon,
                         reward_in_step=reward,
                         cumulated_reward_in_this_episode=cumulated_reward,

@@ -18,19 +18,26 @@ class AutoCarlaRewards:
         w_heading = 1
         done_function = False
 
-        center_reward, done_center = self.rewards_center(centers_norm)
+        center_reward, done_center, centers_rewards_list = self.rewards_center(
+            centers_norm
+        )
         velocity_reward, done_velocity = self.rewards_velocity(velocity, target_vel)
         heading_reward, done_heading = self.rewards_heading(angle)
+
+        print(f"in rewards function()....")
+        print(f"\n\t{center_reward=}, {done_center=}, {centers_rewards_list=}")
+        print(f"\n\t{velocity_reward=}, {done_velocity=}")
+        print(f"\n\t{heading_reward=}, {done_heading=}")
 
         function_reward = (
             (w_center * center_reward)
             + (w_velocity * velocity_reward)
-            - (w_heading * heading_reward)
+            + (w_heading * heading_reward)
         )
         if done_center or done_velocity or done_heading:
             done_function = True
 
-        return function_reward, done_function
+        return function_reward, done_function, centers_rewards_list
 
     def rewards_center(self, centers_norm):
         """
@@ -48,7 +55,7 @@ class AutoCarlaRewards:
         rewards = []
         done = False
         # for index, _ in enumerate(centers_norm):
-        # dist = dist_normalized[index] - ground_truth_normalized[index]
+        #    dist = dist_normalized[index] - ground_truth_normalized[index]
         #  rewards.append(a - (b / (c + d * math.exp(-i * centers_norm[index]))))
         rewards = [
             a - (b / (c + d * math.exp(-i * abs(centers_norm[index]))))
@@ -86,7 +93,7 @@ class AutoCarlaRewards:
             reward = 1.0 - (1 / (1 + np.exp(-0.5 * (velocity - target_vel))))
 
         # if reward < 0.1:
-        if (target_vel + 10) < velocity < 1:
+        if not (0 <= velocity <= target_vel + 5):
             done = True
 
         return reward, done
