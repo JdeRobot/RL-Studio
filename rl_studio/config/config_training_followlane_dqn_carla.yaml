@@ -7,7 +7,7 @@ settings:
   env: follow_lane # simple, nurburgring, montreal, curves, simple_laser, manual, autoparking
   agent: auto_carla # f1, autoparkingRL, auto_carla, mountain_car, robot_mesh, cartpole, turtlebot
   actions: carla_discrete # continuous, simple, medium, hard, test, autoparking_simple, carla_discrete
-  states: sp7 #sp4 #image, sp1 (simplified perception with 1 point), sp3 (simplified perception with 3 points), spn (simplified perception with n points)
+  states: sp4 #sp4 #image, sp1 (simplified perception with 1 point), sp3 (simplified perception with 3 points), spn (simplified perception with n points)
   rewards: rewards_sigmoid_only_right_line # follow_right_lane_only_center, follow_right_lane_center_v_step, follow_right_lane_center_v_w_linear
   framework: TensorFlow # TensorFlow, Pytorch
   total_episodes: 1000
@@ -42,16 +42,16 @@ inference:
 algorithm:
   dqn:
     alpha: 0.95
-    gamma: 0.5
+    gamma: 0.5 # future values in the long term reward. When close to 1, we reward long term
     epsilon: 0.99 # in Retraining mode is convenient to reduce, i.e. 0.45
     epsilon_discount: 0.9986
     epsilon_min: 0.00
-    model_name: DQN_sp_16x16 #DQN_im_32x64
-    replay_memory_size: 50_000
-    min_replay_memory_size: 1000
-    minibatch_size: 4 # original 64
+    model_name: recurrent_32x32x32
+    replay_memory_size: 100_000 # How many last steps to keep for model training
+    min_replay_memory_size: 100 #1000 # Minimum number of steps in a memory to start training
+    minibatch_size: 64 # How many steps (samples) to use for training
     update_target_every: 5
-    memory_fraction: 0.20
+    memory_fraction: 0.40
     buffer_capacity: 100_000
     batch_size: 64
   ddpg:
@@ -80,13 +80,13 @@ agents:
 
 states: # should be named as points of percepction (states name is wrong)
   image:
-    0: [30, 40, 50, 60] # try up to 4 points
+    0: [50, 60, 70, 80] # try up to 4 points
   sp1:
     0: [50]
   sp3:
     0: [5, 15, 22]
   sp4:
-    0: [30, 40, 50, 60] #[50, 70, 90, 120] #[30, 50, 70, 90] #[90, 130, 170, 210] #[30, 60, 100, 120]
+    0: [50, 60, 70, 80] #[50, 70, 90, 120] #[30, 50, 70, 90] #[90, 130, 170, 210] #[30, 60, 100, 120]
   sp7:
     0: [30, 40, 50, 60, 100, 160, 200] #[30, 35, 40, 45, 50, 55, 60]
   spn:
@@ -95,29 +95,75 @@ states: # should be named as points of percepction (states name is wrong)
 
 actions:
   carla_discrete:
-    0: [0.6, 0.0] #straight forward
-    1: [0.2, 0.1]
-    2: [0.2, 0.2]
-    3: [0.2, -0.1]
-    4: [0.2, -0.2]
-    5: [0.3, 0.07]
-    6: [0.3, 0.1]
-    7: [0.3, -0.07]
-    8: [0.3, -0.1]
-    9: [0.4, 0.03]
-    10: [0.4, 0.05]
-    11: [0.4, 0.07]
-    12: [0.4, -0.03]
-    13: [0.4, -0.05]
-    14: [0.4, -0.7]
-    15: [0.5, 0.03]
-    16: [0.5, 0.05]
-    17: [0.5, -0.03]
-    18: [0.5, -0.05]
-    19: [0.55, 0.01]
-    20: [0.55, 0.03]
-    21: [0.55, -0.01]
-    22: [0.55, -0.03]
+    0: [0.45, 0.0] #straight forward
+    1: [0.1, 0.1]
+    2: [0.1, 0.2]
+    3: [0.1, -0.1]
+    4: [0.1, -0.2]
+    5: [0.15, 0.07]
+    6: [0.15, 0.1]
+    7: [0.15, -0.07]
+    8: [0.15, -0.1]
+    9: [0.2, 0.03]
+    10: [0.2, 0.05]
+    11: [0.2, 0.07]
+    12: [0.2, -0.03]
+    13: [0.2, -0.05]
+    14: [0.2, -0.7]
+    15: [0.25, 0.03]
+    16: [0.25, 0.05]
+    17: [0.25, -0.03]
+    18: [0.25, -0.05]
+    19: [0.35, 0.01]
+    20: [0.35, 0.03]
+    21: [0.35, -0.01]
+    22: [0.35, -0.03]
+    #0: [0.5, 0.0] #straight forward
+    #1: [0.2, 0.1]
+    #2: [0.2, 0.2]
+    #3: [0.2, -0.1]
+    #4: [0.2, -0.2]
+    #5: [0.25, 0.07]
+    #6: [0.25, 0.1]
+    #7: [0.25, -0.07]
+    #8: [0.25, -0.1]
+    #9: [0.3, 0.03]
+    #10: [0.3, 0.05]
+    #11: [0.3, 0.07]
+    #12: [0.3, -0.03]
+    #13: [0.3, -0.05]
+    #14: [0.3, -0.7]
+    #15: [0.35, 0.03]
+    #16: [0.35, 0.05]
+    #17: [0.35, -0.03]
+    #18: [0.35, -0.05]
+    #19: [0.45, 0.01]
+    #20: [0.45, 0.03]
+    #21: [0.45, -0.01]
+    #22: [0.45, -0.03]
+    #0: [0.6, 0.0] #straight forward
+    #1: [0.2, 0.1]
+    #2: [0.2, 0.2]
+    #3: [0.2, -0.1]
+    #4: [0.2, -0.2]
+    #5: [0.3, 0.07]
+    #6: [0.3, 0.1]
+    #7: [0.3, -0.07]
+    #8: [0.3, -0.1]
+    #9: [0.4, 0.03]
+    #10: [0.4, 0.05]
+    #11: [0.4, 0.07]
+    #12: [0.4, -0.03]
+    #13: [0.4, -0.05]
+    #14: [0.4, -0.7]
+    #15: [0.5, 0.03]
+    #16: [0.5, 0.05]
+    #17: [0.5, -0.03]
+    #18: [0.5, -0.05]
+    #19: [0.55, 0.01]
+    #20: [0.55, 0.03]
+    #21: [0.55, -0.01]
+    #22: [0.55, -0.03]
     #0: [0.5, -0.03] #turn left
     #1: [0.55, 0.0] #straight forward
     #2: [0.5, 0.03] #turn right
@@ -187,8 +233,8 @@ carla_environments:
     traffic_pedestrians: False
     city_lights: False
     car_lights: False
-    estimated_steps: 300
-    save_episodes: 5
+    estimated_steps: 100
+    save_episodes: 20
     save_every_step: 50
     filter: vehicle.*
     generation: "2"

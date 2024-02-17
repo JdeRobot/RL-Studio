@@ -234,9 +234,20 @@ class LaneDetector:
 
         # We show only points with probability higher than 0.07
         # show lines in BLUE
-        res[left_mask > self.__threshold, :] = [255, 0, 0]  # [255, 0, 0]
-        res[right_mask > self.__threshold, :] = [255, 0, 0]  # [0, 0, 255]
+        # res[left_mask > self.__threshold, :] = [255, 0, 0]  # [255, 0, 0]
+        # res[right_mask > self.__threshold, :] = [255, 0, 0]  # [0, 0, 255]
 
+        # show lines in RED
+        res[left_mask > self.__threshold, :] = [
+            0,
+            0,
+            255,
+        ]  # [0, 0, 255]  # [255, 0, 0]
+        res[right_mask > self.__threshold, :] = [
+            0,
+            0,
+            255,
+        ]  # [0, 0, 255]  # [0, 0, 255]
         return res, left_mask, right_mask
 
     def _image_polyfit(self, image: np.ndarray) -> np.ndarray:

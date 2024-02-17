@@ -89,7 +89,7 @@ class DQN:
         self.ACTION_SIZE = actions_size
         self.STATE_SIZE = state_size
         # self.OBSERVATION_SPACE_SHAPE = config.OBSERVATION_SPACE_SHAPE
-        print(f"\n{self.ACTION_SIZE =} and {self.STATE_SIZE =}")
+        print(f"\n\tIn DQN class --> {self.ACTION_SIZE =} and {self.STATE_SIZE =}")
 
         # DQN settings
         self.REPLAY_MEMORY_SIZE = (
@@ -127,6 +127,9 @@ class DQN:
                 self.target_model = self.get_model_conv2D()
                 self.target_model.set_weights(self.model.get_weights())
             else:
+                print(
+                    f"\n\tDQN class, creating model get_model_simplified_perception()..."
+                )
                 self.model = self.get_model_simplified_perception()
                 # Target model this is what we .predict against every step
                 self.target_model = self.get_model_simplified_perception()
@@ -163,10 +166,10 @@ class DQN:
         model.add(Dense(units=32, activation="relu"))
         # last layer with 2 neurons (v and w) and linear activation which gets negative values
         # Relu only releases positive values
-        model.add(Dense(units=2, activation="linear"))
+        model.add(Dense(units=self.ACTION_SIZE, activation="linear"))
 
-        model.compile(optimizer="adam", loss="mse", metrics=["accuracy"])
-        # model.compile(optimizer=Adam(0.005), loss="mse", metrics=["accuracy"])
+        # model.compile(optimizer="adam", loss="mse", metrics=["accuracy"])
+        model.compile(optimizer=Adam(0.005), loss="mse", metrics=["accuracy"])
 
         return model
 
@@ -240,6 +243,7 @@ class DQN:
         X = []  # thats the image input
         y = []  # thats the label or action to take
 
+        # current_qs = np.zeros((len(current_qs_list), 2))
         # Now we need to enumerate our batches
         for index, (
             current_state,
@@ -258,12 +262,49 @@ class DQN:
                 new_q = reward
 
             # Update Q value for given state
-            current_qs = current_qs_list[index]
-            current_qs[action] = new_q
+            try:
+                current_qs = current_qs_list[index]
+                # current_qs = current_qs_list[action]
+                # current_qs = []
+                # print(f"\n\t{current_qs_list[index] =}")
+                # print(f"\n\t{len(current_qs_list[index]) =}")
+                # current_qs.append(current_qs_list[index])
+                current_qs[action] = new_q
+                # print(f"\n\tin DQN train ---> {current_qs =}")
+                # print(f"\n\tin DQN train ---> {len(current_qs) =}")
+                # print(f"\n\tin DQN train ---> {new_q =}")
+                # print(f"\n\tin DQN train ---> {index =}")
+                # print(f"\n\tin DQN train ---> {action =}")
+                # print(f"\n\tin DQN train ---> {current_qs[action] =}")
+            except Exception as e:
+                print(f"\n\tError {e}")
+                print(f"\n\tin DQN train ---> {len(minibatch) =}")
+                print(f"\n\tin DQN train ---> {len(new_current_states) =}")
+                print(f"\n\tin DQN train ---> {len(future_qs_list) =}")
+                print(f"\n\tin DQN train ---> {len(current_qs_list) =}")
+                print(f"\n\tin DQN train ---> {type(current_qs_list) =}")
+                print(f"\n\tin DQN train ---> {current_qs_list[index] =}")
 
+                print(f"\n\tin DQN train ---> {current_qs =}")
+                print(f"\n\tin DQN train ---> {type(current_qs) =}")
+                print(f"\n\tin DQN train ---> {len(current_qs) =}")
+                print(f"\n\tin DQN train ---> {new_q =}")
+                print(f"\n\tin DQN train ---> {index =}")
+                print(f"\n\tin DQN train ---> {action =}")
+                print(f"\n\tin DQN train ---> {current_qs[action] =}")
+                print(f"In breakpoint press (c)ontinue, (q)uit, (n)ext line, (s)")
+                breakpoint()
+                # break
+
+            # print(f"\n\t{len(current_state) =}")
+            # print(f"\n\t{current_state =}")
+            # print(f"\n\t{current_qs_list[index] =}")
+            # print(f"\n\t{current_qs =}")
+            # print(f"\n\t{len(current_qs) =}")
             # And append to our training data
             X.append(current_state)  # image
             y.append(current_qs)  # q_value which is Action to take
+            # y.append(current_qs[action])  # q_value which is Action to take
 
         # Fit on all samples as one batch, log only on terminal state
         self.model.fit(

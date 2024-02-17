@@ -142,7 +142,6 @@ class CarlaEnv(gym.Env):
         ###############################################################
 
         ######## Actions Gym based
-        print(f"{self.state_space = } and {self.actions_space =}")
         # print(f"{len(self.actions) =}")
         # print(f"{type(self.actions) =}")
         # print(f"{self.actions =}")
@@ -167,8 +166,6 @@ class CarlaEnv(gym.Env):
             print(f"{self.action_space.low[0] = }")
             print(f"{self.action_space.high[0] = }")
 
-        print(f"{self.action_space =}")
-
         ######## observations Gym based
         # image
         if self.state_space == "image":
@@ -179,7 +176,10 @@ class CarlaEnv(gym.Env):
             # TODO: change x_row for other list
             self.observation_space = spaces.Discrete(len(self.x_row))  # temporary
 
-        print(f"{self.observation_space = }")
+        # print(f"\n\t In case of implementing Stable-Baselines-gym-based:")
+        # print(
+        #    f"\n\tIn CarlaEnv --> {self.state_space =}, {self.actions_space =}, {self.action_space =}, {self.observation_space =}"
+        # )
 
         #########################################################################
 
@@ -205,7 +205,7 @@ class CarlaEnv(gym.Env):
         self.drawing_numbers_states = []
 
         self.lane_changing_hist = []
-        self.target_veloc = 30
+        self.target_veloc = 10
 
         ######################################################################
 
@@ -268,12 +268,7 @@ class CarlaEnv(gym.Env):
             index_left,
         ) = self.calculate_lane_centers_with_lane_detector(mask)
 
-        # print(
-        #    f"\n\t{lane_centers_in_pixels = }\n\t{errors =}\n\t{errors_normalized =}\n\t{index_right = }\n\t{index_left =}"
-        # )
-
         ### CALCULATING STATES AS [lane_centers_in_pixels, index_right, index_left, V, W, ANGLE]
-
         self.state = self.DQN_states_simplified_perception_normalized(
             0,
             self.target_veloc,
@@ -284,10 +279,7 @@ class CarlaEnv(gym.Env):
             index_left,
             mask.shape[1],
         )
-        # print(f"\n\t{self.state = }")
-        # input("En Reset ------")
-        # states_size = len(self.states)
-        # input("Enter....")
+
         return self.state  # , states_size
 
     #####################################################################################
@@ -330,6 +322,12 @@ class CarlaEnv(gym.Env):
             10,
         )
         AutoCarlaUtils.show_image(
+            "RGB",
+            image_copy,
+            900,
+            350,
+        )
+        AutoCarlaUtils.show_image(
             "LaneDetector",
             image_rgb_lanedetector_regression[
                 (image_rgb_lanedetector_regression.shape[0] // 2) :
@@ -345,9 +343,9 @@ class CarlaEnv(gym.Env):
             index_left,
         ) = self.calculate_lane_centers_with_lane_detector(mask)
 
-        print(
-            f"\n\tin step()...\n\t{lane_centers_in_pixels = }\n\t{errors =}\n\t{errors_normalized =}\n\t{index_right = }\n\t{index_left =}"
-        )
+        # print(
+        #    f"\n\tin step()...\n\t{lane_centers_in_pixels = }\n\t{errors =}\n\t{errors_normalized =}\n\t{index_right = }\n\t{index_left =}"
+        # )
 
         (
             self.states,
@@ -359,10 +357,10 @@ class CarlaEnv(gym.Env):
             self.num_regions,
             size_lateral_states=140,
         )
-        print(
-            # f"\n\t{self.states = }\n\t{drawing_lines_states =}\n\t{drawing_numbers_states =}"
-            f"\n\t{self.states = }"
-        )
+        # print(
+        # f"\n\t{self.states = }\n\t{drawing_lines_states =}\n\t{drawing_numbers_states =}"
+        #    f"\n\t{self.states = }"
+        # )
         AutoCarlaUtils.show_image_lines_centers_borders(
             "Front Camera",
             self.sensor_camera_rgb.front_rgb_camera[
@@ -391,35 +389,46 @@ class CarlaEnv(gym.Env):
         # print(f"\n\t{angle =}")
         # input("press ...")
 
-        ############ RESET by:
+        ################################################### RESET by:
         ## 1. No lateral lines detected
-        ## 2. REWARD: far from center
+        ## 2. REWARD: far from center, vel > target, heading > 30
         ## 3. reach FINISH line
         ## 4. Collision
         ##
 
         ## -------- Step() over...
         done = False
-        print(
-            f"\n\t{errors_normalized = }\n\t{self.params['current_speed']=}\n\t{self.params['target_veloc']=},\n\t{angle=}"
-        )
+        # print(
+        #    f"\n\t{errors_normalized = }\n\t{self.params['current_speed']=}"
+        #    f"\n\t{self.params['current_steering_angle']=},\n\t{self.params['target_veloc']=},"
+        #    f"\n\t{angle=}"
+        # )
 
-        reward, done, centers_rewards_list = (
-            self.autocarlarewards.rewards_followlane_center_velocity_angle(
-                errors_normalized,
-                self.params["current_speed"],
-                self.params["target_veloc"],
-                angle,
-            )
+        # reward, done, centers_rewards_list = (
+        (
+            center_reward,
+            done_center,
+            centers_rewards_list,
+            velocity_reward,
+            done_velocity,
+            heading_reward,
+            done_heading,
+            done,
+            reward,
+        ) = self.autocarlarewards.rewards_followlane_center_velocity_angle(
+            errors_normalized,
+            self.params["current_speed"],
+            self.params["target_veloc"],
+            angle,
         )
-        print(f"\n\t{reward = }\t{done=}\t{centers_rewards_list=}")
-        input(f"\n\tin step() after rewards... waiting")
+        # print(f"\n\t{reward = }\t{done=}\t{centers_rewards_list=}")
+        # input(f"\n\tin step() after rewards... waiting")
 
         ## -------- ... or Finish by...
-        if len(self.collision_hist) > 0:  # crashed you, baby
-            done = True
-            # reward = -100
-            print(f"crash")
+        # if len(self.collision_hist) > 0:  # crashed you, baby
+        #    done = True
+        #    # reward = -100
+        #    print(f"crash")
 
         self.is_finish, self.dist_to_finish = AutoCarlaUtils.finish_fix_number_target(
             self.params["location"],
@@ -431,37 +440,14 @@ class CarlaEnv(gym.Env):
             print(f"Finish!!!!")
             done = True
 
-        #### STATE = DQN INPUTS:
+        ########################## STATE = DQN INPUTS: (ALL NORMALIZED IN THEIR PARTICULAR RANGES)
         ## CENTERS +
         ## LINE BORDERS +
         ## V +
         ## W +
         ## ANGLE
 
-        ## ALL NORMALIZED IN THEIR PARTICULAR RANGES
-
-        # v_normal = self.normalizing_DQN_values(
-        #    self.params["speed"],
-        #    self.params["target_veloc"],
-        #    0,
-        #    is_list=False,
-        # )
-        # w_normal = self.normalizing_DQN_values(
-        #    self.params["steering_angle"], 3, 0, is_list=False
-        # )
-        # angle_normal = self.normalizing_DQN_values(angle, 30, 0, is_list=False)
-        # states_normal = self.normalizing_DQN_values(
-        #    lane_centers_in_pixels, 640, 0, is_list=True
-        # )
-        # line_borders_normal = self.normalizing_DQN_values(
-        #    index_right + index_left, 640, 0, is_list=True
-        # )
-
-        # DQN_input = (
-        #    states_normal + line_borders_normal + v_normal + w_normal + angle_normal
-        # )
-
-        print(f"\t{self.params['current_steering_angle'] =}")
+        # print(f"\t{self.params['current_steering_angle'] =}")
         self.state = self.DQN_states_simplified_perception_normalized(
             self.params["current_speed"],
             self.params["target_veloc"],
@@ -472,8 +458,20 @@ class CarlaEnv(gym.Env):
             index_left,
             mask.shape[1],
         )
-        print(f"\n\t{self.state = }")
-        input(f"\n\tin step() after state... waiting")
+        # print(f"\n\t{self.state = }")
+
+        """
+        if done:
+            print(
+                f"\n\t{center_reward =}, {done_center =}, {centers_rewards_list =}"
+                f"\n\t{velocity_reward =}, {done_velocity =}"
+                f"\n\t{heading_reward =}, {done_heading =}"
+                f"\n\t{done =}, {reward =}"
+                f"\n\t{self.params['current_speed'] =}, {self.params['target_veloc'] =}, {angle =}"
+            )
+            input("step() ----> done = True")
+        """
+
         return self.state, reward, done, {}
 
     ##################################################
@@ -607,15 +605,30 @@ class CarlaEnv(gym.Env):
         # Convertir la imagen de BGR a RGB
         image_rgb = cv2.cvtColor(img_erosion, cv2.COLOR_BGR2RGB)
 
-        # Definir un rango de color azul en el formato HSV
-        lower_blue = np.array([100, 50, 50])
-        upper_blue = np.array([130, 255, 255])
+        # Definir un rango de color  en el formato HSV
+        # lower_blue = np.array([100, 50, 50])
+        # upper_blue = np.array([130, 255, 255])
+        # lower_red = np.array([0, 50, 50])
+        lower_red = np.array([0, 200, 140])
+        upper_red = np.array([0, 255, 255])
+        # Definir un rango adicional para tonos cercanos al rojo
+        # lower_red_additional = np.array([170, 50, 50])
+        # upper_red_additional = np.array([180, 255, 255])
 
         # Convertir la imagen RGB a HSV
         image_hsv = cv2.cvtColor(image_rgb, cv2.COLOR_RGB2HSV)
 
-        # Crear una máscara para los píxeles azules
-        mask = cv2.inRange(image_hsv, lower_blue, upper_blue)
+        # Crear una máscara
+        mask = cv2.inRange(image_hsv, lower_red, upper_red)
+
+        # Crear una máscara para los píxeles rojos y cercanos al rojo
+        # mask_red = cv2.inRange(image_hsv, lower_red, upper_red)
+        # mask_red_additional = cv2.inRange(
+        #    image_hsv, lower_red_additional, upper_red_additional
+        # )
+
+        # Unir ambas máscaras
+        # mask = cv2.bitwise_or(mask_red, mask_red_additional)
 
         # Convertir la máscara a una máscara de tres canales
         # mask_rgb = cv2.cvtColor(mask, cv2.COLOR_GRAY2RGB)

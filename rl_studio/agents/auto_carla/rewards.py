@@ -24,20 +24,31 @@ class AutoCarlaRewards:
         velocity_reward, done_velocity = self.rewards_velocity(velocity, target_vel)
         heading_reward, done_heading = self.rewards_heading(angle)
 
-        print(f"in rewards function()....")
-        print(f"\n\t{center_reward=}, {done_center=}, {centers_rewards_list=}")
-        print(f"\n\t{velocity_reward=}, {done_velocity=}")
-        print(f"\n\t{heading_reward=}, {done_heading=}")
+        # print(f"\n\tin rewards function()....")
+        # print(f"\t{center_reward=}, {done_center=}, {centers_rewards_list=}")
+        # print(f"\t{velocity_reward=}, {done_velocity=}")
+        # print(f"\t{heading_reward=}, {done_heading=}")
 
         function_reward = (
             (w_center * center_reward)
             + (w_velocity * velocity_reward)
             + (w_heading * heading_reward)
         )
-        if done_center or done_velocity or done_heading:
+        if done_center or done_velocity:  # or done_heading:
             done_function = True
 
-        return function_reward, done_function, centers_rewards_list
+        return (
+            center_reward,
+            done_center,
+            centers_rewards_list,
+            velocity_reward,
+            done_velocity,
+            heading_reward,
+            done_heading,
+            done_function,
+            function_reward,
+        )
+        # return function_reward, done_function, centers_rewards_list
 
     def rewards_center(self, centers_norm):
         """
@@ -70,6 +81,7 @@ class AutoCarlaRewards:
         if (
             function_reward < 0.2
         ):  # por dist_normaliz_mean >= 0.16 or dist_normaliz_mean <= -0.5):  # distance of -0.8 to right, and 0.6 to left
+            done = True
             done = True
         #  function_reward = 0
 
@@ -116,7 +128,7 @@ class AutoCarlaRewards:
 
         reward = a - (b / (c + math.exp(d * (abs(angle_normal) - i))))
 
-        if abs(angle_normal) >= 1:
+        if abs(angle_normal) >= 0.9:
             done = True
 
         return reward, done
