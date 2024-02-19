@@ -2,6 +2,7 @@ from collections import Counter, OrderedDict, deque
 from datetime import datetime, timedelta
 import glob
 import math
+import resource
 
 # from multiprocessing import Process, cpu_count, Queue, Value, Array
 # from threading import Thread
@@ -44,9 +45,13 @@ from rl_studio.agents.auto_carla.carla_env import CarlaEnv
 from rl_studio.agents.f1.loaders import (
     LoadAlgorithmParams,
     LoadEnvParams,
-    LoadEnvVariablesDDPGCarla,
-    LoadEnvVariablesSB3Carla,
     LoadGlobalParams,
+    LoadEnvVariablesDQNCarla,
+)
+from rl_studio.agents.auto_carla.utils import (
+    LoggingHandler,
+    Logger,
+    LoggerAllInOne,
 )
 from rl_studio.agents.utils import (
     render_params,
@@ -55,7 +60,7 @@ from rl_studio.agents.utils import (
     save_carla_dataframe_episodes,
     save_batch,
     save_best_episode,
-    LoggingHandler,
+    # LoggingHandler,
     print_messages,
 )
 from rl_studio.agents.utilities.plot_stats import MetricsPlot, StatsDataFrame
@@ -76,9 +81,6 @@ from rl_studio.algorithms.dqn_keras_parallel import (
 from rl_studio.algorithms.utils import (
     save_actorcritic_model,
 )
-
-# from rl_studio.envs.gazebo.gazebo_envs import *
-# from rl_studio.envs.carla.carla_env import CarlaEnv
 from rl_studio.envs.carla.followlane.utils import AutoCarlaUtils
 from rl_studio.envs.carla.followlane.settings import FollowLaneCarlaConfig
 from rl_studio.envs.carla.utils.bounding_boxes import BasicSynchronousClient
@@ -97,7 +99,7 @@ from rl_studio.envs.carla.utils.synchronous_mode import (
 
 ##################################################################
 """
-import multiprocessing libraries and PythonProgramming libraries
+import multiprocessing libraries
 """
 from multiprocessing import Process, cpu_count, Queue, Value, Array
 from threading import Thread
@@ -136,8 +138,9 @@ for gpu in gpus:
     tf.config.experimental.set_memory_growth(gpu, True)  # auto memory configuration
 
 logical_gpus = tf.config.list_logical_devices("GPU")
-print(len(gpus), "Physical GPUs,", len(logical_gpus), "Logical GPUs")
-
+print(
+    f"\n\tIn train_followlane_dqn_carla_tf.py ---> {len(gpus)} Physical GPUs, {len(logical_gpus)} Logical GPUs"
+)
 
 ############ 1 phisical GPU + 2 logial GPUs
 # gpus = tf.config.list_physical_devices("GPU")
@@ -164,13 +167,6 @@ print(len(gpus), "Physical GPUs,", len(logical_gpus), "Logical GPUs")
 # ray.init(ignore_reinit_error=True)
 
 
-##################################################################################################
-##################################################################################################
-##################################################################################################
-##################################################################################################
-##################################################################################################
-
-
 #############################################################################################
 #
 # Trainer
@@ -193,11 +189,10 @@ class TrainerFollowLaneDQNAutoCarlaTF:
     """
 
     def __init__(self, config):
-        # print(f"{config =}\n")
 
         self.algoritmhs_params = LoadAlgorithmParams(config)
         self.env_params = LoadEnvParams(config)
-        self.environment = LoadEnvVariablesSB3Carla(config)
+        self.environment = LoadEnvVariablesDQNCarla(config)
         self.global_params = LoadGlobalParams(config)
 
         os.makedirs(f"{self.global_params.models_dir}", exist_ok=True)
@@ -227,7 +222,9 @@ class TrainerFollowLaneDQNAutoCarlaTF:
         # Vars
         #########################################################################
 
-        log = LoggingHandler(self.log_file)
+        # log = LoggingHandler(self.log_file)
+        # log = LoggerAllInOne(self.log_file)
+        log = Logger(self.log_file)
         random.seed(1)
         np.random.seed(1)
         tf.compat.v1.random.set_random_seed(1)
@@ -243,10 +240,9 @@ class TrainerFollowLaneDQNAutoCarlaTF:
         epsilon_decay = epsilon / (self.env_params.total_episodes // 2)
 
         ### DQN declaration
-        ### DQN size: [centers_n, line_borders_n * 2, v, w, angle, pose_x, pose_y]
-        ### DQN size = (x_row * 3) + 5
-        ### DQN_size = (len(self.environment.environment["x_row"]) * 3) + 5
-        DQN_size = (len(self.environment.environment["x_row"]) * 3) + 5
+        ### DQN size: [centers_n, line_borders_n * 2, v, w, angle]
+        ### DQN size = (x_row * 3) + 3
+        DQN_size = (len(self.environment.environment["x_row"]) * 3) + 3
 
         dqn_agent = DQN(
             self.environment.environment,
@@ -272,7 +268,9 @@ class TrainerFollowLaneDQNAutoCarlaTF:
                 self.environment.environment["carla_client"],
             )
             self.client.set_timeout(3.0)
-            print(f"\n maps in carla 0.9.13: {self.client.get_available_maps()}\n")
+            print(
+                f"\n In TrainerFollowLaneDQNAutoCarlaTF/main() ---> maps in carla 0.9.13: {self.client.get_available_maps()}\n"
+            )
 
             self.world = self.client.load_world(self.environment.environment["town"])
 
@@ -280,6 +278,7 @@ class TrainerFollowLaneDQNAutoCarlaTF:
             settings = self.world.get_settings()
             settings.synchronous_mode = True
             settings.fixed_delta_seconds = 0.1  # read: https://carla.readthedocs.io/en/0.9.13/adv_synchrony_timestep/# Phisics substepping
+            # With 0.05 value, the simulator will take twenty steps (1/0.05) to recreate one second of the simulated world
             self.world.apply_settings(settings)
 
             # Set up the traffic manager
@@ -310,7 +309,9 @@ class TrainerFollowLaneDQNAutoCarlaTF:
             # FOR
             #
             ####################################################################################
-
+            memory_use_in_every_epoch = resource.getrusage(
+                resource.RUSAGE_SELF
+            ).ru_maxrss / (1024 * 1024)
             for episode in tqdm(
                 range(1, self.env_params.total_episodes + 1),
                 ascii=True,
@@ -359,19 +360,23 @@ class TrainerFollowLaneDQNAutoCarlaTF:
                 self.world.tick()
 
                 state = env.reset()
-
+                # print(f"\n\tin Training For loop -------> {state =}")
                 ######################################################################################
                 #
                 # STEPS
                 ######################################################################################
-
+                memory_use_in_every_step = resource.getrusage(
+                    resource.RUSAGE_SELF
+                ).ru_maxrss / (1024 * 1024)
                 while not done:
                     # print(f"\n{episode =} , {step = }")
                     # print(f"{state = } and {state_size = }")
 
                     self.world.tick()
 
+                    # epsilon = 0.1  ###### PARA PROBAR-----------OJO QUITARLO
                     if np.random.random() > epsilon:
+                        # print(f"\n\tin Training For loop -----> {epsilon =}")
                         action = np.argmax(dqn_agent.get_qs(state))
                     else:
                         # Get random action
@@ -385,7 +390,9 @@ class TrainerFollowLaneDQNAutoCarlaTF:
                     start_step = time.time()
                     new_state, reward, done, _ = env.step(action)
                     # print(f"{new_state = } and {reward = } and {done =}")
-                    end_step = time.time()
+                    # print(
+                    #    f"\n\tin Training For loop ---> {state =}, {action =}, {new_state =}, {reward =}, {done =}"
+                    # )
 
                     # Every step we update replay memory and train main network
                     # agent_dqn.update_replay_memory((state, action, reward, nextState, done))
@@ -393,6 +400,7 @@ class TrainerFollowLaneDQNAutoCarlaTF:
                         (state, action, reward, new_state, done)
                     )
                     dqn_agent.train(done, step)
+                    end_step = time.time()
 
                     self.world.tick()
 
@@ -416,8 +424,9 @@ class TrainerFollowLaneDQNAutoCarlaTF:
                     render_params_left_bottom(
                         episode=episode,
                         step=step,
-                        observation=state,
-                        new_observation=new_state,
+                        epsilon=epsilon,
+                        # observation=state,
+                        # new_observation=new_state,
                         action=action,
                         throttle=self.global_params.actions_set[action][
                             0
@@ -427,9 +436,13 @@ class TrainerFollowLaneDQNAutoCarlaTF:
                         ],  # this case for discrete
                         v_km_h=env.params["current_speed"],
                         w_deg_sec=env.params["current_steering_angle"],
-                        epsilon=epsilon,
+                        angle=env.angle,
+                        FPS=1 / (end_step - start_step),
+                        centers=sum(env.centers_normal) / len(env.centers_normal),
                         reward_in_step=reward,
                         cumulated_reward_in_this_episode=cumulated_reward,
+                        memory_use_in_every_epoch=memory_use_in_every_epoch,
+                        memory_use_in_every_step=memory_use_in_every_step,
                         _="------------------------",
                         best_episode_until_now=best_epoch,
                         in_best_step=best_step,
@@ -437,41 +450,21 @@ class TrainerFollowLaneDQNAutoCarlaTF:
                         # in_best_epoch_training_time=best_epoch_training_time,
                     )
 
-                    """
-                    AutoCarlaUtils.show_image(
-                        "RGB",
-                        self.sensor_camera_rgb.front_rgb_camera,
-                        50,
-                        50,
+                    log._warning(
+                        f"\n\tepisode = {episode}\n"
+                        f"step = {step}\n"
+                        f"epsilon = {epsilon}\n"
+                        f"state = {state}\n"
+                        f"action = {action}\n"
+                        f"angle = {env.angle}\n"
+                        f"FPS = {1/(end_step - start_step)}\n"
+                        f"reward in step = {reward}\n"
+                        f"current_max_reward = {current_max_reward}\n"
+                        f"cumulated_reward_in_this_episode = {cumulated_reward}\n"
+                        f"done = {done}\n"
+                        f"memory_use_in_every_epoch = {memory_use_in_every_epoch}\n"
+                        f"memory_use_in_every_step = {memory_use_in_every_step}\n"
                     )
-                    AutoCarlaUtils.show_image(
-                        "segmentation_cam",
-                        self.sensor_camera_red_mask.front_red_mask_camera,
-                        500,
-                        50,
-                    )
-                    """
-
-                    """
-                    AutoCarlaUtils.show_image_only_right_line(
-                        "front RGB",
-                        # self.front_rgb_camera[(self.front_rgb_camera.shape[0] // 2) :],
-                        self.sensor_camera_rgb.front_rgb_camera[
-                            (self.sensor_camera_rgb.front_rgb_camera.shape[0] // 2) :
-                        ],
-                        1,
-                        env.right_line_in_pixels,
-                        env.ground_truth_pixel_values,
-                        env.dist_normalized,
-                        new_state,
-                        env.x_row,
-                        1250,
-                        10,
-                        env.drawing_lines_states,
-                        env.drawing_numbers_states,
-                    )
-                    """
-
                     # best episode
                     if current_max_reward <= cumulated_reward and episode > 1:
                         current_max_reward = cumulated_reward
@@ -626,6 +619,8 @@ class TrainerFollowLaneDQNAutoCarlaTF:
                 ### save every save_episode times
                 self.global_params.ep_rewards.append(cumulated_reward)
                 if not episode % self.env_params.save_episodes:
+
+                    # input("parada en Training al saving el batch.....verificar valores")
                     average_reward = sum(
                         self.global_params.ep_rewards[-self.env_params.save_episodes :]
                     ) / len(

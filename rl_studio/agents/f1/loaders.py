@@ -16,7 +16,7 @@ class LoadAlgorithmParams:
             self.batch_size = config["algorithm"]["ddpg"]["batch_size"]
 
         elif config["settings"]["algorithm"] == "dqn":
-            self.alpha = config["algorithm"]["dqn"]["alpha"]
+            # self.alpha = config["algorithm"]["dqn"]["alpha"]
             self.gamma = config["algorithm"]["dqn"]["gamma"]
             self.epsilon = config["algorithm"]["dqn"]["epsilon"]
             self.epsilon_discount = config["algorithm"]["dqn"]["epsilon_discount"]
@@ -895,7 +895,7 @@ class LoadEnvVariablesDQNCarla:
         self.environment["algorithm"] = config["settings"]["algorithm"]
         self.environment["task"] = config["settings"]["task"]
         self.environment["framework"] = config["settings"]["framework"]
-
+        self.environment["circuit_name"] = config["settings"]["env"]
         # Training/inference
         self.environment["mode"] = config["settings"]["mode"]
         self.environment["retrain_dqn_tf_model_name"] = config["retraining"]["dqn"][
@@ -972,6 +972,11 @@ class LoadEnvVariablesDQNCarla:
             self.town
         ][self.town_circuit][self.waypoints_lane_id]["finish_positions"]
 
+        # ----- agent
+        self.environment["target_vel"] = config["agents"][self.agent]["targets"][
+            "target_vel"
+        ]
+
         # --------- Image
         self.environment["height_image"] = config["agents"][self.agent][
             "camera_params"
@@ -1012,7 +1017,7 @@ class LoadEnvVariablesDQNCarla:
         self.environment["min_reward"] = config["rewards"][self.rewards]["min_reward"]
 
         # Algorithm
-        self.environment["alpha"] = config["algorithm"]["dqn"]["alpha"]
+        # self.environment["alpha"] = config["algorithm"]["dqn"]["alpha"]
         self.environment["gamma"] = config["algorithm"]["dqn"]["gamma"]
         self.environment["epsilon"] = config["algorithm"]["dqn"]["epsilon"]
         self.environment["epsilon_discount"] = config["algorithm"]["dqn"][
@@ -1074,6 +1079,7 @@ class LoadEnvVariablesSB3Carla:
         self.environment["algorithm"] = config["settings"]["algorithm"]
         self.environment["task"] = config["settings"]["task"]
         self.environment["framework"] = config["settings"]["framework"]
+        self.environment["circuit_name"] = config["settings"]["env"]
 
         # Training/inference
         self.environment["mode"] = config["settings"]["mode"]

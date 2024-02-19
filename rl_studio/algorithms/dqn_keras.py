@@ -127,9 +127,9 @@ class DQN:
                 self.target_model = self.get_model_conv2D()
                 self.target_model.set_weights(self.model.get_weights())
             else:
-                print(
-                    f"\n\tDQN class, creating model get_model_simplified_perception()..."
-                )
+                # print(
+                #    f"\n\tDQN class, creating model get_model_simplified_perception()..."
+                # )
                 self.model = self.get_model_simplified_perception()
                 # Target model this is what we .predict against every step
                 self.target_model = self.get_model_simplified_perception()

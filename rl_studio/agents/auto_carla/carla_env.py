@@ -205,7 +205,9 @@ class CarlaEnv(gym.Env):
         self.drawing_numbers_states = []
 
         self.lane_changing_hist = []
-        self.target_veloc = 10
+        self.target_veloc = config["target_vel"]
+        self.angle = None
+        self.centers_normal = []
 
         ######################################################################
 
@@ -317,28 +319,37 @@ class CarlaEnv(gym.Env):
         mask = self.preprocess_image_lane_detector(image_rgb_lanedetector_regression)
         AutoCarlaUtils.show_image(
             "mask",
-            mask,
-            300,
+            # mask,
+            cv2.resize(mask, (400, 200), cv2.INTER_AREA),
+            10,
             10,
         )
         AutoCarlaUtils.show_image(
             "RGB",
-            image_copy,
-            900,
-            350,
+            # image_copy,
+            cv2.resize(image_copy, (400, 200), cv2.INTER_AREA),
+            1500,
+            10,
         )
         AutoCarlaUtils.show_image(
             "LaneDetector",
-            image_rgb_lanedetector_regression[
-                (image_rgb_lanedetector_regression.shape[0] // 2) :
-            ],
-            300,
-            350,
+            # image_rgb_lanedetector_regression[
+            #    (image_rgb_lanedetector_regression.shape[0] // 2) :
+            # ],
+            cv2.resize(
+                image_rgb_lanedetector_regression[
+                    (image_rgb_lanedetector_regression.shape[0] // 2) :
+                ],
+                (400, 200),
+                cv2.INTER_AREA,
+            ),
+            1100,
+            10,
         )
         (
             lane_centers_in_pixels,
             errors,
-            errors_normalized,
+            self.centers_normal,
             index_right,
             index_left,
         ) = self.calculate_lane_centers_with_lane_detector(mask)
@@ -367,7 +378,7 @@ class CarlaEnv(gym.Env):
                 (self.sensor_camera_rgb.front_rgb_camera.shape[0] // 2) :
             ],
             self.x_row,
-            900,
+            450,
             10,
             index_right,
             index_left,
@@ -385,7 +396,7 @@ class CarlaEnv(gym.Env):
         ]
         # centers_lines_points = [(320, 20), (340, 160), (360, 300), (400, 480)]
         centers_lines_points = list(zip(lane_centers_in_pixels, self.x_row))
-        angle = self.heading_car(central_line_points, centers_lines_points)
+        self.angle = self.heading_car(central_line_points, centers_lines_points)
         # print(f"\n\t{angle =}")
         # input("press ...")
 
@@ -416,10 +427,10 @@ class CarlaEnv(gym.Env):
             done,
             reward,
         ) = self.autocarlarewards.rewards_followlane_center_velocity_angle(
-            errors_normalized,
+            self.centers_normal,
             self.params["current_speed"],
             self.params["target_veloc"],
-            angle,
+            self.angle,
         )
         # print(f"\n\t{reward = }\t{done=}\t{centers_rewards_list=}")
         # input(f"\n\tin step() after rewards... waiting")
@@ -452,7 +463,7 @@ class CarlaEnv(gym.Env):
             self.params["current_speed"],
             self.params["target_veloc"],
             self.params["current_steering_angle"],
-            angle,
+            self.angle,
             lane_centers_in_pixels,
             index_right,
             index_left,
@@ -460,17 +471,15 @@ class CarlaEnv(gym.Env):
         )
         # print(f"\n\t{self.state = }")
 
-        """
         if done:
             print(
                 f"\n\t{center_reward =}, {done_center =}, {centers_rewards_list =}"
                 f"\n\t{velocity_reward =}, {done_velocity =}"
                 f"\n\t{heading_reward =}, {done_heading =}"
                 f"\n\t{done =}, {reward =}"
-                f"\n\t{self.params['current_speed'] =}, {self.params['target_veloc'] =}, {angle =}"
+                f"\n\t{self.params['current_speed'] =}, {self.params['target_veloc'] =}, {self.angle =}"
             )
-            input("step() ----> done = True")
-        """
+            # input("step() ----> done = True")
 
         return self.state, reward, done, {}
 

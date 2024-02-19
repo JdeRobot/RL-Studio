@@ -34,7 +34,7 @@ class AutoCarlaRewards:
             + (w_velocity * velocity_reward)
             + (w_heading * heading_reward)
         )
-        if done_center or done_velocity:  # or done_heading:
+        if done_center or done_velocity or done_heading:
             done_function = True
 
         return (
@@ -79,7 +79,7 @@ class AutoCarlaRewards:
         # if function_reward < 0.1: #por dist_normaliz_mean >= 0.16 or dist_normaliz_mean <= -0.5):  # distance of -0.8 to right, and 0.6 to left
         # if max([abs(value) for value in centers_norm]) > max_dist2center_allowed: #por dist_normaliz_mean >= 0.16 or dist_normaliz_mean <= -0.5):  # distance of -0.8 to right, and 0.6 to left
         if (
-            function_reward < 0.2
+            function_reward < 0.4
         ):  # por dist_normaliz_mean >= 0.16 or dist_normaliz_mean <= -0.5):  # distance of -0.8 to right, and 0.6 to left
             done = True
             done = True

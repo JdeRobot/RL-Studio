@@ -7,8 +7,8 @@ settings:
   env: follow_lane # simple, nurburgring, montreal, curves, simple_laser, manual, autoparking
   agent: auto_carla # f1, autoparkingRL, auto_carla, mountain_car, robot_mesh, cartpole, turtlebot
   actions: carla_discrete # continuous, simple, medium, hard, test, autoparking_simple, carla_discrete
-  states: sp4 #sp4 #image, sp1 (simplified perception with 1 point), sp3 (simplified perception with 3 points), spn (simplified perception with n points)
-  rewards: rewards_sigmoid_only_right_line # follow_right_lane_only_center, follow_right_lane_center_v_step, follow_right_lane_center_v_w_linear
+  states: sp7 #sp4 #image, sp1 (simplified perception with 1 point), sp3 (simplified perception with 3 points), spn (simplified perception with n points)
+  rewards: rewards_followlane_center_velocity_angle # follow_right_lane_only_center, follow_right_lane_center_v_step, follow_right_lane_center_v_w_linear
   framework: TensorFlow # TensorFlow, Pytorch
   total_episodes: 1000
   training_time: 16
@@ -41,8 +41,8 @@ inference:
 
 algorithm:
   dqn:
-    alpha: 0.95
-    gamma: 0.5 # future values in the long term reward. When close to 1, we reward long term
+    #alpha: 0.95
+    gamma: 0.99 # future values in the long term reward. When close to 1, we reward long term
     epsilon: 0.99 # in Retraining mode is convenient to reduce, i.e. 0.45
     epsilon_discount: 0.9986
     epsilon_min: 0.00
@@ -68,6 +68,8 @@ algorithm:
 
 agents:
   auto_carla:
+    targets:
+      target_vel: 10
     camera_params:
       width: 640
       height: 480
@@ -88,36 +90,36 @@ states: # should be named as points of percepction (states name is wrong)
   sp4:
     0: [50, 60, 70, 80] #[50, 70, 90, 120] #[30, 50, 70, 90] #[90, 130, 170, 210] #[30, 60, 100, 120]
   sp7:
-    0: [30, 40, 50, 60, 100, 160, 200] #[30, 35, 40, 45, 50, 55, 60]
+    0: [30, 40, 50, 60, 70, 80, 90] #[30, 35, 40, 45, 50, 55, 60]
   spn:
     0: [10]
   states_entry: lane_detector_pytorch # only_right_line, between_right_left_lines, lane_detector_pytorch
 
 actions:
   carla_discrete:
-    0: [0.45, 0.0] #straight forward
-    1: [0.1, 0.1]
-    2: [0.1, 0.2]
-    3: [0.1, -0.1]
-    4: [0.1, -0.2]
-    5: [0.15, 0.07]
-    6: [0.15, 0.1]
-    7: [0.15, -0.07]
-    8: [0.15, -0.1]
-    9: [0.2, 0.03]
-    10: [0.2, 0.05]
-    11: [0.2, 0.07]
-    12: [0.2, -0.03]
-    13: [0.2, -0.05]
-    14: [0.2, -0.7]
-    15: [0.25, 0.03]
-    16: [0.25, 0.05]
-    17: [0.25, -0.03]
-    18: [0.25, -0.05]
-    19: [0.35, 0.01]
-    20: [0.35, 0.03]
-    21: [0.35, -0.01]
-    22: [0.35, -0.03]
+    0: [0.55, 0.0] #straight forward
+    1: [0.3, 0.1]
+    2: [0.3, 0.2]
+    3: [0.3, -0.1]
+    4: [0.3, -0.2]
+    5: [0.35, 0.07]
+    6: [0.35, 0.1]
+    7: [0.35, -0.07]
+    8: [0.35, -0.1]
+    9: [0.4, 0.03]
+    10: [0.4, 0.05]
+    11: [0.4, 0.07]
+    12: [0.4, -0.03]
+    13: [0.4, -0.05]
+    14: [0.4, -0.7]
+    15: [0.45, 0.03]
+    16: [0.45, 0.05]
+    17: [0.45, -0.03]
+    18: [0.45, -0.05]
+    19: [0.50, 0.01]
+    20: [0.5, 0.03]
+    21: [0.5, -0.01]
+    22: [0.5, -0.03]
     #0: [0.5, 0.0] #straight forward
     #1: [0.2, 0.1]
     #2: [0.2, 0.2]
@@ -196,6 +198,13 @@ actions:
     0: [0, 0]
 
 rewards:
+  rewards_followlane_center_velocity_angle:
+    from_10: 10
+    from_02: 2
+    from_01: 1
+    penal: -100
+    min_reward: 5_000
+    highest_reward: 100
   rewards_sigmoid_only_right_line:
     from_10: 10
     from_02: 2
@@ -233,7 +242,7 @@ carla_environments:
     traffic_pedestrians: False
     city_lights: False
     car_lights: False
-    estimated_steps: 100
+    estimated_steps: 500
     save_episodes: 20
     save_every_step: 50
     filter: vehicle.*
