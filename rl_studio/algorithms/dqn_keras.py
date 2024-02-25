@@ -68,6 +68,59 @@ class ModifiedTensorBoard(TensorBoard):
                 self.writer.flush()
 
 
+class ComplexReplayMemoryGenerator:
+    def __init__(self, replay_memory, batch_size=32):
+        """
+        Initializes a generator for efficient batch sampling from a replay memory.
+
+        Args:
+            replay_memory (list): The replay memory containing transitions.
+            batch_size (int, optional): The number of transitions to sample in each batch. Defaults to 32.
+        """
+
+        self.replay_memory = replay_memory
+        self.batch_size = batch_size
+
+        # Calculate the number of batches based on replay memory size and batch size
+        self.num_batches = len(self.replay_memory) // batch_size
+
+    def __iter__(self):
+        """
+        Yields batches of transitions from the replay memory.
+
+        Yields:
+            list: A list of `batch_size` transitions, where each transition is a tuple of
+                  (current_state, action, reward, next_state, done).
+        """
+
+        indices = list(range(len(self.replay_memory)))  # Create a list of all indices
+
+        while True:
+            if not indices:  # Handle case when all indices have been used
+                indices = list(range(len(self.replay_memory)))  # Reset indices
+
+            # Select a random batch of indices
+            batch_indices = random.sample(indices, self.batch_size)
+
+            # Remove used indices to avoid duplicates in future batches
+            for index in batch_indices:
+                indices.remove(index)
+
+            # Yield the batch of transitions
+            yield [self.replay_memory[i] for i in batch_indices]
+
+
+class ReplayMemoryGenerator:
+    def __init__(self, replay_memory, minibatch_size):
+        self.replay_memory = replay_memory
+        self.minibatch_size = minibatch_size
+
+    def __iter__(self):
+        while True:
+            batch = random.sample(self.replay_memory, self.minibatch_size)
+            yield batch
+
+
 ########################################################################
 #
 # DQN Carla
@@ -146,7 +199,32 @@ class DQN:
         # Used to count when to update target network with main network's weights
         self.target_update_counter = 0
 
-    def get_model_simplified_perception(self):
+    def get_model_simplified_perception_ERROR(self):
+        """
+        RECURRENT NN WITH INPUT VARIABLE AND
+        A MASK FOR MISSING VALUES (WHICH COME IN VALUES SUCH AS -1 OR 0
+        Lane Detectors not always return the same lenght information. IN A PREVIOUS STEP
+        WE TRANSFOR MISSING VALUES INTO -1, 0 OR ANYTHING ELSE
+        """
+
+        ## mask_value = -1
+        # model
+        model = Sequential()
+        # Masking layer for missing values (-1)
+        model.add(Masking(mask_value=-1, input_shape=(None, 1)))
+        # RNN recurrent layer with N units
+        model.add(Dense(units=16, activation="relu"))
+        model.add(Dense(units=16, activation="relu"))
+        # Relu only releases positive values
+        model.add(Dense(units=self.ACTION_SIZE, activation="linear"))
+
+        # model.compile(optimizer="adam", loss="mse", metrics=["accuracy"])
+
+        model.compile(optimizer=Adam(0.005), loss="mse", metrics=["accuracy"])
+
+        return model
+
+    def get_model_simplified_perception_RNN(self):
         """
         RECURRENT NN WITH INPUT VARIABLE AND
         A MASK FOR MISSING VALUES (WHICH COME IN VALUES SUCH AS -1 OR 0
@@ -164,16 +242,16 @@ class DQN:
         model.add(SimpleRNN(units=32))
         # Dense layer with relu activation
         model.add(Dense(units=32, activation="relu"))
-        # last layer with 2 neurons (v and w) and linear activation which gets negative values
         # Relu only releases positive values
         model.add(Dense(units=self.ACTION_SIZE, activation="linear"))
 
         # model.compile(optimizer="adam", loss="mse", metrics=["accuracy"])
+
         model.compile(optimizer=Adam(0.005), loss="mse", metrics=["accuracy"])
 
         return model
 
-    def get_model_simple_simplified_perception(self):
+    def get_model_simplified_perception(self):
         """
         simple model with 2 layers. Using for Simplified Perception
         """
@@ -219,6 +297,14 @@ class DQN:
             return self.model.predict(np.array([state]))
 
             # return self.model.predict(tf.convert_to_tensor(state))
+
+    def choose_action(self, state, epsilon):
+        if np.random.random() > epsilon:
+            # print(f"\n\tin Training For loop -----> {epsilon =}")
+            return np.argmax(self.get_qs(state))
+        else:
+            # Get random action
+            return np.random.randint(0, self.ACTION_SIZE)
 
     # Trains main network every step during episode
     def train(self, terminal_state, step):

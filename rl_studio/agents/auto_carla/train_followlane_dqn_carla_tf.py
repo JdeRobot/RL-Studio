@@ -1,36 +1,23 @@
 from collections import Counter, OrderedDict, deque
 from datetime import datetime, timedelta
+import gc
 import glob
 import math
+from memory_profiler import memory_usage, profile
 import resource
-
-# from multiprocessing import Process, cpu_count, Queue, Value, Array
-# from threading import Thread
-# import subprocess
 from statistics import median
 import os
 
 os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"
 import random
 import time
-import weakref
 
 import carla
-import cv2
-import gymnasium as gym
-from gymnasium import spaces
+import keras
 import numpy as np
-import pygame
-import ray
-from reloading import reloading
-from stable_baselines3 import PPO
-from stable_baselines3.common.env_checker import check_env
-from stable_baselines3.common.env_util import make_vec_env
-from stable_baselines3.ppo.policies import MlpPolicy
 import tensorflow as tf
-import torch
 
-# import keras.backend.tensorflow_backend as backend
+# import torch
 from tqdm import tqdm
 import sys
 
@@ -49,9 +36,11 @@ from rl_studio.agents.f1.loaders import (
     LoadEnvVariablesDQNCarla,
 )
 from rl_studio.agents.auto_carla.utils import (
-    LoggingHandler,
+    # LoggingHandler,
     Logger,
-    LoggerAllInOne,
+    # LoggerAllInOne,
+    format_time,
+    get_variables_size,
 )
 from rl_studio.agents.utils import (
     render_params,
@@ -66,48 +55,11 @@ from rl_studio.agents.utils import (
 from rl_studio.agents.utilities.plot_stats import MetricsPlot, StatsDataFrame
 from rl_studio.algorithms.ddpg import (
     ModifiedTensorBoard,
-    OUActionNoise,
-    Buffer,
-    DDPGAgent,
 )
 from rl_studio.algorithms.dqn_keras import (
     ModifiedTensorBoard,
     DQN,
 )
-from rl_studio.algorithms.dqn_keras_parallel import (
-    ModifiedTensorBoard,
-    DQNMultiprocessing,
-)
-from rl_studio.algorithms.utils import (
-    save_actorcritic_model,
-)
-from rl_studio.envs.carla.followlane.utils import AutoCarlaUtils
-from rl_studio.envs.carla.followlane.settings import FollowLaneCarlaConfig
-from rl_studio.envs.carla.utils.bounding_boxes import BasicSynchronousClient
-from rl_studio.envs.carla.utils.logger import logger
-from rl_studio.envs.carla.utils.manual_control import HUD, World
-from rl_studio.envs.carla.utils.visualize_multiple_sensors import (
-    DisplayManager,
-    SensorManager,
-)
-from rl_studio.envs.carla.utils.synchronous_mode import (
-    CarlaSyncMode,
-    draw_image,
-    get_font,
-    should_quit,
-)
-
-##################################################################
-"""
-import multiprocessing libraries
-"""
-from multiprocessing import Process, cpu_count, Queue, Value, Array
-from threading import Thread
-import subprocess
-
-import rl_studio.agents.auto_carla.sources.settings
-from rl_studio.agents.auto_carla.sources.cage import check_weights_size
-
 
 try:
     sys.path.append(
@@ -309,14 +261,14 @@ class TrainerFollowLaneDQNAutoCarlaTF:
             # FOR
             #
             ####################################################################################
-            memory_use_in_every_epoch = resource.getrusage(
-                resource.RUSAGE_SELF
-            ).ru_maxrss / (1024 * 1024)
+            memory_use_before_1_epoch = memory_usage()[0]
+
             for episode in tqdm(
                 range(1, self.env_params.total_episodes + 1),
                 ascii=True,
                 unit="episodes",
             ):
+                memory_use_after_FOR = memory_usage()[0]
                 tensorboard.step = episode
                 # time.sleep(0.1)
                 done = False
@@ -331,7 +283,7 @@ class TrainerFollowLaneDQNAutoCarlaTF:
                     self.environment.environment["start_alternate_pose"],
                     self.environment.environment["alternate_pose"],
                 )
-                # self.actor_list.append(self.new_car.car)
+                self.actor_list.append(self.new_car.car)
 
                 ############################################
                 ## --------------- Sensors ---------------
@@ -365,15 +317,17 @@ class TrainerFollowLaneDQNAutoCarlaTF:
                 #
                 # STEPS
                 ######################################################################################
-                memory_use_in_every_step = resource.getrusage(
-                    resource.RUSAGE_SELF
-                ).ru_maxrss / (1024 * 1024)
+
                 while not done:
                     # print(f"\n{episode =} , {step = }")
                     # print(f"{state = } and {state_size = }")
 
                     self.world.tick()
 
+                    memory_use_after_while = memory_usage()[0]
+                    start_training_step = time.time()
+
+                    """
                     # epsilon = 0.1  ###### PARA PROBAR-----------OJO QUITARLO
                     if np.random.random() > epsilon:
                         # print(f"\n\tin Training For loop -----> {epsilon =}")
@@ -383,11 +337,17 @@ class TrainerFollowLaneDQNAutoCarlaTF:
                         action = np.random.randint(
                             0, len(self.global_params.actions_set)
                         )
+                    """
 
+                    action = dqn_agent.choose_action(state, epsilon)
+
+                    memory_use_after_ACTION = memory_usage()[0]
                     # print(f"{action = }\n")
 
                     ############################
+                    start_training_step = time.time()
                     start_step = time.time()
+
                     new_state, reward, done, _ = env.step(action)
                     # print(f"{new_state = } and {reward = } and {done =}")
                     # print(
@@ -396,31 +356,28 @@ class TrainerFollowLaneDQNAutoCarlaTF:
 
                     # Every step we update replay memory and train main network
                     # agent_dqn.update_replay_memory((state, action, reward, nextState, done))
+                    end_step: float = time.time()
+                    memory_use_after_STEP = memory_usage()[0]
+
                     dqn_agent.update_replay_memory(
                         (state, action, reward, new_state, done)
                     )
                     dqn_agent.train(done, step)
-                    end_step = time.time()
+
+                    memory_use_after_every_NN_train = memory_usage()[0]
+                    end_training_step = time.time()
 
                     self.world.tick()
 
                     self.global_params.time_steps[step] = end_step - start_step
+                    self.global_params.time_training_steps[step] = (
+                        end_training_step - start_training_step
+                    )
+
                     cumulated_reward += reward
                     state = new_state
                     step += 1
 
-                    ########################
-                    ### solo para chequear que funcione
-                    #########################
-
-                    # if self.sensor_camera_rgb.front_rgb_camera is not None:
-                    #    print(
-                    #        f"Again in main() self.sensor_camera_rgb.front_rgb_camera in {time.time()}"
-                    #    )
-                    # if self.sensor_camera_red_mask.front_red_mask_camera is not None:
-                    #    print(
-                    #        f"Again in main() self.sensor_camera_red_mask.front_red_mask_camera in {time.time()}"
-                    #    )
                     render_params_left_bottom(
                         episode=episode,
                         step=step,
@@ -438,11 +395,20 @@ class TrainerFollowLaneDQNAutoCarlaTF:
                         w_deg_sec=env.params["current_steering_angle"],
                         angle=env.angle,
                         FPS=1 / (end_step - start_step),
+                        FPS_training_step=1 / (end_training_step - start_training_step),
                         centers=sum(env.centers_normal) / len(env.centers_normal),
                         reward_in_step=reward,
                         cumulated_reward_in_this_episode=cumulated_reward,
-                        memory_use_in_every_epoch=memory_use_in_every_epoch,
-                        memory_use_in_every_step=memory_use_in_every_step,
+                        memory_use_before_1_epoch=memory_use_before_1_epoch,
+                        memory_use_after_FOR=memory_use_after_FOR,
+                        memory_use_after_while=memory_use_after_while,
+                        memory_use_after_ACTION=memory_use_after_ACTION,
+                        memory_use_after_STEP=memory_use_after_STEP,
+                        memory_use_after_every_NN_train=memory_use_after_every_NN_train,
+                        memory_use_in_every_step=memory_use_after_every_NN_train
+                        - memory_use_after_while,
+                        memory_use_in_every_for=memory_use_after_every_NN_train
+                        - memory_use_after_FOR,
                         _="------------------------",
                         best_episode_until_now=best_epoch,
                         in_best_step=best_step,
@@ -450,21 +416,6 @@ class TrainerFollowLaneDQNAutoCarlaTF:
                         # in_best_epoch_training_time=best_epoch_training_time,
                     )
 
-                    log._warning(
-                        f"\n\tepisode = {episode}\n"
-                        f"step = {step}\n"
-                        f"epsilon = {epsilon}\n"
-                        f"state = {state}\n"
-                        f"action = {action}\n"
-                        f"angle = {env.angle}\n"
-                        f"FPS = {1/(end_step - start_step)}\n"
-                        f"reward in step = {reward}\n"
-                        f"current_max_reward = {current_max_reward}\n"
-                        f"cumulated_reward_in_this_episode = {cumulated_reward}\n"
-                        f"done = {done}\n"
-                        f"memory_use_in_every_epoch = {memory_use_in_every_epoch}\n"
-                        f"memory_use_in_every_step = {memory_use_in_every_step}\n"
-                    )
                     # best episode
                     if current_max_reward <= cumulated_reward and episode > 1:
                         current_max_reward = cumulated_reward
@@ -483,14 +434,27 @@ class TrainerFollowLaneDQNAutoCarlaTF:
                             self.global_params.aggr_ep_rewards,
                             self.global_params.actions_rewards,
                         )
-
+                        log._warning(
+                            f"SHOWING BATCH OF STEPS\n"
+                            f"current epoch = {episode}\n"
+                            f"current step = {step}\n"
+                            f"epsilon = {epsilon}\n"
+                            f"current_max_reward = {current_max_reward}\n"
+                            f"cumulated_reward = {cumulated_reward}\n"
+                            f"best epoch so far = {best_epoch}\n"
+                            f"best step so far = {best_step}\n"
+                            f"best_epoch_training_time = {best_epoch_training_time}\n"
+                        )
                     # Reach Finish Line!!!
                     if env.is_finish:
                         dqn_agent.model.save(
-                            f"{self.global_params.models_dir}/{time.strftime('%Y%m%d-%H%M%S')}_Circuit-{self.environment.environment['circuit_name']}_States-{self.environment.environment['states']}_Actions-{self.environment.environment['action_space']}_EPOCHCOMPLETED_Rewards-{self.environment.environment['reward_function']}_epsilon-{round(epsilon,3)}_epoch-{episode}_step-{step}_reward-{int(cumulated_reward)}_{self.algoritmhs_params.model_name}.model",
+                            f"{self.global_params.models_dir}/{time.strftime('%Y%m%d-%H%M%S')}_Circuit-{self.environment.environment['circuit_name']}_States-{self.environment.environment['states']}_Actions-{self.environment.environment['action_space']}_EPOCHCOMPLETED_Rewards-{self.environment.environment['reward_function']}_epsilon-{round(epsilon,3)}_epoch-{episode}_step-{step}_reward-{int(cumulated_reward)}_{self.algoritmhs_params.model_name}.keras",
                         )
                         dqn_agent.model.save(
                             f"{self.global_params.models_dir}/{time.strftime('%Y%m%d-%H%M%S')}_Circuit-{self.environment.environment['circuit_name']}_States-{self.environment.environment['states']}_Actions-{self.environment.environment['action_space']}_EPOCHCOMPLETED_Rewards-{self.environment.environment['reward_function']}_epsilon-{round(epsilon,3)}_epoch-{episode}_step-{step}_reward-{int(cumulated_reward)}_{self.algoritmhs_params.model_name}.h5",
+                        )
+                        dqn_agent.model.save_weights(
+                            f"{self.global_params.models_dir}/{time.strftime('%Y%m%d-%H%M%S')}_Circuit-{self.environment.environment['circuit_name']}_States-{self.environment.environment['states']}_Actions-{self.environment.environment['action_space']}_EPOCHCOMPLETED_WEIGHTS_Rewards-{self.environment.environment['reward_function']}_epsilon-{round(epsilon,3)}_epoch-{episode}_step-{step}_reward-{int(cumulated_reward)}_{self.algoritmhs_params.model_name}.h5",
                         )
 
                         print_messages(
@@ -499,15 +463,31 @@ class TrainerFollowLaneDQNAutoCarlaTF:
                             step=step,
                             cumulated_reward=cumulated_reward,
                         )
-
+                        log._warning(
+                            f"\nFINISH LINE\n"
+                            f"in episode = {episode}\n"
+                            f"steps = {step}\n"
+                            f"cumulated_reward = {cumulated_reward}\n"
+                            f"epsilon = {epsilon}\n"
+                        )
                     ### save in case of completed steps in one episode
                     if step >= self.env_params.estimated_steps:
                         done = True
                         dqn_agent.model.save(
-                            f"{self.global_params.models_dir}/{time.strftime('%Y%m%d-%H%M%S')}_Circuit-{self.environment.environment['circuit_name']}_States-{self.environment.environment['states']}_Actions-{self.environment.environment['action_space']}_EPOCHCOMPLETED_Rewards-{self.environment.environment['reward_function']}_epsilon-{round(epsilon,3)}_epoch-{episode}_step-{step}_reward-{int(cumulated_reward)}_{self.algoritmhs_params.model_name}.model",
+                            f"{self.global_params.models_dir}/{time.strftime('%Y%m%d-%H%M%S')}_Circuit-{self.environment.environment['circuit_name']}_States-{self.environment.environment['states']}_Actions-{self.environment.environment['action_space']}_EPOCHCOMPLETED_Rewards-{self.environment.environment['reward_function']}_epsilon-{round(epsilon,3)}_epoch-{episode}_step-{step}_reward-{int(cumulated_reward)}_{self.algoritmhs_params.model_name}.keras",
                         )
                         dqn_agent.model.save(
                             f"{self.global_params.models_dir}/{time.strftime('%Y%m%d-%H%M%S')}_Circuit-{self.environment.environment['circuit_name']}_States-{self.environment.environment['states']}_Actions-{self.environment.environment['action_space']}_EPOCHCOMPLETED_Rewards-{self.environment.environment['reward_function']}_epsilon-{round(epsilon,3)}_epoch-{episode}_step-{step}_reward-{int(cumulated_reward)}_{self.algoritmhs_params.model_name}.h5",
+                        )
+                        dqn_agent.model.save_weights(
+                            f"{self.global_params.models_dir}/{time.strftime('%Y%m%d-%H%M%S')}_Circuit-{self.environment.environment['circuit_name']}_States-{self.environment.environment['states']}_Actions-{self.environment.environment['action_space']}_EPOCHCOMPLETED_WEIGHTS_Rewards-{self.environment.environment['reward_function']}_epsilon-{round(epsilon,3)}_epoch-{episode}_step-{step}_reward-{int(cumulated_reward)}_{self.algoritmhs_params.model_name}.h5",
+                        )
+                        log._warning(
+                            f"\nEPISODE COMPLETED\n"
+                            f"in episode = {episode}\n"
+                            f"steps = {step}\n"
+                            f"cumulated_reward = {cumulated_reward}\n"
+                            f"epsilon = {epsilon}\n"
                         )
 
                 ########################################
@@ -584,10 +564,21 @@ class TrainerFollowLaneDQNAutoCarlaTF:
                         self.global_params.best_current_epoch,
                     )
                     dqn_agent.model.save(
-                        f"{self.global_params.models_dir}/{time.strftime('%Y%m%d-%H%M%S')}_Circuit-{self.environment.environment['circuit_name']}_States-{self.environment.environment['states']}_Actions-{self.environment.environment['action_space']}_BESTLAP_Rewards-{self.environment.environment['reward_function']}_epsilon-{round(epsilon,3)}_epoch-{episode}_step-{step}_reward-{int(cumulated_reward)}_{self.algoritmhs_params.model_name}.model",
+                        f"{self.global_params.models_dir}/{time.strftime('%Y%m%d-%H%M%S')}_Circuit-{self.environment.environment['circuit_name']}_States-{self.environment.environment['states']}_Actions-{self.environment.environment['action_space']}_BESTLAP_Rewards-{self.environment.environment['reward_function']}_epsilon-{round(epsilon,3)}_epoch-{episode}_step-{step}_reward-{int(cumulated_reward)}_{self.algoritmhs_params.model_name}.keras",
                     )
                     dqn_agent.model.save(
                         f"{self.global_params.models_dir}/{time.strftime('%Y%m%d-%H%M%S')}_Circuit-{self.environment.environment['circuit_name']}_States-{self.environment.environment['states']}_Actions-{self.environment.environment['action_space']}_BESTLAP_Rewards-{self.environment.environment['reward_function']}_epsilon-{round(epsilon,3)}_epoch-{episode}_step-{step}_reward-{int(cumulated_reward)}_{self.algoritmhs_params.model_name}.h5",
+                    )
+                    dqn_agent.model.save_weights(
+                        f"{self.global_params.models_dir}/{time.strftime('%Y%m%d-%H%M%S')}_Circuit-{self.environment.environment['circuit_name']}_States-{self.environment.environment['states']}_Actions-{self.environment.environment['action_space']}_BESTLAP_WEIGHTS_Rewards-{self.environment.environment['reward_function']}_epsilon-{round(epsilon,3)}_epoch-{episode}_step-{step}_reward-{int(cumulated_reward)}_{self.algoritmhs_params.model_name}.h5",
+                    )
+                    log._warning(
+                        f"\nSAVING BEST LAP\n"
+                        f"in episode = {episode}\n"
+                        f"steps = {step}\n"
+                        f"cumulated_reward = {cumulated_reward}\n"
+                        f"current_max_reward = {current_max_reward}\n"
+                        f"epsilon = {epsilon}\n"
                     )
 
                 # end episode in time settings: 2 hours, 15 hours...
@@ -609,10 +600,13 @@ class TrainerFollowLaneDQNAutoCarlaTF:
                         - self.environment.environment["rewards"]["penal"]
                     ) >= current_max_reward:
                         dqn_agent.model.save(
-                            f"{self.global_params.models_dir}/{time.strftime('%Y%m%d-%H%M%S')}_Circuit-{self.environment.environment['circuit_name']}_States-{self.environment.environment['states']}_Actions-{self.environment.environment['action_space']}_LAPCOMPLETED_Rewards-{self.environment.environment['reward_function']}_epsilon-{round(epsilon,3)}_epoch-{episode}_step-{step}_reward-{int(cumulated_reward)}_{self.algoritmhs_params.model_name}.model",
+                            f"{self.global_params.models_dir}/{time.strftime('%Y%m%d-%H%M%S')}_Circuit-{self.environment.environment['circuit_name']}_States-{self.environment.environment['states']}_Actions-{self.environment.environment['action_space']}_LAPCOMPLETED_Rewards-{self.environment.environment['reward_function']}_epsilon-{round(epsilon,3)}_epoch-{episode}_step-{step}_reward-{int(cumulated_reward)}_{self.algoritmhs_params.model_name}.keras",
                         )
                         dqn_agent.model.save(
                             f"{self.global_params.models_dir}/{time.strftime('%Y%m%d-%H%M%S')}_Circuit-{self.environment.environment['circuit_name']}_States-{self.environment.environment['states']}_Actions-{self.environment.environment['action_space']}_LAPCOMPLETED_Rewards-{self.environment.environment['reward_function']}_epsilon-{round(epsilon,3)}_epoch-{episode}_step-{step}_reward-{int(cumulated_reward)}_{self.algoritmhs_params.model_name}.h5",
+                        )
+                        dqn_agent.model.save_weights(
+                            f"{self.global_params.models_dir}/{time.strftime('%Y%m%d-%H%M%S')}_Circuit-{self.environment.environment['circuit_name']}_States-{self.environment.environment['states']}_Actions-{self.environment.environment['action_space']}_LAPCOMPLETED_WEIGHTS_Rewards-{self.environment.environment['reward_function']}_epsilon-{round(epsilon,3)}_epoch-{episode}_step-{step}_reward-{int(cumulated_reward)}_{self.algoritmhs_params.model_name}.h5",
                         )
                     break
 
@@ -652,17 +646,27 @@ class TrainerFollowLaneDQNAutoCarlaTF:
                     )
                     if max_reward > current_max_reward:
                         dqn_agent.model.save(
-                            f"{self.global_params.models_dir}/{time.strftime('%Y%m%d-%H%M%S')}_Circuit-{self.environment.environment['circuit_name']}_States-{self.environment.environment['states']}_Actions-{self.environment.environment['action_space']}_BATCH_Rewards-{self.environment.environment['reward_function']}_epsilon-{round(epsilon,3)}_epoch-{episode}_step-{step}_reward-{int(cumulated_reward)}_{self.algoritmhs_params.model_name}.model",
+                            f"{self.global_params.models_dir}/{time.strftime('%Y%m%d-%H%M%S')}_Circuit-{self.environment.environment['circuit_name']}_States-{self.environment.environment['states']}_Actions-{self.environment.environment['action_space']}_BATCH_Rewards-{self.environment.environment['reward_function']}_epsilon-{round(epsilon,3)}_epoch-{episode}_step-{step}_reward-{int(cumulated_reward)}_{self.algoritmhs_params.model_name}.keras",
                         )
                         dqn_agent.model.save(
                             f"{self.global_params.models_dir}/{time.strftime('%Y%m%d-%H%M%S')}_Circuit-{self.environment.environment['circuit_name']}_States-{self.environment.environment['states']}_Actions-{self.environment.environment['action_space']}_BATCH_Rewards-{self.environment.environment['reward_function']}_epsilon-{round(epsilon,3)}_epoch-{episode}_step-{step}_reward-{int(cumulated_reward)}_{self.algoritmhs_params.model_name}.h5",
+                        )
+                        dqn_agent.model.save_weights(
+                            f"{self.global_params.models_dir}/{time.strftime('%Y%m%d-%H%M%S')}_Circuit-{self.environment.environment['circuit_name']}_States-{self.environment.environment['states']}_Actions-{self.environment.environment['action_space']}_BATCH_WEIGHTS_Rewards-{self.environment.environment['reward_function']}_epsilon-{round(epsilon,3)}_epoch-{episode}_step-{step}_reward-{int(cumulated_reward)}_{self.algoritmhs_params.model_name}.h5",
                         )
                         save_dataframe_episodes(
                             self.environment.environment,
                             self.global_params.metrics_data_dir,
                             self.global_params.aggr_ep_rewards,
                         )
-
+                        log._warning(
+                            f"\nsaving BATCH\n"
+                            f"best_epoch = {best_epoch}\n"
+                            f"best_step = {best_step}\n"
+                            f"current_max_reward = {current_max_reward}\n"
+                            f"best_epoch_training_time = {best_epoch_training_time}\n"
+                            f"epsilon = {epsilon}\n"
+                        )
                 #######################################################
                 #
                 # End render
@@ -673,23 +677,19 @@ class TrainerFollowLaneDQNAutoCarlaTF:
                     # epsilon *= epsilon_discount
                     epsilon -= epsilon_decay
 
-                # if episode < 4:
-                # self.client.apply_batch(
-                #    [carla.command.DestroyActor(x) for x in self.actor_list[::-1]]
-                # )
-                # self.actor_list = []
+                for actor in self.actor_list[::-1]:
 
-                for sensor in self.actor_list:
-                    if sensor.is_listening:
-                        # print(f"is_listening {sensor =}")
-                        sensor.stop()
+                    print(f"Destroying {actor}")
+                    actor.destroy()
 
-                    # print(f"destroying {sensor =}")
-                    sensor.destroy()
-
-                self.new_car.car.destroy()
                 self.actor_list = []
 
+                variables_size = get_variables_size()
+                for var_name, size in variables_size.items():
+                    log._warning(f"{var_name}: {size} bytes")
+
+                del sorted_time_steps
+                gc.collect()
             ### save last episode, not neccesarily the best one
             save_dataframe_episodes(
                 self.environment.environment,

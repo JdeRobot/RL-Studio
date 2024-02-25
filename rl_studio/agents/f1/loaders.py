@@ -29,8 +29,8 @@ class LoadAlgorithmParams:
             self.minibatch_size = config["algorithm"]["dqn"]["minibatch_size"]
             self.update_target_every = config["algorithm"]["dqn"]["update_target_every"]
             self.memory_fraction = config["algorithm"]["dqn"]["memory_fraction"]
-            self.buffer_capacity = config["algorithm"]["dqn"]["buffer_capacity"]
-            self.batch_size = config["algorithm"]["dqn"]["batch_size"]
+            # self.buffer_capacity = config["algorithm"]["dqn"]["buffer_capacity"]
+            # self.batch_size = config["algorithm"]["dqn"]["batch_size"]
 
         elif config["settings"]["algorithm"] == "qlearn":
             self.alpha = config["algorithm"]["qlearn"]["alpha"]
@@ -87,6 +87,7 @@ class LoadGlobalParams:
         self.states_actions_counter = {}
         self.states_reward = {}
         self.time_steps = {}
+        self.time_training_steps = {}
         self.ep_rewards = []
 
         self.im_general_ddpg = {
@@ -1037,10 +1038,10 @@ class LoadEnvVariablesDQNCarla:
         self.environment["memory_fraction"] = config["algorithm"]["dqn"][
             "memory_fraction"
         ]
-        self.environment["buffer_capacity"] = config["algorithm"]["dqn"][
-            "buffer_capacity"
-        ]
-        self.environment["batch_size"] = config["algorithm"]["dqn"]["batch_size"]
+        # self.environment["buffer_capacity"] = config["algorithm"]["dqn"][
+        #    "buffer_capacity"
+        # ]
+        # self.environment["batch_size"] = config["algorithm"]["dqn"]["batch_size"]
 
         # CARLA
         self.environment["carla_server"] = config["carla"]["carla_server"]

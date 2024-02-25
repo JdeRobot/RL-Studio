@@ -11,8 +11,8 @@ from sklearn.preprocessing import StandardScaler, MinMaxScaler
 import torch
 
 from rl_studio.agents.auto_carla.actors_sensors import LaneDetector
-from rl_studio.envs.carla.followlane.utils import AutoCarlaUtils
-from rl_studio.envs.carla.followlane.settings import FollowLaneCarlaConfig
+from rl_studio.agents.auto_carla.utils import AutoCarlaUtils
+from rl_studio.agents.auto_carla.settings import FollowLaneCarlaConfig
 
 
 correct_normalized_distance = {  # based in an image of 640 pixels width

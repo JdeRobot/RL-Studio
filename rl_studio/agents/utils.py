@@ -121,7 +121,7 @@ def render_params(**kwargs):
 
 def render_params_left_bottom(**kwargs):
     font = cv2.FONT_HERSHEY_SIMPLEX
-    canvas = np.zeros((400, 450, 3), dtype="uint8")
+    canvas = np.zeros((750, 600, 3), dtype="uint8")
     # blue = (255, 0, 0)
     # green = (0, 255, 0)
     # red = (0, 0, 255)
@@ -143,7 +143,7 @@ def render_params_left_bottom(**kwargs):
 
     window_name = "Stats Board"
     cv2.namedWindow(window_name)  # Create a named window
-    cv2.moveWindow(window_name, 0, 750)  # Move it to (40,30)
+    cv2.moveWindow(window_name, 0, 400)  # Move it to (40,30)
     cv2.imshow(window_name, canvas)
     cv2.waitKey(100)
 
