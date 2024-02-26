@@ -257,6 +257,16 @@ class TrainerFollowLaneDQNAutoCarlaTF:
             #    "models/fastai_torch_lane_detector_model.pth"
             # )
 
+            env = CarlaEnv(
+                # self.new_car,
+                # self.sensor_camera_rgb,  # img to process
+                # self.sensor_camera_red_mask,  # sensor to process image
+                self.client,
+                self.world,
+                self.environment.environment,
+            )
+            self.world.tick()
+
             ####################################################################################
             # FOR
             #
@@ -278,6 +288,7 @@ class TrainerFollowLaneDQNAutoCarlaTF:
 
                 self.world.tick()
 
+                """
                 self.new_car = NewCar(
                     self.world,
                     self.environment.environment["start_alternate_pose"],
@@ -302,7 +313,9 @@ class TrainerFollowLaneDQNAutoCarlaTF:
                 ############################################################################
                 # ENV, RESET, DQN-AGENT, FOR
                 ############################################################################
+                """
 
+                """
                 env = CarlaEnv(
                     self.new_car,
                     self.sensor_camera_rgb,  # img to process
@@ -310,6 +323,9 @@ class TrainerFollowLaneDQNAutoCarlaTF:
                     self.environment.environment,
                 )
                 self.world.tick()
+                
+                
+                """
 
                 state = env.reset()
                 # print(f"\n\tin Training For loop -------> {state =}")
@@ -445,6 +461,7 @@ class TrainerFollowLaneDQNAutoCarlaTF:
                             f"best step so far = {best_step}\n"
                             f"best_epoch_training_time = {best_epoch_training_time}\n"
                         )
+
                     # Reach Finish Line!!!
                     if env.is_finish:
                         dqn_agent.model.save(
@@ -456,7 +473,6 @@ class TrainerFollowLaneDQNAutoCarlaTF:
                         dqn_agent.model.save_weights(
                             f"{self.global_params.models_dir}/{time.strftime('%Y%m%d-%H%M%S')}_Circuit-{self.environment.environment['circuit_name']}_States-{self.environment.environment['states']}_Actions-{self.environment.environment['action_space']}_EPOCHCOMPLETED_WEIGHTS_Rewards-{self.environment.environment['reward_function']}_epsilon-{round(epsilon,3)}_epoch-{episode}_step-{step}_reward-{int(cumulated_reward)}_{self.algoritmhs_params.model_name}.h5",
                         )
-
                         print_messages(
                             "FINISH LINE",
                             episode=episode,
@@ -539,7 +555,6 @@ class TrainerFollowLaneDQNAutoCarlaTF:
                 #
                 #
                 ########################################
-
                 #### save best lap in episode
                 if (
                     cumulated_reward - self.environment.environment["rewards"]["penal"]
@@ -580,19 +595,18 @@ class TrainerFollowLaneDQNAutoCarlaTF:
                         f"current_max_reward = {current_max_reward}\n"
                         f"epsilon = {epsilon}\n"
                     )
-
                 # end episode in time settings: 2 hours, 15 hours...
                 # or epochs over
                 if (
                     datetime.now() - timedelta(hours=self.global_params.training_time)
                     > start_time
                 ) or (episode > self.env_params.total_episodes):
-                    log.logger.info(
+                    log._warning(
                         f"\nTraining Time over or num epochs reached\n"
-                        f"current_max_reward = {current_max_reward}\n"
-                        f"cumulated_reward = {cumulated_reward}\n"
                         f"epoch = {episode}\n"
                         f"step = {step}\n"
+                        f"current_max_reward = {current_max_reward}\n"
+                        f"cumulated_reward = {cumulated_reward}\n"
                         f"epsilon = {epsilon}\n"
                     )
                     if (
@@ -608,6 +622,7 @@ class TrainerFollowLaneDQNAutoCarlaTF:
                         dqn_agent.model.save_weights(
                             f"{self.global_params.models_dir}/{time.strftime('%Y%m%d-%H%M%S')}_Circuit-{self.environment.environment['circuit_name']}_States-{self.environment.environment['states']}_Actions-{self.environment.environment['action_space']}_LAPCOMPLETED_WEIGHTS_Rewards-{self.environment.environment['reward_function']}_epsilon-{round(epsilon,3)}_epoch-{episode}_step-{step}_reward-{int(cumulated_reward)}_{self.algoritmhs_params.model_name}.h5",
                         )
+
                     break
 
                 ### save every save_episode times
@@ -669,7 +684,7 @@ class TrainerFollowLaneDQNAutoCarlaTF:
                         )
                 #######################################################
                 #
-                # End render
+                # End FOR
                 #######################################################
 
                 ### reducing epsilon
@@ -677,16 +692,17 @@ class TrainerFollowLaneDQNAutoCarlaTF:
                     # epsilon *= epsilon_discount
                     epsilon -= epsilon_decay
 
-                for actor in self.actor_list[::-1]:
+                # for actor in env.actor_list[::-1]:
+                #    print(f"Destroying {actor}")
+                #    actor.destroy()
 
-                    print(f"Destroying {actor}")
-                    actor.destroy()
+                env.destroy_all_actors()
+                # env.actor_list = []
 
-                self.actor_list = []
-
-                variables_size = get_variables_size()
-                for var_name, size in variables_size.items():
-                    log._warning(f"{var_name}: {size} bytes")
+                variables_size, total_size = get_variables_size()
+                for var_name, var_value in variables_size.items():
+                    size = sys.getsizeof(var_value)
+                    log._warning(f"{var_name}: {size} bytes | {total_size =}")
 
                 del sorted_time_steps
                 gc.collect()
@@ -696,7 +712,6 @@ class TrainerFollowLaneDQNAutoCarlaTF:
                 self.global_params.metrics_data_dir,
                 self.global_params.aggr_ep_rewards,
             )
-
         ############################################################################
         #
         # finally

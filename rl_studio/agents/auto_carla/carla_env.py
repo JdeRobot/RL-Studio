@@ -10,7 +10,12 @@ import numpy as np
 from sklearn.preprocessing import StandardScaler, MinMaxScaler
 import torch
 
-from rl_studio.agents.auto_carla.actors_sensors import LaneDetector
+from rl_studio.agents.auto_carla.actors_sensors import (
+    LaneDetector,
+    NewCar,
+    CameraRGBSensor,
+    CameraRedMaskSemanticSensor,
+)
 from rl_studio.agents.auto_carla.utils import AutoCarlaUtils
 from rl_studio.agents.auto_carla.settings import FollowLaneCarlaConfig
 
@@ -70,7 +75,8 @@ correct_pixel_distance = {  # based in an image of 640 pixels width
 
 class CarlaEnv(gym.Env):
     # def __init__(self, car, sensor_camera_rgb, sensor_camera_lanedetector, config):
-    def __init__(self, car, sensor_camera_rgb, sensor_camera_red_mask, config):
+    # def __init__(self, car, sensor_camera_rgb, sensor_camera_red_mask, config):
+    def __init__(self, client, world, config):
         super(CarlaEnv, self).__init__()
         ## --------------- init env
         # FollowLaneEnv.__init__(self, **config)
@@ -186,9 +192,12 @@ class CarlaEnv(gym.Env):
         # self.params = config
         # print(f"{self.params =}\n")
 
-        self.car = car
-        self.sensor_camera_rgb = sensor_camera_rgb
-        self.sensor_camera_red_mask = sensor_camera_red_mask
+        self.client = client
+        self.world = world
+
+        self.new_car = None
+        self.sensor_camera_rgb = None
+        self.sensor_camera_red_mask = None
         # self.sensor_camera_lanedetector = sensor_camera_lanedetector
         self.params = {}
         self.is_finish = None
@@ -209,16 +218,31 @@ class CarlaEnv(gym.Env):
         self.angle = None
         self.centers_normal = []
 
+        self.actor_list = []
+
         ######################################################################
 
         ## LaneDetector Camera ---------------
-        self.sensor_camera_lanedetector = LaneDetector(
-            "models/fastai_torch_lane_detector_model.pth"
-        )
+        self.sensor_camera_lanedetector = None
+        # self.sensor_camera_lanedetector = LaneDetector(
+        #    "models/fastai_torch_lane_detector_model.pth"
+        # )
 
         # torch.cuda.empty_cache()
         # self.model = torch.load("models/fastai_torch_lane_detector_model.pth")
         # self.model.eval()
+
+    def destroy_all_actors_apply_batch(self):
+        print("\ndestroying %d actors with apply_batch method" % len(self.actor_list))
+        self.client.apply_batch(
+            [carla.command.DestroyActor(x) for x in self.actor_list[::-1]]
+        )
+
+    def destroy_all_actors(self):
+        print("\ndestroying %d actors with destroy() method" % len(self.actor_list))
+        for actor in self.actor_list[::-1]:
+            actor.destroy()
+        self.actor_list = []
 
     #####################################################################################
     #
@@ -243,6 +267,47 @@ class CarlaEnv(gym.Env):
                                   12 VALUES WHEN X_ROW = 3
 
         """
+        self.world.tick()
+
+        if self.sensor_camera_rgb is not None:
+            self.destroy_all_actors_apply_batch()
+
+        self.sensor_camera_rgb = None
+        self.sensor_camera_red_mask = None
+
+        self.lane_sensor = None
+        self.obstacle_sensor = None
+        self.collision_hist = []
+        self.lane_changing_hist = []
+        self.obstacle_hist = []
+        self.actor_list = []
+
+        ############################################
+        ## --------------- Sensors ---------------
+        ############################################
+
+        self.sensor_camera_lanedetector = LaneDetector(
+            "models/fastai_torch_lane_detector_model.pth"
+        )
+
+        self.new_car = NewCar(
+            self.world,
+            self.start_alternate_pose,
+            self.alternate_pose,
+        )
+        self.actor_list.append(self.new_car.car)
+
+        ## RGB camera ---------------
+        self.sensor_camera_rgb = CameraRGBSensor(self.new_car.car)
+        self.actor_list.append(self.sensor_camera_rgb.sensor)
+
+        ## RedMask Camera ---------------
+        self.sensor_camera_red_mask = CameraRedMaskSemanticSensor(self.new_car.car)
+        self.actor_list.append(self.sensor_camera_red_mask.sensor)
+
+        self.world.tick()
+
+        ###################################################################
 
         while self.sensor_camera_rgb.front_rgb_camera is None:
             print(
@@ -492,13 +557,13 @@ class CarlaEnv(gym.Env):
         """
         working with LaneDetector
         """
-        t = self.car.car.get_transform()
-        v = self.car.car.get_velocity()  # returns in m/sec
+        t = self.new_car.car.get_transform()
+        v = self.new_car.car.get_velocity()  # returns in m/sec
         c = (
-            self.car.car.get_control()
+            self.new_car.car.get_control()
         )  # returns values in [-1, 1] range for throttle, steer,...(https://carla.readthedocs.io/en/0.9.13/python_api/#carla.VehicleControl)
-        w = self.car.car.get_angular_velocity()  # returns in deg/sec in a 3D vector
-        a = self.car.car.get_acceleration()
+        w = self.new_car.car.get_angular_velocity()  # returns in deg/sec in a 3D vector
+        a = self.new_car.car.get_acceleration()
 
         ## Applied throttle, brake and steer
         curr_speed = int(3.6 * math.sqrt(v.x**2 + v.y**2 + v.z**2))
@@ -528,7 +593,7 @@ class CarlaEnv(gym.Env):
         if curr_speed > target_veloc:
             throttle = 0.0
 
-        self.car.car.apply_control(
+        self.new_car.car.apply_control(
             carla.VehicleControl(throttle=throttle, steer=steer, brake=brake)
         )
 

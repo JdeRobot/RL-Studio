@@ -1,6 +1,8 @@
 import logging
-import cv2
 import imutils
+import sys
+
+import cv2
 import numpy as np
 
 
@@ -18,6 +20,21 @@ def format_time(seconds):
 
 
 def get_variables_size():
+    total_size = 0
+    all_vars = {
+        k: v for k, v in globals().items() if not k.startswith("_")
+    }  # Exclude variables starting with _
+    all_vars.update(locals())  # Include local variables
+    for var_name, var_value in all_vars.items():
+        if not var_name.startswith("_"):
+            size = sys.getsizeof(var_value)
+            # print(f"Size of {var_name}: {size} bytes")
+            total_size += size
+
+    return all_vars, total_size
+
+
+def old_get_variables_size():
     """
     Get the size of declared variables in global and local scopes
 
