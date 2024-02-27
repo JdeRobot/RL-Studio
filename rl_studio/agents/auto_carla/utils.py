@@ -66,6 +66,48 @@ def old_get_variables_size():
 
 class Logger:
     def __init__(self, log_file):
+        # Configure the log format
+        format = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+        logging.basicConfig(level=logging.DEBUG, format=format)
+
+        # File handler
+        file_handler = logging.FileHandler(log_file)
+        file_handler.setLevel(
+            logging.WARNING
+        )  # Only warnings and errors will be written to the file
+        file_handler.setFormatter(logging.Formatter(format))
+        logging.getLogger().addHandler(file_handler)
+
+        # Remove the console handler
+        self._remove_console_handler()
+
+    def _remove_console_handler(self):
+        root_logger = logging.getLogger()
+        for handler in root_logger.handlers:
+            if isinstance(handler, logging.StreamHandler):
+                root_logger.removeHandler(handler)
+
+    def _info(self, message):
+        logging.info(message)
+
+    def _warning(self, message):
+        logging.warning(message)
+
+    def _error(self, message):
+        logging.error(message)
+
+    def _debug(self, message):
+        logging.debug(message)
+
+
+class Logger_:
+    """
+    shows warning in console
+
+
+    """
+
+    def __init__(self, log_file):
         # Configurar el formato de los registros
         format = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
         logging.basicConfig(level=logging.DEBUG, format=format)

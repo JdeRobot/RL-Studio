@@ -5,7 +5,7 @@ from collections import deque
 
 import numpy as np
 import tensorflow as tf
-from tensorflow.keras import Input, Model, layers
+from tensorflow.keras import Input, Model, layers, models, layers, optimizers
 from tensorflow.keras.callbacks import TensorBoard
 from tensorflow.keras.layers import (
     Dense,
@@ -253,7 +253,31 @@ class DQN:
 
     def get_model_simplified_perception(self):
         """
+        mask = -1
+        dynamic input
+
+        """
+
+        neurons1 = 32
+        neurons2 = 32
+        loss = "mse"
+        optimizing = 0.005
+
+        inputs = layers.Input(shape=(self.STATE_SIZE,))
+        masked_inputs = layers.Masking(mask_value=-1)(
+            inputs
+        )  # Masking layer for handling -1 values
+        out = layers.Dense(neurons1, activation="relu")(masked_inputs)
+        out = layers.Dense(neurons2, activation="relu")(out)
+        outputs = layers.Dense(self.ACTION_SIZE, activation="linear")(out)
+        model = models.Model(inputs, outputs)
+        model.compile(loss=loss, optimizer=optimizers.Adam(learning_rate=optimizing))
+        return model
+
+    def get_model_simplified_perception_very_simple(self):
+        """
         simple model with 2 layers. Using for Simplified Perception
+        No accept -1
         """
         neurons1 = 16  # 32, 64, 256, 400...
         neurons2 = 16  # 32, 64, 256, 300...

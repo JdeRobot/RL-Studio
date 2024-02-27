@@ -46,14 +46,14 @@ algorithm:
     epsilon: 0.99 # in Retraining mode is convenient to reduce, i.e. 0.45
     epsilon_discount: 0.9986
     epsilon_min: 0.00
-    model_name: recurrent_32x32x32
-    replay_memory_size: 100_000 # How many last steps to keep for model training
-    min_replay_memory_size: 100 #1000 # Minimum number of steps in a memory to start training
+    model_name: SEQ_32x32
+    replay_memory_size: 10_000 # How many last steps to keep for model training
+    min_replay_memory_size: 1000 #1000 # Minimum number of steps in a memory to start training
     minibatch_size: 64 # How many steps (samples) to use for training
     update_target_every: 5
-    memory_fraction: 0.40
-    buffer_capacity: 100_000
-    batch_size: 64
+    memory_fraction: 0.20
+    #buffer_capacity: 100_000
+    #batch_size: 64
   ddpg:
     gamma: 0.99
     tau: 0.005
@@ -99,19 +99,19 @@ actions:
   carla_discrete:
     0: [0.55, 0.0] #straight forward
     1: [0.3, 0.1]
-    2: [0.3, 0.2]
+    2: [0.3, 0.15]
     3: [0.3, -0.1]
-    4: [0.3, -0.2]
+    4: [0.3, -0.15]
     5: [0.35, 0.07]
-    6: [0.35, 0.1]
+    6: [0.35, 0.09]
     7: [0.35, -0.07]
-    8: [0.35, -0.1]
+    8: [0.35, -0.09]
     9: [0.4, 0.03]
     10: [0.4, 0.05]
     11: [0.4, 0.07]
     12: [0.4, -0.03]
     13: [0.4, -0.05]
-    14: [0.4, -0.7]
+    14: [0.4, -0.07]
     15: [0.45, 0.03]
     16: [0.45, 0.05]
     17: [0.45, -0.03]

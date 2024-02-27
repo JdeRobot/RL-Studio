@@ -244,6 +244,23 @@ class CarlaEnv(gym.Env):
             actor.destroy()
         self.actor_list = []
 
+    def concatenate_states(self, state, state_space):
+
+        N_CONCATENATES = 1
+
+        if not hasattr(self, "state_queue"):
+            self.state_queue = [state] * N_CONCATENATES
+        else:
+            self.state_queue.pop(0)
+            self.state_queue.append(state)
+
+        if state_space == "image":
+            state = np.concatenate(self.state_queue, axis=0)
+        else:
+            state = np.concatenate(self.state_queue)
+
+        return state
+
     #####################################################################################
     #
     #                                       RESET
@@ -346,6 +363,27 @@ class CarlaEnv(gym.Env):
             index_left,
             mask.shape[1],
         )
+
+        ################ CONCATENATE
+        """
+        N_CONCATENATES = 1
+        if not hasattr(self, "state_queue"):
+            self.state_queue = [self.state] * N_CONCATENATES
+        else:
+            self.state_queue.pop(0)
+            self.state_queue.append(self.state)
+
+        if self.state_space == "image":
+            self.state = np.concatenate(self.state_queue, axis=0)
+        else:
+            self.state = np.concatenate(self.state_queue)
+
+        """
+
+        self.state = self.concatenate_states(self.state, self.state_space)
+        # input(
+        #    f"\n\t{self.state_queue =}\n\t{len(self.state_queue) =}\n\t{self.state =}\n\t{len(self.state) =}"
+        # )
 
         return self.state  # , states_size
 
@@ -536,15 +574,34 @@ class CarlaEnv(gym.Env):
         )
         # print(f"\n\t{self.state = }")
 
-        if done:
-            print(
+        ################ CONCATENATE
+        # N_CONCATENATES = 1
+        # if not hasattr(self, "state_queue"):
+        #    state_queue = [self.state] * N_CONCATENATES
+        # else:
+        # self.state_queue.pop(0)
+        # self.state_queue.append(self.state)
+
+        # if self.state_space == "image":
+        #    self.state = np.concatenate(self.state_queue, axis=0)
+        # else:
+        #    self.state = np.concatenate(self.state_queue)
+        self.state = self.concatenate_states(self.state, self.state_space)
+
+        """
+        step = 1
+        show = 10
+        if done and (not step % show):
+            step += 1
+            input(
                 f"\n\t{center_reward =}, {done_center =}, {centers_rewards_list =}"
                 f"\n\t{velocity_reward =}, {done_velocity =}"
                 f"\n\t{heading_reward =}, {done_heading =}"
                 f"\n\t{done =}, {reward =}"
                 f"\n\t{self.params['current_speed'] =}, {self.params['target_veloc'] =}, {self.angle =}"
+                f"\n\t{self.state}"
             )
-            # input("step() ----> done = True")
+        """
 
         return self.state, reward, done, {}
 

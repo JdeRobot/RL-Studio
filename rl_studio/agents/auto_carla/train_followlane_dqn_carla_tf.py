@@ -21,12 +21,12 @@ import tensorflow as tf
 from tqdm import tqdm
 import sys
 
-from rl_studio.agents.auto_carla.actors_sensors import (
-    NewCar,
-    CameraRGBSensor,
-    CameraRedMaskSemanticSensor,
-    # LaneDetector,
-)
+# from rl_studio.agents.auto_carla.actors_sensors import (
+#    NewCar,
+#    CameraRGBSensor,
+#    CameraRedMaskSemanticSensor,
+#    # LaneDetector,
+# )
 from rl_studio.agents.auto_carla.carla_env import CarlaEnv
 
 from rl_studio.agents.f1.loaders import (
@@ -53,9 +53,10 @@ from rl_studio.agents.utils import (
     print_messages,
 )
 from rl_studio.agents.utilities.plot_stats import MetricsPlot, StatsDataFrame
-from rl_studio.algorithms.ddpg import (
-    ModifiedTensorBoard,
-)
+
+# from rl_studio.algorithms.ddpg import (
+#    ModifiedTensorBoard,
+# )
 from rl_studio.algorithms.dqn_keras import (
     ModifiedTensorBoard,
     DQN,
