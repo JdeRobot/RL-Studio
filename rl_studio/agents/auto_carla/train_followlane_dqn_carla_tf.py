@@ -5,6 +5,7 @@ import glob
 import math
 from memory_profiler import memory_usage, profile
 import resource
+import subprocess
 from statistics import median
 import os
 
@@ -736,3 +737,46 @@ class TrainerFollowLaneDQNAutoCarlaTF:
             #    actor.destroy()
 
             env.close()
+
+            try:
+                ps_output = (
+                    subprocess.check_output(["ps", "-Af"]).decode("utf-8").strip("\n")
+                )
+            except subprocess.CalledProcessError as ce:
+                log._warning(
+                    "SimulatorEnv: exception raised executing ps command {}".format(ce)
+                )
+                sys.exit(-1)
+
+            if ps_output.count("CarlaUE4.sh") > 0:
+                try:
+                    subprocess.check_call(["killall", "-9", "CarlaUE4.sh"])
+                    log._warning("SimulatorEnv: CARLA server killed.")
+                except subprocess.CalledProcessError as ce:
+                    log._warning(
+                        "SimulatorEnv: exception raised executing killall command for CARLA server {}".format(
+                            ce
+                        )
+                    )
+
+            if ps_output.count("CarlaUE4-Linux-Shipping") > 0:
+                try:
+                    subprocess.check_call(["killall", "-9", "CarlaUE4-Linux-Shipping"])
+                    log._warning("SimulatorEnv: CarlaUE4-Linux-Shipping killed.")
+                except subprocess.CalledProcessError as ce:
+                    log._warning(
+                        "SimulatorEnv: exception raised executing killall command for CarlaUE4-Linux-Shipping {}".format(
+                            ce
+                        )
+                    )
+
+            if ps_output.count("CarlaUE4-Linux-") > 0:
+                try:
+                    subprocess.check_call(["killall", "-9", "CarlaUE4-Linux-"])
+                    log._warning("SimulatorEnv: CarlaUE4-Linux- killed.")
+                except subprocess.CalledProcessError as ce:
+                    log._warning(
+                        "SimulatorEnv: exception raised executing killall command for CarlaUE4-Linux- {}".format(
+                            ce
+                        )
+                    )
