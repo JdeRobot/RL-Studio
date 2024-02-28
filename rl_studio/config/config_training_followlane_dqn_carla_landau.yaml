@@ -1,5 +1,5 @@
 settings:
-  station: my_local_PC # landau
+  station: landau # landau
   mode: training # training, retraining, inference
   task: follow_lane_carla # follow_line_gazebo, follow_lane_gazebo, autoparking_gazebo
   algorithm: dqn # qlearn, dqn, ddpg, ppo
@@ -11,7 +11,7 @@ settings:
   states: sp7 #sp4 #image, sp1 (simplified perception with 1 point), sp3 (simplified perception with 3 points), spn (simplified perception with n points)
   rewards: rewards_followlane_center_velocity_angle # follow_right_lane_only_center, follow_right_lane_center_v_step, follow_right_lane_center_v_w_linear
   framework: TensorFlow # TensorFlow, Pytorch
-  total_episodes: 500
+  total_episodes: 20_000
   training_time: 16
   models_dir: "./checkpoints"
   logs_dir: "./logs"
@@ -24,7 +24,7 @@ ros:
 
 carla:
   carla_server: localhost
-  carla_client: 2000
+  carla_client: 4356
 
 retraining:
   dqn:

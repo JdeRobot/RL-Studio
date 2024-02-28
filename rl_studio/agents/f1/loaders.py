@@ -150,6 +150,7 @@ class LoadGlobalParams:
             "current_total_training_time": [],
         }
         self.settings = config["settings"]
+        self.station = config['settings']['station']
         self.mode = config["settings"]["mode"]
         self.task = config["settings"]["task"]
         self.algorithm = config["settings"]["algorithm"]

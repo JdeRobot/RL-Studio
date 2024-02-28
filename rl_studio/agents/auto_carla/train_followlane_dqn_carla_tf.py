@@ -2,25 +2,26 @@ from collections import Counter, OrderedDict, deque
 from datetime import datetime, timedelta
 import gc
 import glob
-import math
-from memory_profiler import memory_usage, profile
-import resource
+
+# import math
+from memory_profiler import memory_usage  # , profile
+
+# import resource
 import subprocess
 from statistics import median
 import os
 
 os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"
 import random
+import sys
 import time
 
 import carla
-import keras
+
+# import keras
 import numpy as np
 import tensorflow as tf
-
-# import torch
 from tqdm import tqdm
-import sys
 
 # from rl_studio.agents.auto_carla.actors_sensors import (
 #    NewCar,
@@ -29,7 +30,6 @@ import sys
 #    # LaneDetector,
 # )
 from rl_studio.agents.auto_carla.carla_env import CarlaEnv
-
 from rl_studio.agents.f1.loaders import (
     LoadAlgorithmParams,
     LoadEnvParams,
@@ -166,6 +166,135 @@ class TrainerFollowLaneDQNAutoCarlaTF:
         self.front_lanedetector_camera = None
         self.actor_list = []
 
+
+
+    def launch_carla_server(self):
+          ### Launch Carla Server only if it is not running!!!
+        ps_output = subprocess.check_output(["ps", "-Af"]).decode("utf-8").strip("\n")
+        
+        #CHECKING IF CARLA SERVER IS RUNNING
+        if ps_output.count("CarlaUE4-Linux-") > 0:
+            try:
+                subprocess.check_call(["killall", "-9", "CarlaUE4-Linux-"])
+            except subprocess.CalledProcessError as ce:
+                print(
+                    "SimulatorEnv: exception raised executing killall command for CarlaUE4-Linux- {}".format(
+                        ce
+                    )
+                )
+        if ps_output.count("CarlaUE4.sh") > 0:
+            try:
+                subprocess.check_call(["killall", "-9", "CarlaUE4.sh"])
+            except subprocess.CalledProcessError as ce:
+                print(
+                    "SimulatorEnv: exception raised executing killall command for CARLA server {}".format(
+                        ce
+                    )
+                )
+
+        if ps_output.count("CarlaUE4-Linux-Shipping") > 0:
+            try:
+                subprocess.check_call(["killall", "-9", "CarlaUE4-Linux-Shipping"])
+            except subprocess.CalledProcessError as ce:
+                print(
+                    "SimulatorEnv: exception raised executing killall command for CarlaUE4-Linux-Shipping {}".format(
+                        ce
+                    )
+                )        
+        
+        if (
+            ps_output.count("CarlaUE4-Linux-") == 0
+            or ps_output.count("CarlaUE4.sh") == 0
+            or ps_output.count("CarlaUE4-Linux-Shipping") == 0
+        ):
+            try:
+                carla_root_local = os.environ["CARLA_ROOT"]
+                carla_exec_local = f"{carla_root_local}/CarlaUE4.sh -prefernvidia -quality-level=low"
+                
+                carla_root_landau = f"/opt/carla/CarlaUE4.sh -world-port=4545"
+                #carla_exec_landau = f"{carla_root_landau}/CarlaUE4.sh -prefernvidia -quality-level=low"
+
+
+                #with open("/tmp/.carlalaunch_stdout.log", "w") as out, open(
+                #    "/tmp/.carlalaunch_stderr.log", "w"
+                #) as err:
+                #subprocess.Popen(
+                #    [carla_exec, "-prefernvidia -quality-level=low"],
+                #    stdout=out,
+                #    stderr=err,
+                #)
+                subprocess.Popen(['gnome-terminal', '--', 'bash', '-c', carla_root_landau])
+
+                # subprocess.Popen([carla_exec, "-prefernvidia"], stdout=out, stderr=err)
+                # subprocess.Popen(["/home/jderobot/Documents/Projects/carla_simulator_0_9_13/CarlaUE4.sh", "-RenderOffScreen"], stdout=out, stderr=err)
+                # subprocess.Popen(["/home/jderobot/Documents/Projects/carla_simulator_0_9_13/CarlaUE4.sh", "-RenderOffScreen", "-quality-level=Low"], stdout=out, stderr=err)
+                print(f"\nCarlaEnv has been launched in other terminal\n")
+                time.sleep(5)
+                # with open("/tmp/.roslaunch_stdout.log", "w") as out, open("/tmp/.roslaunch_stderr.log", "w") as err:
+                #    child = subprocess.Popen(["roslaunch", launch_file], stdout=out, stderr=err)
+                # logger.info("SimulatorEnv: launching simulator server.")
+            except OSError as oe:
+                print(
+                    "SimulatorEnv: exception raised launching simulator server. {}".format(
+                        oe
+                    )
+                )      
+
+
+
+    def closing_carla_server(self, log):
+        
+        
+        try:
+            ps_output = (
+                subprocess.check_output(["ps", "-Af"]).decode("utf-8").strip("\n")
+            )
+        except subprocess.CalledProcessError as ce:
+            log._warning(
+                "SimulatorEnv: exception raised executing ps command {}".format(ce)
+            )
+            sys.exit(-1)
+
+        if ps_output.count("CarlaUE4-Linux-") > 0:
+            try:
+                subprocess.check_call(["killall", "-9", "CarlaUE4-Linux-"])
+                log._warning("SimulatorEnv: CarlaUE4-Linux- killed.")
+            except subprocess.CalledProcessError as ce:
+                log._warning(
+                    "SimulatorEnv: exception raised executing killall command for CarlaUE4-Linux- {}".format(
+                        ce
+                    )
+                )
+        if ps_output.count("CarlaUE4.sh") > 0:
+            try:
+                subprocess.check_call(["killall", "-9", "CarlaUE4.sh"])
+                log._warning("SimulatorEnv: CarlaUE4.sh killed.")
+            except subprocess.CalledProcessError as ce:
+                log._warning(
+                    "SimulatorEnv: exception raised executing killall command for CARLA server {}".format(
+                        ce
+                    )
+                )
+
+        if ps_output.count("CarlaUE4-Linux-Shipping") > 0:
+            try:
+                subprocess.check_call(["killall", "-9", "CarlaUE4-Linux-Shipping"])
+                log._warning("SimulatorEnv: CarlaUE4-Linux-Shipping killed.")
+            except subprocess.CalledProcessError as ce:
+                log._warning(
+                    "SimulatorEnv: exception raised executing killall command for CarlaUE4-Linux-Shipping {}".format(
+                        ce
+                    )
+                )
+
+        print(
+            f"\n\tclosing env",
+            f"\n\tKilled Carla server",
+            f"\n\tending training...have a good day!!",
+        )
+        
+
+
     #########################################################################
     # Main
     #########################################################################
@@ -211,6 +340,17 @@ class TrainerFollowLaneDQNAutoCarlaTF:
         tensorboard = ModifiedTensorBoard(
             log_dir=f"{self.global_params.logs_tensorboard_dir}/{self.algoritmhs_params.model_name}-{time.strftime('%Y%m%d-%H%M%S')}"
         )
+
+        ### Launch Carla Server only if it is not running!!!
+        if self.global_params.station == 'landau':
+            self.launch_carla_server()
+
+            
+
+        ################################
+        #
+        # TRAINING
+        ############################################
 
         try:
             #########################################################################
@@ -704,16 +844,36 @@ class TrainerFollowLaneDQNAutoCarlaTF:
                 variables_size, total_size = get_variables_size()
                 for var_name, var_value in variables_size.items():
                     size = sys.getsizeof(var_value)
-                    log._warning(f"{var_name}: {size} bytes | {total_size =}")
+                    log._warning(
+                        f"\n{var_name}: {size} bytes |"
+                        f"\t{total_size =}")
 
                 del sorted_time_steps
                 gc.collect()
+                
+                
+                
+                ## VERIFY DATA
+                show = 10
+                if done and (not episode % show) and self.global_params.station != 'landau':
+                    input(
+                        f"\n\t{env.center_reward =}, {env.done_center =}, {env.centers_normal =}"
+                        f"\n\t{env.velocity_reward =}, {env.done_velocity =}"
+                        f"\n\t{env.heading_reward =}, {env.done_heading =}"
+                        f"\n\t{done =}, {reward =}"
+                        f"\n\t{env.params['current_speed'] =}, {env.params['target_veloc'] =}, {env.angle =}"
+                        f"\n\t{env.params['current_steering_angle'] =}"
+                        f"\n\t{state}"
+                    ) 
             ### save last episode, not neccesarily the best one
             save_dataframe_episodes(
                 self.environment.environment,
                 self.global_params.metrics_data_dir,
                 self.global_params.aggr_ep_rewards,
             )
+            
+               
+            
         ############################################################################
         #
         # finally
@@ -726,7 +886,6 @@ class TrainerFollowLaneDQNAutoCarlaTF:
                 settings.fixed_delta_seconds = None
                 self.world.apply_settings(settings)
                 traffic_manager.set_synchronous_mode(True)
-                print(f"ending training...bye!!")
 
             # destroy_all_actors()
             # for actor in self.actor_list[::-1]:
@@ -738,45 +897,9 @@ class TrainerFollowLaneDQNAutoCarlaTF:
 
             env.close()
 
-            try:
-                ps_output = (
-                    subprocess.check_output(["ps", "-Af"]).decode("utf-8").strip("\n")
-                )
-            except subprocess.CalledProcessError as ce:
-                log._warning(
-                    "SimulatorEnv: exception raised executing ps command {}".format(ce)
-                )
-                sys.exit(-1)
 
-            if ps_output.count("CarlaUE4.sh") > 0:
-                try:
-                    subprocess.check_call(["killall", "-9", "CarlaUE4.sh"])
-                    log._warning("SimulatorEnv: CARLA server killed.")
-                except subprocess.CalledProcessError as ce:
-                    log._warning(
-                        "SimulatorEnv: exception raised executing killall command for CARLA server {}".format(
-                            ce
-                        )
-                    )
 
-            if ps_output.count("CarlaUE4-Linux-Shipping") > 0:
-                try:
-                    subprocess.check_call(["killall", "-9", "CarlaUE4-Linux-Shipping"])
-                    log._warning("SimulatorEnv: CarlaUE4-Linux-Shipping killed.")
-                except subprocess.CalledProcessError as ce:
-                    log._warning(
-                        "SimulatorEnv: exception raised executing killall command for CarlaUE4-Linux-Shipping {}".format(
-                            ce
-                        )
-                    )
-
-            if ps_output.count("CarlaUE4-Linux-") > 0:
-                try:
-                    subprocess.check_call(["killall", "-9", "CarlaUE4-Linux-"])
-                    log._warning("SimulatorEnv: CarlaUE4-Linux- killed.")
-                except subprocess.CalledProcessError as ce:
-                    log._warning(
-                        "SimulatorEnv: exception raised executing killall command for CarlaUE4-Linux- {}".format(
-                            ce
-                        )
-                    )
+            if self.global_params.station == 'landau':
+                self.closing_carla_server()
+                
+                

@@ -3,15 +3,15 @@ from pydantic import BaseModel
 from rl_studio.agents.auto_carla.rewards import AutoCarlaRewards
 
 # from rl_studio.envs.carla.followlane.rewards import AutoCarlaRewards
-from rl_studio.envs.carla.followlane.simplified_perception import (
-    AutoCarlaSimplifiedPerception,
-)
+# from rl_studio.envs.carla.followlane.simplified_perception import (
+#    AutoCarlaSimplifiedPerception,
+# )
 from rl_studio.agents.auto_carla.utils import AutoCarlaUtils
 
 
 class FollowLaneCarlaConfig(BaseModel):
     def __init__(self, **config):
-        self.simplifiedperception = AutoCarlaSimplifiedPerception()
+        # self.simplifiedperception = AutoCarlaSimplifiedPerception()
         self.autocarlarewards = AutoCarlaRewards()
         self.autocarlautils = AutoCarlaUtils()
         # self.autocarlalanedetector = LaneDetector()

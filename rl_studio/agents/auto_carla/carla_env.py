@@ -220,6 +220,7 @@ class CarlaEnv(gym.Env):
 
         self.actor_list = []
 
+        self.spectator = self.world.get_spectator()
         ######################################################################
 
         ## LaneDetector Camera ---------------
@@ -260,6 +261,23 @@ class CarlaEnv(gym.Env):
             state = np.concatenate(self.state_queue)
 
         return state
+
+
+    def setup_spectator(self):
+        # self.spectator = self.world.get_spectator()
+        car_transfor = self.new_car.car.get_transform()
+        # world_snapshot = self.world.wait_for_tick()
+        # actor_snapshot = world_snapshot.find(self.car.id)
+        # Set spectator at given transform (vehicle transform)
+        # self.spectator.set_transform(actor_snapshot.get_transform())
+        self.spectator.set_transform(
+            carla.Transform(
+                car_transfor.location + carla.Location(z=60),
+                carla.Rotation(pitch=-90, roll=-90),
+            )
+        )
+        # self.actor_list.append(self.spectator)
+        
 
     #####################################################################################
     #
@@ -333,6 +351,9 @@ class CarlaEnv(gym.Env):
             time.sleep(0.2)
 
         # TODO: spawning car
+
+        self.setup_spectator()
+
 
         #### LANEDETECTOR + REGRESSION
         image_copy = np.copy(self.sensor_camera_rgb.front_rgb_camera)
@@ -520,13 +541,13 @@ class CarlaEnv(gym.Env):
 
         # reward, done, centers_rewards_list = (
         (
-            center_reward,
-            done_center,
-            centers_rewards_list,
-            velocity_reward,
-            done_velocity,
-            heading_reward,
-            done_heading,
+            self.center_reward,
+            self.done_center,
+            self.centers_rewards_list,
+            self.velocity_reward,
+            self.done_velocity,
+            self.heading_reward,
+            self.done_heading,
             done,
             reward,
         ) = self.autocarlarewards.rewards_followlane_center_velocity_angle(
@@ -588,20 +609,6 @@ class CarlaEnv(gym.Env):
         #    self.state = np.concatenate(self.state_queue)
         self.state = self.concatenate_states(self.state, self.state_space)
 
-        """
-        step = 1
-        show = 10
-        if done and (not step % show):
-            step += 1
-            input(
-                f"\n\t{center_reward =}, {done_center =}, {centers_rewards_list =}"
-                f"\n\t{velocity_reward =}, {done_velocity =}"
-                f"\n\t{heading_reward =}, {done_heading =}"
-                f"\n\t{done =}, {reward =}"
-                f"\n\t{self.params['current_speed'] =}, {self.params['target_veloc'] =}, {self.angle =}"
-                f"\n\t{self.state}"
-            )
-        """
 
         return self.state, reward, done, {}
 
