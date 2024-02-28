@@ -92,7 +92,7 @@ def print_dictionary(dic):
 
 def render_params(**kwargs):
     font = cv2.FONT_HERSHEY_SIMPLEX
-    canvas = np.zeros((400, 900, 3), dtype="uint8")
+    canvas = np.zeros((400, 1800, 3), dtype="uint8")
     white = (255, 255, 255)
     i = 10
     for key, value in kwargs.items():

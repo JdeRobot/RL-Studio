@@ -84,6 +84,14 @@ class ModifiedTensorBoard(TensorBoard):
             tf.summary.histogram("actions_w", actions[1], step=index)
             self.writer.flush()
 
+    def update_weights(self, weights_paramaters, index):
+        with self.writer.as_default():
+            for name, param in weights_paramaters:
+                # Convert PyTorch tensor to NumPy array
+                param_numpy = param.cpu().detach().numpy() if param.device.type == 'cuda' else param.detach().numpy()
+                tf.summary.histogram(name, param_numpy, step=index)
+                self.writer.flush()
+
     def update_hyperparams(self, params):
         # Convert the dictionary to a list of (key, value) pairs
         table_data = [[key, value] for key, value in params.items()]

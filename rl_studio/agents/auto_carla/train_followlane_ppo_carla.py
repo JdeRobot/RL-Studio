@@ -80,6 +80,7 @@ class TrainerFollowLanePPOCarla:
         self.environment = LoadEnvVariablesPPOCarla(config)
         self.log_file = f"{self.global_params.logs_dir}/{time.strftime('%Y%m%d-%H%M%S')}_{self.global_params.mode}_{self.global_params.task}_{self.global_params.algorithm}_{self.global_params.agent}_{self.global_params.framework}.log"
         self.log = LoggingHandler(self.log_file)
+        self.loss = 0
 
         self.tensorboard = ModifiedTensorBoard(
             log_dir=f"{self.global_params.logs_tensorboard_dir}/{self.algoritmhs_params.model_name}-{time.strftime('%Y%m%d-%H%M%S')}"
@@ -96,12 +97,17 @@ class TrainerFollowLanePPOCarla:
         self.env = gym.make(self.env_params.env_name, **self.environment.environment)
         self.all_steps = 0
         self.current_max_reward = 0
+        self.episodes_speed = []
+        self.episodes_d_reward = []
+        self.episodes_v_reward = []
+        self.episodes_steer = []
+        self.episodes_reward = []
 
         std_init = self.algoritmhs_params.std_dev
         K_epochs = 8
 
-        # TODO This 4 must come from config states in yaml
-        state_size = 10
+        # TODO This must come from config states in yaml
+        state_size = len(self.environment.environment["x_row"]) + 2
         self.ppo_agent = PPO(state_size, len(self.global_params.actions_set), self.algoritmhs_params.actor_lr,
              self.algoritmhs_params.critic_lr, self.algoritmhs_params.gamma,
              K_epochs, self.algoritmhs_params.epsilon, True, std_init)
@@ -131,42 +137,21 @@ class TrainerFollowLanePPOCarla:
 
     def save_if_completed(self, episode, step, cumulated_reward):
         if step >= self.env_params.estimated_steps:
-            self.ppo_agent.save(
-                f"{self.global_params.models_dir}/"
-                f"{time.strftime('%Y%m%d-%H%M%S')}_LAPCOMPLETED"
-                f"MaxReward-{int(cumulated_reward)}_"
-                f"Epoch-{episode}")
+        #    self.ppo_agent.save(
+        #        f"{self.global_params.models_dir}/"
+        #        f"{time.strftime('%Y%m%d-%H%M%S')}_LAPCOMPLETED"
+        #        f"MaxReward-{int(cumulated_reward)}_"
+        #        f"Epoch-{episode}")
+            return True
+        return False
 
-    def send_and_store_metrics(self, episode, step, loss, start_time_epoch):
-        if not episode % self.env_params.save_episodes:
-            average_reward = sum(self.global_params.ep_rewards[-self.env_params.save_episodes:]) / len(
-                self.global_params.ep_rewards[-self.env_params.save_episodes:]
-            )
-            min_reward = min(self.global_params.ep_rewards[-self.env_params.save_episodes:])
-            max_reward = max(self.global_params.ep_rewards[-self.env_params.save_episodes:])
-            self.tensorboard.update_stats(
-                std_dev=self.ppo_agent.policy_old.std_dev,
-                steps_episode=step,
-                cum_rewards=average_reward,
-                # reward_min=min_reward,
-                # reward_max=max_reward,
-                actor_loss=loss if isinstance(loss, int) else loss.mean().detach().numpy(),
-            )
-
-            self.global_params.aggr_ep_rewards["episode"].append(episode)
-            self.global_params.aggr_ep_rewards["avg"].append(average_reward)
-            self.global_params.aggr_ep_rewards["max"].append(max_reward)
-            self.global_params.aggr_ep_rewards["min"].append(min_reward)
-            self.global_params.aggr_ep_rewards["epoch_training_time"].append(
-                (datetime.now() - start_time_epoch).total_seconds()
-            )
     def log_and_plot_rewards(self, episode, step, cumulated_reward):
         # Showing stats in screen for monitoring. Showing every 'save_every_step' value
         if not self.all_steps % self.env_params.save_every_step:
             file_name = save_dataframe_episodes(
                 self.environment.environment,
                 self.global_params.metrics_data_dir,
-                self.global_params.aggr_ep_rewards,
+                cumulated_reward,
             )
             plot_rewards(
                 self.global_params.metrics_data_dir,
@@ -188,18 +173,19 @@ class TrainerFollowLanePPOCarla:
 
         action = self.ppo_agent.select_action(tf_prev_state)
         action[0] = action[0] + 1  # TODO scale it propperly ( now between 0 and 2)
-        action[1] = action[1] * 1.5  # TODO scale it propperly (now between -1.5 and 1.5)
+        action[1] = action[1]  # TODO scale it propperly (now between -1 and 1)
         self.tensorboard.update_actions(action, self.all_steps)
 
         state, reward, done, info = self.env.step(action)
+        self.set_stats(info)
         # fps = info["fps"]
         self.ppo_agent.buffer.rewards.append(reward)
         self.ppo_agent.buffer.is_terminals.append(done)
 
-        loss = 0
         # update PPO agent
         if self.all_steps % self.algoritmhs_params.episodes_update == 0:
-            loss = self.ppo_agent.update()
+            self.loss, agent_weights = self.ppo_agent.update()
+            self.tensorboard.update_weights(agent_weights, self.all_steps)
 
         if self.all_steps % self.global_params.steps_to_decrease == 0:
             self.ppo_agent.decay_action_std(self.global_params.decrease_substraction,
@@ -239,7 +225,7 @@ class TrainerFollowLanePPOCarla:
                 # best_episode_until_now=best_epoch,
                 # with_highest_reward=int(current_max_reward),
             )
-            return state, cumulated_reward, done, loss
+            return state, cumulated_reward, done
 
     def main(self):
         hyperparams = combine_attributes(self.algoritmhs_params,
@@ -248,7 +234,6 @@ class TrainerFollowLanePPOCarla:
         self.tensorboard.update_hyperparams(hyperparams)
         # best_epoch_training_time = 0
         # best_epoch = 1
-        loss = 0
 
         if self.global_params.mode == "retraining":
             checkpoint = self.environment.environment["retrain_ppo_tf_model_name"]
@@ -274,23 +259,59 @@ class TrainerFollowLanePPOCarla:
             done = False
             cumulated_reward = 0
             step = 1
-            start_time_epoch = datetime.now()
 
             prev_state, _ = self.env.reset()
-
+            start_time = time.time()
             while not done:
-                state, cumulated_reward, done, loss = self.one_step_iteration(episode, step, prev_state, cumulated_reward)
+                state, cumulated_reward, done = self.one_step_iteration(episode, step, prev_state, cumulated_reward)
                 prev_state = state
                 step += 1
 
-                # self.log_and_plot_rewards(episode, step, cumulated_reward)
-                self.save_if_completed(episode, step, cumulated_reward)
+                if not done:
+                    done = self.save_if_completed(episode, step, cumulated_reward)
                 self.env.display_manager.render()
+            episode_time = time.time() - start_time
 
             self.save_if_best_epoch(episode, step, cumulated_reward)
-            self.global_params.ep_rewards.append(cumulated_reward)
-            self.send_and_store_metrics(episode, step, loss, start_time_epoch)
+            self.calculate_and_report_episode_stats(episode_time, step, cumulated_reward)
             self.env.destroy_all_actors()
             self.env.display_manager.destroy()
 
         # self.env.close()
+
+    def set_stats(self, info):
+        self.episodes_speed.append(info["velocity"])
+        self.episodes_steer.append(info["steering_angle"])
+        self.episodes_d_reward.append(info["d_reward"])
+        self.episodes_v_reward.append(info["v_eff_reward"])
+        self.episodes_reward.append(info["reward"])
+
+        pass
+
+    def calculate_and_report_episode_stats(self, episode_time, step, cumulated_reward):
+        avg_speed = np.mean(self.episodes_speed)
+        max_speed = np.max(self.episodes_speed)
+        cum_d_reward = np.sum(self.episodes_d_reward)
+        cum_v_reward = np.sum(self.episodes_v_reward)
+        max_reward = np.max(self.episodes_reward)
+        steering_std_dev = np.std(self.episodes_steer)
+        advanced_meters = avg_speed * episode_time
+        self.tensorboard.update_stats(
+            std_dev=self.ppo_agent.action_std,
+            steps_episode=step,
+            cum_rewards=cumulated_reward,
+            avg_speed=avg_speed,
+            max_speed=max_speed,
+            cum_d_reward=cum_d_reward,
+            cum_v_reward=cum_v_reward,
+            max_reward=max_reward,
+            steering_std_dev=steering_std_dev,
+            advanced_meters=advanced_meters,
+            actor_loss=self.loss if isinstance(self.loss, int) else self.loss.mean().cpu().detach().numpy(),
+        )
+        self.episodes_speed = []
+        self.episodes_d_reward = []
+        self.episodes_v_reward = []
+        self.episodes_steer = []
+        self.episodes_reward = []
+

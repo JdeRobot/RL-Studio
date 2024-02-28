@@ -246,7 +246,7 @@ class PPO:
 
         # clear buffer
         self.buffer.clear()
-        return loss
+        return loss, self.policy_old.named_parameters()
 
     def inference(self, state):
         return self.select_action(state)

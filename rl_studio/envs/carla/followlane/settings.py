@@ -62,5 +62,8 @@ class FollowLaneCarlaConfig(BaseModel):
         self.waypoints_lane_id = config["waypoints_lane_id"]
         self.waypoints_road_id = config["waypoints_road_id"]
 
+        self.beta = config["beta_1"]
+        self.punish_ineffective_vel = config["punish_ineffective_vel"]
+        self.punish_zig_zag_value = config["punish_zig_zag_value"]
         # self.actor_list = []
         # self.collision_hist = []

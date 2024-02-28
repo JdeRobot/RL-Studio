@@ -83,7 +83,7 @@ def draw_dash(index, dist, ll_segment):
 
 def calculate_midpoints(input_array):
     midpoints = []
-    for i in range(len(input_array) - 1):
+    for i in range(0, len(input_array) - 1, 2):
         midpoint = (input_array[i] + input_array[i + 1]) // 2
         midpoints.append(midpoint)
     return midpoints
@@ -100,7 +100,27 @@ def add_midpoints(ll_segment, index, dists):
 
 
 def connect_dashed_lines(ll_seg_mask):
+    # TODO
     return ll_seg_mask
+
+def discard_not_confident_centers(center_lane_indexes):
+    # Count the occurrences of each list size leaving out of the equation the non-detected
+    size_counter = Counter(len(inner_list) for inner_list in center_lane_indexes if NO_DETECTED not in inner_list)
+    # Check if size_counter is empty, which mean no centers found
+    if not size_counter:
+        return center_lane_indexes
+    # Find the most frequent size
+    # most_frequent_size = max(size_counter, key=size_counter.get)
+
+    # Iterate over inner lists and set elements to 1 if the size doesn't match majority
+    result = []
+    for inner_list in center_lane_indexes:
+        # if len(inner_list) != most_frequent_size:
+        if len(inner_list) != 2: # If we don't see the 2 lanes, we discard the row
+            inner_list = [NO_DETECTED] * len(inner_list)  # Set all elements to 1
+        result.append(inner_list)
+
+    return result
 
 
 class FollowLaneStaticWeatherNoTraffic(FollowLaneEnv):
@@ -158,186 +178,45 @@ class FollowLaneStaticWeatherNoTraffic(FollowLaneEnv):
         self.yolop_model.load_state_dict(checkpoint['state_dict'])
         self.yolop_model = self.yolop_model.to(self.device)
 
+
+    def setup_car_fix_pose(self, init):
+        car_bp = self.world.get_blueprint_library().filter("vehicle.*")[0]
+        location = carla.Transform(
+            carla.Location(
+                x=init.transform.location.x,
+                y=init.transform.location.y,
+                z=init.transform.location.z,
+            ),
+            carla.Rotation(
+                pitch=init.transform.rotation.pitch,
+                yaw=init.transform.rotation.yaw,
+                roll=init.transform.rotation.roll,
+            ),
+        )
+
+        self.car = self.world.spawn_actor(car_bp, location)
+        while self.car is None:
+            self.car = self.world.spawn_actor(car_bp, location)
+
+        self.actor_list.append(self.car)
+        spectator = self.world.get_spectator()
+        spectator_location = carla.Transform(
+            location.location + carla.Location(z=100),
+            carla.Rotation(-90, location.rotation.yaw, 0))
+        spectator.set_transform(spectator_location)
+
+        time.sleep(1)
+
     def reset(self):
 
         self.collision_hist = []
         self.actor_list = []
 
-        ## ---  Car
-        waypoints_town = self.world.get_map().generate_waypoints(5.0)
-        init_waypoint = waypoints_town[self.waypoints_init + 1]
-
-        if self.alternate_pose:
-            self.setup_car_random_pose()
-        elif self.waypoints_target is not None:
-            # waypoints = self.get_waypoints()
-            filtered_waypoints = self.draw_waypoints(
-                waypoints_town,
-                self.waypoints_init,
-                self.waypoints_target,
-                self.waypoints_lane_id,
-                2000,
-            )
-            self.setup_car_fix_pose(init_waypoint)
-
-        else:  # TODO: hacer en el caso que se quiera poner el target con .next()
-            waypoints_lane = init_waypoint.next_until_lane_end(1000)
-            waypoints_next = init_waypoint.next(1000)
-            print(f"{init_waypoint.transform.location.x = }")
-            print(f"{init_waypoint.transform.location.y = }")
-            print(f"{init_waypoint.lane_id = }")
-            print(f"{init_waypoint.road_id = }")
-            print(f"{len(waypoints_lane) = }")
-            print(f"{len(waypoints_next) = }")
-            w_road = []
-            w_lane = []
-            for x in waypoints_next:
-                w_road.append(x.road_id)
-                w_lane.append(x.lane_id)
-
-            counter_lanes = Counter(w_lane)
-            counter_road = Counter(w_road)
-            print(f"{counter_lanes = }")
-            print(f"{counter_road = }")
-
-            self.setup_car_fix_pose(init_waypoint)
-
-        ## --- Sensor collision
-        self.setup_col_sensor()
-
-        ## --- Cameras
-        # self.camera_spectator = SensorManager(
-        #    self.world,
-        #    self.display_manager,
-        #    "RGBCamera",
-        #    carla.Transform(carla.Location(x=-5, z=2.8), carla.Rotation(yaw=+00)),
-        #    self.car,
-        #    {},
-        #    display_pos=[0, 0],
-        # )
-        # self.camera_spectator_segmentated = SensorManager(
-        #    self.world,
-        #    self.display_manager,
-        #    "SemanticCamera",
-        #    carla.Transform(carla.Location(x=-5, z=2.8), carla.Rotation(yaw=+00)),
-        #    self.car,
-        #    {},
-        #    display_pos=[1, 0],
-        # )
-        # self.sergio_camera_spectator = SensorManager(
-        #    self.world,
-        #    self.display_manager,
-        #    "SemanticCameraSergio",
-        #    carla.Transform(carla.Location(x=-5, z=2.8), carla.Rotation(yaw=+00)),
-        #    self.car,
-        #    {},
-        #    display_pos=[2, 0],
-        # )
-        # self.front_camera = SensorManager(
-        #    self.world,
-        #    self.display_manager,
-        #    "RGBCamera",
-        #    carla.Transform(carla.Location(x=2, z=1), carla.Rotation(yaw=+00)),
-        #    self.car,
-        #    {},
-        #    display_pos=[0, 1],
-        # )
-
-        # self.front_camera_segmentated = SensorManager(
-        #    self.world,
-        #    self.display_manager,
-        #    "SemanticCamera",
-        #    carla.Transform(carla.Location(x=2, z=1), carla.Rotation(yaw=+00)),
-        #    self.car,
-        #    {},
-        #    display_pos=[1, 1],
-        # )
-
-        # self.sergio_front_camera = SensorManager(
-        #    self.world,
-        #    self.display_manager,
-        #    "SemanticCameraSergio",
-        #    carla.Transform(carla.Location(x=2, z=1), carla.Rotation(yaw=+00)),
-        #    self.car,
-        #    {},
-        #    display_pos=[2, 1],
-        # )
-        # self.front_camera_mas_baja = SensorManager(
-        #    self.world,
-        #    self.display_manager,
-        #    "RGBCamera",
-        #    carla.Transform(carla.Location(x=2, z=0.5), carla.Rotation(yaw=+00)),
-        #    self.car,
-        #    {},
-        #    display_pos=[0, 2],
-        # )
-        # self.front_camera_mas_baja_segmentated = SensorManager(
-        #    self.world,
-        #    self.display_manager,
-        #    "SemanticCamera",
-        #    carla.Transform(carla.Location(x=2, z=0.5), carla.Rotation(yaw=+00)),
-        #    self.car,
-        #    {},
-        #    display_pos=[1, 2],
-        # )
-
-        # self.sergio_front_camera_mas_baja = SensorManager(
-        #    self.world,
-        #    self.display_manager,
-        #    "SemanticCameraSergio",
-        #    carla.Transform(carla.Location(x=2, z=0.5), carla.Rotation(yaw=+0)),
-        #    self.car,
-        #    {},
-        #    display_pos=[2, 2],
-        # )
-
-        # self.front_camera_1_5_bev = SensorManager(
-        #     self.world,
-        #     self.display_manager,
-        #     "BirdEyeView",
-        #     carla.Transform(carla.Location(x=2, z=1.5), carla.Rotation(yaw=+00)),
-        #     self.car,
-        #     {},
-        #     display_pos=[1, 1],
-        #     client=self.client,
-        # )
-
-        self.front_camera_1_5 = SensorManager(
-            self.world,
-            self.display_manager,
-            "RGBCamera",
-            carla.Transform(carla.Location(x=2, z=1.5), carla.Rotation(yaw=+00)),
-            self.car,
-            {},
-            display_pos=[0, 0],
-        )
-
-        self.front_camera_1_5_segmentated = SensorManager(
-            self.world,
-            self.display_manager,
-            "SemanticCamera",
-            carla.Transform(carla.Location(x=2, z=1.5), carla.Rotation(yaw=+00)),
-            self.car,
-            {},
-            display_pos=[0, 1],
-        )
-
-        self.front_camera_1_5_red_mask = SensorManager(
-            self.world,
-            self.display_manager,
-            "RedMask",
-            carla.Transform(carla.Location(x=2, z=1.5), carla.Rotation(yaw=+0)),
-            self.car,
-            {},
-            display_pos=[0, 2],
-        )
-
+        self.set_init_pose()
         if self.sync_mode:
             self.world.tick()
         else:
             self.world.wait_for_tick()
-
-        self.set_spectator_location()
 
         time.sleep(1)
         self.episode_start = time.time()
@@ -345,39 +224,26 @@ class FollowLaneStaticWeatherNoTraffic(FollowLaneEnv):
 
         AutoCarlaUtils.show_image("image", self.front_camera_1_5.front_camera, 1)
 
-        # mask = self.preprocess_image(
-        #    self.front_camera_1_5_red_mask.front_camera_red_mask
-        # )
-        # AutoCarlaUtils.show_image("mask", mask, 1)
 
-        ## -- states
-        # (
-        #     states,
-        #     distance_center,
-        #     distance_to_centr_normalized,
-        # ) = self.calculate_states(mask)
         raw_image = self.get_resized_image(self.front_camera_1_5.front_camera)
-        ll_segment = self.detect_lines(raw_image)
-        # (
-        #     distance_center_nop,
-        #     _,
-        # ) = self.calculate_center(ll_segment)
-        # # Iterate over self.x_row and distance_center simultaneously
-        # self.show_ll_seg_image(distance_center_nop, ll_segment, "_no_post_process")
 
+        ll_segment = self.detect_lines(raw_image)
         ll_segment_post_process = self.post_process(ll_segment)
         (
             center_lanes,
             distance_to_center_normalized,
         ) = self.calculate_center(ll_segment_post_process)
-        right_lane_normalized_distances = [inner_array[0] for inner_array in distance_to_center_normalized]
-        right_center_lane = [[inner_array[0]] for inner_array in center_lanes]
+        right_lane_normalized_distances = [inner_array[-1] for inner_array in distance_to_center_normalized]
+        right_center_lane = [[inner_array[-1]] for inner_array in center_lanes]
 
         self.show_ll_seg_image(right_center_lane, ll_segment_post_process)
 
         state_size = len(distance_to_center_normalized)
+        # right_lane_normalized_distances = [1,1,1,1,1,1,1,1,1,1]
+        # state_size = 12
         time.sleep(1)
-
+        right_lane_normalized_distances.append(0)
+        right_lane_normalized_distances.append(0)
 
         return np.array(right_lane_normalized_distances), state_size
 
@@ -405,13 +271,6 @@ class FollowLaneStaticWeatherNoTraffic(FollowLaneEnv):
         for index in diff_indices:
             interested_line_borders = np.append(interested_line_borders, indices[index])
             interested_line_borders = np.append(interested_line_borders, int(indices[index+1]))
-        # print(interested_line_borders)
-
-        # Find the indices of the last 1 in the first set and the first 1 in the second set
-        # last_one_first_set = indices[diff_indices[0]]
-        # first_one_second_set = indices[diff_indices[0] + 1]
-        # Calculate the position of the middle point between the last 1 and the first 1
-        # middle_point = (last_one_first_set + first_one_second_set) // 2
 
         midpoints = calculate_midpoints(interested_line_borders)
         # print(midpoints)
@@ -429,14 +288,18 @@ class FollowLaneStaticWeatherNoTraffic(FollowLaneEnv):
             self.find_lane_center(lines[x]) for x, _ in enumerate(lines)
         ]
 
-        center_right_lane_distance = [
+        # this part consists of checking the number of lines detected in all rows
+        # then discarding the rows (set to 1) in which more or less centers are detected
+        center_lane_indexes = discard_not_confident_centers(center_lane_indexes)
+
+        center_lane_distances = [
             [center_image - x for x in inner_array] for inner_array in center_lane_indexes
         ]
 
         # Calculate the average position of the right lane lines
         ## normalized distance
         distance_to_center_normalized = [
-            np.array(x) / (width - center_image) for x in center_right_lane_distance
+            np.array(x) / (width - center_image) for x in center_lane_distances
         ]
         return center_lane_indexes, distance_to_center_normalized
 
@@ -481,8 +344,10 @@ class FollowLaneStaticWeatherNoTraffic(FollowLaneEnv):
 
     def draw_waypoints(self, spawn_points, init, target, lane_id, life_time):
         filtered_waypoints = []
-        i = init
-        for waypoint in spawn_points[init + 1: target + 2]:
+        # i = init
+        # for waypoint in spawn_points[init + 1: target + 2]:
+        i = 1
+        for waypoint in spawn_points:
             filtered_waypoints.append(waypoint)
             string = f"[{waypoint.road_id},{waypoint.lane_id},{i}]"
             if waypoint.lane_id == lane_id:
@@ -520,48 +385,6 @@ class FollowLaneStaticWeatherNoTraffic(FollowLaneEnv):
             life_time=life_time,
             persistent_lines=True,
         )
-
-    def setup_car_fix_pose(self, init):
-        # while(1):
-        #     # Get the current spectator
-        #     spectator = self.world.get_spectator()
-        #
-        #     # Get the transform of the spectator (location and rotation)
-        #     spectator_transform = spectator.get_transform()
-        #
-        #     # Extract the location and rotation
-        #     spectator_location = spectator_transform.location
-        #     spectator_rotation = spectator_transform.rotation
-        #
-        #     # Print or use the values as needed
-        #     print("Spectator Location:", spectator_location)
-        #     print("Spectator Rotation:", spectator_rotation)
-        #     time.sleep(10)
-        # location = random.choice(self.world.get_map().get_spawn_points())
-        car_bp = self.world.get_blueprint_library().filter("vehicle.*")[0]
-        location = carla.Transform(
-            carla.Location(x=-9.732346, y=16.522575, z=10.90110),
-            carla.Rotation(pitch=3.958518, yaw=0.607781, roll=0.2),
-        )
-        # location = carla.Transform(
-        #     carla.Location(
-        #         x=init.transform.location.x,
-        #         y=init.transform.location.y,
-        #         z=init.transform.location.z,
-        #     ),
-        #     carla.Rotation(
-        #         pitch=init.transform.rotation.pitch,
-        #         yaw=init.transform.rotation.yaw,
-        #         roll=init.transform.rotation.roll,
-        #     ),
-        # )
-
-        self.car = self.world.spawn_actor(car_bp, location)
-        while self.car is None:
-            self.car = self.world.spawn_actor(car_bp, location)
-
-        self.actor_list.append(self.car)
-        time.sleep(1)
 
     def setup_car_random_pose(self):
         car_bp = self.world.get_blueprint_library().filter("vehicle.*")[0]
@@ -605,7 +428,6 @@ class FollowLaneStaticWeatherNoTraffic(FollowLaneEnv):
             self.world.tick()
         else:
             self.world.wait_for_tick()
-        # self.set_spectator_location()
 
         ## -- states
         # mask = self.preprocess_image(
@@ -627,10 +449,11 @@ class FollowLaneStaticWeatherNoTraffic(FollowLaneEnv):
             distance_to_center_normalized,
         ) = self.calculate_center(ll_segment_post_process)
         # We get the first of all calculated "center lanes" assuming it will be the right lane
-        right_lane_normalized_distances = [inner_array[0] for inner_array in distance_to_center_normalized]
-        right_center_lane = [[inner_array[0]] for inner_array in center_lanes]
+        right_lane_normalized_distances = [inner_array[-1] for inner_array in distance_to_center_normalized]
+        right_center_lane = [[inner_array[-1]] for inner_array in center_lanes]
 
         self.show_ll_seg_image(right_center_lane, ll_segment_post_process)
+        # self.show_ll_seg_image(center_lanes, ll_segment_post_process, name="ll_seg_all")
 
         # print(f"states:{states}\n")
         # AutoCarlaUtils.show_image_with_centrals(
@@ -649,8 +472,10 @@ class FollowLaneStaticWeatherNoTraffic(FollowLaneEnv):
         distance_error = [abs(x) for x in right_lane_normalized_distances]
         ## -------- Rewards
         reward, done = self.rewards_easy(distance_error, params)
+        right_lane_normalized_distances.append(params["velocity"]/5)
+        right_lane_normalized_distances.append(params["steering_angle"])
 
-        return np.array(right_lane_normalized_distances), reward, done, {}
+        return np.array(right_lane_normalized_distances), reward, done, params
 
     def control(self, action):
 
@@ -661,7 +486,10 @@ class FollowLaneStaticWeatherNoTraffic(FollowLaneEnv):
         params["velocity"] = math.sqrt(v.x ** 2 + v.y ** 2 + v.z ** 2)
 
         w = self.car.get_angular_velocity()
-        params["steering_angle"] = w
+        params["angular_velocity"] = w
+
+        w_angle = self.car.get_control().steer
+        params["steering_angle"] = w_angle
 
         return params
 
@@ -685,22 +513,37 @@ class FollowLaneStaticWeatherNoTraffic(FollowLaneEnv):
 
     def rewards_easy(self, distance_error, params):
 
-        done, states_non_line = self.end_if_conditions(distance_error)
+        done, states_non_line = self.end_if_conditions(distance_error, threshold=0.3)
 
         if done:
-            return 0, done
+            params["d_reward"] = 0
+            params["v_reward"] = 0
+            params["v_eff_reward"] = 0
+            params["reward"] = 0
+            return -self.punish_ineffective_vel, done
 
-        rewards = []
+        d_rewards = []
         for _, error in enumerate(distance_error):
-            rewards.append(error*10)
+            d_rewards.append(pow(1 - error, 5))
 
-        function_reward = sum(rewards) / states_non_line
-        function_reward += params["velocity"] * 0.5
-        function_reward -= params["steering_angle"].y
-        # print("v " + str(params["velocity"]))
-        # print("w" + str(params["steering_angle"]))
+        d_reward = sum(d_rewards) / ( len(distance_error) - states_non_line )
+        params["d_reward"] = d_reward
+        # reward Max = 1 here
+        punish = 0
+        if params["velocity"] < 1.5:
+            punish += self.punish_ineffective_vel
+        punish += self.punish_zig_zag_value * params["steering_angle"]
 
+        v_reward = params["velocity"] / 5
+        v_eff_reward = v_reward * pow(d_reward, 2)
+        params["v_reward"] = v_reward
+        params["v_eff_reward"] = v_eff_reward
 
+        beta = self.beta
+        # TODO Ver que valores toma la velocity para compensarlo mejor
+        function_reward = beta * d_reward + (1-beta) * v_eff_reward
+        function_reward -= punish
+        params["reward"] = function_reward
 
         return function_reward, done
 
@@ -755,7 +598,6 @@ class FollowLaneStaticWeatherNoTraffic(FollowLaneEnv):
     def detect(self, raw_image):
         # Get names and colors
         names = self.yolop_model.module.names if hasattr(self.yolop_model, 'module') else self.yolop_model.names
-        colors = [[random.randint(0, 255) for _ in range(3)] for _ in range(len(names))]
 
         # Run inference
         img = transform(raw_image).to(self.device)
@@ -764,33 +606,18 @@ class FollowLaneStaticWeatherNoTraffic(FollowLaneEnv):
             img = img.unsqueeze(0)
         # Inference
         det_out, da_seg_out, ll_seg_out = self.yolop_model(img)
-        # det_pred = non_max_suppression(det_out, classes=None, agnostic=False)
-        # det = det_pred[0]
 
-        # _, _, height, width = img.shape
-        # h, w, _ = img_det.shape
-        # pad_w, pad_h = shapes[1][1]
-        # pad_w = int(pad_w)
-        # pad_h = int(pad_h)
-        # ratio = shapes[1][0][1]
-        #
-        # da_predict = da_seg_out[:, :, pad_h:(height - pad_h), pad_w:(width - pad_w)]
-        # da_seg_mask = torch.nn.functional.interpolate(da_predict, scale_factor=int(1 / ratio), mode='bilinear')
-        # _, da_seg_mask = torch.max(da_seg_mask, 1)
-        # da_seg_mask = da_seg_mask.int().squeeze().cpu().numpy()
-        # # da_seg_mask = morphological_process(da_seg_mask, kernel_size=7)
-        #
-        # ll_predict = ll_seg_out[:, :, pad_h:(height - pad_h), pad_w:(width - pad_w)]
-        ll_seg_mask = torch.nn.functional.interpolate(ll_seg_out, scale_factor=int(1), mode='bilinear')
+        ll_seg_mask = torch.nn.functional.interpolate(ll_seg_out, scale_factor=int(1), mode='bicubic')
         _, ll_seg_mask = torch.max(ll_seg_mask, 1)
         ll_seg_mask = ll_seg_mask.int().squeeze().cpu().numpy()
 
         return ll_seg_mask
 
-    def show_ll_seg_image(self, dists, ll_segment, suffix=""):
+    def show_ll_seg_image(self,dists, ll_segment, suffix="",  name='ll_seg'):
         ll_segment_int8 = (ll_segment * 255).astype(np.uint8)
         ll_segment_all = [np.copy(ll_segment_int8),np.copy(ll_segment_int8),np.copy(ll_segment_int8)]
-        # Iterate over self.x_row and distance_center simultaneously
+
+        # draw the midpoint used as right center lane
         for index, dist in zip(self.x_row, dists):
             # Set the value at the specified index and distance to 1
             add_midpoints(ll_segment_all[0], index, dist)
@@ -802,54 +629,166 @@ class FollowLaneStaticWeatherNoTraffic(FollowLaneEnv):
 
         ll_segment_stacked = np.stack(ll_segment_all, axis=-1)
         # We now show the segmentation and center lane postprocessing
-        cv2.imshow('ll_seg' + suffix, ll_segment_stacked)
-        # cv2.imshow('image', det)
+        cv2.imshow(name + suffix, ll_segment_stacked)
         cv2.waitKey(1)  # 1 millisecond
 
     def post_process(self, ll_segment):
-        # # Lane line post-processing
-        ll_seg_mask = morphological_process(ll_segment, kernel_size=5, func_type=cv2.MORPH_OPEN)
-        ll_seg_mask = connect_dashed_lines(ll_seg_mask)
+        ''''
+        Lane line post-processing
+        '''
+        ll_segment = morphological_process(ll_segment, kernel_size=5, func_type=cv2.MORPH_OPEN)
+        ll_segment = morphological_process(ll_segment, kernel_size=20, func_type=cv2.MORPH_CLOSE)
+        return ll_segment
 
-        # ll_seg_mask = connect_lane(ll_seg_mask)
-        #
-        # img_det =  show_seg_result(img_det, (da_seg_mask, ll_seg_mask), _, _, is_demo=True)
-        return ll_seg_mask
+    def post_process_hough(self, ll_segment):
+        ll_segment_int8 = (ll_segment * 255).astype(np.uint8)
+        # Detect lines using HoughLines
+        lines = cv2.HoughLinesP(
+            ll_segment_int8,  # Input edge image
+            1,  # Distance resolution in pixels
+            np.pi / 60,  # Angle resolution in radians
+            threshold=80,  # Min number of votes for valid line
+            minLineLength=10,  # Min allowed length of line
+            maxLineGap=60  # Max allowed gap between line for joining them
+        )
 
-    def set_spectator_location(self):
-        spectator = self.world.get_spectator()
+        # Filter and draw the two most prominent lines
+        if lines is None:
+            ll_segment = morphological_process(ll_segment, kernel_size=5, func_type=cv2.MORPH_OPEN)
+            ll_segment = morphological_process(ll_segment, kernel_size=20, func_type=cv2.MORPH_CLOSE)
+            return ll_segment
 
-        world_snapshot = self.world.get_snapshot()
-        actor_snapshot = world_snapshot.find(self.car.id)
-        # Set spectator at given transform (vehicle transform)
-        # spectator.set_transform(actor_snapshot.get_transform())
+        # Sort lines by their length
+        # lines = sorted(lines, key=lambda x: x[0][0] * np.sin(x[0][1]), reverse=True)[:5]
 
-        # Get the car's current transform
-        car_transform = actor_snapshot.get_transform()
+        # Create a blank image to draw lines
+        line_mask = np.zeros_like(ll_segment, dtype=np.uint8)  # Ensure dtype is uint8
 
-        # Calculate the pitch and yaw angles to look down at the road
-        pitch = -90  # Look down
-        yaw = car_transform.rotation.yaw  # Maintain the same yaw angle as the car
+        # Iterate over points
+        for points in lines:
+            # Extracted points nested in the list
+            x1, y1, x2, y2 = points[0]
+            # Draw the lines joing the points
+            # On the original image
+            cv2.line(line_mask, (x1, y1), (x2, y2), (255, 255, 255), 2)
 
-        # Create a rotation quaternion from Euler angles
-        rotation = carla.Rotation(pitch, yaw, 0)
-        # Set the spectator's transform with adjusted z-coordinate
-        new_spectator_transform = carla.Transform(car_transform.location + carla.Location(z=100),
-                                                  rotation)
+        # Postprocess the detected lines
+        # line_mask = morphological_process(line_mask, kernel_size=5, func_type=cv2.MORPH_OPEN)
+        # line_mask = morphological_process(line_mask, kernel_size=5, func_type=cv2.MORPH_CLOSE)
+        # kernel = np.ones((3, 3), np.uint8)  # Adjust the size as needed
+        # eroded_image = cv2.erode(line_mask, kernel, iterations=1)
+        ll_segment_int8 = (line_mask // 255).astype(np.uint8)
+        # TODO We could still pass the houghlines to the final image to check if we can extends the detected
+        # lines with some arithmetics
+        return ll_segment_int8
 
-        spectator.set_transform(new_spectator_transform)
+    def extend_lines(self, lines, image_height):
+        extended_lines = []
+        for line in lines:
+            x1, y1, x2, y2 = line[0]
+            # Calculate slope and intercept
+            if x2 - x1 != 0:
+                slope = (y2 - y1) / (x2 - x1)
+                intercept = y1 - slope * x1
+                # Calculate new endpoints to extend the line
+                x1_extended = int(x1 - 2 * (x2 - x1))  # Extend 2 times the original length
+                y1_extended = int(slope * x1_extended + intercept)
+                x2_extended = int(x2 + 2 * (x2 - x1))  # Extend 2 times the original length
+                y2_extended = int(slope * x2_extended + intercept)
+                # Ensure the extended points are within the image bounds
+                x1_extended = max(0, min(x1_extended, image_height - 1))
+                y1_extended = max(0, min(y1_extended, image_height - 1))
+                x2_extended = max(0, min(x2_extended, image_height - 1))
+                y2_extended = max(0, min(y2_extended, image_height - 1))
+                # Append the extended line to the list
+                extended_lines.append([(x1_extended, y1_extended, x2_extended, y2_extended)])
+        return extended_lines
 
-    def end_if_conditions(self, right_lane_normalized_distances):
-        counter_states = Counter(right_lane_normalized_distances)
-        states_non_line = counter_states.get(1)
-        ## ----- hacemos la salida
+    def end_if_conditions(self, distances_error, threshold=0.6, min_conf_states=2):
         done = False
-        if states_non_line is not None and (
-                states_non_line > len(right_lane_normalized_distances) // 1.5
-        ):  # salimos porque no detecta linea a la derecha
+
+        states_above_threshold = sum(1 for state_value in distances_error if state_value > threshold)
+
+        if states_above_threshold is None:
+            states_above_threshold = 0
+
+        if (states_above_threshold > len(distances_error) - min_conf_states):  # salimos porque no detecta linea a la derecha
             done = True
         if len(self.collision_hist) > 0:  # te has chocado, baby
             done = True
 
-        return done, states_non_line
+        return done, states_above_threshold
+
+    def set_init_pose(self):
+        ## ---  Car
+        waypoints_town = self.world.get_map().generate_waypoints(5.0)
+        init_waypoint = waypoints_town[self.waypoints_init + 1]
+
+        if self.alternate_pose:
+            self.setup_car_random_pose()
+        elif self.waypoints_init is not None:
+            # self.draw_waypoints(
+            #     waypoints_town,
+            #     self.waypoints_init,
+            #     self.waypoints_target,
+            #     self.waypoints_lane_id,
+            #     2000,
+            # )
+            self.setup_car_fix_pose(init_waypoint)
+        else:  # TODO: hacer en el caso que se quiera poner el target con .next()
+            waypoints_lane = init_waypoint.next_until_lane_end(1000)
+            waypoints_next = init_waypoint.next(1000)
+            print(f"{init_waypoint.transform.location.x = }")
+            print(f"{init_waypoint.transform.location.y = }")
+            print(f"{init_waypoint.lane_id = }")
+            print(f"{init_waypoint.road_id = }")
+            print(f"{len(waypoints_lane) = }")
+            print(f"{len(waypoints_next) = }")
+            w_road = []
+            w_lane = []
+            for x in waypoints_next:
+                w_road.append(x.road_id)
+                w_lane.append(x.lane_id)
+
+            counter_lanes = Counter(w_lane)
+            counter_road = Counter(w_road)
+            print(f"{counter_lanes = }")
+            print(f"{counter_road = }")
+
+            self.setup_car_fix_pose(init_waypoint)
+
+
+        ## --- Sensor collision
+        self.setup_col_sensor()
+
+        self.front_camera_1_5 = SensorManager(
+            self.world,
+            self.display_manager,
+            "RGBCamera",
+            carla.Transform(carla.Location(x=2, z=1.5), carla.Rotation(yaw=+00)),
+            self.car,
+            {},
+            display_pos=[0, 0],
+        )
+
+        self.front_camera_1_5_segmentated = SensorManager(
+            self.world,
+            self.display_manager,
+            "SemanticCamera",
+            carla.Transform(carla.Location(x=2, z=1.5), carla.Rotation(yaw=+00)),
+            self.car,
+            {},
+            display_pos=[0, 1],
+        )
+
+        self.front_camera_1_5_red_mask = SensorManager(
+            self.world,
+            self.display_manager,
+            "RedMask",
+            carla.Transform(carla.Location(x=2, z=1.5), carla.Rotation(yaw=+0)),
+            self.car,
+            {},
+            display_pos=[0, 2],
+        )
+
 

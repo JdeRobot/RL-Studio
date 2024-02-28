@@ -1,6 +1,6 @@
 ale_py==0.7.4
 carla_birdeye_view==1.1.1
-cv_bridge==1.16.2
+#cv_bridge==1.16.2
 gym==0.17.0
 gymnasium==0.28.1
 keras==2.11.0
@@ -20,10 +20,10 @@ pygame==2.4.0
 Pygments==2.14.0
 PyYAML==6.0.1
 reloading==1.1.2
-rosbag==1.16.0
-rosgraph==1.16.0
-rosnode==1.16.0
-rospy==1.16.0
+#rosbag==1.16.0
+#rosgraph==1.16.0
+#rosnode==1.16.0
+#rospy==1.16.0
 scikit_learn==1.1.2
 scipy==1.6.1
 sensor_msgs==1.13.1
@@ -34,7 +34,7 @@ tensorboardX==2.6.2.2
 tensorflow==2.9.1
 tensorflow_gpu==2.11.0
 tf==1.13.2
-torch==2.1.2
+torch==2.2.0
 tqdm==4.64.0
 protobuf==3.20.1
 rospkg==1.5.0

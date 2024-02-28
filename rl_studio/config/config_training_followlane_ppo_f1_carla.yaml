@@ -1,5 +1,5 @@
 settings:
-  mode: training # training, retraining, inference
+  mode: retraining # training, retraining, inference
   task: follow_lane_carla # follow_line_gazebo, follow_lane_gazebo, autoparking_gazebo
   algorithm: ppo_continuous # qlearn, dqn, ddpg, ppo
   simulator: carla # openai, carla, gazebo, sumo
@@ -7,7 +7,7 @@ settings:
   env: follow_lane # Town01, simple, nurburgring, montreal, curves, simple_laser, manual, autoparking
   agent: auto_carla # f1, autoparkingRL, auto_carla, mountain_car, robot_mesh, cartpole, turtlebot
   actions: slow # slow, fast
-  states: sp10 #image, sp1 (simplified perception with 1 point), sp3 (simplified perception with 3 points), spn (simplified perception with n points)
+  states: sp5 #image, sp1 (simplified perception with 1 point), sp3 (simplified perception with 3 points), spn (simplified perception with n points)
   rewards: followline_center # followline_center, followline_center_v_w_linear
   framework: TensorFlow # TensorFlow, Pytorch
   total_episodes: 500000
@@ -18,14 +18,14 @@ settings:
   metrics_dir: "./metrics"
   debug_stats: false
   show_monitoring: true
-  steps_to_decrease: 30000
-  decrease_substraction: 0.01
-  decrease_min: 0.03
+  steps_to_decrease: 25000
+  decrease_substraction: 0.005
+  decrease_min: 0.05
   reward_params:
     function: pow
-    punish_zig_zag_value: 1
+    punish_zig_zag_value: 0
     punish_ineffective_vel: 0
-    beta_1: 0.5
+    beta_1: 0
 
 
 ros:
@@ -34,7 +34,7 @@ ros:
 
 retraining:
   ppo:
-    retrain_ppo_tf_model_name: "20231118-235922-IMPROVEDMaxReward-1132_Epoch-7"
+    retrain_ppo_tf_model_name: "20240303-191120-IMPROVEDMaxReward-388_Epoch-30"
 inference:
   ppo:
     inference_ppo_tf_actor_model_name:
@@ -45,7 +45,7 @@ algorithm:
     gamma: 0.9
     epsilon: 0.1
     std_dev: 0.2
-    episodes_update: 100
+    episodes_update: 50 # episodes how often the algorithm is trained
     replay_memory_size: 50_000
     memory_fraction: 0.20
     critic_lr: 0.003
@@ -71,10 +71,10 @@ states:
     0: [40] #TODO
   sp3:
     0: [10, 50, 150]
-  sp4:
-    0: [ 30, 60, 100, 120 ]
+  sp5:
+    0: [ 280, 290, 300, 310, 320 ]
   sp10:
-    0: [250, 270, 290, 320, 330, 350, 360, 370, 380, 400]
+    0: [270, 280, 290, 300, 310, 320, 330, 340, 350, 360]
   spn:
     0: [10]
 
@@ -106,9 +106,9 @@ carla_environments:
     traffic_pedestrians: False
     city_lights: False
     car_lights: False
-    estimated_steps: 10000
-    save_episodes: 10
-    save_every_step: 100
+    estimated_steps: 5000
+    save_episodes: 5 # not used in this carla ppo
+    save_every_step: 100 # not used in this carla ppo
     init_pose:
     goal_pose:
     filter: vehicle.*
@@ -118,7 +118,7 @@ carla_environments:
     sync: True #syncronous mode or async
     alternate_pose: False
     waypoints_meters: 5 #distance between waypoints in meters
-    waypoints_init: 839
+    waypoints_init: 1471 # 6927
     waypoints_target: 959 #961
     waypoints_lane_id: -1
     waypoints_road_id: 8

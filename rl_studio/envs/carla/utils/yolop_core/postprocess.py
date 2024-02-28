@@ -78,7 +78,7 @@ def build_targets(cfg, predictions, targets, model):
 
     return tcls, tbox, indices, anch
 
-def morphological_process(image, kernel_size=5, func_type=cv2.MORPH_CLOSE):
+def  morphological_process(image, kernel_size=5, func_type=cv2.MORPH_CLOSE):
     """
     morphological process to fill the hole in the binary segmentation result
     :param image:
