@@ -185,7 +185,7 @@ class Buffer:
             self.next_state_buffer[index] = obs_tuple[3]
             if self.action_space == "continuous":
                 self.action_buffer[index] = [
-                    obs_tuple[1][0][i] for i in range(len(obs_tuple[1][0]))
+                    obs_tuple[1][i] for i in range(len(obs_tuple[1]))
                 ]
             else:  # discrete actions. Only for baselines
                 self.action_buffer[index] = obs_tuple[1]
@@ -524,14 +524,14 @@ class DDPGAgent:
         sampled_actions[1] = sampled_actions[1] + noise
         
         legal_action_v = round(
-            np.clip(sampled_actions[0], self.V_LOWER_BOUND, self.V_UPPER_BOUND), 1
+            np.clip(sampled_actions[0], self.V_LOWER_BOUND, self.V_UPPER_BOUND), 3
         )
         legal_action_w = round(
-            np.clip(sampled_actions[1], self.W_RIGHT_BOUND, self.W_LEFT_BOUND), 1
+            np.clip(sampled_actions[1], self.W_RIGHT_BOUND, self.W_LEFT_BOUND), 3
         )
         legal_action = np.array([legal_action_v, legal_action_w])
 
-        return [np.squeeze(legal_action)]
+        return np.squeeze(legal_action)
 
     def get_actor_model_image_continuous_actions(self):
         # inputShape = (96, 128, 3)

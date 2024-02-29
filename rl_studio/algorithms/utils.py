@@ -13,7 +13,6 @@ def save_actorcritic_model(
     timestamp = time.strftime('%Y%m%d-%H%M%S')
     agent.actor_model.save(
         f"{global_params.models_dir}/{timestamp}_{text}_"
-        f"C-{environment['circuit_name']}_"
         f"S-{environment['states']}_"
         f"A-{environment['action_space']}_"
         f"MR-{int(cumulated_reward)}_"
@@ -21,7 +20,6 @@ def save_actorcritic_model(
     )    
     agent.critic_model.save(
         f"{global_params.models_dir}/{timestamp}_{text}_"
-        f"C-{environment['circuit_name']}_"
         f"S-{environment['states']}_"
         f"A-{environment['action_space']}_"
         f"MR-{int(cumulated_reward)}_"

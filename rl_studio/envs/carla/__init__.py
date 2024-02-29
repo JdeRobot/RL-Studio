@@ -13,9 +13,6 @@ class Carla:
         weather = environment["weather"]
         traffic_pedestrians = environment["traffic_pedestrians"]
 
-        # =============================
-        # FollowLane - qlearn - weather: static - traffic and pedestrians: No - (No framework)
-        # =============================
         if (
             task == TasksType.FOLLOWLANECARLA.value
             and algorithm == AlgorithmsType.QLEARN.value
@@ -31,6 +28,18 @@ class Carla:
         elif (
             task == TasksType.FOLLOWLANECARLA.value
             and algorithm == AlgorithmsType.PPO_CONTINIUOUS.value
+            and weather != "dynamic"
+            and traffic_pedestrians is False
+        ):
+            from rl_studio.envs.carla.followlane.followlane_ppo import (
+                FollowLaneStaticWeatherNoTraffic,
+            )
+
+            return FollowLaneStaticWeatherNoTraffic(**environment)
+
+        elif (
+            task == TasksType.FOLLOWLANECARLA.value
+            and algorithm == AlgorithmsType.DDPG.value
             and weather != "dynamic"
             and traffic_pedestrians is False
         ):

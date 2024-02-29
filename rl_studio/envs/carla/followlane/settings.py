@@ -52,7 +52,6 @@ class FollowLaneCarlaConfig(BaseModel):
         # Rewards
         self.reward_function = config["reward_function"]
         self.rewards = config["rewards"]
-        self.min_reward = config["min_reward"]
 
         # Pose
         self.alternate_pose = config["alternate_pose"]
