@@ -150,7 +150,7 @@ class LoadGlobalParams:
             "current_total_training_time": [],
         }
         self.settings = config["settings"]
-        self.station = config['settings']['station']
+        self.station = config["settings"]["station"]
         self.mode = config["settings"]["mode"]
         self.task = config["settings"]["task"]
         self.algorithm = config["settings"]["algorithm"]
@@ -1047,6 +1047,9 @@ class LoadEnvVariablesDQNCarla:
         # CARLA
         self.environment["carla_server"] = config["carla"]["carla_server"]
         self.environment["carla_client"] = config["carla"]["carla_client"]
+        self.environment["traffic_manager_port"] = config["carla"][
+            "traffic_manager_port"
+        ]
 
 
 class LoadEnvVariablesSB3Carla:

@@ -256,12 +256,11 @@ class CarlaEnv(gym.Env):
             self.state_queue.append(state)
 
         if state_space == "image":
-            state = np.concatenate(self.state_queue, axis=0)
+            state = np.concatenate(self.state_queue, axis=-1)
         else:
             state = np.concatenate(self.state_queue)
 
         return state
-
 
     def setup_spectator(self):
         # self.spectator = self.world.get_spectator()
@@ -277,7 +276,6 @@ class CarlaEnv(gym.Env):
             )
         )
         # self.actor_list.append(self.spectator)
-        
 
     #####################################################################################
     #
@@ -354,7 +352,6 @@ class CarlaEnv(gym.Env):
 
         self.setup_spectator()
 
-
         #### LANEDETECTOR + REGRESSION
         image_copy = np.copy(self.sensor_camera_rgb.front_rgb_camera)
         (
@@ -374,16 +371,31 @@ class CarlaEnv(gym.Env):
         ) = self.calculate_lane_centers_with_lane_detector(mask)
 
         ### CALCULATING STATES AS [lane_centers_in_pixels, index_right, index_left, V, W, ANGLE]
-        self.state = self.DQN_states_simplified_perception_normalized(
-            0,
-            self.target_veloc,
-            0,
-            0,
-            lane_centers_in_pixels,
-            index_right,
-            index_left,
-            mask.shape[1],
-        )
+
+        if self.state_space != "image":
+            self.state = self.DQN_states_simplified_perception_normalized(
+                0,
+                self.target_veloc,
+                0,
+                0,
+                lane_centers_in_pixels,
+                index_right,
+                index_left,
+                mask.shape[1],
+            )
+        else:  # IF STATE = image then resize it 32x32, 11x11...
+            mask = self.preprocess_image_lane_detector(
+                image_rgb_lanedetector_regression, is_image=True
+            )
+            # input(f"{mask.shape=}")
+            mask = cv2.resize(
+                mask, (self.new_image_size, self.new_image_size), cv2.INTER_AREA
+            )
+            # input(f"{mask.shape=}")
+
+            self.state = np.array(np.expand_dims(mask, axis=2))
+
+        # input(f"{self.state.shape =}")
 
         ################ CONCATENATE
         """
@@ -402,6 +414,7 @@ class CarlaEnv(gym.Env):
         """
 
         self.state = self.concatenate_states(self.state, self.state_space)
+        # input(f"2 {self.state.shape =}")
         # input(
         #    f"\n\t{self.state_queue =}\n\t{len(self.state_queue) =}\n\t{self.state =}\n\t{len(self.state) =}"
         # )
@@ -595,6 +608,14 @@ class CarlaEnv(gym.Env):
         )
         # print(f"\n\t{self.state = }")
 
+        # TODO: me quedo aqui: hay que implementar image flatten, image flatten + vector, vector
+
+        if self.state_space == "image":
+            pass
+            # self.states = np.array(
+            # self.simplifiedperception.resize_and_trimming_right_line_mask(mask)
+        # )
+
         ################ CONCATENATE
         # N_CONCATENATES = 1
         # if not hasattr(self, "state_queue"):
@@ -608,7 +629,6 @@ class CarlaEnv(gym.Env):
         # else:
         #    self.state = np.concatenate(self.state_queue)
         self.state = self.concatenate_states(self.state, self.state_space)
-
 
         return self.state, reward, done, {}
 
@@ -728,7 +748,7 @@ class CarlaEnv(gym.Env):
 
         return white_mask
 
-    def preprocess_image_lane_detector(self, image):
+    def preprocess_image_lane_detector(self, image, is_image=None):
         """
         image from lane detector with regression
         """
@@ -737,8 +757,17 @@ class CarlaEnv(gym.Env):
         image_middle_line = (height) // 2
         img_sliced = image[image_middle_line:]
 
-        kernel = np.ones((3, 3), np.uint8)
-        img_erosion = cv2.erode(img_sliced, kernel, iterations=2)
+        if not is_image:
+            n = 3
+            iter = 2
+        else:
+            n = 5
+            iter = 4
+
+        # kernel = np.ones((3, 3), np.uint8)
+        # img_erosion = cv2.erode(img_sliced, kernel, iterations=2)
+        kernel = np.ones((n, n), np.uint8)
+        img_erosion = cv2.erode(img_sliced, kernel, iterations=iter)
 
         # Convertir la imagen de BGR a RGB
         image_rgb = cv2.cvtColor(img_erosion, cv2.COLOR_BGR2RGB)

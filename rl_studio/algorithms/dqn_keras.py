@@ -308,6 +308,56 @@ class DQN:
         return model
     """
 
+    def get_model_conv2D(self):
+        print(f"self.STATE_SIZE:{self.STATE_SIZE}")
+        model = Sequential()
+        # model.add(Conv2D(256, (3, 3), input_shape=(2,) + self.OBSERVATION_SPACE_SHAPE))
+        # model.add(Conv2D(256, (3, 3), input_shape=(None,) + self.STATE_SIZE))
+        model.add(Rescaling(1./255, input_shape=self.STATE_SIZE))
+
+        model.add(Conv2D(256, (3, 3), input_shape=self.STATE_SIZE))
+        model.add(Activation("relu"))
+        model.add(MaxPooling2D(pool_size=(2, 2)))
+        model.add(Dropout(0.2))
+        model.add(Conv2D(256, (3, 3)))
+        model.add(Activation("relu"))
+        model.add(MaxPooling2D(pool_size=(2, 2)))
+        model.add(Dropout(0.2))
+        model.add(Flatten(input_shape=self.STATE_SIZE))
+        model.add(Dense(64))
+        model.add(Dense(self.ACTION_SIZE, activation="linear"))
+        model.compile(
+            loss="mse", optimizer=Adam(learning_rate=0.001), metrics=["accuracy"]
+        )
+        return model
+
+    def get_model_conv2D__(self):
+        last_init = tf.random_uniform_initializer(minval=-0.01, maxval=0.01)
+        # inputs = Input(shape=self.STATE_SIZE)
+        inputs = Input(shape=(None,) + self.STATE_SIZE)
+        x = Rescaling(1.0 / 255)(inputs)
+        x = Conv2D(32, (3, 3), padding="same")(x)
+        # x = Conv2D(32, (3, 3), padding="same")(inputs)
+        x = Activation("relu")(x)
+        x = MaxPooling2D(pool_size=(3, 3), padding="same")(x)
+        x = Dropout(0.25)(x)
+
+        x = Conv2D(64, (3, 3), padding="same")(x)
+        x = Activation("relu")(x)
+        x = MaxPooling2D(pool_size=(2, 2), padding="same")(x)
+        x = Dropout(0.25)(x)
+
+        x = Flatten()(x)
+        x = Dense(64)(x)
+
+        x = Dense(self.ACTION_SIZE, activation="tanh", kernel_initializer=last_init)(x)
+        # x = Activation("tanh", name=action_name)(x)
+        model = Model(inputs=inputs, outputs=x, name="conv2D")
+        model.compile(
+            loss="mse", optimizer=Adam(learning_rate=0.001), metrics=["accuracy"]
+        )
+        return model
+
     def update_replay_memory(self, transition):
         self.replay_memory.append(transition)
 
