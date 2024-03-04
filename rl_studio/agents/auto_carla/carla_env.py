@@ -15,6 +15,9 @@ from rl_studio.agents.auto_carla.actors_sensors import (
     NewCar,
     CameraRGBSensor,
     CameraRedMaskSemanticSensor,
+    CollisionSensor,
+    LaneInvasionSensor,
+    ObstacleSensor,
 )
 from rl_studio.agents.auto_carla.utils import AutoCarlaUtils
 from rl_studio.agents.auto_carla.settings import FollowLaneCarlaConfig
@@ -198,11 +201,13 @@ class CarlaEnv(gym.Env):
         self.new_car = None
         self.sensor_camera_rgb = None
         self.sensor_camera_red_mask = None
+        self.sensor_collision = None
+        self.sensor_lane_invasion = None
+        self.sensor_obstacle = None
         # self.sensor_camera_lanedetector = sensor_camera_lanedetector
         self.params = {}
         self.is_finish = None
         self.dist_to_finish = None
-        self.collision_hist = []
 
         self.right_line_in_pixels = None
         self.lane_centers_in_pixels = None
@@ -219,6 +224,9 @@ class CarlaEnv(gym.Env):
         self.centers_normal = []
 
         self.actor_list = []
+        self.collision_hist = []
+        self.lane_changing_hist = []
+        self.obstacle_hist = []
 
         self.spectator = self.world.get_spectator()
         ######################################################################
@@ -307,9 +315,12 @@ class CarlaEnv(gym.Env):
 
         self.sensor_camera_rgb = None
         self.sensor_camera_red_mask = None
+        self.sensor_collision = None
+        self.sensor_lane_invasion = None
+        self.sensor_obstacle = None
 
-        self.lane_sensor = None
-        self.obstacle_sensor = None
+        # self.lane_sensor = None
+        # self.obstacle_sensor = None
         self.collision_hist = []
         self.lane_changing_hist = []
         self.obstacle_hist = []
@@ -337,6 +348,18 @@ class CarlaEnv(gym.Env):
         ## RedMask Camera ---------------
         self.sensor_camera_red_mask = CameraRedMaskSemanticSensor(self.new_car.car)
         self.actor_list.append(self.sensor_camera_red_mask.sensor)
+
+        ## Collision ---------------
+        self.sensor_collision = CollisionSensor(self.new_car.car)
+        self.actor_list.append(self.sensor_collision.sensor)
+
+        ## Lane Invasion sensor -----------
+        self.sensor_lane_invasion = LaneInvasionSensor(self.new_car.car)
+        self.actor_list.append(self.sensor_lane_invasion.sensor)
+
+        ## Obstacle sensor ----------------
+        self.sensor_obstacle = ObstacleSensor(self.new_car.car)
+        self.actor_list.append(self.sensor_obstacle.sensor)
 
         self.world.tick()
 
@@ -396,22 +419,6 @@ class CarlaEnv(gym.Env):
             self.state = np.array(np.expand_dims(mask, axis=2))
 
         # input(f"{self.state.shape =}")
-
-        ################ CONCATENATE
-        """
-        N_CONCATENATES = 1
-        if not hasattr(self, "state_queue"):
-            self.state_queue = [self.state] * N_CONCATENATES
-        else:
-            self.state_queue.pop(0)
-            self.state_queue.append(self.state)
-
-        if self.state_space == "image":
-            self.state = np.concatenate(self.state_queue, axis=0)
-        else:
-            self.state = np.concatenate(self.state_queue)
-
-        """
 
         self.state = self.concatenate_states(self.state, self.state_space)
         # input(f"2 {self.state.shape =}")
@@ -537,7 +544,7 @@ class CarlaEnv(gym.Env):
         # print(f"\n\t{angle =}")
         # input("press ...")
 
-        ################################################### RESET by:
+        ### RESET      ################################################
         ## 1. No lateral lines detected
         ## 2. REWARD: far from center, vel > target, heading > 30
         ## 3. reach FINISH line
@@ -573,9 +580,9 @@ class CarlaEnv(gym.Env):
         # input(f"\n\tin step() after rewards... waiting")
 
         ## -------- ... or Finish by...
-        # if len(self.collision_hist) > 0:  # crashed you, baby
-        #    done = True
-        #    # reward = -100
+        if len(self.collision_hist) > 0:  # crashed you, baby
+            done = True
+            reward = -1
         #    print(f"crash")
 
         self.is_finish, self.dist_to_finish = AutoCarlaUtils.finish_fix_number_target(
@@ -589,47 +596,33 @@ class CarlaEnv(gym.Env):
             done = True
 
         ########################## STATE = DQN INPUTS: (ALL NORMALIZED IN THEIR PARTICULAR RANGES)
-        ## CENTERS +
-        ## LINE BORDERS +
-        ## V +
-        ## W +
-        ## ANGLE
 
-        # print(f"\t{self.params['current_steering_angle'] =}")
-        self.state = self.DQN_states_simplified_perception_normalized(
-            self.params["current_speed"],
-            self.params["target_veloc"],
-            self.params["current_steering_angle"],
-            self.angle,
-            lane_centers_in_pixels,
-            index_right,
-            index_left,
-            mask.shape[1],
-        )
-        # print(f"\n\t{self.state = }")
+        if self.state_space != "image":
+            self.state = self.DQN_states_simplified_perception_normalized(
+                self.params["current_speed"],
+                self.params["target_veloc"],
+                self.params["current_steering_angle"],
+                self.angle,
+                lane_centers_in_pixels,
+                index_right,
+                index_left,
+                mask.shape[1],
+            )
+        else:  # IMAGE
+            mask = self.preprocess_image_lane_detector(
+                image_rgb_lanedetector_regression, is_image=True
+            )
+            # input(f"{mask.shape=}")
+            mask = cv2.resize(
+                mask, (self.new_image_size, self.new_image_size), cv2.INTER_AREA
+            )
+            # input(f"{mask.shape=}")
 
-        # TODO: me quedo aqui: hay que implementar image flatten, image flatten + vector, vector
+            self.state = np.array(np.expand_dims(mask, axis=2))
 
-        if self.state_space == "image":
-            pass
-            # self.states = np.array(
-            # self.simplifiedperception.resize_and_trimming_right_line_mask(mask)
-        # )
-
-        ################ CONCATENATE
-        # N_CONCATENATES = 1
-        # if not hasattr(self, "state_queue"):
-        #    state_queue = [self.state] * N_CONCATENATES
-        # else:
-        # self.state_queue.pop(0)
-        # self.state_queue.append(self.state)
-
-        # if self.state_space == "image":
-        #    self.state = np.concatenate(self.state_queue, axis=0)
-        # else:
-        #    self.state = np.concatenate(self.state_queue)
         self.state = self.concatenate_states(self.state, self.state_space)
 
+        input(f"end STEP()---> {mask.shape=}")
         return self.state, reward, done, {}
 
     ##################################################

@@ -1,3 +1,4 @@
+import math
 import weakref
 
 import carla
@@ -73,6 +74,121 @@ class CameraRGBSensor(object):
         image = image[:, :, :3]
         # self._data_dict["image"] = image3
         self.front_rgb_camera = image
+
+
+# ==============================================================================
+# -- class Collision sensor -------------------------------------------------------------
+# ==============================================================================
+class CollisionSensor(object):
+    def __init__(self, parent_actor):
+        self.sensor = None
+        self._parent = parent_actor
+        # self.collision = None
+
+        self.world = self._parent.get_world()
+        bp = self.world.get_blueprint_library().find("sensor.other.collision")
+        # bp.set_attribute("image_size_x", f"640")
+        # bp.set_attribute("image_size_y", f"480")
+        # bp.set_attribute("fov", f"110")
+
+        self.sensor = self.world.spawn_actor(
+            bp,
+            carla.Transform(carla.Location(x=2.5, z=0.7), carla.Rotation(yaw=+00)),
+            attach_to=self._parent,
+        )
+        # We need to pass the lambda a weak reference to self to avoid circular
+        # reference.
+        weak_self = weakref.ref(self)
+        self.sensor.listen(
+            lambda event: CollisionSensor._collision_data(weak_self, event)
+        )
+
+    @staticmethod
+    def _collision_data(weak_self, event):
+        """weakref"""
+        self = weak_self()
+        if not self:
+            return
+
+        actor_we_collide_against = event.other_actor
+        impulse = event.normal_impulse
+        intensity = math.sqrt(impulse.x**2 + impulse.y**2 + impulse.z**2)
+        print(
+            f"you have crashed with {actor_we_collide_against.type_id} with impulse {impulse} and intensity {intensity}"
+        )
+
+        self.collision_hist.append(event)
+
+
+# ==============================================================================
+# -- class LaneInvasio sensor -------------------------------------------------------------
+# ==============================================================================
+class LaneInvasionSensor(object):
+    def __init__(self, parent_actor):
+        self.sensor = None
+        self._parent = parent_actor
+        # self.collision = None
+
+        self.world = self._parent.get_world()
+        bp = self.world.get_blueprint_library().find("sensor.other.lane_invasion")
+        # bp.set_attribute("image_size_x", f"640")
+        # bp.set_attribute("image_size_y", f"480")
+        # bp.set_attribute("fov", f"110")
+
+        self.sensor = self.world.spawn_actor(
+            bp,
+            carla.Transform(carla.Location(x=2.5, z=0.7), carla.Rotation(yaw=+00)),
+            attach_to=self._parent,
+        )
+        # We need to pass the lambda a weak reference to self to avoid circular
+        # reference.
+        weak_self = weakref.ref(self)
+        self.sensor.listen(
+            lambda event: LaneInvasionSensor._lane_changing(weak_self, event)
+        )
+
+    @staticmethod
+    def _lane_changing(weak_self, event):
+        """weakref"""
+        self = weak_self()
+        if not self:
+            return
+
+        self.lane_changing_hist.append(event)
+
+
+# ==============================================================================
+# -- class Obstacle sensor -------------------------------------------------------------
+# ==============================================================================
+class ObstacleSensor(object):
+    def __init__(self, parent_actor):
+        self.sensor = None
+        self._parent = parent_actor
+        # self.collision = None
+
+        self.world = self._parent.get_world()
+        bp = self.world.get_blueprint_library().find("sensor.other.obstacle")
+
+        self.sensor = self.world.spawn_actor(
+            bp,
+            carla.Transform(carla.Location(x=2.5, z=0.7), carla.Rotation(yaw=+00)),
+            attach_to=self._parent,
+        )
+        # We need to pass the lambda a weak reference to self to avoid circular
+        # reference.
+        weak_self = weakref.ref(self)
+        self.sensor.listen(
+            lambda event: ObstacleSensor._obstacle_sensor(weak_self, event)
+        )
+
+    @staticmethod
+    def _obstacle_sensor(weak_self, event):
+        """weakref"""
+        self = weak_self()
+        if not self:
+            return
+
+        self.obstacle_hist.append(event)
 
 
 # ==============================================================================
