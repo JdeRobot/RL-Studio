@@ -296,7 +296,7 @@ carla_town_positions:
           #7: [-15.9, -266.8, -0.0, -0.0, 121.3, 0.0] #x, y, z, pitch, yaw, roll
           #8: [-25.8, 124.7, -0.0, -0.0, 131.7, -0.0] #x, y, z, pitch, yaw, roll
         finish_positions:
-          0: [22, -75.8, -0.0, -0.0, -58.1, 0.0] #x, y, z, pitch, yaw, roll
+          0: [-384.6, -8.5, -0.0, -0.0, 94.5, -0.0] #x, y, z, pitch, yaw, roll
           1: [-103.1, -6.7, 9.3, 0.1, -133.0, -0.3] #x, y, z, pitch, yaw, roll
           2: [-25.8, 124.7, -0.0, -0.0, 131.7, -0.0] #x, y, z, pitch, yaw, roll
           3: [109.3, 48.9, 10.4, -1.7, 42.3, -0.4] #x, y, z, pitch, yaw, roll
