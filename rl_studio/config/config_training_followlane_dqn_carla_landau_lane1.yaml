@@ -25,6 +25,7 @@ ros:
 carla:
   carla_server: localhost
   carla_client: 4356
+  traffic_manager_port: 4637
 
 retraining:
   dqn:

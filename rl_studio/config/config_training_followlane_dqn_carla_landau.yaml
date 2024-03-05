@@ -12,7 +12,7 @@ settings:
   rewards: rewards_followlane_center_velocity_angle # follow_right_lane_only_center, follow_right_lane_center_v_step, follow_right_lane_center_v_w_linear
   framework: TensorFlow # TensorFlow, Pytorch
   total_episodes: 20_000
-  training_time: 16
+  training_time: 24
   models_dir: "./checkpoints"
   logs_dir: "./logs"
   metrics_dir: "./metrics"
@@ -25,6 +25,7 @@ ros:
 carla:
   carla_server: localhost
   carla_client: 4356
+  traffic_manager_port: 4637
 
 retraining:
   dqn:
