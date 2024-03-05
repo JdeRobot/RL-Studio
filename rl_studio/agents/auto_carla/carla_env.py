@@ -622,7 +622,7 @@ class CarlaEnv(gym.Env):
 
         self.state = self.concatenate_states(self.state, self.state_space)
 
-        input(f"end STEP()---> {mask.shape=}")
+        #input(f"end STEP()---> {mask.shape=}")
         return self.state, reward, done, {}
 
     ##################################################
