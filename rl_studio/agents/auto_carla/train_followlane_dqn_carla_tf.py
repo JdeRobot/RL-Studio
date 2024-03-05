@@ -868,4 +868,12 @@ class TrainerFollowLaneDQNAutoCarlaTF:
             env.close()
 
             if self.global_params.station == "landau":
-                self.closing_carla_server(log)
+                ps_output = (
+                    subprocess.check_output(["ps", "-Af"]).decode("utf-8").strip("\n")
+                )
+                # If there are NOT python scripts running....kill the server
+                if ps_output.count("python") < 1:
+                    self.closing_carla_server(log)
+
+            ## kill python script in case othersPython script being running
+            sys.exit(0)
