@@ -7,7 +7,7 @@ settings:
   env: follow_lane # Town01, simple, nurburgring, montreal, curves, simple_laser, manual, autoparking
   agent: auto_carla # auto_carla, autoparkingRL, auto_carla, mountain_car, robot_mesh, cartpole, turtlebot
   actions: continuous # slow, fast
-  states: sp5 #image, sp1 (simplified perception with 1 point), sp3 (simplified perception with 3 points), spn (simplified perception with n points)
+  states: sp10 #image, sp1 (simplified perception with 1 point), sp3 (simplified perception with 3 points), spn (simplified perception with n points)
   rewards: followlane_center # followline_center, followline_center_v_w_linear
   framework: TensorFlow # TensorFlow, Pytorch
   total_episodes: 500000
@@ -25,7 +25,7 @@ settings:
     function: pow
     punish_zig_zag_value: 1
     punish_ineffective_vel: 1
-    beta_1: 0.5
+    beta_1: 0.7
 
 ros:
   ros_master_uri: "11311"
@@ -74,13 +74,13 @@ states:
   sp5:
     0: [ 280, 290, 300, 310, 320 ]
   sp10:
-    0: [270, 280, 290, 300, 310, 320, 330, 340, 350, 360]
+    0: [270, 280, 290, 300, 310, 330, 370, 400, 430, 460]
   spn:
     0: [10]
 
 actions:
   continuous:
-    v: [1, 1.5]
+    v: [0, 1]
     w: [-0.3, 0.3]
 
 

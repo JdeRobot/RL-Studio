@@ -62,7 +62,7 @@ class StepFollowLine(F1Env):
         self._gazebo_pause()
 
         start = time.time()
-        fps = (1 / (start - self.end))*2
+        fps = (1 / (start - self.end))
         self.end = start
 
         ##==== get image from sensor camera

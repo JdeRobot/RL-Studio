@@ -1,5 +1,5 @@
 settings:
-  mode: training # training, retraining, inference
+  mode: retraining # training, retraining, inference
   task: follow_lane_carla # follow_line_gazebo, follow_lane_gazebo, autoparking_gazebo
   algorithm: ppo_continuous # qlearn, dqn, ddpg, ppo
   simulator: carla # openai, carla, gazebo, sumo
@@ -7,7 +7,7 @@ settings:
   env: follow_lane # Town01, simple, nurburgring, montreal, curves, simple_laser, manual, autoparking
   agent: auto_carla # f1, autoparkingRL, auto_carla, mountain_car, robot_mesh, cartpole, turtlebot
   actions: slow # slow, fast
-  states: sp5 #image, sp1 (simplified perception with 1 point), sp3 (simplified perception with 3 points), spn (simplified perception with n points)
+  states: sp10 #image, sp1 (simplified perception with 1 point), sp3 (simplified perception with 3 points), spn (simplified perception with n points)
   rewards: followline_center # followline_center, followline_center_v_w_linear
   framework: TensorFlow # TensorFlow, Pytorch
   total_episodes: 500000
@@ -18,14 +18,14 @@ settings:
   metrics_dir: "./metrics"
   debug_stats: false
   show_monitoring: true
-  steps_to_decrease: 30000
+  steps_to_decrease: 40000
   decrease_substraction: 0.01
-  decrease_min: 0.05
+  decrease_min: 0.03
   reward_params:
     function: pow
     punish_zig_zag_value: 0
-    punish_ineffective_vel: 0
-    beta_1: 0
+    punish_ineffective_vel: 0.5 # velocity below which reward is not calculated (0)
+    beta_1: 0.9
 
 
 ros:
@@ -34,7 +34,7 @@ ros:
 
 retraining:
   ppo:
-    retrain_ppo_tf_model_name: "20240223-124444-IMPROVEDMaxReward-527_Epoch-175"
+    retrain_ppo_tf_model_name: "20240317-050634-IMPROVEDMaxReward-2957_Epoch-420"
 inference:
   ppo:
     inference_ppo_tf_actor_model_name:
@@ -42,10 +42,10 @@ inference:
 
 algorithm:
   ppo:
-    gamma: 0.85
-    epsilon: 0.05
-    std_dev: 0.2
-    episodes_update: 50 # episodes how often the algorithm is trained
+    gamma: 0.9
+    epsilon: 0.15
+    std_dev: 0.1
+    episodes_update: 190 # episodes how often the algorithm is trained
     replay_memory_size: 50_000
     memory_fraction: 0.20
     critic_lr: 0.003
@@ -74,7 +74,7 @@ states:
   sp5:
     0: [ 280, 290, 300, 310, 320 ]
   sp10:
-    0: [270, 280, 290, 300, 310, 320, 330, 340, 350, 360]
+    0: [270, 280, 290, 300, 310, 330, 370, 400, 430, 460]
   spn:
     0: [10]
 

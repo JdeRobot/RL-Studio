@@ -104,7 +104,7 @@ class TrainerFollowLanePPOCarla:
         self.episodes_reward = []
 
         std_init = self.algoritmhs_params.std_dev
-        K_epochs = 8
+        K_epochs = 5
 
         # TODO This must come from config states in yaml
         state_size = len(self.environment.environment["x_row"]) + 2
@@ -172,13 +172,13 @@ class TrainerFollowLanePPOCarla:
         tf_prev_state = tf.expand_dims(tf.convert_to_tensor(prev_state_fl), 0)
 
         action = self.ppo_agent.select_action(tf_prev_state)
-        action[0] = action[0] + 1  # TODO scale it propperly ( now between 0 and 2)
+        action[0] = action[0]  # TODO scale it propperly ( now between 0 and 1)
         action[1] = action[1]  # TODO scale it propperly (now between -1 and 1)
         self.tensorboard.update_actions(action, self.all_steps)
 
         state, reward, done, info = self.env.step(action)
         self.set_stats(info)
-        # fps = info["fps"]
+        fps = info["fps"]
         self.ppo_agent.buffer.rewards.append(reward)
         self.ppo_agent.buffer.is_terminals.append(done)
 
@@ -221,7 +221,7 @@ class TrainerFollowLanePPOCarla:
                 cumulated_reward_in_this_episode=cumulated_reward,
                 _="--------------------------",
                 exploration=self.ppo_agent.action_std,
-                # fps=fps,
+                fps=fps,
                 # best_episode_until_now=best_epoch,
                 # with_highest_reward=int(current_max_reward),
             )

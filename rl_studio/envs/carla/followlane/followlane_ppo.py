@@ -89,14 +89,13 @@ def calculate_midpoints(input_array):
     return midpoints
 
 
-def add_midpoints(ll_segment, index, dists):
+def add_midpoints(ll_segment, index, dist):
     # Set the value at the specified index and distance to 1
-    for dist in dists:
-        draw_dash(index, dist, ll_segment)
-        draw_dash(index + 2, dist, ll_segment)
-        draw_dash(index + 1, dist, ll_segment)
-        draw_dash(index - 1, dist, ll_segment)
-        draw_dash(index - 2, dist, ll_segment)
+    draw_dash(index, dist, ll_segment)
+    draw_dash(index + 2, dist, ll_segment)
+    draw_dash(index + 1, dist, ll_segment)
+    draw_dash(index - 1, dist, ll_segment)
+    draw_dash(index - 2, dist, ll_segment)
 
 
 def connect_dashed_lines(ll_seg_mask):
@@ -116,11 +115,19 @@ def discard_not_confident_centers(center_lane_indexes):
     result = []
     for inner_list in center_lane_indexes:
         # if len(inner_list) != most_frequent_size:
-        if len(inner_list) != 2: # If we don't see the 2 lanes, we discard the row
+        if len(inner_list) < 1: # If we don't see the 2 lanes, we discard the row
             inner_list = [NO_DETECTED] * len(inner_list)  # Set all elements to 1
         result.append(inner_list)
 
     return result
+
+
+def choose_lane(distance_to_center_normalized, center_points):
+    close_lane_indexes = [min(enumerate(inner_array), key=lambda x: abs(x[1]))[0] for inner_array in
+                          distance_to_center_normalized]
+    distances = [array[index] for array, index in zip(distance_to_center_normalized, close_lane_indexes)]
+    centers = [array[index] for array, index in zip(center_points, close_lane_indexes)]
+    return distances, centers
 
 
 class FollowLaneStaticWeatherNoTraffic(FollowLaneEnv):
@@ -211,7 +218,7 @@ class FollowLaneStaticWeatherNoTraffic(FollowLaneEnv):
 
         self.collision_hist = []
         self.actor_list = []
-
+        self.previous_time = 0
         self.set_init_pose()
         if self.sync_mode:
             self.world.tick()
@@ -233,8 +240,7 @@ class FollowLaneStaticWeatherNoTraffic(FollowLaneEnv):
             center_lanes,
             distance_to_center_normalized,
         ) = self.calculate_center(ll_segment_post_process)
-        right_lane_normalized_distances = [inner_array[-1] for inner_array in distance_to_center_normalized]
-        right_center_lane = [[inner_array[-1]] for inner_array in center_lanes]
+        right_lane_normalized_distances, right_center_lane = choose_lane(distance_to_center_normalized, center_lanes)
 
         self.show_ll_seg_image(right_center_lane, ll_segment_post_process)
 
@@ -296,7 +302,7 @@ class FollowLaneStaticWeatherNoTraffic(FollowLaneEnv):
             [center_image - x for x in inner_array] for inner_array in center_lane_indexes
         ]
 
-        # Calculate the average position of the right lane lines
+        # Calculate the average position of the lane lines
         ## normalized distance
         distance_to_center_normalized = [
             np.array(x) / (width - center_image) for x in center_lane_distances
@@ -424,6 +430,11 @@ class FollowLaneStaticWeatherNoTraffic(FollowLaneEnv):
 
         ### -------- send action
         params = self.control(action)
+
+        now = time.time()
+        params["fps"] = 1 / (now - self.previous_time)
+        self.previous_time = now
+
         if self.sync_mode:
             self.world.tick()
         else:
@@ -449,8 +460,9 @@ class FollowLaneStaticWeatherNoTraffic(FollowLaneEnv):
             distance_to_center_normalized,
         ) = self.calculate_center(ll_segment_post_process)
         # We get the first of all calculated "center lanes" assuming it will be the right lane
-        right_lane_normalized_distances = [inner_array[-1] for inner_array in distance_to_center_normalized]
-        right_center_lane = [[inner_array[-1]] for inner_array in center_lanes]
+        #right_lane_normalized_distances = [inner_array[-1] for inner_array in distance_to_center_normalized]
+        #right_center_lane = [[inner_array[-1]] for inner_array in center_lanes]
+        right_lane_normalized_distances, right_center_lane = choose_lane(distance_to_center_normalized, center_lanes)
 
         self.show_ll_seg_image(right_center_lane, ll_segment_post_process)
         # self.show_ll_seg_image(center_lanes, ll_segment_post_process, name="ll_seg_all")
@@ -512,30 +524,31 @@ class FollowLaneStaticWeatherNoTraffic(FollowLaneEnv):
         return function_reward
 
     def rewards_easy(self, distance_error, params):
-
         done, states_non_line = self.end_if_conditions(distance_error, threshold=0.3)
-
+        params["d_reward"] = 0
+        params["v_reward"] = 0
+        params["v_eff_reward"] = 0
+        params["reward"] = 0
         if done:
-            params["d_reward"] = 0
-            params["v_reward"] = 0
-            params["v_eff_reward"] = 0
-            params["reward"] = 0
-            return -self.punish_ineffective_vel, done
+            return 0, done
+
+        if params["velocity"] < self.punish_ineffective_vel:
+            return 0, done
 
         d_rewards = []
         for _, error in enumerate(distance_error):
-            d_rewards.append(pow(1 - error, 5))
+            d_rewards.append(1 - error)
 
-        d_reward = sum(d_rewards) / ( len(distance_error) - states_non_line )
+        # TODO ignore non detected centers
+        d_reward = sum(d_rewards) / len(distance_error)
         params["d_reward"] = d_reward
+
         # reward Max = 1 here
         punish = 0
-        if params["velocity"] < 1.5:
-            punish += self.punish_ineffective_vel
         punish += self.punish_zig_zag_value * params["steering_angle"]
 
-        v_reward = params["velocity"] / 5
-        v_eff_reward = v_reward * pow(d_reward, 2)
+        v_reward = params["velocity"]
+        v_eff_reward = v_reward * d_reward
         params["v_reward"] = v_reward
         params["v_eff_reward"] = v_eff_reward
 
@@ -636,27 +649,28 @@ class FollowLaneStaticWeatherNoTraffic(FollowLaneEnv):
         ''''
         Lane line post-processing
         '''
+        #ll_segment = morphological_process(ll_segment, kernel_size=5, func_type=cv2.MORPH_OPEN)
+        #ll_segment = morphological_process(ll_segment, kernel_size=20, func_type=cv2.MORPH_CLOSE)
+        #return ll_segment
         ll_segment = morphological_process(ll_segment, kernel_size=5, func_type=cv2.MORPH_OPEN)
-        ll_segment = morphological_process(ll_segment, kernel_size=20, func_type=cv2.MORPH_CLOSE)
-        return ll_segment
+        ll_segment = morphological_process(ll_segment, kernel_size=5, func_type=cv2.MORPH_CLOSE)
+        return self.post_process_hough(ll_segment)
 
     def post_process_hough(self, ll_segment):
-        ll_segment_int8 = (ll_segment * 255).astype(np.uint8)
-        # Detect lines using HoughLines
-        lines = cv2.HoughLinesP(
-            ll_segment_int8,  # Input edge image
-            1,  # Distance resolution in pixels
-            np.pi / 60,  # Angle resolution in radians
-            threshold=80,  # Min number of votes for valid line
-            minLineLength=10,  # Min allowed length of line
-            maxLineGap=60  # Max allowed gap between line for joining them
-        )
+        ll_segment = (ll_segment * 255).astype(np.uint8)
+        # Step 3: Apply Canny edge detection
+        #ll_segment = cv2.Canny(ll_segment, 50, 150)
+        cv2.imshow("edges", ll_segment)
 
-        # Filter and draw the two most prominent lines
-        if lines is None:
-            ll_segment = morphological_process(ll_segment, kernel_size=5, func_type=cv2.MORPH_OPEN)
-            ll_segment = morphological_process(ll_segment, kernel_size=20, func_type=cv2.MORPH_CLOSE)
-            return ll_segment
+        # Step 4: Perform Hough transform to detect lines
+        lines = cv2.HoughLinesP(
+            ll_segment,  # Input edge image
+            1,  # Distance resolution in pixels
+            np.pi/60,  # Angle resolution in radians
+            threshold=70,  # Min number of votes for valid line
+            minLineLength=30,  # Min allowed length of line
+            maxLineGap=15  # Max allowed gap between line for joining them
+        )
 
         # Sort lines by their length
         # lines = sorted(lines, key=lambda x: x[0][0] * np.sin(x[0][1]), reverse=True)[:5]
@@ -677,10 +691,49 @@ class FollowLaneStaticWeatherNoTraffic(FollowLaneEnv):
         # line_mask = morphological_process(line_mask, kernel_size=5, func_type=cv2.MORPH_CLOSE)
         # kernel = np.ones((3, 3), np.uint8)  # Adjust the size as needed
         # eroded_image = cv2.erode(line_mask, kernel, iterations=1)
-        ll_segment_int8 = (line_mask // 255).astype(np.uint8)
-        # TODO We could still pass the houghlines to the final image to check if we can extends the detected
-        # lines with some arithmetics
-        return ll_segment_int8
+        cv2.imshow("hough", line_mask)
+
+        line_mask = np.zeros_like(ll_segment, dtype=np.uint8)  # Ensure dtype is uint8
+
+        # Step 5: Perform linear regression on detected lines
+        # Iterate over detected lines
+        for line in lines:
+            # Extract endpoints of the line
+            x1, y1, x2, y2 = line[0]
+
+            # Fit a line to the detected points
+            vx, vy, x0, y0 = cv2.fitLine(np.array([[x1, y1], [x2, y2]], dtype=np.float32), cv2.DIST_L2, 0, 0.01, 0.01)
+
+            # Calculate the slope and intercept of the line
+            slope = vy / vx
+            #if abs(slope) < 0.5:
+             #   continue
+            intercept = y0 - (slope * x0)
+
+            # Extend the line if needed (e.g., to cover the entire image width)
+            extended_x1 = 0
+            extended_y1 = int(intercept)
+            extended_x2 = ll_segment.shape[1]
+            extended_y2 = int(slope * extended_x2 + intercept)
+
+            if extended_y1 > 2147483647 or extended_y2 > 2147483647:
+                cv2.line(line_mask, (int(x0), 0), (int(x0), ll_segment.shape[0] - 1), (255, 0, 0), 2)
+                continue
+
+            # Draw the extended line on the image
+            cv2.line(line_mask, (extended_x1, extended_y1), (extended_x2, extended_y2), (255, 0, 0), 2)
+        line_mask = morphological_process(line_mask, kernel_size=15, func_type=cv2.MORPH_CLOSE)
+        # line_mask = morphological_process(line_mask, kernel_size=5, func_type=cv2.MORPH_OPEN)
+
+        # TODO (Ruben) It is quite hardcoded and unrobust. Fix this to enable all lines and more than
+        # 1 lane detection and cameras in other positions
+        boundary_y = ll_segment.shape[1] * 2 // 5  # Keep the lower one-third of the image
+
+        # Copy the lower part of the source image into the target image
+        ll_segment[boundary_y:, :] = line_mask[boundary_y:, :]
+        ll_segment = (ll_segment // 255).astype(np.uint8)
+
+        return ll_segment
 
     def extend_lines(self, lines, image_height):
         extended_lines = []
